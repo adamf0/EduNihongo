@@ -1,6 +1,7 @@
 import React from "react";
 import Icon from "./Icon";
 import SidebarLink from "./SidebarLink";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -13,6 +14,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose = () => {},
   activeRoute = "home",
 }) => {
+  const navigate = useNavigate();
+
   const sidebarClasses = `fixed top-0 bottom-0 w-64 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col transition-all duration-300 ${
     isOpen ? "left-0" : "-left-64 lg:left-0"
   } lg:flex`;
@@ -48,9 +51,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation links */}
         <nav className="flex-grow px-4 py-4 space-y-1 sidebar-scroll overflow-y-auto">
-          <SidebarLink icon="home" label="Home" isActive={activeRoute === "home"} href="/dashboard" />
-          <SidebarLink icon="translate" label="Kanji" isActive={activeRoute === "kanji"} href="/kanji" />
-          <SidebarLink icon="menu_book" label="Vocab" isActive={activeRoute === "vocab"} href="/vocabulary" />
+          <SidebarLink icon="home" label="Home" isActive={activeRoute === "home"} onClick={navigate("/dashboard")} />
+          <SidebarLink icon="translate" label="Kanji" isActive={activeRoute === "kanji"} onClick={navigate("/kanji")} />
+          <SidebarLink icon="menu_book" label="Vocab" isActive={activeRoute === "vocab"} onClick={navigate("/vocabulary")} />
         </nav>
 
         {/* Footer options */}

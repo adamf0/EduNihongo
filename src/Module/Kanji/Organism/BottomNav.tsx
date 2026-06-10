@@ -19,7 +19,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeRoute = "kanji" }) =
     { key: "home", icon: "home", label: "Beranda", path: "/dashboard" },
     { key: "kanji", icon: "translate", label: "Kanji", path: "/kanji" },
     { key: "vocab", icon: "menu_book", label: "Vocab", path: "/vocabulary" },
-    { key: "profile", icon: "person", label: "Profil", path: "#" },
   ];
 
   return (

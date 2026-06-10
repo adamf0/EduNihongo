@@ -20,7 +20,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { key: "home", icon: "home", label: "Home", path: "/dashboard" },
     { key: "kanji", icon: "translate", label: "Kanji", path: "/kanji" },
     { key: "vocab", icon: "menu_book", label: "Vocab", path: "/vocabulary" },
-    { key: "profile", icon: "person", label: "Profile", path: "#" },
   ];
 
   return (
