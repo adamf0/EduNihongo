@@ -1,0 +1,24 @@
+import React from "react";
+
+interface IconProps {
+  name: string;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export const Icon: React.FC<IconProps> = ({
+  name,
+  className = "",
+  style,
+}) => {
+  return (
+    <span
+      className={`material-symbols-outlined select-none ${className}`}
+      style={style}
+    >
+      {name}
+    </span>
+  );
+};
+
+export default Icon;
