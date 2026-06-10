@@ -57,9 +57,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Footer options */}
-        <div className="p-4 border-t border-outline-variant">
+        {/* <div className="p-4 border-t border-outline-variant">
           <SidebarLink icon="settings" label="Pengaturan" isActive={activeRoute === "settings"} href="#" />
-        </div>
+        </div> */}
       </aside>
     </>
   );
