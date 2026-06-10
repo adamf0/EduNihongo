@@ -51,9 +51,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation links */}
         <nav className="flex-grow px-4 py-4 space-y-1 sidebar-scroll overflow-y-auto">
-          <SidebarLink icon="home" label="Home" isActive={activeRoute === "home"} onClick={navigate("/dashboard")} />
-          <SidebarLink icon="translate" label="Kanji" isActive={activeRoute === "kanji"} onClick={navigate("/kanji")} />
-          <SidebarLink icon="menu_book" label="Vocab" isActive={activeRoute === "vocab"} onClick={navigate("/vocabulary")} />
+          <SidebarLink icon="home" label="Home" isActive={activeRoute === "home"} onClick={()=>navigate("/dashboard")} />
+          <SidebarLink icon="translate" label="Kanji" isActive={activeRoute === "kanji"} onClick={()=>navigate("/kanji")} />
+          <SidebarLink icon="menu_book" label="Vocab" isActive={activeRoute === "vocab"} onClick={()=>navigate("/vocabulary")} />
         </nav>
 
         {/* Footer options */}
