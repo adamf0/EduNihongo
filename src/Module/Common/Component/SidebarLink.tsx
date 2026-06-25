@@ -15,13 +15,13 @@ export const SidebarLink: React.FC<SidebarLinkProps> = ({
   onClick,
 }) => {
   const baseClass =
-    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all w-full text-left";
+    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 w-full text-left cursor-pointer";
 
   const activeClass =
-    "text-on-primary bg-secondary-fixed shadow-md";
+    "text-primary font-bold border-r-4 border-primary bg-primary-container/10 scale-[0.98]";
 
   const inactiveClass =
-    "text-on-surface-variant hover:bg-surface-container transition-colors";
+    "text-on-surface-variant hover:text-primary hover:bg-surface-container-highest";
 
   return (
     <button
@@ -44,7 +44,7 @@ export const SidebarLink: React.FC<SidebarLinkProps> = ({
         }
       />
 
-      <span className="font-medium">
+      <span className="font-label-md">
         {label}
       </span>
     </button>
