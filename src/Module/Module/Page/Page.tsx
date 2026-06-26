@@ -150,7 +150,7 @@ export const ModulePage: React.FC = () => {
                     <span className="text-xs font-bold text-[#8f0020]">32%</span>
                   </div>
                   <button 
-                    onClick={() => navigate('/learn')} 
+                    onClick={() => navigate('/latihan')} 
                     className="w-full py-2 bg-[#8f0020] text-white rounded-xl font-bold shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm"
                   >
                     Lanjutkan Belajar

@@ -1,0 +1,154 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                Int                  @id @default(autoincrement())
+  email             String               @unique
+  password          String
+  name              String
+  level             String               @default("N3")
+  levelName         String               @default("Gerbang Besi")
+  joinedAt          DateTime             @default(now())
+  streak            Int                  @default(15)
+  totalXp           Int                  @default(1240)
+  rank              String               @default("Top 5% Learner")
+  masteryReading    Int                  @default(88)
+  masteryWriting    Int                  @default(65)
+  masteryVocabulary Int                  @default(74)
+  dailyTargetKanji  Int                  @default(5)
+  dailyTargetVocab  Int                  @default(10)
+  
+  activities        UserActivity[]
+  badges            UserBadge[]
+  modules           UserModuleProgress[]
+  kanjiProgress     UserKanjiProgress[]
+}
+
+model UserActivity {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date         DateTime @default(now())
+  kanjiCount   Int      @default(0)
+  vocabCount   Int      @default(0)
+  xpEarned     Int      @default(0)
+  activityType String   // "LESSON", "REVIEW", "ACHIEVEMENT"
+  description  String
+}
+
+model Badge {
+  id          Int         @id @default(autoincrement())
+  icon        String
+  title       String
+  description String
+  bgClass     String?
+  iconColor   String?
+  users       UserBadge[]
+}
+
+model UserBadge {
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId    Int
+  badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  unlockedAt DateTime @default(now())
+  isUnlocked Boolean  @default(true)
+
+  @@id([userId, badgeId])
+}
+
+model Module {
+  id           Int                  @id @default(autoincrement())
+  title        String
+  level        String               // "N3", "N4"
+  category     String               // "RADICAL", "KANJI", "VOCABULARY"
+  difficulty   String
+  userProgress UserModuleProgress[]
+}
+
+model UserModuleProgress {
+  userId          Int
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId        Int
+  module          Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  isCompleted     Boolean @default(false)
+  isLocked        Boolean @default(false)
+  progressPercent Int     @default(0)
+
+  @@id([userId, moduleId])
+}
+
+model Kanji {
+  id             Int                 @id @default(autoincrement())
+  character      String              @unique // e.g. "情報"
+  romaji         String
+  meaning        String
+  onyomi         String?
+  kunyomi        String?
+  difficulty     String              @default("N3")
+  isJukugo       Boolean             @default(false)
+  border         String?             // e.g. "border-l-4 border-secondary"
+  
+  examples       ExampleSentence[]
+  etymologies    Etymology[]
+  userProgress   UserKanjiProgress[]
+  graphNodes     KanjiGraphNode[]
+  graphEdges     KanjiGraphEdge[]
+}
+
+model UserKanjiProgress {
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kanjiId        Int
+  kanji          Kanji    @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  masteryPercent Int      @default(0)
+  status         String   @default("LEARNING") // "MASTERED", "LEARNING", "REVIEW"
+  mistakeCount   Int      @default(0)
+  lastPracticed  DateTime @default(now())
+
+  @@id([userId, kanjiId])
+}
+
+model ExampleSentence {
+  id          Int    @id @default(autoincrement())
+  kanjiId     Int
+  kanji       Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  japanese    String
+  romaji      String
+  translation String
+}
+
+model Etymology {
+  id        Int    @id @default(autoincrement())
+  kanjiId   Int
+  kanji     Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  character String // Sub-character, e.g. "情"
+  romaji    String // "JOU • Perasaan, Keadaan"
+  detail    String
+}
+
+model KanjiGraphNode {
+  id          String   @id // e.g. "root", "top-1"
+  kanjiId     Int
+  kanjiRef    Kanji    @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  character   String   // "情", "報"
+  meaning     String
+  type        String   // "root", "top", "bottom", "sub-bottom"
+  borderColor String?
+  isPill      Boolean  @default(false)
+  parentPill  String?
+}
+
+model KanjiGraphEdge {
+  id       String @id // e.g. "e-top1-root"
+  kanjiId  Int
+  kanjiRef Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  source   String
+  target   String
+}

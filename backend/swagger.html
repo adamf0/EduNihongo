@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Kanjigraph API Documentation - Swagger UI</title>
+  <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/japanese-temple.png" />
+  <!-- Swagger UI CDN -->
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.css" />
+  <style>
+    /* Premium Theme Customization */
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      margin: 0;
+      background: #f7f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    /* Brand Header */
+    .brand-header {
+      background: linear-gradient(135deg, #8f0020 0%, #2d486d 100%);
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo img {
+      width: 40px;
+      height: 40px;
+      filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.2));
+    }
+    .brand-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    .brand-subtitle {
+      margin: 0;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+    .badge-status {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Swagger UI Overrides */
+    .swagger-ui .topbar {
+      display: none; /* Hide default topbar */
+    }
+    .swagger-ui .info {
+      margin: 30px 0;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      border-left: 6px solid #8f0020;
+    }
+    .swagger-ui .info .title {
+      font-family: inherit;
+      color: #1c2d42;
+    }
+    .swagger-ui .scheme-container {
+      background: white;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      margin: 20px 0;
+      padding: 15px 30px;
+      border-radius: 12px;
+    }
+    .swagger-ui .opblock {
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+    }
+    .swagger-ui .opblock.opblock-post {
+      background: rgba(73, 204, 144, 0.05);
+      border-color: #49cc90;
+    }
+    .swagger-ui .opblock.opblock-get {
+      background: rgba(97, 175, 254, 0.05);
+      border-color: #61affe;
+    }
+    .swagger-ui .opblock.opblock-put {
+      background: rgba(252, 161, 48, 0.05);
+      border-color: #fca130;
+    }
+    .swagger-ui .btn.authorize {
+      background-color: #8f0020;
+      border-color: #8f0020;
+      color: white;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .swagger-ui .btn.authorize svg {
+      fill: white;
+    }
+    .swagger-ui .btn.authorize:hover {
+      background-color: #720019;
+      border-color: #720019;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Custom Brand Header -->
+  <header class="brand-header">
+    <div class="brand-logo">
+      <img src="https://img.icons8.com/color/96/000000/japanese-gate.png" alt="Torii Gate" />
+      <div>
+        <h1 class="brand-title">KANJIGRAPH</h1>
+        <p class="brand-subtitle">Master the Stroke • API Docs</p>
+      </div>
+    </div>
+    <div class="badge-status">
+      🟢 v1.0.0 - Development Stable
+    </div>
+  </header>
+
+  <!-- Swagger UI container -->
+  <div id="swagger-ui"></div>
+
+  <!-- Swagger UI Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      // Define OpenAPI Spec
+      const spec = {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Kanjigraph Backend API",
+          "version": "1.0.0",
+          "description": "REST API untuk mengelola pembelajaran Kanji, Jukugo, profil pengguna Haruki Sato, heatmap intensitas, lencana pencapaian, dan grafik hubungan semantik.",
+          "contact": {
+            "name": "Kanjigraph Team Support",
+            "email": "support@kanjigraph.com"
+          }
+        },
+        "servers": [
+          {
+            "url": "http://localhost:5001",
+            "description": "Local Development Server"
+          }
+        ],
+        "paths": {
+          "/api/auth/register": {
+            "post": {
+              "tags": ["Autentikasi"],
+              "summary": "Registrasi Pengguna Baru",
+              "description": "Mendaftarkan pengguna baru ke platform dan otomatis menginisialisasi modul belajar serta progres kanji standar.",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["email", "password", "name"],
+                      "properties": {
+                        "email": { "type": "string", "example": "haruki@sato.com" },
+                        "password": { "type": "string", "example": "haruki123" },
+                        "name": { "type": "string", "example": "Haruki Sato" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "201": {
+                  "description": "Registrasi Berhasil",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "message": { "type": "string", "example": "Registrasi berhasil." },
+                          "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsIn..." },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "integer", "example": 1 },
+                              "email": { "type": "string", "example": "haruki@sato.com" },
+                              "name": { "type": "string", "example": "Haruki Sato" },
+                              "level": { "type": "string", "example": "N3" },
+                              "levelName": { "type": "string", "example": "Gerbang Besi" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "400": { "description": "Email sudah digunakan atau input tidak lengkap" }
+              }
+            }
+          },
+          "/api/auth/login": {
+            "post": {
+              "tags": ["Autentikasi"],
+              "summary": "Login Pengguna",
+              "description": "Autentikasi pengguna menggunakan email & password untuk mendapatkan Token JWT.",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["email", "password"],
+                      "properties": {
+                        "email": { "type": "string", "example": "haruki@sato.com" },
+                        "password": { "type": "string", "example": "haruki123" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Login Berhasil",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "message": { "type": "string", "example": "Login berhasil." },
+                          "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsIn..." },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "integer", "example": 1 },
+                              "email": { "type": "string", "example": "haruki@sato.com" },
+                              "name": { "type": "string", "example": "Haruki Sato" },
+                              "level": { "type": "string", "example": "N3" },
+                              "levelName": { "type": "string", "example": "Gerbang Besi" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "400": { "description": "Kredensial salah" }
+              }
+            }
+          },
+          "/api/dashboard": {
+            "get": {
+              "tags": ["Dasbor"],
+              "summary": "Muat Ringkasan Dasbor",
+              "description": "Mengambil statistik harian, data chart aktivitas mingguan, rekomendasi Jukugo, modul yang sedang aktif belajar, dan daily insight quote.",
+              "security": [{ "BearerAuth": [] }],
+              "responses": {
+                "200": {
+                  "description": "Data Dasbor Ditemukan",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "stats": {
+                            "type": "object",
+                            "properties": {
+                              "dailyTarget": { "type": "string", "example": "Target: 5 Kanji, 10 Kosakata" },
+                              "streak": { "type": "string", "example": "15 Hari" },
+                              "levelProgress": { "type": "integer", "example": 65 },
+                              "level": { "type": "string", "example": "Tingkat N3" },
+                              "totalDays": { "type": "string", "example": "42 Hari" }
+                            }
+                          },
+                          "weeklyActivity": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "day": { "type": "string", "example": "Sel" },
+                                "kanji": { "type": "integer", "example": 6 },
+                                "vocab": { "type": "integer", "example": 9 },
+                                "xp": { "type": "integer", "example": 45 }
+                              }
+                            }
+                          },
+                          "recommendedJukugo": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "kanji": { "type": "string", "example": "学習" },
+                                "romaji": { "type": "string", "example": "Gakushū" },
+                                "meaning": { "type": "string", "example": "Belajar, Pembelajaran" },
+                                "border": { "type": "string", "example": "border-l-4 border-secondary" }
+                              }
+                            }
+                          },
+                          "continueLearning": {
+                            "type": "object",
+                            "properties": {
+                              "moduleTitle": { "type": "string", "example": "Variasi Kunyomi Tahap 1" },
+                              "category": { "type": "string", "example": "KANJI" },
+                              "progressPercent": { "type": "integer", "example": 32 },
+                              "level": { "type": "string", "example": "N3" }
+                            }
+                          },
+                          "dailyInsight": {
+                            "type": "object",
+                            "properties": {
+                              "quote": { "type": "string", "example": "Urutan goresan bukan sekadar aturan..." },
+                              "author": { "type": "string", "example": "Kanjigraph Sensei" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "401": { "description": "Tidak ada token / Token tidak valid" }
+              }
+            }
+          },
+          "/api/modules": {
+            "get": {
+              "tags": ["Modul"],
+              "summary": "Daftar Modul Alur Belajar",
+              "description": "Mengambil detail level saat ini dan seluruh daftar item materi yang dikelompokkan berdasarkan Radikal, Kanji, dan Kosakata.",
+              "security": [{ "BearerAuth": [] }],
+              "responses": {
+                "200": {
+                  "description": "Daftar Modul Berhasil Dimuat",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "level": { "type": "string", "example": "Level 12: Gerbang Besi" },
+                          "overallProgress": { "type": "integer", "example": 64 },
+                          "radicals": {
+                            "type": "object",
+                            "properties": {
+                              "items": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": { "type": "string", "example": "Komponen Radikal" },
+                                    "isCompleted": { "type": "boolean", "example": true },
+                                    "isLocked": { "type": "boolean", "example": false },
+                                    "progressPercent": { "type": "integer", "example": 100 }
+                                  }
+                                }
+                              },
+                              "progress": { "type": "integer", "example": 85 }
+                            }
+                          },
+                          "kanji": {
+                            "type": "object",
+                            "properties": {
+                              "items": { "type": "array", "items": { "type": "object" } },
+                              "progress": { "type": "integer", "example": 32 }
+                            }
+                          },
+                          "vocabulary": {
+                            "type": "object",
+                            "properties": {
+                              "items": { "type": "array", "items": { "type": "object" } },
+                              "progress": { "type": "integer", "example": 0 }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/latihan/{character}": {
+            "get": {
+              "tags": ["Latihan Menulis"],
+              "summary": "Detail Latihan & Struktur Graf Kanji",
+              "description": "Mengambil detail lengkap karakter (misal: '情報'), pembacaan onyomi/kunyomi, persentase penguasaan, contoh kalimat, etimologi pecahan kanji, dan grafik relasi semantiknya.",
+              "security": [{ "BearerAuth": [] }],
+              "parameters": [
+                {
+                  "name": "character",
+                  "in": "path",
+                  "required": true,
+                  "description": "Karakter kanji atau jukugo yang ingin dicari.",
+                  "schema": { "type": "string", "example": "情報" }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Detail Kanji Ditemukan",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "kanji": { "type": "string", "example": "情報" },
+                          "romaji": { "type": "string", "example": "じょうほう • Jouhou" },
+                          "meaning": { "type": "string", "example": "Informasi / Berita" },
+                          "masteryPercent": { "type": "integer", "example": 84 },
+                          "masteryLevelTitle": { "type": "string", "example": "Tingkat Emas" },
+                          "examples": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "japanese": { "type": "string", "example": "正確な情報が必要です。" },
+                                "romaji": { "type": "string", "example": "Seikaku na jouhou..." },
+                                "translation": { "type": "string", "example": "Informasi yang akurat..." }
+                              }
+                            }
+                          },
+                          "etymologies": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "character": { "type": "string", "example": "情" },
+                                "romaji": { "type": "string", "example": "JOU • Perasaan, Keadaan" },
+                                "detail": { "type": "string", "example": "\"keadaan\" atau \"perasaan\" dari segala hal..." }
+                              }
+                            }
+                          },
+                          "graph": {
+                            "type": "object",
+                            "properties": {
+                              "nodes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": { "type": "string", "example": "root" },
+                                    "kanji": { "type": "string", "example": "情報" },
+                                    "meaning": { "type": "string", "example": "INTI" },
+                                    "type": { "type": "string", "example": "root" }
+                                  }
+                                }
+                              },
+                              "edges": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": { "type": "string", "example": "e-top1-root" },
+                                    "source": { "type": "string", "example": "top-1" },
+                                    "target": { "type": "string", "example": "root" }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "404": { "description": "Kanji tidak ditemukan" }
+              }
+            }
+          },
+          "/api/latihan/verify": {
+            "post": {
+              "tags": ["Latihan Menulis"],
+              "summary": "Verifikasi Goresan Menulis Kanji",
+              "description": "Menerima target karakter dan data koordinat kanvas untuk menghitung persentase keakuratan menulis goresan secara real-time.",
+              "security": [{ "BearerAuth": [] }],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["character"],
+                      "properties": {
+                        "character": { "type": "string", "example": "情報" },
+                        "drawingData": { "type": "string", "description": "Base64 canvas image atau stroke array data" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Verifikasi Berhasil diproses",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "success": { "type": "boolean", "example": true },
+                          "accuracy": { "type": "integer", "example": 94 },
+                          "detectedText": { "type": "string", "example": "情報" },
+                          "message": { "type": "string", "example": "Luar biasa! Goresan Anda sangat akurat." }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/progress": {
+            "get": {
+              "tags": ["Progres & Statistik"],
+              "summary": "Statistik Progress & Heatmap",
+              "description": "Mengambil summary total kanji terkuasai, akurasi rata-rata, heatmap 30/90 hari, pencapaian lencana (badges), dan daftar kanji yang sering salah (Focus Review).",
+              "security": [{ "BearerAuth": [] }],
+              "responses": {
+                "200": {
+                  "description": "Data Progres Dimuat",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "stats": {
+                            "type": "object",
+                            "properties": {
+                              "kanjiMastered": { "type": "string", "example": "1.420 Kanji" },
+                              "accuracy": { "type": "string", "example": "94%" },
+                              "streak": { "type": "string", "example": "15 Hari" },
+                              "level": { "type": "string", "example": "Level N3 (Gerbang Besi)" }
+                            }
+                          },
+                          "heatmap": {
+                            "type": "object",
+                            "properties": {
+                              "last30Days": { "type": "array", "items": { "type": "string", "example": "bg-primary/40" } },
+                              "last90Days": { "type": "array", "items": { "type": "string", "example": "bg-primary/5" } }
+                            }
+                          },
+                          "badges": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "icon": { "type": "string", "example": "star_shine" },
+                                "title": { "type": "string", "example": "Gerbang Torii" },
+                                "description": { "type": "string", "example": "Menyelesaikan 100 Kanji N5" },
+                                "isUnlocked": { "type": "boolean", "example": true },
+                                "bgClass": { "type": "string", "example": "bg-secondary-container" },
+                                "iconColor": { "type": "string", "example": "text-on-secondary-container" }
+                              }
+                            }
+                          },
+                          "reviewKanji": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "character": { "type": "string", "example": "曜" },
+                                "romaji": { "type": "string", "example": "Yō" },
+                                "meaning": { "type": "string", "example": "Day of the week" },
+                                "mistakeCount": { "type": "integer", "example": 5 }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/profile": {
+            "get": {
+              "tags": ["Profil & Pengaturan"],
+              "summary": "Detail Profil & Koleksi Kanji",
+              "description": "Mengambil informasi akun, total XP, koleksi kanji terkuasai secara visual (愛, 道, 空), aktivitas log belajar terbaru, dan breakdown mastery skill.",
+              "security": [{ "BearerAuth": [] }],
+              "responses": {
+                "200": {
+                  "description": "Profil berhasil dimuat",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string", "example": "Haruki Sato" },
+                          "email": { "type": "string", "example": "haruki@sato.com" },
+                          "joinedMonthYear": { "type": "string", "example": "Mastering the strokes since October 2023" },
+                          "avatar": { "type": "string" },
+                          "stats": {
+                            "type": "object",
+                            "properties": {
+                              "streak": { "type": "integer", "example": 342 },
+                              "xp": { "type": "integer", "example": 1240 },
+                              "rank": { "type": "string", "example": "Top 5% Learner" }
+                            }
+                          },
+                          "masteredKanji": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "character": { "type": "string", "example": "愛" },
+                                "romaji": { "type": "string", "example": "Ai" },
+                                "meaning": { "type": "string", "example": "Love / Affection" }
+                              }
+                            }
+                          },
+                          "activities": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "icon": { "type": "string", "example": "school" },
+                                "bgClass": { "type": "string", "example": "bg-secondary-container..." },
+                                "title": { "type": "string", "example": "Menyelesaikan Sesi Belajar" },
+                                "desc": { "type": "string", "example": "Kanji N3 Bab 4" },
+                                "time": { "type": "string", "example": "2 jam yang lalu" },
+                                "xp": { "type": "string", "example": "+45 XP" }
+                              }
+                            }
+                          },
+                          "masteryBreakdown": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": { "type": "string", "example": "Reading" },
+                                "percentage": { "type": "integer", "example": 88 },
+                                "colorClass": { "type": "string", "example": "bg-primary" }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "put": {
+              "tags": ["Profil & Pengaturan"],
+              "summary": "Perbarui Detail Profil",
+              "description": "Mengubah nama, email, atau password pengguna.",
+              "security": [{ "BearerAuth": [] }],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string", "example": "Haruki Sato Baru" },
+                        "email": { "type": "string", "example": "newemail@sato.com" },
+                        "password": { "type": "string", "example": "newsecurepwd" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Profil berhasil diperbarui" }
+              }
+            }
+          }
+        },
+        "components": {
+          "securitySchemes": {
+            "BearerAuth": {
+              "type": "http",
+              "scheme": "bearer",
+              "bearerFormat": "JWT",
+              "description": "Masukkan Token JWT Anda yang diperoleh dari POST /api/auth/login. Format: 'Bearer <token>'"
+            }
+          }
+        }
+      };
+
+      // Initialize Swagger UI
+      const ui = SwaggerUIBundle({
+        spec: spec,
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "BaseLayout"
+      });
+
+      window.ui = ui;
+    };
+  </script>
+</body>
+</html>

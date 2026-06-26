@@ -40,23 +40,17 @@ export const LatihanPage: React.FC = () => {
   // };
 
   const handleVerify = async () => {
-    const image = canvasRef.current?.getImage();
+    if (!canvasRef.current) return;
+    
+    setLoading(true);
+    // Memanggil API alternatif berbasis stroke
+    const textResult = await canvasRef.current.getGoogleOcrText();
+    setLoading(false);
 
-    if (!image) return;
-
-    try {
-      setLoading(true);
-
-      const {
-        data: { text },
-      } = await worker.recognize(image);
-
-      setResult(text.trim());
-      await worker.terminate();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (textResult) {
+      setResult(textResult);
+    } else {
+      setResult('Gagal mendeteksi teks atau canvas kosong.');
     }
   };
 

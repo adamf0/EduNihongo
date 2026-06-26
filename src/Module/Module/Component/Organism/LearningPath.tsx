@@ -63,7 +63,7 @@ const LearningPath = ({ radicalItems, kanjiItems, vocabItems }: Props) => {
             badgeBg="#ffdad9"
             badgeText="#400009"
             buttonText="Lanjutkan Belajar"
-            onButtonClick={() => navigate("/learn")}
+            onButtonClick={() => navigate("/latihan")}
           />
         </div>
       </div>
