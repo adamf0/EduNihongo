@@ -1,66 +1,66 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "../../Common/Component/Organism/Layout";
 import StatCard from "../../Dashboard/Component/Molecules/StatCard";
-import BadgeCard from "../Component/Molecules/BadgeCard";
-import Icon from "../../Common/Component/Icon";
+
 import { useNavigate } from "react-router-dom";
+import { api } from "../../Common/Utility/api";
 
 export const ProgressPage: React.FC = () => {
   const navigate = useNavigate();
   const [heatmapRange, setHeatmapRange] = useState("30");
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const badges = [
-    {
-      icon: "star_shine",
-      title: "Gerbang Torii",
-      description: "Menyelesaikan 100 Kanji N5",
-      isUnlocked: true,
-      bgClass: "bg-secondary-container",
-      iconColor: "text-on-secondary-container",
-    },
-    {
-      icon: "festival",
-      title: "Lampion Festival",
-      description: "30 Hari Belajar Beruntun",
-      isUnlocked: true,
-      bgClass: "bg-primary-fixed-dim",
-      iconColor: "text-on-primary-fixed-variant",
-    },
-    {
-      icon: "yard",
-      title: "Bunga Sakura",
-      description: "Kuasai 500 Kanji N2",
-      isUnlocked: false,
-    },
-    {
-      icon: "castle",
-      title: "Kastil Himeji",
-      description: "Kuasai Seluruh Kanji Joyo",
-      isUnlocked: false,
-    },
-  ];
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        setLoading(true);
+        const result = await api.progress.get();
+        setData(result);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Gagal memuat progres belajar.");
+        if (err.message?.includes("Token") || err.message?.includes("Akses ditolak")) {
+          navigate("/login");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProgress();
+  }, [navigate]);
 
-  const reviewKanji = [
-    { character: "曜", romaji: "Yō", meaning: "Day of the week" },
-    { character: "機", romaji: "Ki", meaning: "Machine/Opportunity" },
-    { character: "議", romaji: "Gi", meaning: "Deliberation" },
-  ];
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center min-h-[400px]">
+          <div className="text-[#8f0020] font-bold animate-pulse text-lg">Memuat progres belajar...</div>
+        </div>
+      </Layout>
+    );
+  }
 
-  // Helper to generate heatmap dot opacities
-  const opacities = [
-    "bg-primary/5",
-    "bg-primary/20",
-    "bg-primary/40",
-    "bg-primary/70",
-    "bg-primary",
-  ];
+  if (error || !data) {
+    return (
+      <Layout>
+        <div className="flex-1 w-full px-4 md:px-6 max-w-[1200px] mx-auto py-6">
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-center font-bold">
+            {error}
+            <button 
+              onClick={() => window.location.reload()} 
+              className="block mx-auto mt-4 px-6 py-2 bg-[#8f0020] text-white rounded-full text-sm font-semibold hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
-  const heatmapDotsCount = heatmapRange === "30" ? 42 : 84;
-  const heatmapDots = Array.from({ length: heatmapDotsCount }).map((_, i) => {
-    // Generate deterministic pseudo-random opacities
-    const opacityIdx = (i * 7 + 13) % opacities.length;
-    return opacities[opacityIdx];
-  });
+  const { stats, heatmap } = data;
+  const heatmapDots = heatmapRange === "30" ? heatmap.last30Days : heatmap.last90Days;
 
   return (
     <Layout>
@@ -75,43 +75,36 @@ export const ProgressPage: React.FC = () => {
               Progress Belajar
             </h2>
             <p className="text-body-md text-on-surface-variant">
-              Lacak riwayat latihan, konsistensi rantai, dan lencana pencapaian
-              Anda.
+              Lacak riwayat latihan, konsistensi rantai, dan lencana pencapaian Anda.
             </p>
           </section>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-base">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-base">
             <StatCard
               icon="menu_book"
               label="Kanji Dikuasai"
-              value="1.420 Kanji"
+              value={stats.kanjiMastered}
               iconColorClass="text-primary"
             />
             <StatCard
               icon="draw"
               label="Akurat Menulis"
-              value="94%"
+              value={stats.accuracy}
               iconColorClass="text-secondary"
             />
             <StatCard
               icon="local_fire_department"
               label="Rantai Belajar"
-              value="15 Hari"
+              value={stats.streak}
               borderClass="border-b-4 border-primary"
               iconColorClass="text-primary"
-            />
-            <StatCard
-              icon="layers"
-              label="Tingkat Belajar"
-              value="Level 12 (Gerbang Besi)"
-              iconColorClass="text-tertiary"
             />
           </div>
 
           {/* Heatmap / Activity Tracker */}
           <div className="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/30 shadow-sm flex flex-col">
-            <div className="flex justify-between items-center mb-md flex-wrap gap-sm">
+            <div className="flex justify-between items-center mb-xs flex-wrap gap-sm">
               <h3 className="font-headline-md text-headline-md font-semibold text-on-surface">
                 Intensitas Belajar
               </h3>
@@ -125,9 +118,13 @@ export const ProgressPage: React.FC = () => {
               </select>
             </div>
 
+            <p className="text-body-md text-on-surface-variant mb-md">
+              Setiap kotak mewakili aktivitas keaktifan belajar per hari (Harian).
+            </p>
+
             {/* Dots grid */}
             <div className="flex-1 grid grid-cols-7 md:grid-cols-14 gap-2">
-              {heatmapDots.map((opacityClass, idx) => (
+              {heatmapDots.map((opacityClass: string, idx: number) => (
                 <div
                   key={idx}
                   className={`aspect-square rounded-sm ${opacityClass} transition-transform hover:scale-110 cursor-pointer`}
@@ -147,88 +144,6 @@ export const ProgressPage: React.FC = () => {
                 <div className="w-3 h-3 rounded-sm bg-primary"></div>
               </div>
               <span>Banyak</span>
-            </div>
-          </div>
-
-          {/* Achievements section */}
-          <section className="mb-base">
-            <div className="flex justify-between items-end mb-md">
-              <div>
-                <h3 className="font-headline-md text-headline-md font-semibold">
-                  Pencapaian & Lencana
-                </h3>
-                <p className="text-body-md text-on-surface-variant">
-                  Terus belajar untuk membuka lencana bertema budaya Jepang.
-                </p>
-              </div>
-              <button className="text-primary font-bold font-label-md hover:underline cursor-pointer border-none bg-transparent">
-                Lihat Semua
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
-              {badges.map((item, idx) => (
-                <BadgeCard
-                  key={idx}
-                  icon={item.icon}
-                  title={item.title}
-                  description={item.description}
-                  isUnlocked={item.isUnlocked}
-                  bgClass={item.bgClass}
-                  iconColorClass={item.iconColor}
-                />
-              ))}
-            </div>
-          </section>
-
-          {/* Fokus Review / Mistakes Review section */}
-          <div className="bg-surface-container-low rounded-xl p-lg flex flex-col gap-base">
-            <div className="flex items-center gap-md mb-xs">
-              <div className="p-3 bg-error-container rounded-lg">
-                <Icon name="warning" className="text-error block text-2xl" />
-              </div>
-              <div>
-                <h3 className="font-headline-md text-headline-md font-semibold text-on-surface">
-                  Fokus Review
-                </h3>
-                <p className="text-body-md text-on-surface-variant">
-                  Kanji yang paling sering salah dalam 7 hari terakhir.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-md items-center">
-              {reviewKanji.map((item, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => navigate("/latihan")}
-                  className="bg-surface-container-lowest p-md rounded-xl flex items-center gap-md border-l-4 border-error shadow-sm min-w-[200px] cursor-pointer hover:translate-y-[-2px] transition-transform"
-                >
-                  <div className="font-display-kanji text-4xl text-on-surface">
-                    {item.character}
-                  </div>
-                  <div>
-                    <div className="font-label-md font-bold text-on-surface">
-                      {item.romaji}
-                    </div>
-                    <div className="text-caption text-on-surface-variant italic">
-                      {item.meaning}
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {/* Latihan Review trigger */}
-              <button
-                onClick={() => navigate("/latihan")}
-                className="flex items-center justify-center p-md border-2 border-dashed border-outline-variant hover:border-primary hover:text-primary transition-all group rounded-xl cursor-pointer bg-transparent py-4 px-6"
-              >
-                <Icon
-                  name="school"
-                  className="mr-sm group-hover:animate-pulse block text-xl"
-                />
-                <span className="font-label-md font-bold">Latihan Review</span>
-              </button>
             </div>
           </div>
         </div>

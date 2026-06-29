@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Icon from "./Icon";
 import SidebarLink from "./SidebarLink";
 import { useNavigate, useLocation } from "react-router-dom";
+import { api } from "../Utility/api";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -16,16 +17,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   const currentPath = location.pathname;
 
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await api.profile.get();
+        setProfile(data);
+      } catch (err) {
+        console.error("Failed to load sidebar profile:", err);
+      }
+    };
+    if (api.auth.isAuthenticated()) {
+      fetchProfile();
+    }
+  }, [currentPath]); // Refetch on path changes to ensure consistency after login/logout
+
   const sidebarClasses = `fixed top-0 bottom-0 w-64 bg-surface dark:bg-surface-dim border-r border-outline-variant/30 z-50 flex flex-col transition-all duration-300 ${
     isOpen ? "left-0" : "-left-64 lg:left-0"
   } lg:flex`;
 
-  const menus = [
-    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
-    { icon: "layers", label: "Module", route: "/module" },
-    { icon: "trending_up", label: "Progress Belajar", route: "/progress" },
-    { icon: "person", label: "Profile", route: "/profile" },
-  ];
+  const role = profile?.role || api.auth.getRole();
+  const menus = role === "ADMIN"
+    ? [
+        { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+        { icon: "layers", label: "Kelola Modul", route: "/admin" },
+      ]
+    : [
+        { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+        { icon: "layers", label: "Module", route: "/module" },
+        { icon: "trending_up", label: "Progress Belajar", route: "/progress" },
+        { icon: "person", label: "Profile", route: "/profile" },
+      ];
 
   return (
     <>
@@ -80,11 +103,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <img
             alt="User Avatar"
             className="w-10 h-10 rounded-full object-cover border border-outline-variant/30"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWQF9F4vGMPAveFwMVwKQx2D3civyQVdPz99A6OgbFjuFGIkmYreQ9eZq8NtpiJDILQQIpYXhPuJT1GNyYyTnj7gUm8hjjDcNY52DwpoUww-jai8UAXz-ffYN2dCTfkfsHwqlB2C-0KlEEjA6v27K0SFfNOoX4NR6Q5H3JAtKbwDBxh0-H2CbiuD70I_nTlX9jgZr8oFg67Xet3NrYYIibEXxoY7aCtTd7btVH2xsDD5-fL9UB129xSn3OCFXI8_1VRZONSf22XRk"
+            src={profile?.avatar || "https://lh3.googleusercontent.com/aida-public/AB6AXuCiQe5kqkxQSznu5qP6MOCvqYEImp869C8EXKrPH0xqE-mSavCz012Q0MTtSiFiePGaV02jEkiMUlPH1dLTj1avEShwCtSPBlbHOZxnVTLhGL0HVhU5xknHCCYedJb-IxKOpMgxpKK-Ow5sIgWFUsyyY7_E-KIuwiPB5-20LhiSP8pqZauZlFtFZIf2EzIHFf1ANexPscHZGB71rWIQwJNpU7zy75AnxMohpp66viSQtkCUk07SBp5f7FtlpU8V_ukuBsXxmpoldEg"}
           />
           <div>
-            <p className="font-bold text-sm text-on-surface leading-tight">Haruki Sato</p>
-            <p className="text-[10px] text-on-surface-variant">Master Tingkat N3</p>
+            <p className="font-bold text-sm text-on-surface leading-tight">
+              {profile?.name || "Memuat..."}
+            </p>
+            <p className="text-[10px] text-on-surface-variant">
+              {profile?.role === "ADMIN" ? "Administrator" : "Master Tingkat N3"}
+            </p>
           </div>
         </div>
       </aside>

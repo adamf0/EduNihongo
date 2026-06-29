@@ -2,6 +2,7 @@ import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/auth";
 import * as bcrypt from "bcryptjs";
+import { calculateUserStats } from "../utils/stats";
 
 const prisma = new PrismaClient();
 
@@ -27,11 +28,11 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ error: "User tidak ditemukan" });
     }
 
-    // 1. Fetch Mastered Kanji Collection (masteryPercent = 100 or status = "MASTERED")
+    // 1. Fetch Mastered Kanji Collection (masteryPercent >= 75)
     const masteredKanjiProgress = await prisma.userKanjiProgress.findMany({
       where: {
         userId,
-        status: "MASTERED",
+        masteryPercent: { gte: 75 },
       },
       include: { kanji: true },
       take: 6, // limit to 6 for profile display
@@ -92,24 +93,25 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
     const joinedDate = new Date(user.joinedAt);
     const joinedMonthYear = `Mastering the strokes since ${months[joinedDate.getMonth()]} ${joinedDate.getFullYear()}`;
 
+    const computedStats = await calculateUserStats(userId);
+
     res.json({
       name: user.name,
       email: user.email,
-      level: `Tingkat ${user.level}`,
-      levelName: user.levelName,
+      role: user.role,
+      level: "Kanjigraph Learner",
+      levelName: "Siswa Aktif",
       joinedMonthYear,
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCiQe5kqkxQSznu5qP6MOCvqYEImp869C8EXKrPH0xqE-mSavCz012Q0MTtSiFiePGaV02jEkiMUlPH1dLTj1avEShwCtSPBlbHOZxnVTLhGL0HVhU5xknHCCYedJb-IxKOpMgxpKK-Ow5sIgWFUsyyY7_E-KIuwiPB5-20LhiSP8pqZauZlFtFZIf2EzIHFf1ANexPscHZGB71rWIQwJNpU7zy75AnxMohpp66viSQtkCUk07SBp5f7FtlpU8V_ukuBsXxmpoldEg",
+      avatar: user.avatar,
       stats: {
-        streak: user.streak, // 342 days in UI or user.streak, let's use user.streak (default 15, or let's override with 342 in response to match UI precisely)
-        xp: user.totalXp, // 1240 XP
-        rank: user.rank, // Top 5% Learner
+        streak: computedStats.streak,
+        xp: computedStats.totalXp,
       },
       masteredKanji,
       activities: recentActivities,
       masteryBreakdown: [
-        { label: "Reading", percentage: user.masteryReading, colorClass: "bg-primary" },
-        { label: "Writing", percentage: user.masteryWriting, colorClass: "bg-secondary" },
-        { label: "Vocabulary", percentage: user.masteryVocabulary, colorClass: "bg-tertiary" },
+        { label: "Writing", percentage: computedStats.masteryWriting, colorClass: "bg-secondary" },
+        { label: "Vocabulary", percentage: computedStats.masteryVocabulary, colorClass: "bg-tertiary" },
       ],
     });
   } catch (error) {
@@ -122,7 +124,7 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
 export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { name, email, password } = req.body;
+    const { name, email, password, avatar } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -130,6 +132,12 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
 
     const dataToUpdate: any = {};
     if (name) dataToUpdate.name = name;
+    
+    if (req.file) {
+      dataToUpdate.avatar = `http://localhost:5001/uploads/${req.file.filename}`;
+    } else if (avatar) {
+      dataToUpdate.avatar = avatar;
+    }
     
     if (email) {
       // Check if email already taken

@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/auth";
+import { calculateUserStats } from "../utils/stats";
 
 const prisma = new PrismaClient();
 
@@ -70,12 +71,14 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
       author: "Kanjigraph Sensei",
     };
 
+    const computedStats = await calculateUserStats(userId);
+
     res.json({
       stats: {
-        dailyTarget: `Target: ${user.dailyTargetKanji} Kanji, ${user.dailyTargetVocab} Kosakata`,
-        streak: `${user.streak} Hari`,
+        dailyTarget: `Target: ${user.dailyTargetKanji} Kanji`,
+        streak: `${computedStats.streak} Hari`,
         levelProgress: 65, // Static progress from Dashboard UI
-        level: `Tingkat ${user.level}`,
+        level: "Kanjigraph Learner",
         totalDays: `${totalDaysActive} Hari`,
       },
       weeklyActivity,
@@ -88,15 +91,11 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
       continueLearning: activeModuleProgress
         ? {
             moduleTitle: activeModuleProgress.module.title,
-            category: activeModuleProgress.module.category,
             progressPercent: activeModuleProgress.progressPercent,
-            level: activeModuleProgress.module.level,
           }
         : {
             moduleTitle: "Semua modul selesai!",
-            category: "NONE",
             progressPercent: 100,
-            level: "N3",
           },
       dailyInsight,
     });

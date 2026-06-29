@@ -26,12 +26,8 @@ export const register = async (req: Request, res: Response) => {
         password: passwordHash,
         name,
         // Set default values matching Haruki Sato's starter kit
-        level: "N3",
-        levelName: "Gerbang Besi",
         streak: 0,
         totalXp: 0,
-        rank: "Pemula",
-        masteryReading: 0,
         masteryWriting: 0,
         masteryVocabulary: 0,
       },
@@ -46,7 +42,7 @@ export const register = async (req: Request, res: Response) => {
           userId: user.id,
           moduleId: mod.id,
           isCompleted: false,
-          isLocked: mod.category === "VOCABULARY", // lock vocabulary by default
+          isLocked: mod.title !== "Module 1" && mod.title !== "Module 2", // unlock only first two modules by default
           progressPercent: 0,
         },
       });
@@ -78,8 +74,9 @@ export const register = async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        level: user.level,
-        levelName: user.levelName,
+        role: user.role,
+        level: "Kanjigraph Learner",
+        levelName: "Siswa Aktif",
       },
     });
   } catch (error) {
@@ -118,8 +115,9 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        level: user.level,
-        levelName: user.levelName,
+        role: user.role,
+        level: "Kanjigraph Learner",
+        levelName: "Siswa Aktif",
       },
     });
   } catch (error) {

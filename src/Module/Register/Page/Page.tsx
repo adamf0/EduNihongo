@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import InputField from "../Component/Atoms/InputField";
-import ToriiButton from "../Component/Atoms/ToriiButton";
+import InputField from "../../Login/Component/Atoms/InputField";
+import ToriiButton from "../../Login/Component/Atoms/ToriiButton";
 import Icon from "../../Common/Component/Icon";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../Common/Utility/api";
 
-export const LoginPage: React.FC = () => {
+export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sakuraPetals, setSakuraPetals] = useState<Array<{ id: number; left: string; delay: string; duration: string }>>([]);
@@ -28,12 +29,26 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!name.trim()) {
+      setError("Nama lengkap wajib diisi.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Konfirmasi kata sandi tidak cocok.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Kata sandi minimal terdiri dari 6 karakter.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await api.auth.login(email, password);
+      await api.auth.register(email, password, name);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.message || "Email atau password salah.");
+      setError(err.message || "Gagal melakukan pendaftaran.");
     } finally {
       setLoading(false);
     }
@@ -62,7 +77,7 @@ export const LoginPage: React.FC = () => {
 
       <main className="flex-grow flex items-center justify-center p-margin-mobile md:p-md relative z-20">
         <div className="w-full max-w-[440px]">
-          {/* Login Card Container */}
+          {/* Register Card Container */}
           <div className="bg-surface-container-lowest rounded-[32px] p-8 flex flex-col items-center shadow-xl border border-outline-variant/30 relative overflow-hidden">
             {/* Logo & Brand Identity */}
             <div className="mb-md flex flex-col items-center">
@@ -82,13 +97,13 @@ export const LoginPage: React.FC = () => {
 
             {/* Welcome messages */}
             <div className="text-center mb-md">
-              <h2 className="text-xl font-bold text-on-surface">Selamat Datang Kembali</h2>
+              <h2 className="text-xl font-bold text-on-surface">Daftar Akun Baru</h2>
               <p className="text-caption text-on-surface-variant mt-1">
-                Kuasai kembali goresan Kanji Anda hari ini.
+                Mulai kuasai goresan menulis Kanji hari ini.
               </p>
             </div>
 
-            {/* Login Form */}
+            {/* Register Form */}
             <form onSubmit={handleSubmit} className="w-full space-y-md">
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
@@ -98,8 +113,18 @@ export const LoginPage: React.FC = () => {
               )}
 
               <InputField
+                type="text"
+                placeholder="Masukkan nama lengkap"
+                label="Nama Lengkap"
+                icon="person"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+
+              <InputField
                 type="email"
-                placeholder="Masukkan email Anda"
+                placeholder="Masukkan alamat email"
                 label="Email"
                 icon="mail"
                 value={email}
@@ -109,7 +134,7 @@ export const LoginPage: React.FC = () => {
 
               <InputField
                 type="password"
-                placeholder="Masukkan password Anda"
+                placeholder="Buat kata sandi minimal 6 karakter"
                 label="Kata Sandi"
                 icon="lock"
                 value={password}
@@ -117,39 +142,29 @@ export const LoginPage: React.FC = () => {
                 required
               />
 
-              {/* Form Options */}
-              <div className="flex justify-between items-center w-full">
-                <label className="flex items-center gap-xs text-caption text-on-surface-variant cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-outline-variant/50 text-primary focus:ring-primary/20 cursor-pointer"
-                  />
-                  Ingat Saya
-                </label>
-                <span
-                  onClick={() => navigate("/")}
-                  className="text-caption text-primary hover:underline font-semibold cursor-pointer"
-                >
-                  Lupa Sandi?
-                </span>
-              </div>
+              <InputField
+                type="password"
+                placeholder="Ulangi kata sandi Anda"
+                label="Konfirmasi Kata Sandi"
+                icon="lock"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
 
-              {/* Action Button */}
               <ToriiButton type="submit" className="mt-base shadow-lg" disabled={loading}>
-                {loading ? "Memproses..." : "Masuk ke Akun"}
+                {loading ? "Mendaftar..." : "Buat Akun Baru"}
               </ToriiButton>
             </form>
 
-            {/* Bottom Register Option */}
+            {/* Bottom Login Option */}
             <div className="mt-md text-caption text-on-surface-variant select-none">
-              Belum punya akun?{" "}
+              Sudah punya akun?{" "}
               <span
-                onClick={() => navigate("/register")}
+                onClick={() => navigate("/login")}
                 className="text-primary hover:underline font-bold cursor-pointer"
               >
-                Daftar Sekarang
+                Masuk Sekarang
               </span>
             </div>
           </div>
@@ -159,4 +174,4 @@ export const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

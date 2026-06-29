@@ -16,13 +16,19 @@ import {
 import "@xyflow/react/dist/style.css";
 import KanjiNode from "./KanjiNode";
 
-export default function KanjiAtlasFlow({initialRawEdges=[], initialRawNodes=[]}) {
+export default function KanjiAtlasFlow({
+  initialRawEdges = [],
+  initialRawNodes = [],
+}: {
+  initialRawEdges?: any[];
+  initialRawNodes?: any[];
+}) {
   const nodeTypes = useMemo(() => ({ kanjiNode: KanjiNode }), []);
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
 
   useEffect(() => {
-    const d3Nodes = initialRawNodes.map((node) => {
+    const d3Nodes = initialRawNodes.map((node: any) => {
       let initialX = Math.random() * 40 - 20;
       if (node.id === "bot-1" || node.parentPill === "bot-1") initialX = -180;
       if (node.id === "bot-2" || node.parentPill === "bot-2") initialX = 180;
@@ -32,25 +38,25 @@ export default function KanjiAtlasFlow({initialRawEdges=[], initialRawNodes=[]})
         x: initialX,
         y:
           node.type === "top"
-            ? -150
-            : node.type === "bottom"
-              ? 100
-              : node.type === "sub-bottom"
-                ? 250
-                : 0,
+             ? -150
+             : node.type === "bottom"
+               ? 100
+               : node.type === "sub-bottom"
+                 ? 250
+                 : 0,
       };
     });
 
-    const d3Links = initialRawEdges.map((edge) => ({
+    const d3Links = initialRawEdges.map((edge: any) => ({
       source: edge.source,
       target: edge.target,
     }));
 
-    const simulation = forceSimulation(d3Nodes)
+    const simulation = forceSimulation(d3Nodes as any)
       .force(
         "link",
         forceLink(d3Links)
-          .id((d) => d.id)
+          .id((d: any) => d.id)
           .distance(90)
           .strength(1),
       )
@@ -58,7 +64,7 @@ export default function KanjiAtlasFlow({initialRawEdges=[], initialRawNodes=[]})
       .force(
         "collide",
         forceCollide()
-          .radius((d) => {
+          .radius((d: any) => {
             if (d.isRoot) return 100;
             if (d.isPill) return 95;
             if (d.type === "sub-bottom") return 90;
@@ -69,7 +75,7 @@ export default function KanjiAtlasFlow({initialRawEdges=[], initialRawNodes=[]})
       .force(
         "x",
         forceX()
-          .x((d) => {
+          .x((d: any) => {
             if (d.id === "bot-1" || d.parentPill === "bot-1") return -200;
             if (d.id === "bot-2" || d.parentPill === "bot-2") return 200;
             return 0;
@@ -79,7 +85,7 @@ export default function KanjiAtlasFlow({initialRawEdges=[], initialRawNodes=[]})
       .force(
         "y",
         forceY()
-          .y((d) => {
+          .y((d: any) => {
             if (d.type === "top") return -180;
             if (d.type === "root") return 0;
             if (d.type === "bottom") return 130;
@@ -91,14 +97,14 @@ export default function KanjiAtlasFlow({initialRawEdges=[], initialRawNodes=[]})
 
     for (let i = 0; i < 200; ++i) simulation.tick();
 
-    const formattedNodes = d3Nodes.map((node) => ({
+    const formattedNodes = d3Nodes.map((node: any) => ({
       id: node.id,
       type: "kanjiNode",
       position: { x: node.x + 400, y: node.y + 250 },
       data: { ...node },
     }));
 
-    const formattedEdges = initialRawEdges.map((edge) => ({
+    const formattedEdges = initialRawEdges.map((edge: any) => ({
       ...edge,
       type: "default",
       style: { stroke: "#cbd5e1", strokeWidth: 2 },

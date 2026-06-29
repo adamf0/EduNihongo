@@ -1,7 +1,7 @@
 import { Position } from "@xyflow/react";
 import NodeHandles from "./NodeHandles";
 
-const KanjiNode = ({ data }) => {
+const KanjiNode = ({ data }: { data: any }) => {
   // Base Handle komponen agar tidak ditulis berulang-ulang
   if (data.type === "sub-bottom") {
     return (

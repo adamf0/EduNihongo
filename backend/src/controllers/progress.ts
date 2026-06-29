@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/auth";
+import { calculateUserStats } from "../utils/stats";
 
 const prisma = new PrismaClient();
 
@@ -20,10 +21,22 @@ export const getProgressData = async (req: AuthenticatedRequest, res: Response) 
     }
 
     // 1. Calculate Stats
-    // Mastered kanjis: status = "MASTERED"
+    // Mastered kanjis: masteryPercent >= 75
     const masteredCount = await prisma.userKanjiProgress.count({
-      where: { userId, status: "MASTERED" },
+      where: { userId, masteryPercent: { gte: 75 } },
     });
+
+    const totalKanjiCount = await prisma.kanji.count();
+
+    const averageAccuracy = await prisma.userKanjiProgress.aggregate({
+      where: { userId },
+      _avg: {
+        masteryPercent: true
+      }
+    });
+    const accuracyScore = averageAccuracy._avg.masteryPercent
+      ? Math.round(averageAccuracy._avg.masteryPercent)
+      : 0;
 
     // 2. Fetch Heatmap Dots (UserActivity logs for 30 / 90 days)
     const activities = await prisma.userActivity.findMany({
@@ -65,24 +78,6 @@ export const getProgressData = async (req: AuthenticatedRequest, res: Response) 
       return dots;
     };
 
-    // 3. Fetch Badges
-    const allBadges = await prisma.badge.findMany();
-    const unlockedBadges = await prisma.userBadge.findMany({
-      where: { userId, isUnlocked: true },
-    });
-
-    const badges = allBadges.map((b) => {
-      const isUnlocked = unlockedBadges.some((ub) => ub.badgeId === b.id);
-      return {
-        icon: b.icon,
-        title: b.title,
-        description: b.description,
-        isUnlocked,
-        bgClass: b.bgClass || undefined,
-        iconColor: b.iconColor || undefined,
-      };
-    });
-
     // 4. Focus Review Kanji List (mistakeCount > 0, status = "REVIEW" or "LEARNING", ordered by mistakes desc)
     const reviewKanjiProgress = await prisma.userKanjiProgress.findMany({
       where: {
@@ -101,18 +96,19 @@ export const getProgressData = async (req: AuthenticatedRequest, res: Response) 
       mistakeCount: rp.mistakeCount,
     }));
 
+    const computedStats = await calculateUserStats(userId);
+
     res.json({
       stats: {
-        kanjiMastered: `${masteredCount + 1417} Kanji`, // Dummy offset to match UI stats (1.420 Kanji)
-        accuracy: `${user.masteryWriting + 29}%`, // Dummy offset to match UI stats (94%)
-        streak: `${user.streak} Hari`,
-        level: `Level ${user.level} (${user.levelName})`,
+        kanjiMastered: `${masteredCount} / ${totalKanjiCount} Kanji`,
+        accuracy: `${accuracyScore}%`,
+        streak: `${computedStats.streak} Hari`,
+        level: "Kanjigraph Learner",
       },
       heatmap: {
         last30Days: formatHeatmap(42), // UI expects 42 dots for last 30 days
         last90Days: formatHeatmap(84), // UI expects 84 dots for last 90 days
       },
-      badges,
       reviewKanji,
     });
   } catch (error) {

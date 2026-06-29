@@ -20,7 +20,7 @@ export const radicalItems: ModuleItem[] = [
 
 export const kanjiItems: ModuleItem[] = [
   {
-    text: "24 Kanji Gerbang Besi Esensial",
+    text: "24 Kanji Esensial",
     isCompleted: true,
     isLocked: false,
   },

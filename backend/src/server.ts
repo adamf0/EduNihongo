@@ -1,3 +1,4 @@
+// Force restart dev server to reload Prisma Client 5
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -8,6 +9,7 @@ import moduleRoutes from "./routes/modules";
 import latihanRoutes from "./routes/latihan";
 import progressRoutes from "./routes/progress";
 import profileRoutes from "./routes/profile";
+import adminRoutes from "./routes/admin";
 
 dotenv.config();
 
@@ -18,6 +20,9 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
+// Serve uploaded static images (RCE prevention: files are served statically and never executed)
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
@@ -25,6 +30,7 @@ app.use("/api/modules", moduleRoutes);
 app.use("/api/latihan", latihanRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Serve Swagger Documentation
 app.get("/docs", (req, res) => {

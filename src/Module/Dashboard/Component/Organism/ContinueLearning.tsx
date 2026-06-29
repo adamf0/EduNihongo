@@ -2,7 +2,14 @@ import React from "react";
 import Icon from "../../../Common/Component/Icon";
 import { useNavigate } from "react-router-dom";
 
-export const ContinueLearning: React.FC = () => {
+interface ContinueLearningProps {
+  moduleTitle?: string;
+  category?: string;
+  progressPercent?: number;
+  level?: string;
+}
+
+export const ContinueLearning: React.FC<ContinueLearningProps> = ({ moduleTitle, category, progressPercent }) => {
   const navigate = useNavigate();
 
   return (
@@ -27,6 +34,16 @@ export const ContinueLearning: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-base mt-base">
+        {moduleTitle && (
+          <div className="p-base bg-[#d5e3ff] text-[#001c3b] rounded-xl flex justify-between items-center mb-2">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#3e5980]">{category || "KANJI"}</p>
+              <p className="font-label-md font-bold text-[#191c1e] mt-1">{moduleTitle}</p>
+            </div>
+            <span className="font-bold text-sm text-[#3e5980]">{progressPercent || 0}%</span>
+          </div>
+        )}
+
         <div 
           onClick={() => navigate("/latihan")}
           className="flex justify-between items-center p-base bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors"

@@ -11,72 +11,63 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       return res.status(401).json({ error: "Unauthorized" });
     }
 
+    // Fetch user module progress with associated modules and their kanjis
     const userProgress = await prisma.userModuleProgress.findMany({
       where: { userId },
-      include: { module: true },
+      include: {
+        module: {
+          include: {
+            kanjis: {
+              include: {
+                userProgress: {
+                  where: { userId },
+                },
+              },
+            },
+          },
+        },
+      },
       orderBy: { moduleId: "asc" },
     });
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { level: true, levelName: true },
-    });
+    const modules = userProgress.map((up, index) => {
+      const moduleKanjis = up.module.kanjis.map((k) => {
+        const progress = k.userProgress[0];
+        return {
+          character: k.character,
+          meaning: k.meaning,
+          masteryPercent: progress?.masteryPercent || 0,
+          isCompleted: (progress?.masteryPercent || 0) >= 75,
+        };
+      });
 
-    if (!user) {
-      return res.status(404).json({ error: "User tidak ditemukan" });
-    }
-
-    // Initialize groupings
-    const radicals: any[] = [];
-    const kanji: any[] = [];
-    const vocabulary: any[] = [];
-
-    userProgress.forEach((p) => {
-      const item = {
-        text: p.module.title,
-        isCompleted: p.isCompleted,
-        isLocked: p.isLocked,
-        progressPercent: p.progressPercent,
-      };
-
-      if (p.module.category === "RADICAL") {
-        radicals.push(item);
-      } else if (p.module.category === "KANJI") {
-        kanji.push(item);
-      } else if (p.module.category === "VOCABULARY") {
-        vocabulary.push(item);
+      // Calculate dynamic locks:
+      // First module is always unlocked.
+      // Subsequent modules are locked if the previous module is not 100% completed.
+      let isLocked = false;
+      if (index > 0) {
+        const prev = userProgress[index - 1];
+        isLocked = prev.progressPercent < 100 && !prev.isCompleted;
       }
+
+      return {
+        id: up.module.id,
+        title: up.module.title,
+        isCompleted: up.isCompleted || up.progressPercent === 100,
+        isLocked,
+        progressPercent: up.progressPercent,
+        kanjis: moduleKanjis,
+      };
     });
 
-    // Calculate category progress percentages based on completion or stored progress
-    const calcProgress = (items: any[]) => {
-      if (items.length === 0) return 0;
-      const total = items.reduce((sum, item) => sum + item.progressPercent, 0);
-      return Math.round(total / items.length);
-    };
-
-    const radicalsProgress = calcProgress(radicals);
-    const kanjiProgress = calcProgress(kanji);
-    const vocabularyProgress = calcProgress(vocabulary);
-
-    // Calculate overall course progress (average of categories)
-    const overallProgress = Math.round((radicalsProgress + kanjiProgress + vocabularyProgress) / 3);
+    // Calculate overall course progress (average of modules progress)
+    const overallProgress = modules.length > 0
+      ? Math.round(modules.reduce((sum, m) => sum + m.progressPercent, 0) / modules.length)
+      : 0;
 
     res.json({
-      level: `Level 12: ${user.levelName}`,
-      overallProgress: 64, // Static overall progress or can be calculated: overallProgress, let's return 64 to match UI perfectly
-      radicals: {
-        items: radicals,
-        progress: 85, // To match UI perfectly
-      },
-      kanji: {
-        items: kanji,
-        progress: 32, // To match UI perfectly
-      },
-      vocabulary: {
-        items: vocabulary,
-        progress: 0, // To match UI perfectly
-      },
+      overallProgress,
+      modules,
     });
   } catch (error) {
     console.error("Modules error:", error);

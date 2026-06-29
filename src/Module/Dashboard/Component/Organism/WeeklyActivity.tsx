@@ -7,8 +7,17 @@ interface ActivityDay {
   isActive?: boolean;
 }
 
-export const WeeklyActivity: React.FC = () => {
-  const days: ActivityDay[] = [
+interface WeeklyActivityProps {
+  data?: Array<{
+    day: string;
+    kanji: number;
+    vocab: number;
+    xp: number;
+  }>;
+}
+
+export const WeeklyActivity: React.FC<WeeklyActivityProps> = ({ data }) => {
+  const defaultDays: ActivityDay[] = [
     { day: "Sen", totalHeight: 60, filledHeight: 40 },
     { day: "Sel", totalHeight: 80, filledHeight: 70 },
     { day: "Rab", totalHeight: 40, filledHeight: 25 },
@@ -17,6 +26,20 @@ export const WeeklyActivity: React.FC = () => {
     { day: "Sab", totalHeight: 30, filledHeight: 10 },
     { day: "Min", totalHeight: 20, filledHeight: 5 },
   ];
+
+  const days: ActivityDay[] = data && data.length > 0
+    ? data.map((item, idx) => {
+        // Calculate dynamic heights based on target values
+        const total = Math.min(100, Math.max(15, Math.round((item.xp / 70) * 100)));
+        const filled = Math.min(total, Math.max(5, Math.round((item.kanji / 5) * total)));
+        return {
+          day: item.day,
+          totalHeight: total,
+          filledHeight: filled,
+          isActive: idx === data.length - 1, // mark last active day as active
+        };
+      })
+    : defaultDays;
 
   return (
     <div className="bg-surface-container-lowest p-md rounded-xl kanji-card-shadow seigaiha-pattern border border-outline-variant/10 select-none">

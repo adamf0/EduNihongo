@@ -1,6 +1,6 @@
 import { Handle } from "@xyflow/react";
 
-const NodeHandles = ({Position}) => (
+const NodeHandles = ({ Position }: { Position: any }) => (
   <>
     <Handle
       type="target"

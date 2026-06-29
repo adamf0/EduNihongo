@@ -71,10 +71,6 @@ export const Layout: React.FC<LayoutProps> = ({
 
           {/* User actions */}
           <div className="flex items-center gap-md">
-            <button className="relative p-2 rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all cursor-pointer">
-              <Icon name="notifications" className="block text-2xl" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
-            </button>
             <button 
               onClick={() => navigate("/profile")}
               className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all cursor-pointer"

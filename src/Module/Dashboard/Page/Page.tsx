@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "../../Common/Component/Organism/Layout";
 import StatCard from "../Component/Molecules/StatCard";
 import JukugoCard from "../Component/Molecules/JukugoCard";
@@ -6,36 +6,63 @@ import DailyInsight from "../Component/Molecules/DailyInsight";
 import WeeklyActivity from "../Component/Organism/WeeklyActivity";
 import ContinueLearning from "../Component/Organism/ContinueLearning";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../Common/Utility/api";
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const jukugoList = [
-    {
-      kanji: "学習",
-      romaji: "Gakushū",
-      meaning: "Belajar, Pembelajaran",
-      border: "border-l-4 border-secondary",
-    },
-    {
-      kanji: "先生",
-      romaji: "Sensei",
-      meaning: "Guru, Penguasa",
-      border: "border-l-4 border-primary",
-    },
-    {
-      kanji: "大学",
-      romaji: "Daigaku",
-      meaning: "Universitas",
-      border: "border-l-4 border-tertiary",
-    },
-    {
-      kanji: "毎日",
-      romaji: "Mainichi",
-      meaning: "Setiap Hari",
-      border: "border-l-4 border-secondary",
-    },
-  ];
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+        const result = await api.dashboard.get();
+        setData(result);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Gagal memuat data dasbor.");
+        // Redirect to login if token is expired/invalid
+        if (err.message?.includes("Token") || err.message?.includes("Akses ditolak")) {
+          navigate("/login");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center min-h-[400px]">
+          <div className="text-[#8f0020] font-bold animate-pulse text-lg">Memuat data dasbor...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex-1 w-full px-4 md:px-6 max-w-[1200px] mx-auto py-6">
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-center font-bold">
+            {error}
+            <button 
+              onClick={() => window.location.reload()} 
+              className="block mx-auto mt-4 px-6 py-2 bg-[#8f0020] text-white rounded-full text-sm font-semibold hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const { stats, weeklyActivity, recommendedJukugo, continueLearning, dailyInsight } = data;
 
   return (
     <Layout
@@ -56,19 +83,19 @@ export const DashboardPage: React.FC = () => {
               icon="school"
               title="Hari Ini"
               label="Pelajaran Hari Ini"
-              value="Target: 5 Kanji, 10 Kosakata"
+              value={stats.dailyTarget}
             />
             <StatCard
               icon="local_fire_department"
               title="Berkobar"
               label="Rantai Belajar"
-              value="15 Hari"
+              value={stats.streak}
               borderClass="border-b-4 border-primary"
               iconColorClass="text-primary"
             />
             <StatCard
-              label="Progres Tingkat"
-              value="Tingkat N3"
+              label="Status Belajar"
+              value={stats.level}
               customProgress={
                 <div className="relative w-16 h-16 flex items-center justify-center">
                   <svg className="w-full h-full -rotate-90">
@@ -89,12 +116,12 @@ export const DashboardPage: React.FC = () => {
                       r="28"
                       stroke="currentColor"
                       strokeDasharray="175"
-                      strokeDashoffset="61"
+                      strokeDashoffset={175 - (175 * stats.levelProgress) / 100}
                       strokeWidth="4"
                     ></circle>
                   </svg>
                   <span className="absolute font-bold text-caption text-on-surface">
-                    65%
+                    {stats.levelProgress}%
                   </span>
                 </div>
               }
@@ -103,7 +130,7 @@ export const DashboardPage: React.FC = () => {
               icon="calendar_today"
               title="Sepanjang Waktu"
               label="Total Hari Belajar"
-              value="42 Hari"
+              value={stats.totalDays}
               iconColorClass="text-secondary"
             />
           </div>
@@ -113,7 +140,7 @@ export const DashboardPage: React.FC = () => {
             {/* Left Columns (2 span wide) */}
             <div className="lg:col-span-2 flex flex-col gap-md">
               {/* Weekly Activity chart */}
-              <WeeklyActivity />
+              <WeeklyActivity data={weeklyActivity} />
 
               {/* Recommended Jukugo */}
               <div className="flex flex-col gap-base">
@@ -131,14 +158,14 @@ export const DashboardPage: React.FC = () => {
 
                 {/* Horizontal Scroll list */}
                 <div className="flex gap-md overflow-x-auto no-scrollbar pb-md px-base">
-                  {jukugoList.map((item, idx) => (
+                  {recommendedJukugo.map((item: any, idx: number) => (
                     <JukugoCard
                       key={idx}
                       kanji={item.kanji}
                       romaji={item.romaji}
                       meaning={item.meaning}
                       borderColorClass={item.border}
-                      onClick={() => navigate("/module-detail")}
+                      onClick={() => navigate(`/latihan?char=${encodeURIComponent(item.kanji)}`)}
                     />
                   ))}
                 </div>
@@ -148,10 +175,18 @@ export const DashboardPage: React.FC = () => {
             {/* Right Column (1 span wide) */}
             <div className="flex flex-col gap-md">
               {/* Continue learning panel */}
-              <ContinueLearning />
+              <ContinueLearning 
+                moduleTitle={continueLearning.moduleTitle}
+                category={continueLearning.category}
+                progressPercent={continueLearning.progressPercent}
+                level={continueLearning.level}
+              />
 
               {/* Daily insight quote card */}
-              <DailyInsight />
+              <DailyInsight 
+                percentage={80}
+                insightText={`"${dailyInsight.quote}"`}
+              />
             </div>
           </div>
         </div>

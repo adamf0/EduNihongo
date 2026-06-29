@@ -12,20 +12,16 @@ model User {
   email             String               @unique
   password          String
   name              String
-  level             String               @default("N3")
-  levelName         String               @default("Gerbang Besi")
   joinedAt          DateTime             @default(now())
-  streak            Int                  @default(15)
-  totalXp           Int                  @default(1240)
-  rank              String               @default("Top 5% Learner")
-  masteryReading    Int                  @default(88)
-  masteryWriting    Int                  @default(65)
-  masteryVocabulary Int                  @default(74)
+  streak            Int                  @default(0)
+  totalXp           Int                  @default(0)
+  masteryWriting    Int                  @default(0)
+  masteryVocabulary Int                  @default(0)
   dailyTargetKanji  Int                  @default(5)
-  dailyTargetVocab  Int                  @default(10)
+  avatar            String               @default("https://lh3.googleusercontent.com/aida-public/AB6AXuCiQe5kqkxQSznu5qP6MOCvqYEImp869C8EXKrPH0xqE-mSavCz012Q0MTtSiFiePGaV02jEkiMUlPH1dLTj1avEShwCtSPBlbHOZxnVTLhGL0HVhU5xknHCCYedJb-IxKOpMgxpKK-Ow5sIgWFUsyyY7_E-KIuwiPB5-20LhiSP8pqZauZlFtFZIf2EzIHFf1ANexPscHZGB71rWIQwJNpU7zy75AnxMohpp66viSQtkCUk07SBp5f7FtlpU8V_ukuBsXxmpoldEg")
+  role              String               @default("USER") // "USER" or "ADMIN"
   
   activities        UserActivity[]
-  badges            UserBadge[]
   modules           UserModuleProgress[]
   kanjiProgress     UserKanjiProgress[]
 }
@@ -42,34 +38,13 @@ model UserActivity {
   description  String
 }
 
-model Badge {
-  id          Int         @id @default(autoincrement())
-  icon        String
-  title       String
-  description String
-  bgClass     String?
-  iconColor   String?
-  users       UserBadge[]
-}
 
-model UserBadge {
-  userId     Int
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badgeId    Int
-  badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-  unlockedAt DateTime @default(now())
-  isUnlocked Boolean  @default(true)
-
-  @@id([userId, badgeId])
-}
 
 model Module {
   id           Int                  @id @default(autoincrement())
   title        String
-  level        String               // "N3", "N4"
-  category     String               // "RADICAL", "KANJI", "VOCABULARY"
-  difficulty   String
   userProgress UserModuleProgress[]
+  kanjis       Kanji[]
 }
 
 model UserModuleProgress {
@@ -91,12 +66,13 @@ model Kanji {
   meaning        String
   onyomi         String?
   kunyomi        String?
-  difficulty     String              @default("N3")
   isJukugo       Boolean             @default(false)
   border         String?             // e.g. "border-l-4 border-secondary"
   
+  moduleId       Int?
+  module         Module?             @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  
   examples       ExampleSentence[]
-  etymologies    Etymology[]
   userProgress   UserKanjiProgress[]
   graphNodes     KanjiGraphNode[]
   graphEdges     KanjiGraphEdge[]
@@ -124,14 +100,7 @@ model ExampleSentence {
   translation String
 }
 
-model Etymology {
-  id        Int    @id @default(autoincrement())
-  kanjiId   Int
-  kanji     Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
-  character String // Sub-character, e.g. "情"
-  romaji    String // "JOU • Perasaan, Keadaan"
-  detail    String
-}
+
 
 model KanjiGraphNode {
   id          String   @id // e.g. "root", "top-1"
