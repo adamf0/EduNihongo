@@ -134,7 +134,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
     if (name) dataToUpdate.name = name;
     
     if (req.file) {
-      dataToUpdate.avatar = `http://localhost:5001/uploads/${req.file.filename}`;
+      dataToUpdate.avatar = `https://kanji.fishiden.com/uploads/${req.file.filename}`;
     } else if (avatar) {
       dataToUpdate.avatar = avatar;
     }

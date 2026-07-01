@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5001/api";
+const BASE_URL = "https://kanji.fishiden.com/api";
 
 const getHeaders = () => {
   const token = localStorage.getItem("kanjigraph_token");
