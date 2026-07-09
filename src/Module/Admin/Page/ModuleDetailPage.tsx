@@ -14,8 +14,6 @@ interface KanjiData {
   character: string;
   romaji: string;
   meaning: string;
-  onyomi: string | null;
-  kunyomi: string | null;
   isJukugo: boolean;
   border: string | null;
   moduleId: number | null;
@@ -151,7 +149,6 @@ export const ModuleDetailPage: React.FC = () => {
                     <th className="p-4 w-24 text-center">Kanji</th>
                     <th className="p-4">Romaji</th>
                     <th className="p-4">Arti / Terjemahan</th>
-                    <th className="p-4">Onyomi / Kunyomi</th>
                     <th className="p-4">Struktur Simpul (Nodes)</th>
                     <th className="p-4 w-36 text-center">Aksi</th>
                   </tr>
@@ -166,10 +163,7 @@ export const ModuleDetailPage: React.FC = () => {
                       </td>
                       <td className="p-4 font-bold">{kj.romaji}</td>
                       <td className="p-4 text-on-surface-variant text-sm">{kj.meaning}</td>
-                      <td className="p-4 text-xs font-mono">
-                        <span className="block text-primary">On: {kj.onyomi || "-"}</span>
-                        <span className="block text-secondary">Kun: {kj.kunyomi || "-"}</span>
-                      </td>
+
                       <td className="p-4 text-xs text-slate-500 font-mono">
                         {kj.graphNodes.length} Nodes • {kj.graphEdges.length} Edges
                       </td>

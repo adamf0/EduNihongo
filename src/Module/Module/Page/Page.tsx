@@ -2,13 +2,17 @@ import React, { useState, useEffect } from "react";
 import Layout from "../../Common/Component/Organism/Layout";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../Common/Utility/api";
-import { CheckCircle2, Lock, BookOpen, ChevronRight } from "lucide-react";
+import { CheckCircle2, Lock, BookOpen, ChevronRight, Info, X } from "lucide-react";
 
 export const ModulePage: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Info modal state
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState({ title: "", objectives: "" });
 
   useEffect(() => {
     const fetchModules = async () => {
@@ -58,6 +62,11 @@ export const ModulePage: React.FC = () => {
   }
 
   const { overallProgress, modules } = data;
+
+  const showObjectives = (title: string, objectives: string) => {
+    setInfoModalContent({ title, objectives });
+    setIsInfoModalOpen(true);
+  };
 
   return (
     <Layout>
@@ -124,6 +133,7 @@ export const ModulePage: React.FC = () => {
                         mod={mod} 
                         targetKanji={targetKanji} 
                         navigate={navigate} 
+                        onShowInfo={showObjectives}
                       />
                     )}
                   </div>
@@ -147,6 +157,7 @@ export const ModulePage: React.FC = () => {
                         mod={mod} 
                         targetKanji={targetKanji} 
                         navigate={navigate} 
+                        onShowInfo={showObjectives}
                       />
                     )}
                   </div>
@@ -159,20 +170,75 @@ export const ModulePage: React.FC = () => {
 
         </div>
       </div>
+
+      {/* ================= MODAL: TUJUAN PEMBELAJARAN ================= */}
+      {isInfoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 max-w-md w-full shadow-2xl relative flex flex-col gap-3 animate-scale-up">
+            <button
+              onClick={() => setIsInfoModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 text-[#8f0020] border-b border-slate-100 pb-2">
+              <Info className="w-5 h-5 shrink-0" />
+              <h3 className="text-lg font-bold text-slate-900 pr-6">
+                Tujuan Pembelajaran - {infoModalContent.title}
+              </h3>
+            </div>
+
+            <div className="mt-2 text-sm text-slate-700 leading-relaxed max-h-[300px] overflow-y-auto whitespace-pre-line bg-slate-50 border border-slate-100 rounded-xl p-4 font-medium">
+              {infoModalContent.objectives || "Belum ada tujuan pembelajaran yang ditetapkan."}
+            </div>
+
+            <div className="flex justify-end mt-4 pt-3 border-t border-slate-100">
+              <button
+                onClick={() => setIsInfoModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl bg-[#8f0020] text-white font-bold shadow-sm hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none text-sm"
+              >
+                Mengerti
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
 
 // Helper ModuleCard component for rendering modular cards
-const ModuleCard = ({ mod, targetKanji, navigate }: { mod: any; targetKanji: string; navigate: any }) => {
+const ModuleCard = ({ 
+  mod, 
+  targetKanji, 
+  navigate, 
+  onShowInfo 
+}: { 
+  mod: any; 
+  targetKanji: string; 
+  navigate: any; 
+  onShowInfo: (title: string, objectives: string) => void;
+}) => {
   return (
     <div className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${mod.isLocked ? 'border-l-slate-300' : (mod.isCompleted ? 'border-l-[#4F7942]' : 'border-l-[#8f0020]')}`}>
       
       {/* Title and Lock Status */}
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
-        <h3 className={`text-lg font-bold ${mod.isLocked ? 'text-slate-500' : 'text-slate-900'}`}>
-          {mod.title}
-        </h3>
+        <div className="flex items-center gap-1.5">
+          <h3 className={`text-lg font-bold ${mod.isLocked ? 'text-slate-500' : 'text-slate-900'}`}>
+            {mod.title}
+          </h3>
+          {!mod.isLocked && mod.tujuanPembelajaran && (
+            <button
+              onClick={() => onShowInfo(mod.title, mod.tujuanPembelajaran)}
+              className="p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-slate-400 hover:text-slate-600 bg-transparent border-none flex items-center justify-center"
+              title="Lihat Tujuan Pembelajaran"
+            >
+              <Info className="w-4.5 h-4.5" />
+            </button>
+          )}
+        </div>
         {mod.isLocked ? (
           <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 select-none">
             <Lock className="w-3 h-3" /> Terkunci

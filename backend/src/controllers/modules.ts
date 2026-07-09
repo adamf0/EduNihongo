@@ -53,6 +53,7 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       return {
         id: up.module.id,
         title: up.module.title,
+        tujuanPembelajaran: up.module.tujuanPembelajaran,
         isCompleted: up.isCompleted || up.progressPercent === 100,
         isLocked,
         progressPercent: up.progressPercent,

@@ -10,7 +10,7 @@ import KanjiStrokeVisualizer from "../../Module/Component/Atom/KanjiStrokeVisual
 import { createWorker, PSM } from "tesseract.js";
 import KanjiAtlasFlow from "../../Module/Component/Atom/KanjiAtlasFlow";
 import Breadcrumbs from "../Component/Atoms/Breadcrumbs";
-import KanjiReadings from "../Component/Atoms/KanjiReadings";
+
 import KanjiEtymology from "../Component/Atoms/KanjiEtymology";
 import ExampleSentence from "../Component/Atoms/ExampleSentence";
 import { api } from "../../Common/Utility/api";
@@ -213,19 +213,12 @@ export const LatihanPage: React.FC = () => {
     kanji,
     romaji: kanjiRomaji,
     meaning: kanjiMeaning,
-    onyomi,
-    kunyomi,
     masteryPercent,
-    masteryLevelTitle,
     examples,
+    jukugos = [],
     etymologies,
     graph
   } = kanjiData;
-
-  const readings = [
-    { type: "ONYOMI" as const, reading: onyomi || "-", example: "感情 (Kanjou)" },
-    { type: "KUNYOMI" as const, reading: kunyomi || "-", example: "情け (Nasake)" }
-  ];
 
   return (
     <Layout>
@@ -277,33 +270,53 @@ export const LatihanPage: React.FC = () => {
                       {kanjiMeaning}
                     </h3>
                     <p className="font-body-md text-on-surface-variant">
-                      Kamus kosakata interaktif tingkat {kanjiData.difficulty || "N3"}
+                      Kamus kosakata interaktif tingkat {kanjiData.difficulty || "N4"}
                     </p>
                   </div>
                 </div>
               </div>
-
-              {/* Progress Tracker */}
-              <div className="mt-6">
-                <div className="flex flex-wrap gap-2 justify-between items-end mb-2">
-                  <span className="font-label-md text-on-surface-variant uppercase">
-                    PROGRES PENGUASAAN
-                  </span>
-                  <span className="font-label-md text-tertiary font-bold">
-                    {masteryLevelTitle}
-                  </span>
-                </div>
-                <div className="h-3 w-full bg-surface-container-high rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-tertiary-fixed-dim rounded-full transition-all duration-500"
-                    style={{ width: `${masteryPercent}%` }}
-                  ></div>
-                </div>
-              </div>
             </div>
 
-            {/* Onyomi / Kunyomi Details */}
-            <KanjiReadings readings={readings} />
+            {/* Jukugo List */}
+            <div className="space-y-4">
+              <h4 className="font-headline-md text-headline-md text-on-surface font-semibold px-2 flex items-center gap-2">
+                <Icon name="translate" className="text-[#8f0020] text-2xl animate-pulse" />
+                Daftar Jukugo (Kata Majemuk)
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {jukugos.map((j: any, idx: number) => (
+                  <div 
+                    key={idx} 
+                    className="bg-white border border-slate-100 hover:border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-display-kanji text-2xl font-bold text-slate-800 tracking-wide select-all">
+                          {j.word}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium">
+                          ({j.reading})
+                        </span>
+                      </div>
+                      <span className="text-sm font-semibold text-[#8f0020]">
+                        {j.meaning}
+                      </span>
+                    </div>
+                    
+                    <button
+                      onClick={() => playAudio(j.word)}
+                      className="w-10 h-10 rounded-full bg-slate-50 hover:bg-[#8f0020]/10 text-slate-500 hover:text-[#8f0020] flex items-center justify-center transition-colors cursor-pointer border-none"
+                      title="Putar Suara"
+                    >
+                      <Icon name="volume_up" className="text-xl" />
+                    </button>
+                  </div>
+                ))}
+                {jukugos.length === 0 && (
+                  <p className="text-sm text-slate-400 italic px-2">Belum ada jukugo yang ditambahkan untuk kanji ini.</p>
+                )}
+              </div>
+            </div>
 
             {/* Context sentences list */}
             <div className="space-y-4">

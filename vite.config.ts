@@ -6,5 +6,7 @@ import { kvgJs } from 'kanjivg-js/vite-plugin';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(),tailwindcss(),kvgJs()],
-  // base: "/EduNihongo/",
+  server: {
+    allowedHosts: ["localhost", "127.0.0.1", "kanji.fishiden.com"],
+  }
 })

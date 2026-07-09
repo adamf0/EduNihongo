@@ -39,7 +39,11 @@ export const KanjiEtymology: React.FC<KanjiEtymologyProps> = ({ etymologies }) =
             className="flex items-start gap-4 p-3 hover:bg-surface-container-low rounded-lg transition-colors border-l-4 border-matcha-green"
           >
             {/* Box Karakter Kanji */}
-            <div className="bg-surface-container-highest w-12 h-12 flex items-center justify-center rounded-lg font-display-kanji text-2xl select-none shrink-0">
+            <div className={`bg-surface-container-highest w-12 h-12 flex items-center justify-center rounded-lg select-none shrink-0 text-center ${
+              item.character.length > 1
+                ? "text-[9px] font-sans font-bold uppercase tracking-wider text-slate-500 leading-tight px-1"
+                : "font-display-kanji text-2xl"
+            }`}>
               {item.character}
             </div>
             

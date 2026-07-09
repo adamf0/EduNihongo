@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 interface ModuleData {
   id: number;
   title: string;
+  tujuanPembelajaran?: string | null;
   kanjis?: any[];
 }
 
@@ -22,6 +23,7 @@ export const AdminPage: React.FC = () => {
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<ModuleData | null>(null);
   const [moduleTitle, setModuleTitle] = useState("");
+  const [moduleTujuan, setModuleTujuan] = useState("");
 
   // Feedback states
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +55,7 @@ export const AdminPage: React.FC = () => {
   const openAddModuleModal = () => {
     setSelectedModule(null);
     setModuleTitle("");
+    setModuleTujuan("");
     setActionError("");
     setIsModuleModalOpen(true);
   };
@@ -60,6 +63,7 @@ export const AdminPage: React.FC = () => {
   const openEditModuleModal = (mod: ModuleData) => {
     setSelectedModule(mod);
     setModuleTitle(mod.title);
+    setModuleTujuan(mod.tujuanPembelajaran || "");
     setActionError("");
     setIsModuleModalOpen(true);
   };
@@ -74,9 +78,9 @@ export const AdminPage: React.FC = () => {
       setSubmitting(true);
       setActionError("");
       if (selectedModule) {
-        await api.admin.modules.update(selectedModule.id, moduleTitle);
+        await api.admin.modules.update(selectedModule.id, moduleTitle, moduleTujuan);
       } else {
-        await api.admin.modules.create(moduleTitle);
+        await api.admin.modules.create(moduleTitle, moduleTujuan);
       }
       setIsModuleModalOpen(false);
       loadData();
@@ -220,7 +224,7 @@ export const AdminPage: React.FC = () => {
       {/* ================= MODAL: ADD/EDIT MODULE ================= */}
       {isModuleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 max-w-[420px] w-full shadow-2xl relative flex flex-col gap-4">
+          <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 max-w-2xl w-full shadow-2xl relative flex flex-col gap-4">
             <button
               onClick={() => setIsModuleModalOpen(false)}
               className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-container transition-colors cursor-pointer border-none bg-transparent"
@@ -244,6 +248,18 @@ export const AdminPage: React.FC = () => {
                   className="bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl p-3 w-full focus:ring-2 focus:ring-primary outline-none transition-all"
                   placeholder="Contoh: Module 6"
                   required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-label-md text-label-md font-bold text-on-surface">
+                  Tujuan Pembelajaran
+                </label>
+                <textarea
+                  value={moduleTujuan}
+                  onChange={(e) => setModuleTujuan(e.target.value)}
+                  className="bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl p-3 w-full focus:ring-2 focus:ring-primary outline-none transition-all resize-y min-h-[100px] font-sans"
+                  placeholder="Masukkan tujuan pembelajaran..."
                 />
               </div>
 

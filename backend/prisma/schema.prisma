@@ -41,10 +41,11 @@ model UserActivity {
 
 
 model Module {
-  id           Int                  @id @default(autoincrement())
-  title        String
-  userProgress UserModuleProgress[]
-  kanjis       Kanji[]
+  id                 Int                  @id @default(autoincrement())
+  title              String
+  tujuanPembelajaran String?
+  userProgress       UserModuleProgress[]
+  kanjis             Kanji[]
 }
 
 model UserModuleProgress {
@@ -64,8 +65,6 @@ model Kanji {
   character      String              @unique // e.g. "情報"
   romaji         String
   meaning        String
-  onyomi         String?
-  kunyomi        String?
   isJukugo       Boolean             @default(false)
   border         String?             // e.g. "border-l-4 border-secondary"
   
@@ -76,6 +75,8 @@ model Kanji {
   userProgress   UserKanjiProgress[]
   graphNodes     KanjiGraphNode[]
   graphEdges     KanjiGraphEdge[]
+  etymologies    Etymology[]
+  jukugos        Jukugo[]
 }
 
 model UserKanjiProgress {
@@ -121,3 +122,22 @@ model KanjiGraphEdge {
   source   String
   target   String
 }
+
+model Etymology {
+  id        Int    @id @default(autoincrement())
+  kanjiId   Int
+  kanji     Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  character String
+  romaji    String
+  detail    String
+}
+
+model Jukugo {
+  id          Int    @id @default(autoincrement())
+  kanjiId     Int
+  kanji       Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  word        String
+  reading     String
+  meaning     String
+}
+

@@ -5,14 +5,6 @@ import {
   useNodesState,
   useEdgesState,
 } from "@xyflow/react";
-import {
-  forceSimulation,
-  forceX,
-  forceY,
-  forceCollide,
-  forceManyBody,
-  forceLink,
-} from "d3-force";
 import "@xyflow/react/dist/style.css";
 import KanjiNode from "./KanjiNode";
 
@@ -28,91 +20,98 @@ export default function KanjiAtlasFlow({
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
 
   useEffect(() => {
-    const d3Nodes = initialRawNodes.map((node: any) => {
-      let initialX = Math.random() * 40 - 20;
-      if (node.id === "bot-1" || node.parentPill === "bot-1") initialX = -180;
-      if (node.id === "bot-2" || node.parentPill === "bot-2") initialX = 180;
+    // 1. Identify the root, category, and sub-word nodes
+    const rootNode = initialRawNodes.find((n: any) => n.type === "root" || n.isRoot);
+    const categoryNodes = initialRawNodes.filter((n: any) => n.type === "bottom");
+    
+    // Sort categories consistently by ID so they are always in the correct left-to-right order
+    categoryNodes.sort((a, b) => a.id.localeCompare(b.id));
 
-      return {
-        ...node,
-        x: initialX,
-        y:
-          node.type === "top"
-             ? -150
-             : node.type === "bottom"
-               ? 100
-               : node.type === "sub-bottom"
-                 ? 250
-                 : 0,
-      };
+    const positionedNodes: any[] = [];
+
+    // Position Root Node at top center
+    if (rootNode) {
+      positionedNodes.push({
+        ...rootNode,
+        x: 0,
+        y: -170,
+      });
+    }
+
+    // Position Category Nodes horizontally and their respective children vertically
+    const numCategories = categoryNodes.length;
+    const totalWidth = 660; // Max horizontal span
+
+    categoryNodes.forEach((cat, catIdx) => {
+      // Calculate X coordinate evenly across the total width
+      const x = numCategories > 1
+        ? -totalWidth / 2 + (totalWidth / (numCategories - 1)) * catIdx
+        : 0;
+
+      positionedNodes.push({
+        ...cat,
+        x,
+        y: -35,
+      });
+
+      // Find children belonging to this category
+      const children = initialRawNodes.filter(
+        (n: any) => n.type === "sub-bottom" && n.parentPill === cat.id
+      );
+      // Sort children by ID to maintain consistent stack order
+      children.sort((a, b) => a.id.localeCompare(b.id));
+
+      children.forEach((child, childIdx) => {
+        positionedNodes.push({
+          ...child,
+          x,
+          y: 65 + childIdx * 90, // Even vertical stacking space (90px)
+        });
+      });
     });
 
-    const d3Links = initialRawEdges.map((edge: any) => ({
-      source: edge.source,
-      target: edge.target,
-    }));
-
-    const simulation = forceSimulation(d3Nodes as any)
-      .force(
-        "link",
-        forceLink(d3Links)
-          .id((d: any) => d.id)
-          .distance(90)
-          .strength(1),
-      )
-      .force("charge", forceManyBody().strength(-1400)) // Tingkatkan tolakkan agar kluster makin berjarak
-      .force(
-        "collide",
-        forceCollide()
-          .radius((d: any) => {
-            if (d.isRoot) return 100;
-            if (d.isPill) return 95;
-            if (d.type === "sub-bottom") return 90;
-            return 65;
-          })
-          .iterations(4),
-      )
-      .force(
-        "x",
-        forceX()
-          .x((d: any) => {
-            if (d.id === "bot-1" || d.parentPill === "bot-1") return -200;
-            if (d.id === "bot-2" || d.parentPill === "bot-2") return 200;
-            return 0;
-          })
-          .strength(0.8),
-      )
-      .force(
-        "y",
-        forceY()
-          .y((d: any) => {
-            if (d.type === "top") return -180;
-            if (d.type === "root") return 0;
-            if (d.type === "bottom") return 130;
-            if (d.type === "sub-bottom") return 280;
-            return 0;
-          })
-          .strength(1.5),
-      );
-
-    for (let i = 0; i < 200; ++i) simulation.tick();
-
-    const formattedNodes = d3Nodes.map((node: any) => ({
+    // 2. Format nodes for ReactFlow
+    const formattedNodes = positionedNodes.map((node: any) => ({
       id: node.id,
       type: "kanjiNode",
-      position: { x: node.x + 400, y: node.y + 250 },
+      position: { x: node.x + 400, y: node.y + 200 }, // Centering offset inside view container
       data: { ...node },
     }));
 
-    const formattedEdges = initialRawEdges.map((edge: any) => ({
+    // 3. Format edges for ReactFlow, correcting sub-bottom paths to connect sequentially in vertical stacks
+    const correctedEdges = [...initialRawEdges];
+    
+    categoryNodes.forEach((cat) => {
+      const children = initialRawNodes.filter(
+        (n: any) => n.type === "sub-bottom" && n.parentPill === cat.id
+      );
+      children.sort((a, b) => a.id.localeCompare(b.id));
+
+      if (children.length > 1) {
+        for (let i = 1; i < children.length; i++) {
+          const prevChild = children[i - 1];
+          const currChild = children[i];
+          
+          const edgeIdx = correctedEdges.findIndex((e) => e.target === currChild.id);
+          if (edgeIdx !== -1) {
+            correctedEdges[edgeIdx] = {
+              ...correctedEdges[edgeIdx],
+              source: prevChild.id,
+            };
+          }
+        }
+      }
+    });
+
+    const formattedEdges = correctedEdges.map((edge: any) => ({
       ...edge,
       type: "default",
-      style: { stroke: "#cbd5e1", strokeWidth: 2 },
+      style: { stroke: "#94a3b8", strokeWidth: 2 }, // Darker slate line for crisp visibility
     }));
 
     setNodes(formattedNodes);
     setEdges(formattedEdges);
-  }, []);
+  }, [initialRawNodes, initialRawEdges]);
 
   return (
     <div className="w-full h-screen bg-slate-50 flex flex-col font-sans select-none">
@@ -123,13 +122,14 @@ export default function KanjiAtlasFlow({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         fitView
-        minZoom={0.5}
+        minZoom={0.3}
         maxZoom={1.5}
         nodesConnectable={false}
         nodesDraggable={true}
       >
-        <Background color="#e2e8f0" gap={16} size={1} />
+        <Background color="#cbd5e1" gap={16} size={1} />
       </ReactFlow>
     </div>
   );
 }
+

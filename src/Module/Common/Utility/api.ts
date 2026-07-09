@@ -1,4 +1,6 @@
-const BASE_URL = "https://kanji.fishiden.com/api";
+const BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:5001/api"
+  : "https://kanji.fishiden.com/api";
 
 const getHeaders = () => {
   const token = localStorage.getItem("kanjigraph_token");
@@ -11,6 +13,11 @@ const getHeaders = () => {
 const handleResponse = async (response: Response) => {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (response.status === 401 || (response.status === 404 && data.error === "User tidak ditemukan")) {
+      localStorage.removeItem("kanjigraph_token");
+      localStorage.removeItem("kanjigraph_role");
+      window.location.hash = "/login";
+    }
     throw new Error(data.error || "Terjadi kesalahan koneksi ke server.");
   }
   return data;
@@ -136,19 +143,19 @@ export const api = {
         });
         return handleResponse(res);
       },
-      create: async (title: string) => {
+      create: async (title: string, tujuanPembelajaran?: string) => {
         const res = await fetch(`${BASE_URL}/admin/modules`, {
           method: "POST",
           headers: getHeaders(),
-          body: JSON.stringify({ title }),
+          body: JSON.stringify({ title, tujuanPembelajaran }),
         });
         return handleResponse(res);
       },
-      update: async (id: number, title: string) => {
+      update: async (id: number, title: string, tujuanPembelajaran?: string) => {
         const res = await fetch(`${BASE_URL}/admin/modules/${id}`, {
           method: "PUT",
           headers: getHeaders(),
-          body: JSON.stringify({ title }),
+          body: JSON.stringify({ title, tujuanPembelajaran }),
         });
         return handleResponse(res);
       },

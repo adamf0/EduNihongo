@@ -56,7 +56,7 @@ const LearningPath = ({ radicalItems, kanjiItems, vocabItems }: Props) => {
         <div className="w-full md:w-1/2 flex justify-start order-2 md:order-3 pl-12 md:pl-0">
           <ModuleCard
             title="Inti Kanji"
-            difficulty="Kesulitan N3"
+            difficulty="Kesulitan N4"
             items={kanjiItems}
             progress={32}
             color="#8f0020"

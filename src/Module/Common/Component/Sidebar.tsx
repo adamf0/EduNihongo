@@ -26,6 +26,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         setProfile(data);
       } catch (err) {
         console.error("Failed to load sidebar profile:", err);
+        api.auth.logout();
+        navigate("/login");
       }
     };
     if (api.auth.isAuthenticated()) {
@@ -89,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.route}
               icon={item.icon}
               label={item.label}
-              isActive={currentPath === item.route}
+              isActive={currentPath === item.route || (item.route === "/admin" && currentPath.startsWith("/admin"))}
               onClick={() => {
                 navigate(item.route);
                 onClose();
@@ -110,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {profile?.name || "Memuat..."}
             </p>
             <p className="text-[10px] text-on-surface-variant">
-              {profile?.role === "ADMIN" ? "Administrator" : "Master Tingkat N3"}
+              {profile?.role === "ADMIN" ? "Administrator" : "Master Tingkat N4"}
             </p>
           </div>
         </div>

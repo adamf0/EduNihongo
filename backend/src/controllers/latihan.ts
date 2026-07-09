@@ -26,6 +26,8 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         graphNodes: true,
         graphEdges: true,
         module: true,
+        etymologies: true,
+        jukugos: true,
       },
     });
 
@@ -97,8 +99,6 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       kanji: kanji.character,
       romaji: kanji.romaji,
       meaning: kanji.meaning,
-      onyomi: kanji.onyomi,
-      kunyomi: kanji.kunyomi,
       moduleTitle: kanji.module ? kanji.module.title : null,
       masteryPercent,
       masteryLevelTitle: levelTitle,
@@ -107,7 +107,16 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         romaji: ex.romaji,
         translation: ex.translation,
       })),
-      etymologies: [],
+      jukugos: kanji.jukugos.map((j) => ({
+        word: j.word,
+        reading: j.reading,
+        meaning: j.meaning,
+      })),
+      etymologies: kanji.etymologies.map((et) => ({
+        character: et.character,
+        romaji: et.romaji,
+        detail: et.detail,
+      })),
       graph: {
         nodes,
         edges,

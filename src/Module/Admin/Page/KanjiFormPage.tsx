@@ -22,8 +22,7 @@ export const KanjiFormPage: React.FC = () => {
   const [kanjiChar, setKanjiChar] = useState("");
   const [kanjiRomaji, setKanjiRomaji] = useState("");
   const [kanjiMeaning, setKanjiMeaning] = useState("");
-  const [kanjiOnyomi, setKanjiOnyomi] = useState("");
-  const [kanjiKunyomi, setKanjiKunyomi] = useState("");
+
   
   // Random border initialization helper
   const getRandomBorder = () => {
@@ -34,6 +33,7 @@ export const KanjiFormPage: React.FC = () => {
 
   // Form Lists
   const [examples, setExamples] = useState<any[]>([]);
+  const [jukugos, setJukugos] = useState<any[]>([]);
   const [nodes, setNodes] = useState<any[]>([]);
   const [edges, setEdges] = useState<any[]>([]);
 
@@ -128,15 +128,16 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiChar(target.character);
           setKanjiRomaji(target.romaji);
           setKanjiMeaning(target.meaning);
-          setKanjiOnyomi(target.onyomi || "");
-          setKanjiKunyomi(target.kunyomi || "");
+
           setKanjiBorder(target.border || "border-l-4 border-primary");
           setExamples(target.examples.length > 0 ? target.examples : [{ japanese: "", romaji: "", translation: "" }]);
+          setJukugos(target.jukugos && target.jukugos.length > 0 ? target.jukugos : [{ word: "", reading: "", meaning: "" }]);
           setNodes(target.graphNodes.length > 0 ? target.graphNodes : [{ id: "root", character: target.character, meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
           setEdges(target.graphEdges);
         } else {
           // Add mode: default initialization
           setExamples([{ japanese: "", romaji: "", translation: "" }]);
+          setJukugos([{ word: "", reading: "", meaning: "" }]);
           setNodes([{ id: "root", character: "", meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
           setEdges([]);
           setKanjiBorder(getRandomBorder());
@@ -191,7 +192,7 @@ export const KanjiFormPage: React.FC = () => {
 
         children.forEach((child, childIdx) => {
           if (!updated[child.id]) {
-            const offset = (childIdx - (children.length - 1) / 2) * 130;
+            const offset = (childIdx - (children.length - 1) / 2) * 190;
             updated[child.id] = {
               x: parentCoord.x + offset,
               y: 330,
@@ -225,6 +226,13 @@ export const KanjiFormPage: React.FC = () => {
   };
   const removeExampleRow = (idx: number) => {
     setExamples((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const addJukugoRow = () => {
+    setJukugos((prev) => [...prev, { word: "", reading: "", meaning: "" }]);
+  };
+  const removeJukugoRow = (idx: number) => {
+    setJukugos((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const addNodeRow = () => {
@@ -349,12 +357,12 @@ export const KanjiFormPage: React.FC = () => {
       character: kanjiChar,
       romaji: kanjiRomaji,
       meaning: kanjiMeaning,
-      onyomi: kanjiOnyomi || null,
-      kunyomi: kanjiKunyomi || null,
+
       isJukugo: kanjiChar.length > 1, // Automatically set based on character length
       border: kanjiBorder || null,
       moduleId,
       examples: examples.filter((ex) => ex.japanese.trim() !== ""),
+      jukugos: jukugos.filter((j) => j.word.trim() !== ""),
       graphNodes: formattedNodes,
       graphEdges: formattedEdges,
     };
@@ -536,28 +544,7 @@ export const KanjiFormPage: React.FC = () => {
                 </div>
               </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-label-sm text-label-sm font-semibold text-on-surface">Onyomi</label>
-                  <input
-                    type="text"
-                    value={kanjiOnyomi}
-                    onChange={(e) => setKanjiOnyomi(e.target.value)}
-                    className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none font-mono"
-                    placeholder="GAKU"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-label-sm text-label-sm font-semibold text-on-surface">Kunyomi</label>
-                  <input
-                    type="text"
-                    value={kanjiKunyomi}
-                    onChange={(e) => setKanjiKunyomi(e.target.value)}
-                    className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none font-mono"
-                    placeholder="mana.bu"
-                  />
-                </div>
-              </div>
+
 
               {/* Jukugo automatically determined on save */}
             </div>
@@ -637,11 +624,87 @@ export const KanjiFormPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Section 3: KanjiGraphNode Visual Drag & Drop Editor */}
+            {/* Section 3: Jukugo */}
+            <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+              <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+                <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
+                  3. Daftar Jukugo (Compound Words)
+                </h4>
+                <button
+                  type="button"
+                  onClick={addJukugoRow}
+                  className="px-3.5 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1"
+                >
+                  <Icon name="add" className="text-sm" />
+                  Tambah Jukugo
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {jukugos.map((j, idx) => (
+                  <div key={idx} className="flex gap-4 items-end bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-bold text-slate-500">Kata Jukugo</label>
+                        <input
+                          type="text"
+                          value={j.word}
+                          onChange={(e) => {
+                            const newJ = [...jukugos];
+                            newJ[idx].word = e.target.value;
+                            setJukugos(newJ);
+                          }}
+                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                          placeholder="試験"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-bold text-slate-500">Pembacaan (Furigana / Reading)</label>
+                        <input
+                          type="text"
+                          value={j.reading}
+                          onChange={(e) => {
+                            const newJ = [...jukugos];
+                            newJ[idx].reading = e.target.value;
+                            setJukugos(newJ);
+                          }}
+                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                          placeholder="しけん"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-bold text-slate-500">Arti (Meaning)</label>
+                        <input
+                          type="text"
+                          value={j.meaning}
+                          onChange={(e) => {
+                            const newJ = [...jukugos];
+                            newJ[idx].meaning = e.target.value;
+                            setJukugos(newJ);
+                          }}
+                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                          placeholder="Ujian"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeJukugoRow(idx)}
+                      disabled={jukugos.length === 1}
+                      className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none mt-4 disabled:opacity-30"
+                    >
+                      <Icon name="delete" className="text-lg block" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 4: KanjiGraphNode Visual Drag & Drop Editor */}
             <div className="flex flex-col gap-4">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  3. Simpul Grafik Semantik
+                  4. Simpul Grafik Semantik
                 </h4>
                 <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
                   <button

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
+import { sanitizeString } from "../utils/sanitize";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-kanjigraph-key-12345";
@@ -14,7 +15,10 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Email, password, dan nama wajib diisi." });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const sanitizedEmail = sanitizeString(email);
+    const sanitizedName = sanitizeString(name);
+
+    const existingUser = await prisma.user.findUnique({ where: { email: sanitizedEmail } });
     if (existingUser) {
       return res.status(400).json({ error: "Email sudah terdaftar." });
     }
@@ -22,9 +26,9 @@ export const register = async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
-        email,
+        email: sanitizedEmail,
         password: passwordHash,
-        name,
+        name: sanitizedName,
         // Set default values matching Haruki Sato's starter kit
         streak: 0,
         totalXp: 0,

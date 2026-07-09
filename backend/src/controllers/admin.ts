@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { sanitizeObject } from "../utils/sanitize";
 
 const prisma = new PrismaClient();
 
@@ -20,13 +21,17 @@ export const getModules = async (req: Request, res: Response) => {
 
 export const createModule = async (req: Request, res: Response) => {
   try {
-    const { title } = req.body;
+    const body = sanitizeObject(req.body);
+    const { title, tujuanPembelajaran } = body;
     if (!title) {
       return res.status(400).json({ error: "Judul modul wajib diisi." });
     }
 
     const module = await prisma.module.create({
-      data: { title },
+      data: { 
+        title,
+        tujuanPembelajaran: tujuanPembelajaran || null
+      },
     });
 
     // Automatically create userModuleProgress for existing users
@@ -53,7 +58,8 @@ export const createModule = async (req: Request, res: Response) => {
 export const updateModule = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title } = req.body;
+    const body = sanitizeObject(req.body);
+    const { title, tujuanPembelajaran } = body;
 
     if (!title) {
       return res.status(400).json({ error: "Judul modul wajib diisi." });
@@ -61,7 +67,10 @@ export const updateModule = async (req: Request, res: Response) => {
 
     const module = await prisma.module.update({
       where: { id: parseInt(id, 10) },
-      data: { title },
+      data: { 
+        title,
+        tujuanPembelajaran: tujuanPembelajaran || null
+      },
     });
 
     res.json(module);
@@ -102,6 +111,7 @@ export const getKanjis = async (req: Request, res: Response) => {
         graphNodes: true,
         graphEdges: true,
         module: true,
+        jukugos: true,
       },
       orderBy: { id: "asc" },
     });
@@ -114,19 +124,19 @@ export const getKanjis = async (req: Request, res: Response) => {
 
 export const createKanji = async (req: Request, res: Response) => {
   try {
+    const body = sanitizeObject(req.body);
     const {
       character,
       romaji,
       meaning,
-      onyomi,
-      kunyomi,
       isJukugo,
       border,
       moduleId,
       examples,
+      jukugos,
       graphNodes,
       graphEdges,
-    } = req.body;
+    } = body;
 
     if (!character || !romaji || !meaning) {
       return res.status(400).json({ error: "Karakter, romaji, dan arti wajib diisi." });
@@ -144,8 +154,6 @@ export const createKanji = async (req: Request, res: Response) => {
         character,
         romaji,
         meaning,
-        onyomi: onyomi || null,
-        kunyomi: kunyomi || null,
         isJukugo: !!isJukugo,
         border: border || null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
@@ -160,6 +168,18 @@ export const createKanji = async (req: Request, res: Response) => {
           japanese: ex.japanese || "",
           romaji: ex.romaji || "",
           translation: ex.translation || "",
+        })),
+      });
+    }
+
+    // Create Jukugos
+    if (Array.isArray(jukugos) && jukugos.length > 0) {
+      await prisma.jukugo.createMany({
+        data: jukugos.map((j: any) => ({
+          kanjiId: kanji.id,
+          word: j.word || "",
+          reading: j.reading || "",
+          meaning: j.meaning || "",
         })),
       });
     }
@@ -217,19 +237,19 @@ export const updateKanji = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const kanjiId = parseInt(id, 10);
+    const body = sanitizeObject(req.body);
     const {
       character,
       romaji,
       meaning,
-      onyomi,
-      kunyomi,
       isJukugo,
       border,
       moduleId,
       examples,
+      jukugos,
       graphNodes,
       graphEdges,
-    } = req.body;
+    } = body;
 
     if (!character || !romaji || !meaning) {
       return res.status(400).json({ error: "Karakter, romaji, dan arti wajib diisi." });
@@ -242,8 +262,6 @@ export const updateKanji = async (req: Request, res: Response) => {
         character,
         romaji,
         meaning,
-        onyomi: onyomi || null,
-        kunyomi: kunyomi || null,
         isJukugo: !!isJukugo,
         border: border || null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
@@ -259,6 +277,19 @@ export const updateKanji = async (req: Request, res: Response) => {
           japanese: ex.japanese || "",
           romaji: ex.romaji || "",
           translation: ex.translation || "",
+        })),
+      });
+    }
+
+    // Update Jukugos: Delete and Re-create
+    await prisma.jukugo.deleteMany({ where: { kanjiId } });
+    if (Array.isArray(jukugos) && jukugos.length > 0) {
+      await prisma.jukugo.createMany({
+        data: jukugos.map((j: any) => ({
+          kanjiId,
+          word: j.word || "",
+          reading: j.reading || "",
+          meaning: j.meaning || "",
         })),
       });
     }
