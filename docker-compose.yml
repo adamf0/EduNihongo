@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: edunihongo-backend
+    ports:
+      - "5001:5001"
+    volumes:
+      - backend-db:/app/prisma
+      - backend-uploads:/app/uploads
+    environment:
+      - PORT=5001
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - JWT_SECRET=super-secret-kanjigraph-key-12345
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edunihongo-frontend
+    ports:
+      - "5173:80" # Map host port 5173 to Nginx port 80 to match user's port preference
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  backend-db:
+    driver: local
+  backend-uploads:
+    driver: local

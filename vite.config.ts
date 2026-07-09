@@ -8,5 +8,8 @@ export default defineConfig({
   plugins: [react(),tailwindcss(),kvgJs()],
   server: {
     allowedHosts: ["localhost", "127.0.0.1", "kanji.fishiden.com"],
+  },
+  build: {
+    sourcemap: false,
   }
 })
