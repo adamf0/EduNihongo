@@ -134,7 +134,7 @@ export const LandingPage: React.FC = () => {
               <img
                 className="w-full h-full object-cover rounded-2xl shadow-xl select-none"
                 alt="A sleek user interface preview of Kanjigraph learning network."
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAWklsQY_N4lcvZVDBg_m9KWGGZHeA8ZlQ6lXyDpLhUOSJwtXmFkjA7RIs87F3AOADM_wADukPHASkhJsTZqlOx_6CRM3LBLVIJ5y6xayMjKXFsu87z2A1cccApVHXMd4gu-zJUkP8hx-inmFRxWR1kXZqoLyozYCGxXunQbRxHMY7yCQhQ8awQS1Dd_WLPpKq2ALijZ0DxDkQ2deqpd4bXfbZdRIfk1tPzcqtsm_HfEiHJMBJt-VlGI_UtROOUyfkblHBtjMJqyk"
+                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&h=450"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent flex items-center justify-center">
                 <button
