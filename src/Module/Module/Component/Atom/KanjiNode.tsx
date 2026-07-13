@@ -9,7 +9,11 @@ const KanjiNode = ({ data }: { data: any }) => {
     const displayMeaning = parts.length > 1 ? parts[1] : (data.meaning || "");
 
     return (
-      <div className="bg-gradient-to-br from-[#ff5b94] to-[#ff2b6d] text-white px-6 py-4 rounded-2xl shadow-lg min-w-[200px] text-center relative border border-[#ff1b5f]">
+      <div 
+        className={`bg-gradient-to-br from-[#ff5b94] to-[#ff2b6d] text-white px-6 py-4 rounded-2xl shadow-lg min-w-[200px] text-center relative border border-[#ff1b5f] animate-node-reveal cursor-pointer transition-transform hover:scale-105 duration-200 ${
+          !data.isExpanded ? "animate-pulse-glow" : ""
+        }`}
+      >
         <NodeHandles Position={Position} />
         <div className="flex flex-col items-center justify-center">
           <span className="text-4xl font-extrabold tracking-wide mb-1 drop-shadow-sm font-serif">
@@ -23,6 +27,11 @@ const KanjiNode = ({ data }: { data: any }) => {
           <span className="text-sm font-bold tracking-wider mt-1 opacity-95">
             {displayMeaning}
           </span>
+          {!data.isExpanded && (
+            <span className="text-[10px] bg-white/25 text-white font-bold px-2 py-0.5 rounded-full mt-2 animate-bounce inline-block">
+              Klik Kanji 💡
+            </span>
+          )}
         </div>
       </div>
     );
@@ -38,9 +47,20 @@ const KanjiNode = ({ data }: { data: any }) => {
     else if (data.borderColor?.includes("yellow")) bgClass = "bg-[#eab308] border-[#ca8a04]";
 
     return (
-      <div className={`text-white px-5 py-2.5 rounded-full text-xs font-bold border shadow-md text-center relative whitespace-nowrap ${bgClass}`}>
+      <div 
+        className={`text-white px-5 py-2.5 rounded-full text-xs font-bold border shadow-md text-center relative whitespace-nowrap animate-node-reveal cursor-pointer transition-transform hover:scale-105 duration-200 ${bgClass}`}
+      >
         <NodeHandles Position={Position}/>
         <span>{data.kanji}</span>
+        {data.hasChildren && (
+          <span 
+            className={`absolute -top-1.5 -right-1.5 flex items-center justify-center rounded-full w-4.5 h-4.5 text-[9px] font-extrabold border border-white shadow-sm transition-all ${
+              data.isExpanded ? "bg-slate-500 text-white" : "bg-rose-500 text-white animate-bounce"
+            }`}
+          >
+            {data.isExpanded ? "−" : "+"}
+          </span>
+        )}
       </div>
     );
   }
@@ -52,7 +72,7 @@ const KanjiNode = ({ data }: { data: any }) => {
     const meaningText = match ? match[2] : (data.meaning || "");
 
     return (
-      <div className="bg-[#f8fafc] text-slate-800 px-4 py-2.5 rounded-xl border-2 border-sky-200 shadow-sm text-center relative min-w-[120px]">
+      <div className="bg-[#f8fafc] text-slate-800 px-4 py-2.5 rounded-xl border-2 border-sky-200 shadow-sm text-center relative min-w-[120px] animate-node-reveal hover:shadow-md hover:border-sky-300 transition-all duration-200">
         <NodeHandles Position={Position}/>
         <div className="flex flex-col items-center justify-center">
           <span className="text-sm font-bold text-sky-950 font-serif">{data.kanji}</span>
@@ -71,7 +91,7 @@ const KanjiNode = ({ data }: { data: any }) => {
 
   return (
     <div
-      className={`bg-white border-2 ${borderColorClass} text-slate-800 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer relative whitespace-nowrap ${radiusClass}`}
+      className={`bg-white border-2 ${borderColorClass} text-slate-800 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer relative whitespace-nowrap animate-node-reveal ${radiusClass}`}
     >
       <NodeHandles Position={Position} />
       <span className={data.isPill ? "text-sm font-bold" : "text-xl font-bold"}>

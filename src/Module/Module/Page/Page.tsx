@@ -174,7 +174,10 @@ export const ModulePage: React.FC = () => {
       {/* ================= MODAL: TUJUAN PEMBELAJARAN ================= */}
       {isInfoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white border border-slate-100 rounded-2xl p-6 max-w-md w-full shadow-2xl relative flex flex-col gap-3 animate-scale-up">
+          <div 
+            className="bg-white border border-slate-100 rounded-2xl p-6 shadow-2xl relative flex flex-col gap-3 animate-scale-up"
+            style={{ width: '90%', maxWidth: '480px', minWidth: '320px', boxSizing: 'border-box' }}
+          >
             <button
               onClick={() => setIsInfoModalOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"

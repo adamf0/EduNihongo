@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -18,6 +18,7 @@ export default function KanjiAtlasFlow({
   const nodeTypes = useMemo(() => ({ kanjiNode: KanjiNode }), []);
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // 1. Identify the root, category, and sub-word nodes
@@ -40,18 +41,20 @@ export default function KanjiAtlasFlow({
 
     // Position Category Nodes horizontally and their respective children vertically
     const numCategories = categoryNodes.length;
-    const totalWidth = 660; // Max horizontal span
+    // Dynamically calculate the horizontal span to maintain a consistent spacing of 280px between columns,
+    // avoiding horizontal overlap regardless of the number of categories.
+    const totalWidth = (numCategories - 1) * 280;
 
     categoryNodes.forEach((cat, catIdx) => {
       // Calculate X coordinate evenly across the total width
       const x = numCategories > 1
-        ? -totalWidth / 2 + (totalWidth / (numCategories - 1)) * catIdx
+        ? -totalWidth / 2 + catIdx * 280
         : 0;
 
       positionedNodes.push({
         ...cat,
         x,
-        y: -35,
+        y: -15, // Clear vertical gap from root node (y: -170)
       });
 
       // Find children belonging to this category
@@ -71,12 +74,41 @@ export default function KanjiAtlasFlow({
     });
 
     // 2. Format nodes for ReactFlow
-    const formattedNodes = positionedNodes.map((node: any) => ({
-      id: node.id,
-      type: "kanjiNode",
-      position: { x: node.x + 400, y: node.y + 200 }, // Centering offset inside view container
-      data: { ...node },
-    }));
+    const formattedNodes = positionedNodes.map((node: any) => {
+      const isExpanded = expandedNodes.has(node.id);
+      const hasChildren = node.type === "bottom" && initialRawNodes.some(
+        (n: any) => n.type === "sub-bottom" && n.parentPill === node.id
+      );
+
+      return {
+        id: node.id,
+        type: "kanjiNode",
+        position: { x: node.x + 400, y: node.y + 200 }, // Centering offset inside view container
+        data: { 
+          ...node,
+          isExpanded,
+          hasChildren,
+        },
+      };
+    });
+
+    // Filter nodes based on expandedNodes state
+    const rootNodeObj = initialRawNodes.find((n: any) => n.type === "root" || n.isRoot);
+    const rootExpanded = rootNodeObj ? expandedNodes.has(rootNodeObj.id) : false;
+
+    const visibleNodes = formattedNodes.filter((node: any) => {
+      if (node.data.isRoot || node.data.type === "root") {
+        return true; // Root is always visible
+      }
+      if (node.data.type === "bottom") {
+        return rootExpanded; // Category nodes are visible if root is expanded
+      }
+      if (node.data.type === "sub-bottom") {
+        // Sub-bottom nodes are visible if their parent category node is expanded AND root is expanded
+        return rootExpanded && expandedNodes.has(node.data.parentPill);
+      }
+      return true;
+    });
 
     // 3. Format edges for ReactFlow, correcting sub-bottom paths to connect sequentially in vertical stacks
     const correctedEdges = [...initialRawEdges];
@@ -109,9 +141,82 @@ export default function KanjiAtlasFlow({
       style: { stroke: "#94a3b8", strokeWidth: 2 }, // Darker slate line for crisp visibility
     }));
 
-    setNodes(formattedNodes);
-    setEdges(formattedEdges);
-  }, [initialRawNodes, initialRawEdges]);
+    // Filter edges to only connect visible nodes
+    const visibleNodeIds = new Set(visibleNodes.map((n: any) => n.id));
+    const visibleEdges = formattedEdges.filter(
+      (edge: any) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)
+    );
+
+    setNodes(visibleNodes);
+    setEdges(visibleEdges);
+  }, [initialRawNodes, initialRawEdges, expandedNodes]);
+
+  const playClickSound = (isCollapse: boolean) => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      if (isCollapse) {
+        // Lower pitch drop sound for collapse
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(320, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+      } else {
+        // Higher bubble-pop sound for expand
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(420, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(750, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.08);
+      }
+    } catch (e) {
+      console.warn("Click audio play error:", e);
+    }
+  };
+
+  const onNodeClick = (_event: React.MouseEvent, node: any) => {
+    const nodeId = node.id;
+    const nodeData = node.data;
+
+    const isRoot = nodeData.isRoot || nodeData.type === "root";
+    const isCategory = nodeData.type === "bottom";
+
+    if (isRoot || isCategory) {
+      setExpandedNodes((prev) => {
+        const next = new Set(prev);
+        const isCurrentlyExpanded = next.has(nodeId);
+        if (isCurrentlyExpanded) {
+          next.delete(nodeId);
+          if (isRoot) {
+            // Collapse all categories when root is collapsed
+            initialRawNodes.forEach((n: any) => {
+              if (n.type === "bottom") {
+                next.delete(n.id);
+              }
+            });
+          }
+          playClickSound(true); // collapse sound
+        } else {
+          next.add(nodeId);
+          playClickSound(false); // expand sound
+        }
+        return next;
+      });
+    }
+  };
 
   return (
     <div className="w-full h-screen bg-slate-50 flex flex-col font-sans select-none">
@@ -121,6 +226,7 @@ export default function KanjiAtlasFlow({
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
         fitView
         minZoom={0.3}
         maxZoom={1.5}
@@ -132,4 +238,5 @@ export default function KanjiAtlasFlow({
     </div>
   );
 }
+
 

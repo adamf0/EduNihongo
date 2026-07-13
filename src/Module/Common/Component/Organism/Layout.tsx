@@ -81,7 +81,7 @@ export const Layout: React.FC<LayoutProps> = ({
               onClick={() => navigate("/profile")}
               alt="Avatar Pengguna"
               className="w-8 h-8 rounded-full lg:hidden border-2 border-primary/10 cursor-pointer object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWQF9F4vGMPAveFwMVwKQx2D3civyQVdPz99A6OgbFjuFGIkmYreQ9eZq8NtpiJDILQQIpYXhPuJT1GNyYyTnj7gUm8hjjDcNY52DwpoUww-jai8UAXz-ffYN2dCTfkfsHwqlB2C-0KlEEjA6v27K0SFfNOoX4NR6Q5H3JAtKbwDBxh0-H2CbiuD70I_nTlX9jgZr8oFg67Xet3NrYYIibEXxoY7aCtTd7btVH2xsDD5-fL9UB129xSn3OCFXI8_1VRZONSf22XRk"
+              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150"
             />
           </div>
         </header>

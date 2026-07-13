@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../Common/Utility/api";
 
 const avatarPresets = [
-  { name: "Default Persona", url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCiQe5kqkxQSznu5qP6MOCvqYEImp869C8EXKrPH0xqE-mSavCz012Q0MTtSiFiePGaV02jEkiMUlPH1dLTj1avEShwCtSPBlbHOZxnVTLhGL0HVhU5xknHCCYedJb-IxKOpMgxpKK-Ow5sIgWFUsyyY7_E-KIuwiPB5-20LhiSP8pqZauZlFtFZIf2EzIHFf1ANexPscHZGB71rWIQwJNpU7zy75AnxMohpp66viSQtkCUk07SBp5f7FtlpU8V_ukuBsXxmpoldEg" },
+  { name: "Default Persona", url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150" },
   { name: "Samurai Mask", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80" },
   { name: "Sakura Tree", url: "https://images.unsplash.com/photo-1522383225653-ed111181a951?auto=format&fit=crop&w=150&q=80" },
   { name: "Origami Crane", url: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=150&q=80" }

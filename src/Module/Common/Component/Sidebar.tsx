@@ -105,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <img
             alt="User Avatar"
             className="w-10 h-10 rounded-full object-cover border border-outline-variant/30"
-            src={profile?.avatar || "https://lh3.googleusercontent.com/aida-public/AB6AXuCiQe5kqkxQSznu5qP6MOCvqYEImp869C8EXKrPH0xqE-mSavCz012Q0MTtSiFiePGaV02jEkiMUlPH1dLTj1avEShwCtSPBlbHOZxnVTLhGL0HVhU5xknHCCYedJb-IxKOpMgxpKK-Ow5sIgWFUsyyY7_E-KIuwiPB5-20LhiSP8pqZauZlFtFZIf2EzIHFf1ANexPscHZGB71rWIQwJNpU7zy75AnxMohpp66viSQtkCUk07SBp5f7FtlpU8V_ukuBsXxmpoldEg"}
+            src={profile?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150"}
           />
           <div>
             <p className="font-bold text-sm text-on-surface leading-tight">
