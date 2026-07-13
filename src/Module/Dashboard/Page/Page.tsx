@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../../Common/Component/Organism/Layout";
 import StatCard from "../Component/Molecules/StatCard";
-import JukugoCard from "../Component/Molecules/JukugoCard";
+import Icon from "../../Common/Component/Icon";
 import DailyInsight from "../Component/Molecules/DailyInsight";
 import WeeklyActivity from "../Component/Organism/WeeklyActivity";
 import ContinueLearning from "../Component/Organism/ContinueLearning";
@@ -62,7 +62,7 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  const { stats, weeklyActivity, recommendedJukugo, continueLearning, dailyInsight } = data;
+  const { stats, weeklyActivity, activities, continueLearning, dailyInsight } = data;
 
   return (
     <Layout
@@ -78,12 +78,20 @@ export const DashboardPage: React.FC = () => {
           </h2>
 
           {/* Stat Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-base">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-base">
             <StatCard
               icon="school"
               title="Hari Ini"
-              label="Pelajaran Hari Ini"
-              value={stats.dailyTarget}
+              label="Target Hari Ini"
+              value={stats.dailyTarget || "0 / 5 Kanji"}
+              iconColorClass="text-primary"
+            />
+            <StatCard
+              icon="stars"
+              title="Hari Ini"
+              label="XP Didapatkan"
+              value={stats.xpToday || "0 XP"}
+              iconColorClass="text-primary"
             />
             <StatCard
               icon="local_fire_department"
@@ -94,43 +102,22 @@ export const DashboardPage: React.FC = () => {
               iconColorClass="text-primary"
             />
             <StatCard
-              label="Status Belajar"
-              value={stats.level}
-              customProgress={
-                <div className="relative w-16 h-16 flex items-center justify-center">
-                  <svg className="w-full h-full -rotate-90">
-                    <circle
-                      className="text-surface-container-high"
-                      cx="32"
-                      cy="32"
-                      fill="transparent"
-                      r="28"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <circle
-                      className="text-tertiary transition-all duration-1000"
-                      cx="32"
-                      cy="32"
-                      fill="transparent"
-                      r="28"
-                      stroke="currentColor"
-                      strokeDasharray="175"
-                      strokeDashoffset={175 - (175 * stats.levelProgress) / 100}
-                      strokeWidth="4"
-                    ></circle>
-                  </svg>
-                  <span className="absolute font-bold text-caption text-on-surface">
-                    {stats.levelProgress}%
-                  </span>
-                </div>
-              }
-            />
-            <StatCard
               icon="calendar_today"
               title="Sepanjang Waktu"
               label="Total Hari Belajar"
               value={stats.totalDays}
+              iconColorClass="text-secondary"
+            />
+            <StatCard
+              icon="draw"
+              label="Penguasaan Menulis"
+              value={stats.masteryWriting || "0%"}
+              iconColorClass="text-secondary"
+            />
+            <StatCard
+              icon="layers"
+              label="Kemajuan Modul"
+              value={stats.masteryVocabulary || "0%"}
               iconColorClass="text-secondary"
             />
           </div>
@@ -142,32 +129,57 @@ export const DashboardPage: React.FC = () => {
               {/* Weekly Activity chart */}
               <WeeklyActivity data={weeklyActivity} />
 
-              {/* Recommended Jukugo */}
-              <div className="flex flex-col gap-base">
-                <div className="flex justify-between items-center px-base">
-                  <h3 className="font-headline-md text-secondary font-semibold">
-                    Rekomendasi Jukugo
+              {/* Recent Activities */}
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+                <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+                  <h3 className="font-headline-md text-secondary font-semibold flex items-center gap-2">
+                    <Icon name="history" className="text-primary text-xl" />
+                    Aktivitas Belajar Terbaru
                   </h3>
-                  <span
-                    onClick={() => navigate("/module")}
-                    className="text-label-md text-primary font-bold hover:underline cursor-pointer"
-                  >
-                    Lihat Semua
-                  </span>
                 </div>
 
-                {/* Horizontal Scroll list */}
-                <div className="flex gap-md overflow-x-auto no-scrollbar pb-md px-base">
-                  {recommendedJukugo.map((item: any, idx: number) => (
-                    <JukugoCard
-                      key={idx}
-                      kanji={item.kanji}
-                      romaji={item.romaji}
-                      meaning={item.meaning}
-                      borderColorClass={item.border}
-                      onClick={() => navigate(`/latihan?char=${encodeURIComponent(item.kanji)}`)}
-                    />
-                  ))}
+                <div className="flex flex-col gap-3">
+                  {activities && activities.length > 0 ? (
+                    activities.map((act: any) => {
+                      let typeIcon = "school";
+                      let iconBg = "bg-primary/10 text-primary";
+                      if (act.activityType === "REVIEW") {
+                        typeIcon = "history_edu";
+                        iconBg = "bg-tertiary/10 text-tertiary";
+                      } else if (act.activityType === "ACHIEVEMENT") {
+                        typeIcon = "emoji_events";
+                        iconBg = "bg-[#d5e3ff] text-[#001c3b]";
+                      }
+
+                      return (
+                        <div key={act.id} className="flex justify-between items-center p-3 bg-surface-container-low/30 rounded-xl border border-outline-variant/10">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 ${iconBg} flex items-center justify-center rounded-lg`}>
+                              <Icon name={typeIcon} className="text-xl" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-on-surface">{act.description}</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                                {new Date(act.date).toLocaleDateString("id-ID", {
+                                  day: "numeric",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-sm font-bold text-emerald-600">
+                            +{act.xpEarned} XP
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-6 text-center text-slate-400 italic text-sm">
+                      Belum ada aktivitas belajar tercatat untuk hari ini.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -180,6 +192,9 @@ export const DashboardPage: React.FC = () => {
                 category={continueLearning.category}
                 progressPercent={continueLearning.progressPercent}
                 level={continueLearning.level}
+                nextKanji={continueLearning.nextKanji}
+                nextKanjiRomaji={continueLearning.nextKanjiRomaji}
+                nextKanjiMeaning={continueLearning.nextKanjiMeaning}
               />
 
               {/* Daily insight quote card */}

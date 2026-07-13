@@ -61,7 +61,8 @@ const parseSvgPath = (d: string): Point[] => {
 
   for (const cmd of commands) {
     const type = cmd[0];
-    const args = cmd.slice(1).trim().split(/[\s,]+/).filter(x => x).map(Number);
+    const argsMatch = cmd.slice(1).match(/[-+]?[0-9]*\.?[0-9]+/g);
+    const args = argsMatch ? argsMatch.map(Number) : [];
 
     switch (type.toUpperCase()) {
       case "M":

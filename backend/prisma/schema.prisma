@@ -77,6 +77,7 @@ model Kanji {
   graphEdges     KanjiGraphEdge[]
   etymologies    Etymology[]
   jukugos        Jukugo[]
+  quizData       String?             // JSON serialized custom quiz questions
 }
 
 model UserKanjiProgress {
@@ -85,6 +86,9 @@ model UserKanjiProgress {
   kanjiId        Int
   kanji          Kanji    @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
   masteryPercent Int      @default(0)
+  writingPercent Int      @default(0)
+  readingPercent Int      @default(0)
+  quizPercent    Int      @default(0)
   status         String   @default("LEARNING") // "MASTERED", "LEARNING", "REVIEW"
   mistakeCount   Int      @default(0)
   lastPracticed  DateTime @default(now())
@@ -93,12 +97,13 @@ model UserKanjiProgress {
 }
 
 model ExampleSentence {
-  id          Int    @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   kanjiId     Int
-  kanji       Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  kanji       Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
   japanese    String
   romaji      String
   translation String
+  isReading   Boolean @default(false)
 }
 
 

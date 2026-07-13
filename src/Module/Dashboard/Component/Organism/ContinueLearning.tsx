@@ -7,9 +7,19 @@ interface ContinueLearningProps {
   category?: string;
   progressPercent?: number;
   level?: string;
+  nextKanji?: string;
+  nextKanjiRomaji?: string;
+  nextKanjiMeaning?: string;
 }
 
-export const ContinueLearning: React.FC<ContinueLearningProps> = ({ moduleTitle, category, progressPercent }) => {
+export const ContinueLearning: React.FC<ContinueLearningProps> = ({ 
+  moduleTitle, 
+  category, 
+  progressPercent,
+  nextKanji = "学",
+  nextKanjiRomaji = "Gaku",
+  nextKanjiMeaning = "Belajar, Pembelajaran, Ilmu"
+}) => {
   const navigate = useNavigate();
 
   return (
@@ -17,17 +27,17 @@ export const ContinueLearning: React.FC<ContinueLearningProps> = ({ moduleTitle,
       <h3 className="font-headline-md text-secondary font-semibold">Lanjutkan Belajar</h3>
       
       {/* Main Study Card */}
-      <div onClick={() => navigate("/latihan")} className="relative group cursor-pointer">
+      <div onClick={() => navigate(nextKanji !== "学" ? `/latihan?char=${encodeURIComponent(nextKanji)}` : "/latihan")} className="relative group cursor-pointer">
         <div className="bg-surface border border-outline-variant/50 rounded-xl p-xl flex flex-col items-center justify-center gap-md transition-all group-hover:border-primary">
           <span className="absolute top-4 right-4 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
             Baru
           </span>
           <div className="font-display-kanji text-[80px] text-on-surface group-hover:text-primary transition-colors select-none leading-none">
-            学
+            {nextKanji}
           </div>
           <div className="text-center">
-            <p className="font-headline-md font-semibold text-on-surface">Gaku</p>
-            <p className="text-on-surface-variant font-label-md">Belajar, Pembelajaran, Ilmu</p>
+            <p className="font-headline-md font-semibold text-on-surface">{nextKanjiRomaji}</p>
+            <p className="text-on-surface-variant font-label-md">{nextKanjiMeaning}</p>
           </div>
         </div>
         <div className="absolute -bottom-2 -right-2 w-full h-full bg-primary/5 -z-10 rounded-xl"></div>

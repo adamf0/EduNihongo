@@ -96,6 +96,22 @@ export const api = {
         body: JSON.stringify({ character, accuracy }),
       });
       return handleResponse(res);
+    },
+    verifyReading: async (character: string, readingPercent: number) => {
+      const res = await fetch(`${BASE_URL}/latihan/verify-reading`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ character, readingPercent }),
+      });
+      return handleResponse(res);
+    },
+    verifyQuiz: async (character: string, quizPercent: number) => {
+      const res = await fetch(`${BASE_URL}/latihan/verify-quiz`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ character, quizPercent }),
+      });
+      return handleResponse(res);
     }
   },
   progress: {

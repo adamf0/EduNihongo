@@ -112,6 +112,7 @@ export const getKanjis = async (req: Request, res: Response) => {
         graphEdges: true,
         module: true,
         jukugos: true,
+        etymologies: true,
       },
       orderBy: { id: "asc" },
     });
@@ -136,6 +137,8 @@ export const createKanji = async (req: Request, res: Response) => {
       jukugos,
       graphNodes,
       graphEdges,
+      etymologies,
+      quizData,
     } = body;
 
     if (!character || !romaji || !meaning) {
@@ -157,6 +160,7 @@ export const createKanji = async (req: Request, res: Response) => {
         isJukugo: !!isJukugo,
         border: border || null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
+        quizData: quizData || null,
       },
     });
 
@@ -168,6 +172,7 @@ export const createKanji = async (req: Request, res: Response) => {
           japanese: ex.japanese || "",
           romaji: ex.romaji || "",
           translation: ex.translation || "",
+          isReading: !!ex.isReading,
         })),
       });
     }
@@ -180,6 +185,18 @@ export const createKanji = async (req: Request, res: Response) => {
           word: j.word || "",
           reading: j.reading || "",
           meaning: j.meaning || "",
+        })),
+      });
+    }
+
+    // Create Etymologies
+    if (Array.isArray(etymologies) && etymologies.length > 0) {
+      await prisma.etymology.createMany({
+        data: etymologies.map((et: any) => ({
+          kanjiId: kanji.id,
+          character: et.character || "",
+          romaji: et.romaji || "",
+          detail: et.detail || "",
         })),
       });
     }
@@ -249,6 +266,8 @@ export const updateKanji = async (req: Request, res: Response) => {
       jukugos,
       graphNodes,
       graphEdges,
+      etymologies,
+      quizData,
     } = body;
 
     if (!character || !romaji || !meaning) {
@@ -265,6 +284,7 @@ export const updateKanji = async (req: Request, res: Response) => {
         isJukugo: !!isJukugo,
         border: border || null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
+        quizData: quizData || null,
       },
     });
 
@@ -277,6 +297,7 @@ export const updateKanji = async (req: Request, res: Response) => {
           japanese: ex.japanese || "",
           romaji: ex.romaji || "",
           translation: ex.translation || "",
+          isReading: !!ex.isReading,
         })),
       });
     }
@@ -290,6 +311,19 @@ export const updateKanji = async (req: Request, res: Response) => {
           word: j.word || "",
           reading: j.reading || "",
           meaning: j.meaning || "",
+        })),
+      });
+    }
+
+    // Update Etymologies: Delete and Re-create
+    await prisma.etymology.deleteMany({ where: { kanjiId } });
+    if (Array.isArray(etymologies) && etymologies.length > 0) {
+      await prisma.etymology.createMany({
+        data: etymologies.map((et: any) => ({
+          kanjiId,
+          character: et.character || "",
+          romaji: et.romaji || "",
+          detail: et.detail || "",
         })),
       });
     }
@@ -341,6 +375,7 @@ export const deleteKanji = async (req: Request, res: Response) => {
     await prisma.exampleSentence.deleteMany({ where: { kanjiId } });
     await prisma.kanjiGraphNode.deleteMany({ where: { kanjiId } });
     await prisma.kanjiGraphEdge.deleteMany({ where: { kanjiId } });
+    await prisma.etymology.deleteMany({ where: { kanjiId } });
 
     await prisma.kanji.delete({
       where: { id: kanjiId },

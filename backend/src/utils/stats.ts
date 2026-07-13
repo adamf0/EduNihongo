@@ -55,38 +55,26 @@ export const calculateUserStats = async (userId: number) => {
   });
   const totalXp = xpSum._sum.xpEarned || 0;
 
-  // 3. Calculate Mastery Writing (Kanjis with masteryPercent >= 75)
-  const totalKanjis = await prisma.kanji.count();
-  const passedKanjis = await prisma.userKanjiProgress.count({
-    where: {
-      userId,
-      masteryPercent: { gte: 75 },
-    },
+  // 3. Calculate Mastery Writing: average writingPercent across all kanjis user has practiced
+  const writingAgg = await prisma.userKanjiProgress.aggregate({
+    where: { userId },
+    _avg: { writingPercent: true },
+    _count: { _all: true },
   });
-  const masteryWriting = totalKanjis > 0 ? Math.round((passedKanjis / totalKanjis) * 100) : 0;
-
-  // 4. Calculate Mastery Vocabulary (unlocked modules percentage)
+  const masteryWriting = (writingAgg._count?._all ?? 0) > 0
+    ? Math.round(writingAgg._avg?.writingPercent ?? 0)
+    : 0;
+  
+  // 4. Calculate Kemajuan Modul: average progressPercent across all user's module progress rows
   const modulesProgress = await prisma.userModuleProgress.findMany({
     where: { userId },
     orderBy: { moduleId: "asc" },
   });
 
-  let unlockedCount = 0;
-  if (modulesProgress.length > 0) {
-    // Index 0 is always unlocked
-    unlockedCount = 1;
-    for (let i = 1; i < modulesProgress.length; i++) {
-      const prev = modulesProgress[i - 1];
-      const isPrevCompleted = prev.progressPercent === 100 || prev.isCompleted;
-      if (isPrevCompleted) {
-        unlockedCount++;
-      } else {
-        break; // Once we hit a locked module, the rest are locked
-      }
-    }
-  }
   const masteryVocabulary = modulesProgress.length > 0
-    ? Math.round((unlockedCount / modulesProgress.length) * 100)
+    ? Math.round(
+        modulesProgress.reduce((sum, m) => sum + m.progressPercent, 0) / modulesProgress.length
+      )
     : 0;
 
   // Update the user table record as a cache (optional but keeps DB record accurate)

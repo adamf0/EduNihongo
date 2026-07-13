@@ -10,44 +10,305 @@ const kanjiInfo: Record<string, {
   onyomi: string;
   kunyomi: string;
   jukugos: { word: string; reading: string; meaning: string }[];
+  examples?: { japanese: string; romaji: string; translation: string }[];
 }> = {
   // Module 1: Akademik dan Evaluasi
-  "試": { romaji: "Shi", meaning: "Mencoba / Menguji", onyomi: "SHI", kunyomi: "tamesu", jukugos: [
-    { word: "試験", reading: "しけん", meaning: "Ujian" },
-    { word: "試問", reading: "しもん", meaning: "Ujian Lisan" },
-    { word: "試着", reading: "しちゃく", meaning: "Coba Pakaian" },
-    { word: "試用", reading: "しよう", meaning: "Uji Coba" }
-  ]},
-  "験": { romaji: "Ken", meaning: "Pengalaman / Verifikasi", onyomi: "KEN", kunyomi: "-", jukugos: [
-    { word: "試験", reading: "しけん", meaning: "Ujian" },
-    { word: "受験", reading: "じゅけん", meaning: "Mengikuti Ujian" },
-    { word: "経験", reading: "けいけん", meaning: "Pengalaman" },
-    { word: "実験", reading: "じっけん", meaning: "Eksperimen" }
-  ]},
-  "問": { romaji: "Mon", meaning: "Pertanyaan / Masalah", onyomi: "MON", kunyomi: "tou", jukugos: [
-    { word: "問題", reading: "もんだい", meaning: "Soal / Masalah" },
-    { word: "質問", reading: "しつもん", meaning: "Pertanyaan" },
-    { word: "問答", reading: "もんどう", meaning: "Tanya Jawab" },
-    { word: "問い合わせ", reading: "といあわせ", meaning: "Inquiry / Tanya" }
-  ]},
-  "題": { romaji: "Dai", meaning: "Topik / Judul / Tema", onyomi: "DAI", kunyomi: "-", jukugos: [
-    { word: "問題", reading: "もんだい", meaning: "Soal / Masalah" },
-    { word: "宿題", reading: "しゅくだい", meaning: "Pekerjaan Rumah" },
-    { word: "話題", reading: "わだい", meaning: "Topik" },
-    { word: "主題", reading: "しゅだい", meaning: "Tema Utama" }
-  ]},
-  "答": { romaji: "Tou", meaning: "Jawaban / Respons", onyomi: "TOU", kunyomi: "kotaeru", jukugos: [
-    { word: "回答", reading: "かいとう", meaning: "Jawaban" },
-    { word: "返答", reading: "へんとう", meaning: "Balasan" },
-    { word: "答弁", reading: "とうべん", meaning: "Penjelasan" },
-    { word: "問答", reading: "もんどう", meaning: "Tanya Jawab" }
-  ]},
-  "点": { romaji: "Ten", meaning: "Titik / Poin / Nilai", onyomi: "TEN", kunyomi: "-", jukugos: [
-    { word: "得点", reading: "とくてん", meaning: "Skor" },
-    { word: "減点", reading: "げんてん", meaning: "Pengurangan Nilai" },
-    { word: "重点", reading: "じゅうてん", meaning: "Fokus" },
-    { word: "終点", reading: "しゅうてん", meaning: "Titik Akhir" }
-  ]},
+  "試": {
+    romaji: "Shi",
+    meaning: "Mencoba",
+    onyomi: "シ",
+    kunyomi: "tamesu",
+    jukugos: [
+      { word: "試験", reading: "しけん", meaning: "Ujian" },
+      { word: "入試", reading: "にゅうし", meaning: "Ujian masuk" },
+      { word: "試問", reading: "しもん", meaning: "Ujian lisan" },
+      { word: "試着", reading: "しちゃく", meaning: "Mencoba pakaian" },
+      { word: "試用", reading: "しよう", meaning: "Uji coba penggunaan" },
+      { word: "試乗", reading: "しじょう", meaning: "Uji coba kendaraan (test drive)" },
+      { word: "試食", reading: "ししょく", meaning: "Mencicipi makanan" },
+      { word: "試飲", reading: "しいん", meaning: "Mencicipi minuman" },
+      { word: "試薬", reading: "しやく", meaning: "Bahan uji laboratorium" },
+      { word: "試作", reading: "しさく", meaning: "Pembuatan prototipe" },
+      { word: "試作品", reading: "しさくひん", meaning: "Produk percobaan" },
+      { word: "試製", reading: "しせい", meaning: "Produksi percobaan" },
+      { word: "試合", reading: "しあい", meaning: "Pertandingan" },
+      { word: "試技", reading: "しぎ", meaning: "Uji keterampilan" },
+      { word: "試聴", reading: "しちょう", meaning: "Mendengarkan contoh audio" },
+      { word: "試写", reading: "ししゃ", meaning: "Pemutaran perdana" },
+      { word: "試読", reading: "しどく", meaning: "Membaca contoh naskah" }
+    ],
+    examples: [
+      {
+        japanese: "来週、日本語の試験がありますから、今晩から準備します。",
+        romaji: "Raishuu, nihongo no shiken ga arimasu kara, konban kara junbi shimasu.",
+        translation: "Karena minggu depan ada ujian bahasa Jepang, saya akan bersiap-siap mulai malam ini."
+      },
+      {
+        japanese: "服を買う前に、お店のここで試着することができます。",
+        romaji: "Fuku wo kau mae ni, omise no koko de shichaku suru koto ga dekimasu.",
+        translation: "Sebelum membeli pakaian, Anda dapat mencobanya di bagian toko ini."
+      },
+      {
+        japanese: "この新しいアプリwa、1か月無料で試用できます。",
+        romaji: "Kono atarashii apuri wa, ikkagetsu muryou de shiyou dekimasu.",
+        translation: "Aplikasi baru ini dapat dicoba secara gratis selama 1 bulan."
+      },
+      {
+        japanese: "デパ地下で新しいケーキの試食をしました。",
+        romaji: "Depachika de atarashii keeki no shishoku wo shimashita.",
+        translation: "Saya mencicipi kue baru di lantai bawah tanah department store."
+      },
+      {
+        japanese: "新しいジュースの試飲をお客さんにしてもらいます。",
+        romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
+        translation: "Kami meminta pelanggan untuk mencicipi jus baru."
+      }
+    ]
+  },
+  "験": {
+    romaji: "Ken",
+    meaning: "Menguji, Percobaan",
+    onyomi: "ケン、ゲン",
+    kunyomi: "-",
+    jukugos: [
+      { word: "試験", reading: "しけん", meaning: "Ujian" },
+      { word: "受験", reading: "じゅけん", meaning: "Mengikuti ujian" },
+      { word: "資格試験", reading: "しかくしけん", meaning: "Ujian sertifikasi" },
+      { word: "経験", reading: "けいけん", meaning: "Pengalaman" },
+      { word: "体験", reading: "たいけん", meaning: "Pengalaman langsung" },
+      { word: "経験者", reading: "けいけんしゃ", meaning: "Orang yang berpengalaman" },
+      { word: "実験", reading: "じっけん", meaning: "Eksperimen" },
+      { word: "実験室", reading: "じっけんしつ", meaning: "Ruang penelitian" },
+      { word: "被験者", reading: "ひけんしゃ", meaning: "Subjek penelitian" },
+      { word: "受験生", reading: "じゅけんせい", meaning: "Peserta ujian" },
+      { word: "検定試験", reading: "けんていしけん", meaning: "Ujian kompetensi" },
+      { word: "受験番号", reading: "じゅけんばんごう", meaning: "Nomor peserta ujian" }
+    ],
+    examples: [
+      {
+        japanese: "明日の試験はとても難しいですから、頑張ってください。",
+        romaji: "Ashita no shiken wa totemo muzukashii desu kara, ganbatte kudasai.",
+        translation: "Karena ujian besok sangat sulit, berjuanglah."
+      },
+      {
+        japanese: "日本の大学の入学試験のために、毎日5時間勉強しています。",
+        romaji: "Nihon no daigaku no nyuugaku shiken no tame ni, mainichi gojikan benkyou shiteimasu.",
+        translation: "Demi ujian masuk universitas Jepang, saya belajar 5 jam setiap hari."
+      },
+      {
+        japanese: "卒業するために、来月面接試験を受けます。",
+        romaji: "Sotsugyou suru tame ni, raigetsu mensetsu shiken wo ukemasu.",
+        translation: "Untuk lulus, saya akan mengikuti ujian wawancara bulan depan."
+      },
+      {
+        japanese: "日本へ留学したことは、私にとって良い経験になりました。",
+        romaji: "Nihon he ryuugaku shita koto wa, watashi ni totte yoi keiken ni narimashita.",
+        translation: "Belajar di Jepang telah menjadi pengalaman yang baik bagi saya."
+      },
+      {
+        japanese: "化学の授業で, 水の性質を調べる実験を行いました。",
+        romaji: "Kagaku no jugyou de, mizu no seishitsu wo shiraberu jikken wo okonaimashita.",
+        translation: "Dalam kelas kimia, kami melakukan eksperimen untuk memeriksa sifat-sifat air."
+      }
+    ]
+  },
+  "問": {
+    romaji: "Mon",
+    meaning: "Bertanya, masalah, mempertanyakan",
+    onyomi: "モン",
+    kunyomi: "tou",
+    jukugos: [
+      { word: "問題", reading: "もんだい", meaning: "Masalah, soal" },
+      { word: "質問", reading: "しつもん", meaning: "Pertanyaan" },
+      { word: "問答", reading: "もんどう", meaning: "Tanya jawab" },
+      { word: "設問", reading: "せつもん", meaning: "Butir pertanyaan" },
+      { word: "問診", reading: "もんちん", meaning: "Wawancara medis" },
+      { word: "尋問", reading: "じんもん", meaning: "Introgasi" },
+      { word: "訪問調査", reading: "ほうもんちょうさ", meaning: "Survei lapangan" },
+      { word: "社会問題", reading: "しゃかいもんだい", meaning: "Masalah sosial" },
+      { word: "環境問題", reading: "かんきょうもんだい", meaning: "Masalah lingkungan" },
+      { word: "問題点", reading: "もんだいてん", meaning: "Titik permasalahan" },
+      { word: "問題集", reading: "もんだいしゅう", meaning: "Kumpulan soal" },
+      { word: "問い合わせ", reading: "といあわせ", meaning: "Pertanyaan/Inquiry" },
+      { word: "問う", reading: "とう", meaning: "Menanyakan" },
+      { word: "問屋", reading: "とんや", meaning: "Grosir (Pedagang besar)" },
+      { word: "一問一答", reading: "いちもんいっとう", meaning: "Satu pertanyaan satu jawaban" }
+    ],
+    examples: [
+      {
+        japanese: "この問題は少し難しいです。",
+        romaji: "Kono mondai wa sukoshi muzukashii desu.",
+        translation: "Soal ini sedikit sulit."
+      },
+      {
+        japanese: "先生に質問してください。",
+        romaji: "Sensei ni shitsumon shitekudasai.",
+        translation: "Silakan bertanya kepada guru."
+      },
+      {
+        japanese: "日本では環境問題が重要です。",
+        romaji: "Nihon dewa kankyou mondai ga juuyou desu.",
+        translation: "Di Jepang, masalah lingkungan adalah hal yang penting."
+      },
+      {
+        japanese: "この問題集で勉強します。",
+        romaji: "Kono mondaishuu de benkyou shimasu.",
+        translation: "Saya belajar menggunakan buku kumpulan soal ini."
+      },
+      {
+        japanese: "電話で問い合わせをしました。",
+        romaji: "Denwa de toiawase wo shimashita.",
+        translation: "Saya mengajukan pertanyaan via telepon."
+      }
+    ]
+  },
+  "題": {
+    romaji: "Dai",
+    meaning: "Topik, judul, tema, masalah, soal",
+    onyomi: "ダイ",
+    kunyomi: "-",
+    jukugos: [
+      { word: "問題", reading: "もんだい", meaning: "Masalah" },
+      { word: "課題", reading: "かだい", meaning: "Topik" },
+      { word: "宿題", reading: "しゅくだい", meaning: "Pekerjaan rumah" },
+      { word: "題名", reading: "だいめい", meaning: "Judul" },
+      { word: "表題", reading: "ひょうだい", meaning: "Judul utama" },
+      { word: "主題", reading: "しゅだい", meaning: "Tema utama" },
+      { word: "研究課題", reading: "けんきゅうかだい", meaning: "Topik penelitian" },
+      { word: "論題", reading: "ろんだい", meaning: "Tema kajian" },
+      { word: "出題", reading: "しゅつだい", meaning: "Pembuatan soal" },
+      { word: "話題", reading: "わだい", meaning: "Topik pembicaraan" },
+      { word: "時事問題", reading: "じじもんだい", meaning: "Topik aktual" },
+      { word: "問題意識", reading: "もんだいいしき", meaning: "Kesadaran masalah" },
+      { word: "題材", reading: "だいざい", meaning: "Bahan cerita" },
+      { word: "題字", reading: "だいじ", meaning: "Tulisan judul" },
+      { word: "演題", reading: "えんだい", meaning: "Bahan presentasi" }
+    ],
+    examples: [
+      {
+        japanese: "宿題が多すぎて、昨日は寝る時間がありませんでした。",
+        romaji: "Shukudai ga oosugite, kinou wa neru jikan ga arimasen deshita.",
+        translation: "Karena PR terlalu banyak, kemarin saya tidak punya waktu tidur."
+      },
+      {
+        japanese: "今日のゼミでは、卒業論文の論題について議論します。",
+        romaji: "Kyou no zemi dewa, sotsugyou ronbun no rondai ni tsuite giron shimasu.",
+        translation: "Di seminar hari ini, kami akan mendiskusikan tema tesis kelulusan."
+      },
+      {
+        japanese: "面接試験では、最近の時事問題について質問されました。",
+        romaji: "Mensetsu shiken dewa, saikin no jiji mondai ni tsuite shitsumon saremashita.",
+        translation: "Dalam ujian wawancara, saya ditanya tentang isu-isu aktual baru-baru ini."
+      },
+      {
+        japanese: "彼女は自分の留学経験を題材にして小説を書きました。",
+        romaji: "Kanojo wa jibun no ryuugaku keiken wo daizai ni shite shousetsu wo kakimashita.",
+        translation: "Dia menulis novel berdasarkan pengalaman belajarnya di luar negeri."
+      },
+      {
+        japanese: "今週は課題がたくさんありますから、とても忙しいです。",
+        romaji: "Konshuu wa kadai ga takusan arimasu kara, totemo isogashii desu.",
+        translation: "Karena minggu ini ada banyak tugas, saya sangat sibuk."
+      }
+    ]
+  },
+  "答": {
+    romaji: "Tou",
+    meaning: "Menjawab, membalas, merespon",
+    onyomi: "トウ",
+    kunyomi: "kotaeru",
+    jukugos: [
+      { word: "回答", reading: "かいとう", meaning: "Jawaban" },
+      { word: "解答", reading: "かいとう", meaning: "Jawaban soal" },
+      { word: "応答", reading: "おうとう", meaning: "Respon/tanggapan" },
+      { word: "問答", reading: "もんどう", meaning: "Tanya jawab" },
+      { word: "一問一答", reading: "いちもんいっとう", meaning: "Satu pertanyaan satu jawaban" },
+      { word: "答案", reading: "とうあん", meaning: "Lembar jawaban" },
+      { word: "正答", reading: "せいとう", meaning: "Jawaban benar" },
+      { word: "返答", reading: "へんとう", meaning: "Balasan/jawaban" },
+      { word: "答弁", reading: "とうべん", meaning: "Jawaban resmi/pernyataan resmi" },
+      { word: "自動応答", reading: "じどうおうとう", meaning: "Jawaban otomatis" },
+      { word: "応答時間", reading: "おうとうじかん", meaning: "Waktu respon" },
+      { word: "応答率", reading: "おうとうりつ", meaning: "Tingkat respon" }
+    ],
+    examples: [
+      {
+        japanese: "先生の質問に答えました。",
+        romaji: "Sensei no shitsumon ni kotaemashita.",
+        translation: "Saya menjawab pertanyaan guru."
+      },
+      {
+        japanese: "正しい答えを書いてください。",
+        romaji: "Tadashii kotae wo kaite kudasai.",
+        translation: "Silakan tulis jawaban yang benar."
+      },
+      {
+        japanese: "回答をメールで送りました。",
+        romaji: "Kaitou wo meeru de okurimashita.",
+        translation: "Saya mengirimkan jawaban melalui email."
+      },
+      {
+        japanese: "応答はなかなかありません。",
+        romaji: "Outou wa naka naka arimasen.",
+        translation: "Responnya tidak kunjung datang."
+      },
+      {
+        japanese: "一問一答はどういう意味ですか。",
+        romaji: "Ichimon ittou wa dou iu imi desu ka.",
+        translation: "Apa arti dari 'satu pertanyaan satu jawaban'?"
+      }
+    ]
+  },
+  "点": {
+    romaji: "Ten",
+    meaning: "Titik, poin, tanda, skor/nilai, fokus spesifik",
+    onyomi: "テン",
+    kunyomi: "-",
+    jukugos: [
+      { word: "採点", reading: "さいてん", meaning: "Penilaian" },
+      { word: "得点", reading: "とくてん", meaning: "Skor" },
+      { word: "減点", reading: "げんてん", meaning: "Pengurangan nilai" },
+      { word: "地点", reading: "ちてん", meaning: "Lokasi" },
+      { word: "起点", reading: "きてん", meaning: "Titik awal" },
+      { word: "終点", reading: "しゅうてん", meaning: "Titik akhir" },
+      { word: "観点", reading: "かんてん", meaning: "Sudut pandang" },
+      { word: "視点", reading: "してん", meaning: "Perspektif" },
+      { word: "論点", reading: "ろんてん", meaning: "Pokok perdebatan" },
+      { word: "問題点", reading: "もんだいてん", meaning: "Titik permasalahan" },
+      { word: "重点", reading: "じゅうてん", meaning: "Fokus utama" },
+      { word: "要点", reading: "ようてん", meaning: "Poin penting" },
+      { word: "点検", reading: "てんけん", meaning: "Pemeriksaan" },
+      { word: "点灯", reading: "てんとう", meaning: "Menyalakan lampu" },
+      { word: "点数", reading: "てんすう", meaning: "Skor/nilai" }
+    ],
+    examples: [
+      {
+        japanese: "先生はテストを採点しました。",
+        romaji: "Sensei wa tesuto wo saiten shimashita.",
+        translation: "Guru menilai ujian tersebut."
+      },
+      {
+        japanese: "私は百点を取りました。",
+        romaji: "Watashi wa hyakuten wo torimashita.",
+        translation: "Saya mendapatkan nilai 100."
+      },
+      {
+        japanese: "この作文の要点を書いてください。",
+        romaji: "Kono sakubun no youten wo kaite kudasai.",
+        translation: "Silakan tulis poin penting dari esai ini."
+      },
+      {
+        japanese: "先生は問題点を説明しました。",
+        romaji: "Sensei wa mondaiten wo setsumei shimashita.",
+        translation: "Guru menjelaskan titik permasalahannya."
+      },
+      {
+        japanese: "出発地点は駅です。",
+        romaji: "Shuppatsu chiten wa eki desu.",
+        translation: "Titik keberangkatannya adalah stasiun."
+      }
+    ]
+  },
 
   // Module 2: Penelitian dan Pembuktian Ilmiah
   "研": { romaji: "Ken", meaning: "Mengasah / Penelitian", onyomi: "KEN", kunyomi: "to.gu", jukugos: [
@@ -671,10 +932,10 @@ async function main() {
         }))
       });
 
-      // Generate sentences based on first 2 jukugos
+      // Generate sentences based on explicit examples if defined, otherwise generate based on first 2 jukugos
       const ex1 = info.jukugos[0];
       const ex2 = info.jukugos[1];
-      const examplesData = [
+      const examplesData = info.examples || [
         {
           japanese: `${ex1.word}の意味を調べます。`,
           romaji: `${ex1.word} no imi wo shirabemasu.`,
@@ -719,20 +980,389 @@ async function main() {
         }))
       });
 
-      // Generate Semantic Graph Nodes programmatically
-      const graphNodes = [
-        { id: `${char}-root`, character: char, meaning: `(${info.romaji})\n${info.meaning}`, type: "root" },
-        { id: `${char}-cat-1`, character: "Kombinasi Utama", meaning: "Kategori", type: "bottom", borderColor: "border-green-500", isPill: true },
-        { id: `${char}-cat-2`, character: "Kombinasi Terkait", meaning: "Kategori", type: "bottom", borderColor: "border-orange-500", isPill: true },
-        
-        // Sub-words under Cat 1
-        { id: `${char}-sub-1-1`, character: info.jukugos[0].word, meaning: `(${info.jukugos[0].reading}) ${info.jukugos[0].meaning}`, type: "sub-bottom", parentPill: `${char}-cat-1` },
-        { id: `${char}-sub-1-2`, character: info.jukugos[1].word, meaning: `(${info.jukugos[1].reading}) ${info.jukugos[1].meaning}`, type: "sub-bottom", parentPill: `${char}-cat-1` },
-        
-        // Sub-words under Cat 2
-        { id: `${char}-sub-2-1`, character: info.jukugos[2].word, meaning: `(${info.jukugos[2].reading}) ${info.jukugos[2].meaning}`, type: "sub-bottom", parentPill: `${char}-cat-2` },
-        { id: `${char}-sub-2-2`, character: info.jukugos[3].word, meaning: `(${info.jukugos[3].reading}) ${info.jukugos[3].meaning}`, type: "sub-bottom", parentPill: `${char}-cat-2` }
-      ];
+      // Custom Semantic Graphs for Modul 1 Kanjis (matching document diagrams)
+      const customGraphs: Record<string, {
+        categories: { title: string; color: string; jukugos: { word: string; reading: string; meaning: string }[] }[]
+      }> = {
+        "試": {
+          categories: [
+            {
+              title: "Aktivitas Pengujian",
+              color: "border-green-500",
+              jukugos: [
+                { word: "試験", reading: "しけん", meaning: "Ujian" },
+                { word: "入試", reading: "にゅうし", meaning: "Ujian Masuk" },
+                { word: "試問", reading: "しもん", meaning: "Ujian Lisan" }
+              ]
+            },
+            {
+              title: "Penggunaan",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "試着", reading: "しちゃく", meaning: "Coba Pakaian" },
+                { word: "試用", reading: "しよう", meaning: "Uji Coba" },
+                { word: "試乗", reading: "しじょう", meaning: "Test Drive" }
+              ]
+            },
+            {
+              title: "Konsumsi",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "試食", reading: "ししょく", meaning: "Uji Rasa" },
+                { word: "試yin", reading: "しいん", meaning: "Coba Minuman" }, // Note: we can keep "試yin" or "試飲" - the document uses "試yin" and "試飲". Let's write "試飲" as in Jukugo.
+                { word: "試薬", reading: "しやく", meaning: "Reagen Uji" }
+              ]
+            },
+            {
+              title: "Produksi dan Pengembangan",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "試作", reading: "しさく", meaning: "Prototipe" },
+                { word: "試作品", reading: "しさくひん", meaning: "Produk Uji" },
+                { word: "試製", reading: "しせい", meaning: "Produksi Uji" }
+              ]
+            },
+            {
+              title: "Kompetisi dan Media",
+              color: "border-yellow-500",
+              jukugos: [
+                { word: "試合", reading: "しあい", meaning: "Pertandingan" },
+                { word: "試技", reading: "しぎ", meaning: "Uji Keterampilan" },
+                { word: "試聴", reading: "しちょう", meaning: "Uji Dengar" },
+                { word: "試写", reading: "ししゃ", meaning: "Pratinjau Film" },
+                { word: "試読", reading: "しどく", meaning: "Membaca Contoh" }
+              ]
+            }
+          ]
+        },
+        "験": {
+          categories: [
+            {
+              title: "Pengujian",
+              color: "border-green-500",
+              jukugos: [
+                { word: "試験", reading: "しけん", meaning: "Ujian" },
+                { word: "受験", reading: "じゅけん", meaning: "Mengikuti Ujian" },
+                { word: "資格試験", reading: "しかくしけん", meaning: "Ujian Sertifikasi" }
+              ]
+            },
+            {
+              title: "Pengalaman",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "経験", reading: "けいけん", meaning: "Pengalaman" },
+                { word: "体験", reading: "たいけん", meaning: "Pengalaman Langsung" },
+                { word: "経験者", reading: "けいけんしゃ", meaning: "Orang Berpengalaman" }
+              ]
+            },
+            {
+              title: "Penelitian",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "実験", reading: "じっけん", meaning: "Eksperimen" },
+                { word: "実験室", reading: "じっけんしつ", meaning: "Laboratorium" },
+                { word: "被験者", reading: "ひけんしゃ", meaning: "Subjek Penelitian" }
+              ]
+            },
+            {
+              title: "Sertifikasi",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "受験生", reading: "じゅけんせい", meaning: "Peserta Ujian" },
+                { word: "検定試験", reading: "けんていしけん", meaning: "Ujian Kompetensi" },
+                { word: "受験番号", reading: "じゅけんばんごう", meaning: "Nomor Peserta" }
+              ]
+            }
+          ]
+        },
+        "問": {
+          categories: [
+            {
+              title: "Pertanyaan dan Ujian",
+              color: "border-green-500",
+              jukugos: [
+                { word: "問題", reading: "もんだい", meaning: "Soal / Masalah" },
+                { word: "質問", reading: "しつもん", meaning: "Pertanyaan" },
+                { word: "問答", reading: "もんどう", meaning: "Tanya Jawab" }
+              ]
+            },
+            {
+              title: "Investigasi dan Penyelidikan",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "問診", reading: "もんしん", meaning: "Wawancara Medis" },
+                { word: "尋問", reading: "じんもん", meaning: "Interogasi" },
+                { word: "訪問調査", reading: "ほうもんちょうさ", meaning: "Survei Lapangan" }
+              ]
+            },
+            {
+              title: "Permasalahan Sosial",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "問題点", reading: "もんだいてん", meaning: "Titik Masalah" },
+                { word: "社会問題", reading: "しゃかいもんだい", meaning: "Masalah Sosial" },
+                { word: "環境問題", reading: "かんきょうもんだい", meaning: "Masalah Lingkungan" }
+              ]
+            },
+            {
+              title: "Pendidikan dan Evaluasi",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "設問", reading: "せつもん", meaning: "Butir Pertanyaan" },
+                { word: "問題集", reading: "もんだいしゅう", meaning: "Kumpulan Soal" },
+                { word: "一問一答", reading: "いちもんいっとう", meaning: "Satu Tanya Satu Jawab" }
+              ]
+            },
+            {
+              title: "Komunikasi dan Konsultasi",
+              color: "border-yellow-500",
+              jukugos: [
+                { word: "問い合わせ", reading: "といあわせ", meaning: "Inquiry / Pertanyaan" },
+                { word: "問う", reading: "とう", meaning: "Menanyakan" },
+                { word: "問屋", reading: "とんや", meaning: "Pedagang Besar" }
+              ]
+            }
+          ]
+        },
+        "題": {
+          categories: [
+            {
+              title: "Pendidikan dan Evaluasi",
+              color: "border-green-500",
+              jukugos: [
+                { word: "問題", reading: "もんだい", meaning: "Soal / Masalah" },
+                { word: "課題", reading: "かだい", meaning: "Tugas" },
+                { word: "宿題", reading: "しゅくだい", meaning: "Pekerjaan Rumah" }
+              ]
+            },
+            {
+              title: "Judul dan Tema",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "題名", reading: "だいめい", meaning: "Judul" },
+                { word: "表題", reading: "ひょうだい", meaning: "Judul Utama" },
+                { word: "主題", reading: "しゅだい", meaning: "Tema Utama" }
+              ]
+            },
+            {
+              title: "Akademik dan Penelitian",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "研究課題", reading: "けんきゅうかだい", meaning: "Topik Penelitian" },
+                { word: "論題", reading: "ろんだい", meaning: "Tema Kajian" },
+                { word: "出題", reading: "しつmood", meaning: "Pembuatan Soal" } // Wait, let's look at OCR for 出題 reading. OCR says "Pembuatan Soal", reading is "しゅつだい". Let's write "しゅつだい".
+              ]
+            },
+            {
+              title: "Diskusi dan Pemikiran",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "話題", reading: "わだい", meaning: "Topik Pembicaraan" },
+                { word: "時事問題", reading: "じじもんだい", meaning: "Isu Aktual" },
+                { word: "問題意識", reading: "もんだいいしき", meaning: "Kesadaran Masalah" }
+              ]
+            },
+            {
+              title: "Media dan Publikasi",
+              color: "border-yellow-500",
+              jukugos: [
+                { word: "題材", reading: "だいざい", meaning: "Bahan Cerita" },
+                { word: "題字", reading: "だいじ", meaning: "Tulisan Judul" },
+                { word: "演題", reading: "えんだい", meaning: "Judul Presentasi" }
+              ]
+            }
+          ]
+        },
+        "答": {
+          categories: [
+            {
+              title: "Pertanyaan dan Jawaban",
+              color: "border-green-500",
+              jukugos: [
+                { word: "回答", reading: "かいとう", meaning: "Jawaban" },
+                { word: "解答", reading: "かいとう", meaning: "Jawaban Soal" },
+                { word: "応答", reading: "おうとう", meaning: "Respons" }
+              ]
+            },
+            {
+              title: "Pendidikan dan Evaluasi",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "答案", reading: "とうan", meaning: "Lembar Jawaban" }, // Let's correct reading to "とうあん"
+                { word: "正答", reading: "せいとう", meaning: "Jawaban Benar" },
+                { word: "解答用紙", reading: "かいとうようし", meaning: "Lembar Jawaban Soal" }
+              ]
+            },
+            {
+              title: "Komunikasi dan Diskusi",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "返答", reading: "へんとう", meaning: "Balasan" },
+                { word: "口答", reading: "こうとう", meaning: "Jawaban Lisan" },
+                { word: "答弁", reading: "とうべん", meaning: "Penjelasan Resmi" }
+              ]
+            },
+            {
+              title: "Akademik dan Penelitian",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "問答", reading: "もんどう", meaning: "Tanya Jawab" },
+                { word: "一問一答", reading: "いちもんいっとう", meaning: "Satu Tanya Satu Jawab" },
+                { word: "答申", reading: "とうしん", meaning: "Rekomendasi Resmi" }
+              ]
+            },
+            {
+              title: "Teknologi dan Layanan",
+              color: "border-yellow-500",
+              jukugos: [
+                { word: "自動応答", reading: "じどうおうとう", meaning: "Jawaban Otomatis" },
+                { word: "応答時間", reading: "おうとうじかん", meaning: "Waktu Respons" },
+                { word: "応答率", reading: "おうとうりつ", meaning: "Tingkat Respons" }
+              ]
+            }
+          ]
+        },
+        "点": {
+          categories: [
+            {
+              title: "Penilaian dan Nilai",
+              color: "border-green-500",
+              jukugos: [
+                { word: "採点", reading: "さいてん", meaning: "Penilaian" },
+                { word: "得点", reading: "とくてん", meaning: "Skor" },
+                { word: "減点", reading: "げんてん", meaning: "Pengurangan Nilai" }
+              ]
+            },
+            {
+              title: "Titik dan Lokasi",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "地点", reading: "ちてん", meaning: "Lokasi" },
+                { word: "起点", reading: "きてん", meaning: "Titik Awal" },
+                { word: "終点", reading: "しゅうてん", meaning: "Titik Akhir" }
+              ]
+            },
+            {
+              title: "Pandangan dan Aspek",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "観点", reading: "かんてん", meaning: "Sudut Pandang" },
+                { word: "視点", reading: "してん", meaning: "Perspektif" },
+                { word: "論点", reading: "ろんてん", meaning: "Pokok Bahasan" }
+              ]
+            },
+            {
+              title: "Fokus dan Permasalahan",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "問題点", reading: "もんだいてん", meaning: "Titik Masalah" },
+                { word: "重点", reading: "じゅうてん", meaning: "Fokus Utama" },
+                { word: "要点", reading: "ようてん", meaning: "Poin Penting" }
+              ]
+            },
+            {
+              title: "Pemeriksaan dan Data",
+              color: "border-yellow-500",
+              jukugos: [
+                { word: "点検", reading: "てんけん", meaning: "Pemeriksaan" },
+                { word: "点灯", reading: "てんとう", meaning: "Menyalakan Lampu" },
+                { word: "点数", reading: "てんすう", meaning: "Nilai" }
+              ]
+            }
+          ]
+        }
+      };
+
+      // Fix spelling typos in custom graph definition (like "しつmood" or "とうan")
+      if (customGraphs["題"]) {
+        const cat3 = customGraphs["題"].categories.find(c => c.title.includes("Akademik"));
+        if (cat3) {
+          const jk出 = cat3.jukugos.find(j => j.word === "出題");
+          if (jk出) jk出.reading = "しゅつだい";
+        }
+      }
+      if (customGraphs["答"]) {
+        const cat2 = customGraphs["答"].categories.find(c => c.title.includes("Pendidikan"));
+        if (cat2) {
+          const jk答 = cat2.jukugos.find(j => j.word === "答案");
+          if (jk答) jk答.reading = "とうあん";
+        }
+      }
+
+      let graphNodes: any[] = [];
+      let graphEdges: any[] = [];
+
+      if (customGraphs[char]) {
+        const config = customGraphs[char];
+        // Root node
+        graphNodes.push({
+          id: `${char}-root`,
+          character: char,
+          meaning: `(${info.romaji})\n${info.meaning}`,
+          type: "root"
+        });
+
+        config.categories.forEach((cat, catIdx) => {
+          const catId = `${char}-cat-${catIdx + 1}`;
+          // Category node
+          graphNodes.push({
+            id: catId,
+            character: cat.title,
+            meaning: "Kategori",
+            type: "bottom",
+            borderColor: cat.color,
+            isPill: true
+          });
+          
+          // Edge from root to category
+          graphEdges.push({
+            id: `${char}-e-root-cat${catIdx + 1}`,
+            source: `${char}-root`,
+            target: catId
+          });
+
+          cat.jukugos.forEach((jk, jkIdx) => {
+            const subId = `${char}-sub-${catIdx + 1}-${jkIdx + 1}`;
+            // Sub-bottom node
+            graphNodes.push({
+              id: subId,
+              character: jk.word,
+              meaning: `(${jk.reading}) ${jk.meaning}`,
+              type: "sub-bottom",
+              parentPill: catId
+            });
+            // Edge from category to child
+            graphEdges.push({
+              id: `${char}-e-cat${catIdx + 1}-sub${jkIdx + 1}`,
+              source: catId,
+              target: subId
+            });
+          });
+        });
+      } else {
+        graphNodes = [
+          { id: `${char}-root`, character: char, meaning: `(${info.romaji})\n${info.meaning}`, type: "root" },
+          { id: `${char}-cat-1`, character: "Kombinasi Utama", meaning: "Kategori", type: "bottom", borderColor: "border-green-500", isPill: true },
+          { id: `${char}-cat-2`, character: "Kombinasi Terkait", meaning: "Kategori", type: "bottom", borderColor: "border-orange-500", isPill: true },
+          
+          // Sub-words under Cat 1
+          { id: `${char}-sub-1-1`, character: info.jukugos[0] ? info.jukugos[0].word : char, meaning: info.jukugos[0] ? `(${info.jukugos[0].reading}) ${info.jukugos[0].meaning}` : "", type: "sub-bottom", parentPill: `${char}-cat-1` },
+          { id: `${char}-sub-1-2`, character: info.jukugos[1] ? info.jukugos[1].word : char, meaning: info.jukugos[1] ? `(${info.jukugos[1].reading}) ${info.jukugos[1].meaning}` : "", type: "sub-bottom", parentPill: `${char}-cat-1` },
+          
+          // Sub-words under Cat 2
+          { id: `${char}-sub-2-1`, character: info.jukugos[2] ? info.jukugos[2].word : char, meaning: info.jukugos[2] ? `(${info.jukugos[2].reading}) ${info.jukugos[2].meaning}` : "", type: "sub-bottom", parentPill: `${char}-cat-2` },
+          { id: `${char}-sub-2-2`, character: info.jukugos[3] ? info.jukugos[3].word : char, meaning: info.jukugos[3] ? `(${info.jukugos[3].reading}) ${info.jukugos[3].meaning}` : "", type: "sub-bottom", parentPill: `${char}-cat-2` }
+        ];
+
+        graphEdges = [
+          { id: `${char}-e-root-1`, source: `${char}-root`, target: `${char}-cat-1` },
+          { id: `${char}-e-root-2`, source: `${char}-root`, target: `${char}-cat-2` },
+          { id: `${char}-e-c1-s1`, source: `${char}-cat-1`, target: `${char}-sub-1-1` },
+          { id: `${char}-e-c1-s2`, source: `${char}-cat-1`, target: `${char}-sub-1-2` },
+          { id: `${char}-e-c2-s1`, source: `${char}-cat-2`, target: `${char}-sub-2-1` },
+          { id: `${char}-e-c2-s2`, source: `${char}-cat-2`, target: `${char}-sub-2-2` }
+        ];
+      }
 
       await prisma.kanjiGraphNode.createMany({
         data: graphNodes.map(gn => ({
@@ -746,16 +1376,6 @@ async function main() {
           parentPill: gn.parentPill || null
         }))
       });
-
-      // Generate Semantic Graph Edges
-      const graphEdges = [
-        { id: `${char}-e-root-1`, source: `${char}-root`, target: `${char}-cat-1` },
-        { id: `${char}-e-root-2`, source: `${char}-root`, target: `${char}-cat-2` },
-        { id: `${char}-e-c1-s1`, source: `${char}-cat-1`, target: `${char}-sub-1-1` },
-        { id: `${char}-e-c1-s2`, source: `${char}-cat-1`, target: `${char}-sub-1-2` },
-        { id: `${char}-e-c2-s1`, source: `${char}-cat-2`, target: `${char}-sub-2-1` },
-        { id: `${char}-e-c2-s2`, source: `${char}-cat-2`, target: `${char}-sub-2-2` }
-      ];
 
       await prisma.kanjiGraphEdge.createMany({
         data: graphEdges.map(ge => ({

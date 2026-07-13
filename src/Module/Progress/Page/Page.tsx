@@ -80,25 +80,42 @@ export const ProgressPage: React.FC = () => {
           </section>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-base">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-base">
             <StatCard
-              icon="menu_book"
-              label="Kanji Dikuasai"
-              value={stats.kanjiMastered}
+              icon="school"
+              label="Target Hari Ini"
+              value={stats.todayProgress || "0 / 5 Kanji"}
               iconColorClass="text-primary"
             />
             <StatCard
-              icon="draw"
-              label="Akurat Menulis"
-              value={stats.accuracy}
-              iconColorClass="text-secondary"
+              icon="stars"
+              label="XP Hari Ini"
+              value={stats.xpToday || "0 XP"}
+              iconColorClass="text-primary"
             />
             <StatCard
               icon="local_fire_department"
               label="Rantai Belajar"
               value={stats.streak}
-              borderClass="border-b-4 border-primary"
               iconColorClass="text-primary"
+            />
+            <StatCard
+              icon="menu_book"
+              label="Kanji Dikuasai"
+              value={stats.kanjiMastered}
+              iconColorClass="text-secondary"
+            />
+            <StatCard
+              icon="draw"
+              label="Penguasaan Menulis"
+              value={stats.masteryWriting || "0%"}
+              iconColorClass="text-secondary"
+            />
+            <StatCard
+              icon="layers"
+              label="Kemajuan Modul"
+              value={stats.masteryVocabulary || "0%"}
+              iconColorClass="text-secondary"
             />
           </div>
 
@@ -137,7 +154,7 @@ export const ProgressPage: React.FC = () => {
             <div className="mt-md flex items-center justify-end gap-base text-caption text-on-surface-variant font-semibold">
               <span>Kurang</span>
               <div className="flex gap-1">
-                <div className="w-3 h-3 rounded-sm bg-primary/5"></div>
+                <div className="w-3 h-3 rounded-sm bg-surface-container-high"></div>
                 <div className="w-3 h-3 rounded-sm bg-primary/20"></div>
                 <div className="w-3 h-3 rounded-sm bg-primary/40"></div>
                 <div className="w-3 h-3 rounded-sm bg-primary/70"></div>

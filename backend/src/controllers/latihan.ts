@@ -46,6 +46,9 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
     });
 
     const masteryPercent = progress ? progress.masteryPercent : 0;
+    const writingPercent = progress ? progress.writingPercent : 0;
+    const readingPercent = progress ? progress.readingPercent : 0;
+    const quizPercent = progress ? progress.quizPercent : 0;
     
     // Map mastery level to title
     let levelTitle = "Perunggu";
@@ -71,29 +74,57 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       target: e.target,
     }));
 
-    // Record user activity for accessing this Kanji/Module (XP awarded only on first access)
-    const hasAccessedBefore = await prisma.userActivity.findFirst({
+    // Record user activity for accessing this Kanji/Module
+    // Only create LESSON activity once per day per kanji to avoid duplicates
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const hasAccessedToday = await prisma.userActivity.findFirst({
       where: {
         userId,
         activityType: "LESSON",
-        description: {
-          contains: `Kanji ${character}`
-        }
+        date: { gte: startOfToday },
+        description: { contains: `Kanji ${character}` }
       }
     });
 
-    const xpEarnedAccess = hasAccessedBefore ? 0 : 5;
+    let xpEarnedAccess = 0;
+    if (!hasAccessedToday) {
+      // XP awarded only on very first access ever
+      const hasAccessedEver = await prisma.userActivity.findFirst({
+        where: {
+          userId,
+          activityType: "LESSON",
+          description: { contains: `Kanji ${character}` }
+        }
+      });
+      xpEarnedAccess = hasAccessedEver ? 0 : 5;
 
-    await prisma.userActivity.create({
-      data: {
+      await prisma.userActivity.create({
+        data: {
+          userId,
+          kanjiCount: 0,
+          vocabCount: 1,
+          xpEarned: xpEarnedAccess,
+          activityType: "LESSON",
+          description: `Membuka Modul: Mempelajari tata bahasa & etimologi Kanji ${character}`,
+        },
+      });
+    }
+
+    const claimedActivities = await prisma.userActivity.findMany({
+      where: {
         userId,
-        kanjiCount: 0,
-        vocabCount: 1,
-        xpEarned: xpEarnedAccess,
-        activityType: "LESSON",
-        description: `Membuka Modul: Mempelajari tata bahasa & etimologi Kanji ${character}`,
-      },
+        date: { gte: startOfToday },
+        activityType: "REVIEW"
+      }
     });
+
+    const xpClaimed = {
+      lesson: true, // opening module theory is always claimed once loaded (either today or previously)
+      writing: claimedActivities.some(act => act.description.includes(`menulis Kanji ${character}`)),
+      reading: claimedActivities.some(act => act.description.includes(`membaca kalimat Kanji ${character}`)),
+      quiz: claimedActivities.some(act => act.description.includes(`kuis latihan Kanji ${character}`))
+    };
 
     res.json({
       kanji: kanji.character,
@@ -101,11 +132,18 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       meaning: kanji.meaning,
       moduleTitle: kanji.module ? kanji.module.title : null,
       masteryPercent,
+      writingPercent,
+      readingPercent,
+      quizPercent,
       masteryLevelTitle: levelTitle,
+      quizData: kanji.quizData,
+      xpEarned: xpEarnedAccess,
+      xpClaimed,
       examples: kanji.examples.map((ex) => ({
         japanese: ex.japanese,
         romaji: ex.romaji,
         translation: ex.translation,
+        isReading: ex.isReading,
       })),
       jukugos: kanji.jukugos.map((j) => ({
         word: j.word,
@@ -161,10 +199,16 @@ export const verifyHandwriting = async (req: AuthenticatedRequest, res: Response
       },
     });
 
-    const previousScore = existingProgress?.masteryPercent || 0;
+    const prevWriting = existingProgress?.writingPercent || 0;
+    const prevReading = existingProgress?.readingPercent || 0;
+    const prevQuiz = existingProgress?.quizPercent || 0;
+
     const score = typeof accuracy === "number" ? Math.min(100, Math.max(0, accuracy)) : 100;
-    const finalScore = Math.max(previousScore, score);
-    const isMastered = finalScore >= 75;
+    const finalWritingScore = Math.max(prevWriting, score);
+
+    // Calculate weighted average masteryPercent: 40% writing, 30% reading, 30% quiz
+    const finalMasteryScore = Math.round(finalWritingScore * 0.4 + prevReading * 0.3 + prevQuiz * 0.3);
+    const isMastered = finalMasteryScore >= 75;
 
     await prisma.userKanjiProgress.upsert({
       where: {
@@ -174,14 +218,16 @@ export const verifyHandwriting = async (req: AuthenticatedRequest, res: Response
         },
       },
       update: {
-        masteryPercent: finalScore,
+        writingPercent: finalWritingScore,
+        masteryPercent: finalMasteryScore,
         status: isMastered ? "MASTERED" : "STUDYING",
         lastPracticed: new Date(),
       },
       create: {
         userId,
         kanjiId: kanji.id,
-        masteryPercent: finalScore,
+        writingPercent: finalWritingScore,
+        masteryPercent: finalMasteryScore,
         status: isMastered ? "MASTERED" : "STUDYING",
       },
     });
@@ -219,21 +265,23 @@ export const verifyHandwriting = async (req: AuthenticatedRequest, res: Response
       }
     }
 
-    // Record user activity for successfully submitting verification (XP awarded only on first writing >= 75%)
+    // Record user activity — award XP once per day per kanji if score >= 60
     let xpEarnedWrite = 0;
-    if (score >= 75) {
-      const hasPassedBefore = await prisma.userActivity.findFirst({
+    if (score >= 60) {
+      const startOfToday2 = new Date();
+      startOfToday2.setHours(0, 0, 0, 0);
+      const hasEarnedWriteXpToday = await prisma.userActivity.findFirst({
         where: {
           userId,
           activityType: "REVIEW",
-          xpEarned: 15,
-          description: {
-            contains: `Kanji ${character}`
-          }
+          date: { gte: startOfToday2 },
+          xpEarned: { gt: 0 },
+          description: { contains: `Kanji ${character}` }
         }
       });
-      if (!hasPassedBefore) {
-        xpEarnedWrite = 15;
+      if (!hasEarnedWriteXpToday) {
+        // 15 XP for first pass (>= 75), 10 XP for practice (>= 60)
+        xpEarnedWrite = score >= 75 ? 15 : 10;
       }
     }
 
@@ -250,12 +298,291 @@ export const verifyHandwriting = async (req: AuthenticatedRequest, res: Response
 
     res.json({
       success: true,
-      accuracy: finalScore,
+      accuracy: finalMasteryScore,
       detectedText: character,
+      xpEarned: xpEarnedWrite,
       message: "Modul Kanji berhasil diselesaikan dan ditandai sebagai Sudah Dipelajari!",
     });
   } catch (error) {
     console.error("Latihan verify error:", error);
     res.status(500).json({ error: "Terjadi kesalahan saat melakukan verifikasi goresan." });
+  }
+};
+
+// Verify reading practice progress
+export const verifyReading = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { character, readingPercent } = req.body;
+    
+    if (!character) {
+      return res.status(400).json({ error: "Karakter target wajib ditentukan." });
+    }
+
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const kanji = await prisma.kanji.findUnique({ 
+      where: { character },
+      include: { module: true }
+    });
+
+    if (!kanji) {
+      return res.status(404).json({ error: `Kanji ${character} tidak ditemukan.` });
+    }
+
+    const existingProgress = await prisma.userKanjiProgress.findUnique({
+      where: {
+        userId_kanjiId: {
+          userId,
+          kanjiId: kanji.id,
+        },
+      },
+    });
+
+    const prevWriting = existingProgress?.writingPercent || 0;
+    const prevReading = existingProgress?.readingPercent || 0;
+    const prevQuiz = existingProgress?.quizPercent || 0;
+
+    const score = typeof readingPercent === "number" ? Math.min(100, Math.max(0, readingPercent)) : 100;
+    const finalReadingScore = Math.max(prevReading, score);
+
+    const finalMasteryScore = Math.round(prevWriting * 0.4 + finalReadingScore * 0.3 + prevQuiz * 0.3);
+    const isMastered = finalMasteryScore >= 75;
+
+    await prisma.userKanjiProgress.upsert({
+      where: {
+        userId_kanjiId: {
+          userId,
+          kanjiId: kanji.id,
+        },
+      },
+      update: {
+        readingPercent: finalReadingScore,
+        masteryPercent: finalMasteryScore,
+        status: isMastered ? "MASTERED" : "STUDYING",
+        lastPracticed: new Date(),
+      },
+      create: {
+        userId,
+        kanjiId: kanji.id,
+        readingPercent: finalReadingScore,
+        masteryPercent: finalMasteryScore,
+        status: isMastered ? "MASTERED" : "STUDYING",
+      },
+    });
+
+    // Recalculate associated Module Progress dynamically
+    if (kanji.moduleId) {
+      const linkedKanjis = await prisma.kanji.findMany({
+        where: { moduleId: kanji.moduleId },
+        include: {
+          userProgress: {
+            where: { userId },
+          },
+        },
+      });
+
+      if (linkedKanjis.length > 0) {
+        const totalProgress = linkedKanjis.reduce((sum, k) => {
+          const mastery = k.userProgress[0]?.masteryPercent || 0;
+          return sum + mastery;
+        }, 0);
+        const averageProgress = Math.round(totalProgress / linkedKanjis.length);
+
+        await prisma.userModuleProgress.update({
+          where: {
+            userId_moduleId: {
+              userId,
+              moduleId: kanji.moduleId,
+            },
+          },
+          data: {
+            progressPercent: averageProgress,
+            isCompleted: averageProgress === 100,
+          },
+        });
+      }
+    }
+
+    // Record activity — award XP once per day per kanji if reading score >= 60%
+    let xpEarnedReading = 0;
+    if (score >= 60) {
+      const startOfToday2 = new Date();
+      startOfToday2.setHours(0, 0, 0, 0);
+      const hasEarnedReadingXpToday = await prisma.userActivity.findFirst({
+        where: {
+          userId,
+          activityType: "REVIEW",
+          date: { gte: startOfToday2 },
+          xpEarned: { gt: 0 },
+          description: { contains: `Kanji ${character}` }
+        }
+      });
+      if (!hasEarnedReadingXpToday) {
+        xpEarnedReading = score >= 100 ? 10 : 5;
+      }
+    }
+
+    await prisma.userActivity.create({
+      data: {
+        userId,
+        kanjiCount: 0,
+        vocabCount: 1,
+        xpEarned: xpEarnedReading,
+        activityType: "REVIEW",
+        description: `Membaca Kalimat: Menyelesaikan latihan membaca kalimat Kanji ${character}`,
+      },
+    });
+
+    res.json({
+      success: true,
+      accuracy: finalMasteryScore,
+      xpEarned: xpEarnedReading,
+      message: "Latihan membaca berhasil disimpan!",
+    });
+  } catch (error) {
+    console.error("Latihan verify-reading error:", error);
+    res.status(500).json({ error: "Terjadi kesalahan saat memverifikasi membaca." });
+  }
+};
+
+// Verify quiz progress
+export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { character, quizPercent } = req.body;
+    
+    if (!character) {
+      return res.status(400).json({ error: "Karakter target wajib ditentukan." });
+    }
+
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const kanji = await prisma.kanji.findUnique({ 
+      where: { character },
+      include: { module: true }
+    });
+
+    if (!kanji) {
+      return res.status(404).json({ error: `Kanji ${character} tidak ditemukan.` });
+    }
+
+    const existingProgress = await prisma.userKanjiProgress.findUnique({
+      where: {
+        userId_kanjiId: {
+          userId,
+          kanjiId: kanji.id,
+        },
+      },
+    });
+
+    const prevWriting = existingProgress?.writingPercent || 0;
+    const prevReading = existingProgress?.readingPercent || 0;
+    const prevQuiz = existingProgress?.quizPercent || 0;
+
+    const score = typeof quizPercent === "number" ? Math.min(100, Math.max(0, quizPercent)) : 100;
+    const finalQuizScore = Math.max(prevQuiz, score);
+
+    const finalMasteryScore = Math.round(prevWriting * 0.4 + prevReading * 0.3 + finalQuizScore * 0.3);
+    const isMastered = finalMasteryScore >= 75;
+
+    await prisma.userKanjiProgress.upsert({
+      where: {
+        userId_kanjiId: {
+          userId,
+          kanjiId: kanji.id,
+        },
+      },
+      update: {
+        quizPercent: finalQuizScore,
+        masteryPercent: finalMasteryScore,
+        status: isMastered ? "MASTERED" : "STUDYING",
+        lastPracticed: new Date(),
+      },
+      create: {
+        userId,
+        kanjiId: kanji.id,
+        quizPercent: finalQuizScore,
+        masteryPercent: finalMasteryScore,
+        status: isMastered ? "MASTERED" : "STUDYING",
+      },
+    });
+
+    // Recalculate associated Module Progress dynamically
+    if (kanji.moduleId) {
+      const linkedKanjis = await prisma.kanji.findMany({
+        where: { moduleId: kanji.moduleId },
+        include: {
+          userProgress: {
+            where: { userId },
+          },
+        },
+      });
+
+      if (linkedKanjis.length > 0) {
+        const totalProgress = linkedKanjis.reduce((sum, k) => {
+          const mastery = k.userProgress[0]?.masteryPercent || 0;
+          return sum + mastery;
+        }, 0);
+        const averageProgress = Math.round(totalProgress / linkedKanjis.length);
+
+        await prisma.userModuleProgress.update({
+          where: {
+            userId_moduleId: {
+              userId,
+              moduleId: kanji.moduleId,
+            },
+          },
+          data: {
+            progressPercent: averageProgress,
+            isCompleted: averageProgress === 100,
+          },
+        });
+      }
+    }
+
+    // Record activity — award XP once per day per kanji if quiz score >= 60%
+    let xpEarnedQuiz = 0;
+    if (score >= 60) {
+      const startOfToday2 = new Date();
+      startOfToday2.setHours(0, 0, 0, 0);
+      const hasEarnedQuizXpToday = await prisma.userActivity.findFirst({
+        where: {
+          userId,
+          activityType: "REVIEW",
+          date: { gte: startOfToday2 },
+          xpEarned: { gt: 0 },
+          description: { contains: `Kanji ${character}` }
+        }
+      });
+      if (!hasEarnedQuizXpToday) {
+        xpEarnedQuiz = score >= 75 ? 20 : 10;
+      }
+    }
+
+    await prisma.userActivity.create({
+      data: {
+        userId,
+        kanjiCount: 0,
+        vocabCount: 1,
+        xpEarned: xpEarnedQuiz,
+        activityType: "REVIEW",
+        description: `Mengerjakan Kuis: Menyelesaikan kuis latihan Kanji ${character} dengan nilai ${score}%`,
+      },
+    });
+
+    res.json({
+      success: true,
+      accuracy: finalMasteryScore,
+      xpEarned: xpEarnedQuiz,
+      message: "Hasil kuis berhasil disimpan!",
+    });
+  } catch (error) {
+    console.error("Latihan verify-quiz error:", error);
+    res.status(500).json({ error: "Terjadi kesalahan saat memverifikasi kuis." });
   }
 };

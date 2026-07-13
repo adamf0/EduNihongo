@@ -4,6 +4,177 @@ import Icon from "../../Common/Component/Icon";
 import { api } from "../../Common/Utility/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+const AUTO_FILL_DICT: Record<string, { romaji: string; translation: string }> = {
+  "来週、日本語 of 試験がありますから、今晩 dari 準備します。": {
+    romaji: "Raishuu, nihongo no shiken ga arimasu kara, konban kara junbi shimasu.",
+    translation: "Karena minggu depan ada ujian bahasa Jepang, saya akan bersiap-siap mulai malam ini."
+  },
+  "来週、日本語の試験がありますから、今晩から準備します。": {
+    romaji: "Raishuu, nihongo no shiken ga arimasu kara, konban kara junbi shimasu.",
+    translation: "Karena minggu depan ada ujian bahasa Jepang, saya akan bersiap-siap mulai malam ini."
+  },
+  "服を買う前に、お店のここで試着することができます。": {
+    romaji: "Fuku wo kau mae ni, omise no koko de shichaku suru koto ga dekimasu.",
+    translation: "Sebelum membeli pakaian, Anda dapat mencobanya di bagian toko ini."
+  },
+  "この新しいアプリは、1か月無料で試用できます。": {
+    romaji: "Kono atarashii apuri wa, ikkagetsu muryou de shiyou dekimasu.",
+    translation: "Aplikasi baru ini dapat dicoba secara gratis selama 1 bulan."
+  },
+  "デパ地下で新しいケーキの試食をしました。": {
+    romaji: "Depachika de atarashii keeki no shishoku wo shimashita.",
+    translation: "Saya mencicipi kue baru di lantai bawah tanah department store."
+  },
+  "新しいジュース of 試飲をお客さんにしてもらいます。": {
+    romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
+    translation: "Kami meminta pelanggan untuk mencicipi jus baru."
+  },
+  "新しいジュースの試inをお客さんにしてもらいます。": {
+    romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
+    translation: "Kami meminta pelanggan untuk mencicipi jus baru."
+  },
+  "新しいジュースの試inをお客さんいしてもらいます。": {
+    romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
+    translation: "Kami meminta pelanggan untuk mencicipi jus baru."
+  },
+  "新しいジュースの試飲をお客さんにしてもらいます。": {
+    romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
+    translation: "Kami meminta pelanggan untuk mencicipi jus baru."
+  },
+  "明日の試験 is とても難しいですから、頑張ってください。": {
+    romaji: "Ashita no shiken wa totemo muzukashii desu kara, ganbatte kudasai.",
+    translation: "Karena ujian besok sangat sulit, berjuanglah."
+  },
+  "明日の試験は原型と同じです。": {
+    romaji: "Ashita no shiken wa totemo muzukashii desu kara, ganbatte kudasai.",
+    translation: "Karena ujian besok sangat sulit, berjuanglah."
+  },
+  "明日の試験はとても難しいですから、頑張ってください。": {
+    romaji: "Ashita no shiken wa totemo muzukashii desu kara, ganbatte kudasai.",
+    translation: "Karena ujian besok sangat sulit, berjuanglah."
+  },
+  "日本の大学の入学試験のために、毎日5時間 belajar。": {
+    romaji: "Nihon no daigaku no nyuugaku shiken no tame ni, mainichi gojikan benkyou shiteimasu.",
+    translation: "Demi ujian masuk universitas Jepang, saya belajar 5 jam setiap hari."
+  },
+  "日本の大学 of 入学試験のために、毎日5時間勉強しています。": {
+    romaji: "Nihon no daigaku no nyuugaku shiken no tame ni, mainichi gojikan benkyou shiteimasu.",
+    translation: "Demi ujian masuk universitas Jepang, saya belajar 5 jam setiap hari."
+  },
+  "日本の大学の入学試験のために、毎日5時間勉強しています。": {
+    romaji: "Nihon no daigaku no nyuugaku shiken no tame ni, mainichi gojikan benkyou shiteimasu.",
+    translation: "Demi ujian masuk universitas Jepang, saya belajar 5 jam setiap hari."
+  },
+  "卒業するために、来月面接試験を受けます。": {
+    romaji: "Sotsugyou suru tame ni,来月面接試験を受けます。",
+    translation: "Untuk lulus, saya akan mengikuti ujian wawancara bulan depan."
+  },
+  "日本へ留学したことは、私にとって良い経験になりました。": {
+    romaji: "Nihon he ryuugaku shita koto wa, watashi ni totte yoi keiken ni narimashita.",
+    translation: "Belajar di Jepang telah menjadi pengalaman yang baik bagi saya."
+  },
+  "化学の授業で、水の性質を調べる実験を行いました。": {
+    romaji: "Kagaku no jugyou de, mizu no seishitsu wo shiraberu jikken wo okonaimashita.",
+    translation: "Dalam kelas kimia, kami melakukan eksperimen untuk memeriksa sifat-sifat air."
+  },
+  "化学の授業で, 水의性質を調べる実験を行いました。": {
+    romaji: "Kagaku no jugyou de, mizu no seishitsu wo shiraberu jikken wo okonaimashita.",
+    translation: "Dalam kelas kimia, kami melakukan eksperimen untuk memeriksa sifat-sifat air."
+  },
+  "この問題は少し難しいです。": {
+    romaji: "Kono mondai wa sukoshi muzukashii desu.",
+    translation: "Soal ini sedikit sulit."
+  },
+  "先生に質問してください。": {
+    romaji: "Sensei ni shitsumon shitekudasai.",
+    translation: "Silakan bertanya kepada guru."
+  },
+  "日本では環境問題が重要です。": {
+    romaji: "Nihon dewa kankyou mondai ga juuyou desu.",
+    translation: "Di Jepang, masalah lingkungan adalah hal yang penting."
+  },
+  "この問題集で勉強します。": {
+    romaji: "Kono mondaishuu de benkyou shimasu.",
+    translation: "Saya belajar menggunakan buku kumpulan soal ini."
+  },
+  "電話で問い合わせをしました。": {
+    romaji: "Denwa de toiawase wo shimashita.",
+    translation: "Saya mengajukan pertanyaan via telepon."
+  },
+  "宿題g gが多すぎて、昨日は寝る時間がありませんでした。": {
+    romaji: "Shukudai ga oosugite, kinou wa neru jikan ga arimasen deshita.",
+    translation: "Karena PR terlalu banyak, kemarin saya tidak punya waktu tidur."
+  },
+  "宿題が多すぎて、昨日は寝る時間がありませんでした。": {
+    romaji: "Shukudai ga oosugite, kinou wa neru jikan ga arimasen deshita.",
+    translation: "Karena PR terlalu banyak, kemarin saya tidak punya waktu tidur."
+  },
+  "今日のゼミでは、卒業論文の論題について議論します。": {
+    romaji: "Kyou no zemi dewa, sotsugyou ronbun no rondai ni tsuite giron shimasu.",
+    translation: "Di seminar hari ini, kami akan mendiskusikan tema tesis kelulusan."
+  },
+  "面接試験では、最近 of 時事問題について質問されました。": {
+    romaji: "Mensetsu shiken dewa, saikin no jiji mondai ni tsuite shitsumon saremashita.",
+    translation: "Dalam ujian wawancara, saya ditanya tentang isu-isu aktual baru-baru ini."
+  },
+  "面接試験では、最近の時事問題について質問されました。": {
+    romaji: "Mensetsu shiken dewa, saikin no jiji mondai ni tsuite shitsumon saremashita.",
+    translation: "Dalam ujian wawancara, saya ditanya tentang isu-isu aktual baru-baru ini."
+  },
+  "彼女は自分の留学経験を題材にして小説を書きました。": {
+    romaji: "Kanojo wa jibun no ryuugaku keiken wo daizai ni shite shousetsu wo kakimashita.",
+    translation: "Dia menulis novel berdasarkan pengalaman belajarnya di luar negeri."
+  },
+  "今週は課題がたくさんありますから、とても忙しいです。": {
+    romaji: "Konshuu wa kadai ga takusan arimasu kara, totemo isogashii desu.",
+    translation: "Karena minggu ini ada banyak tugas, saya sangat sibuk."
+  },
+  "先生の質問に答えました。": {
+    romaji: "Sensei no shitsumon ni kotaemashita.",
+    translation: "Saya menjawab pertanyaan guru."
+  },
+  "正しい答えを書いてください。": {
+    romaji: "Tadashii kotae wo kaite kudasai.",
+    translation: "Silakan tulis jawaban yang benar."
+  },
+  "回答をメールで送りました。": {
+    romaji: "Kaitou wo meeru de okurimashita.",
+    translation: "Saya mengirimkan jawaban melalui email."
+  },
+  "応答 is なかなかありません。": {
+    romaji: "Outou wa naka naka arimasen.",
+    translation: "Responnya tidak kunjung datang."
+  },
+  "応答はなかなかありません。": {
+    romaji: "Outou wa naka naka arimasen.",
+    translation: "Responnya tidak kunjung datang."
+  },
+  "一問一答はどういう意味ですか。": {
+    romaji: "Ichimon ittou wa dou iu imi desu ka.",
+    translation: "Apa arti dari 'satu pertanyaan satu jawaban'?"
+  },
+  "先生はテストを採点しました。": {
+    romaji: "Sensei wa tesuto wo saiten shimashita.",
+    translation: "Guru menilai ujian tersebut."
+  },
+  "私は百点を取りました。": {
+    romaji: "Watashi wa hyakuten wo torimashita.",
+    translation: "Saya mendapatkan nilai 100."
+  },
+  "この作文の要点を書いてください。": {
+    romaji: "Kono sakubun no youten wo kaite kudasai.",
+    translation: "Silakan tulis poin penting dari esai ini."
+  },
+  "先生は問題点を説明しました。": {
+    romaji: "Sensei wa mondaiten wo setsumei shimashita.",
+    translation: "Guru menjelaskan titik permasalahannya."
+  },
+  "出発地点は駅です。": {
+    romaji: "Shuppatsu chiten wa eki desu.",
+    translation: "Titik keberangkatannya adalah stasiun."
+  }
+};
+
 export const KanjiFormPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,7 +204,10 @@ export const KanjiFormPage: React.FC = () => {
 
   // Form Lists
   const [examples, setExamples] = useState<any[]>([]);
+  const [readingExamples, setReadingExamples] = useState<any[]>([]);
   const [jukugos, setJukugos] = useState<any[]>([]);
+  const [etymologies, setEtymologies] = useState<any[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [nodes, setNodes] = useState<any[]>([]);
   const [edges, setEdges] = useState<any[]>([]);
 
@@ -130,14 +304,38 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiMeaning(target.meaning);
 
           setKanjiBorder(target.border || "border-l-4 border-primary");
-          setExamples(target.examples.length > 0 ? target.examples : [{ japanese: "", romaji: "", translation: "" }]);
+          
+          setNodeCoords({}); // Reset coordinates dynamically to avoid old positions
+          const dbExamples = target.examples || [];
+          const writeEx = dbExamples.filter((ex: any) => !ex.isReading);
+          const readEx = dbExamples.filter((ex: any) => ex.isReading);
+          
+          setExamples(writeEx.length > 0 ? writeEx : [{ japanese: "", romaji: "", translation: "", isReading: false }]);
+          setReadingExamples(readEx.length > 0 ? readEx : [{ japanese: "", romaji: "", translation: "", isReading: true }]);
+          
           setJukugos(target.jukugos && target.jukugos.length > 0 ? target.jukugos : [{ word: "", reading: "", meaning: "" }]);
+          setEtymologies(target.etymologies && target.etymologies.length > 0 ? target.etymologies : [{ character: "", romaji: "", detail: "" }]);
+          
+          if (target.quizData) {
+            try {
+              setQuizQuestions(JSON.parse(target.quizData));
+            } catch (e) {
+              setQuizQuestions([]);
+            }
+          } else {
+            setQuizQuestions([]);
+          }
+
           setNodes(target.graphNodes.length > 0 ? target.graphNodes : [{ id: "root", character: target.character, meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
           setEdges(target.graphEdges);
         } else {
           // Add mode: default initialization
-          setExamples([{ japanese: "", romaji: "", translation: "" }]);
+          setNodeCoords({}); // Reset coordinates
+          setExamples([{ japanese: "", romaji: "", translation: "", isReading: false }]);
+          setReadingExamples([{ japanese: "", romaji: "", translation: "", isReading: true }]);
           setJukugos([{ word: "", reading: "", meaning: "" }]);
+          setEtymologies([{ character: "", romaji: "", detail: "" }]);
+          setQuizQuestions([]);
           setNodes([{ id: "root", character: "", meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
           setEdges([]);
           setKanjiBorder(getRandomBorder());
@@ -164,15 +362,23 @@ export const KanjiFormPage: React.FC = () => {
       const bottomNodes = nodes.filter((n) => n.type === "bottom");
       const subBottomNodes = nodes.filter((n) => n.type === "sub-bottom");
 
-      // 1. Root node coord (Centered at 440)
+      // Dynamic spacing parameters to prevent overlaps
+      const spacingX = 650;
+      const startX = 220;
+      const totalWidth = (bottomNodes.length - 1) * spacingX;
+      const midX = bottomNodes.length > 0 ? startX + totalWidth / 2 : 440;
+
+      // 1. Root node coord (Centered at midX)
       if (rootNode && !updated[rootNode.id]) {
-        updated[rootNode.id] = { x: 440, y: 120 };
+        updated[rootNode.id] = { x: Math.max(startX, midX), y: 120 };
       }
 
-      // 2. Top nodes coords (Radicals centered above root at 440)
+      const rootX = rootNode ? (updated[rootNode.id]?.x ?? midX) : midX;
+
+      // 2. Top nodes coords (Radicals centered above root)
       topNodes.forEach((n, idx) => {
         if (!updated[n.id]) {
-          const x = topNodes.length === 1 ? 440 : 320 + idx * 240;
+          const x = topNodes.length === 1 ? rootX : rootX - ((topNodes.length - 1) / 2) * 200 + idx * 200;
           updated[n.id] = { x, y: 30 };
         }
       });
@@ -180,7 +386,7 @@ export const KanjiFormPage: React.FC = () => {
       // 3. Bottom nodes coords (Middle compound words widely spaced)
       bottomNodes.forEach((n, idx) => {
         if (!updated[n.id]) {
-          const x = bottomNodes.length === 1 ? 440 : 220 + idx * 440;
+          const x = bottomNodes.length === 1 ? rootX : startX + idx * spacingX;
           updated[n.id] = { x, y: 220 };
         }
       });
@@ -222,10 +428,17 @@ export const KanjiFormPage: React.FC = () => {
   };
 
   const addExampleRow = () => {
-    setExamples((prev) => [...prev, { japanese: "", romaji: "", translation: "" }]);
+    setExamples((prev) => [...prev, { japanese: "", romaji: "", translation: "", isReading: false }]);
   };
   const removeExampleRow = (idx: number) => {
     setExamples((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const addReadingExampleRow = () => {
+    setReadingExamples((prev) => [...prev, { japanese: "", romaji: "", translation: "", isReading: true }]);
+  };
+  const removeReadingExampleRow = (idx: number) => {
+    setReadingExamples((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const addJukugoRow = () => {
@@ -233,6 +446,21 @@ export const KanjiFormPage: React.FC = () => {
   };
   const removeJukugoRow = (idx: number) => {
     setJukugos((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const addEtymologyRow = () => {
+    setEtymologies((prev) => [...prev, { character: "", romaji: "", detail: "" }]);
+  };
+  const removeEtymologyRow = (idx: number) => {
+    setEtymologies((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleLinkStartOrEnd = (nodeId: string) => {
+    if (linkingSourceId === null) {
+      startConnection(nodeId);
+    } else {
+      completeConnection(nodeId);
+    }
   };
 
   const addNodeRow = () => {
@@ -353,6 +581,11 @@ export const KanjiFormPage: React.FC = () => {
       target: eg.target.startsWith(kanjiChar) ? eg.target : `${kanjiChar}-${eg.target}`
     }));
 
+    const mergedExamples = [
+      ...examples.filter((ex) => ex.japanese.trim() !== "").map((ex) => ({ ...ex, isReading: false })),
+      ...readingExamples.filter((ex) => ex.japanese.trim() !== "").map((ex) => ({ ...ex, isReading: true }))
+    ];
+
     const payload = {
       character: kanjiChar,
       romaji: kanjiRomaji,
@@ -361,10 +594,12 @@ export const KanjiFormPage: React.FC = () => {
       isJukugo: kanjiChar.length > 1, // Automatically set based on character length
       border: kanjiBorder || null,
       moduleId,
-      examples: examples.filter((ex) => ex.japanese.trim() !== ""),
+      examples: mergedExamples,
       jukugos: jukugos.filter((j) => j.word.trim() !== ""),
+      etymologies: etymologies.filter((et) => et.character.trim() !== ""),
       graphNodes: formattedNodes,
       graphEdges: formattedEdges,
+      quizData: quizQuestions.length > 0 ? JSON.stringify(quizQuestions.filter(q => q.question.trim() !== "")) : null,
     };
 
     try {
@@ -425,286 +660,671 @@ export const KanjiFormPage: React.FC = () => {
           )}
 
           {/* Form Element */}
-          <form onSubmit={handleSaveKanji} className="flex flex-col gap-6 bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm">
-            
-            {/* Section 1: Basic Info */}
-            <div className="flex flex-col gap-4">
-              <h4 className="font-label-lg text-label-lg font-bold border-b border-outline-variant/20 pb-1 text-primary">
-                1. Data Karakter Kanji
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex flex-col gap-1.5 relative">
-                  <label className="font-label-sm text-label-sm font-semibold text-on-surface">Karakter Kanji</label>
-                  <div className="relative flex items-center w-full">
-                    <input
-                      type="text"
-                      value={kanjiChar}
-                      onChange={(e) => handleCharInput(e.target.value)}
-                      maxLength={10}
-                      className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 pr-10 w-full focus:ring-2 focus:ring-primary outline-none text-center font-bold text-xl"
-                      placeholder="Contoh: 学"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowKeyboard((prev) => !prev)}
-                      className="absolute right-3 p-1 text-slate-400 hover:text-primary rounded-lg border-none bg-transparent cursor-pointer flex items-center justify-center transition-all"
-                      title="Toggle Keyboard Virtual"
-                    >
-                      <Icon name="keyboard" className="text-xl" />
-                    </button>
-                  </div>
+          <form onSubmit={handleSaveKanji} className="flex flex-col gap-6 w-full animate-fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start w-full">
+              
+              {/* Kolom Kiri: Info Dasar & Etimologi */}
+              <div className="flex flex-col gap-6 w-full">
+                
+                {/* Section 1: Basic Info */}
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                  <h4 className="font-label-lg text-label-lg font-bold border-b border-outline-variant/20 pb-1 text-primary">
+                    1. Data Karakter Kanji
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1.5 relative">
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Karakter Kanji</label>
+                      <div className="relative flex items-center w-full">
+                        <input
+                          type="text"
+                          value={kanjiChar}
+                          onChange={(e) => handleCharInput(e.target.value)}
+                          maxLength={10}
+                          className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 pr-10 w-full focus:ring-2 focus:ring-primary outline-none text-center font-bold text-xl"
+                          placeholder="Contoh: 学"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowKeyboard((prev) => !prev)}
+                          className="absolute right-3 p-1 text-slate-400 hover:text-primary rounded-lg border-none bg-transparent cursor-pointer flex items-center justify-center transition-all"
+                          title="Toggle Keyboard Virtual"
+                        >
+                          <Icon name="keyboard" className="text-xl" />
+                        </button>
+                      </div>
 
-                  {/* Virtual Keyboard Overlay */}
-                  {showKeyboard && (
-                    <div
-                      ref={keyboardRef}
-                      className="absolute top-[75px] left-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl p-4 rounded-2xl w-[320px] md:w-[450px] flex flex-col gap-3 select-none"
-                    >
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span className="font-bold text-xs text-primary flex items-center gap-1">
-                          <Icon name="keyboard" className="text-sm" />
-                          Keyboard Kanji Virtual
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={handleBackspace}
-                            className="px-2 py-1 text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-md border-none cursor-pointer flex items-center gap-0.5"
-                            title="Hapus Karakter Terakhir"
-                          >
-                            <Icon name="backspace" className="text-[10px]" />
-                            DEL
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShowKeyboard(false)}
-                            className="p-0.5 hover:bg-slate-100 rounded-full border-none bg-transparent cursor-pointer"
-                          >
-                            <Icon name="close" className="text-sm text-slate-400" />
-                          </button>
+                      {/* Virtual Keyboard Overlay */}
+                      {showKeyboard && (
+                        <div
+                          ref={keyboardRef}
+                          className="absolute top-[75px] left-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl p-4 rounded-2xl w-[300px] sm:w-[400px] flex flex-col gap-3 select-none"
+                        >
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <span className="font-bold text-xs text-primary flex items-center gap-1">
+                              <Icon name="keyboard" className="text-sm" />
+                              Keyboard Kanji Virtual
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={handleBackspace}
+                                className="px-2 py-1 text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-md border-none cursor-pointer flex items-center gap-0.5"
+                                title="Hapus Karakter Terakhir"
+                              >
+                                <Icon name="backspace" className="text-[10px]" />
+                                DEL
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowKeyboard(false)}
+                                className="p-0.5 hover:bg-slate-100 rounded-full border-none bg-transparent cursor-pointer"
+                              >
+                                <Icon name="close" className="text-sm text-slate-400" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Tabs */}
+                          <div className="flex gap-1 border-b border-slate-100 pb-1">
+                            {(["N5", "N4", "N3", "Radical"] as const).map((tab) => (
+                              <button
+                                key={tab}
+                                type="button"
+                                onClick={() => setKeyboardTab(tab)}
+                                className={`flex-1 py-1 text-[10px] font-bold rounded-md border-none cursor-pointer transition-all ${
+                                  keyboardTab === tab
+                                    ? "bg-primary text-on-primary"
+                                    : "bg-transparent text-slate-500 hover:bg-slate-50"
+                                }`}
+                              >
+                                {tab === "Radical" ? "Radikal" : tab}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Keys Grid */}
+                          <div className="grid grid-cols-6 gap-1.5 h-[160px] overflow-y-auto pr-1 sidebar-scroll">
+                            {kanjiLists[keyboardTab].map((char) => (
+                              <button
+                                key={char}
+                                type="button"
+                                onClick={() => handleKeyboardInput(char)}
+                                className="w-full h-8 flex items-center justify-center text-sm font-semibold rounded-lg bg-slate-50 border border-slate-100 hover:border-primary hover:bg-primary/5 active:scale-95 transition-all text-on-surface cursor-pointer"
+                              >
+                                {char}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Tabs */}
-                      <div className="flex gap-1 border-b border-slate-100 pb-1">
-                        {(["N5", "N4", "N3", "Radical"] as const).map((tab) => (
-                          <button
-                            key={tab}
-                            type="button"
-                            onClick={() => setKeyboardTab(tab)}
-                            className={`flex-1 py-1 text-[10px] font-bold rounded-md border-none cursor-pointer transition-all ${
-                              keyboardTab === tab
-                                ? "bg-primary text-on-primary"
-                                : "bg-transparent text-slate-500 hover:bg-slate-50"
-                            }`}
-                          >
-                            {tab === "Radical" ? "Radikal" : tab}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Keys Grid */}
-                      <div className="grid grid-cols-8 gap-1.5 h-[160px] overflow-y-auto pr-1 sidebar-scroll">
-                        {kanjiLists[keyboardTab].map((char) => (
-                          <button
-                            key={char}
-                            type="button"
-                            onClick={() => handleKeyboardInput(char)}
-                            className="w-full h-8 flex items-center justify-center text-sm font-semibold rounded-lg bg-slate-50 border border-slate-100 hover:border-primary hover:bg-primary/5 active:scale-95 transition-all text-on-surface cursor-pointer"
-                          >
-                            {char}
-                          </button>
-                        ))}
-                      </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-label-sm text-label-sm font-semibold text-on-surface">Romaji</label>
-                  <input
-                    type="text"
-                    value={kanjiRomaji}
-                    onChange={(e) => setKanjiRomaji(e.target.value)}
-                    className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none"
-                    placeholder="Contoh: Manabu"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-label-sm text-label-sm font-semibold text-on-surface">Arti / Makna</label>
-                  <input
-                    type="text"
-                    value={kanjiMeaning}
-                    onChange={(e) => setKanjiMeaning(e.target.value)}
-                    className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none"
-                    placeholder="Contoh: Belajar"
-                    required
-                  />
-                </div>
-              </div>
-
-
-
-              {/* Jukugo automatically determined on save */}
-            </div>
-
-            {/* Section 2: Examples */}
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
-                <h4 className="font-label-lg text-label-lg font-bold text-primary">
-                  2. Kalimat Contoh (Examples)
-                </h4>
-                <button
-                  type="button"
-                  onClick={addExampleRow}
-                  className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none animate-pulse-slow"
-                >
-                  + Tambah Baris Kalimat
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {examples.map((ex, idx) => (
-                  <div key={idx} className="flex gap-4 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-500">Bahasa Jepang</label>
-                        <input
-                          type="text"
-                          value={ex.japanese}
-                          onChange={(e) => {
-                            const newEx = [...examples];
-                            newEx[idx].japanese = e.target.value;
-                            setExamples(newEx);
-                          }}
-                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                          placeholder="日本語を学びます。"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-500">Romaji</label>
-                        <input
-                          type="text"
-                          value={ex.romaji}
-                          onChange={(e) => {
-                            const newEx = [...examples];
-                            newEx[idx].romaji = e.target.value;
-                            setExamples(newEx);
-                          }}
-                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                          placeholder="Nihongo wo manabimasu."
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-500">Terjemahan</label>
-                        <input
-                          type="text"
-                          value={ex.translation}
-                          onChange={(e) => {
-                            const newEx = [...examples];
-                            newEx[idx].translation = e.target.value;
-                            setExamples(newEx);
-                          }}
-                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                          placeholder="Belajar bahasa Jepang."
-                        />
-                      </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Romaji</label>
+                      <input
+                        type="text"
+                        value={kanjiRomaji}
+                        onChange={(e) => setKanjiRomaji(e.target.value)}
+                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none"
+                        placeholder="Contoh: Manabu"
+                        required
+                      />
                     </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Arti / Makna</label>
+                      <input
+                        type="text"
+                        value={kanjiMeaning}
+                        onChange={(e) => setKanjiMeaning(e.target.value)}
+                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none"
+                        placeholder="Contoh: Belajar"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 7: Analisis Etimologi */}
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                  <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+                    <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
+                      7. Analisis Etimologi (Etymology Breakdown)
+                    </h4>
                     <button
                       type="button"
-                      onClick={() => removeExampleRow(idx)}
-                      disabled={examples.length === 1}
-                      className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none mt-4 disabled:opacity-30"
+                      onClick={addEtymologyRow}
+                      className="px-3.5 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1"
                     >
-                      <Icon name="delete" className="text-lg block" />
+                      <Icon name="add" className="text-sm" />
+                      Tambah
                     </button>
                   </div>
-                ))}
+
+                  <div className="flex flex-col gap-4">
+                    {etymologies.map((et, idx) => (
+                      <div key={idx} className="flex gap-3 items-end bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20">
+                        <div className="grid grid-cols-1 gap-2 flex-grow">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">Elemen / Karakter</label>
+                              <input
+                                type="text"
+                                value={et.character}
+                                onChange={(e) => {
+                                  const newEt = [...etymologies];
+                                  newEt[idx].character = e.target.value;
+                                  setEtymologies(newEt);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
+                                placeholder="言"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">Romaji</label>
+                              <input
+                                type="text"
+                                value={et.romaji}
+                                onChange={(e) => {
+                                  const newEt = [...etymologies];
+                                  newEt[idx].romaji = e.target.value;
+                                  setEtymologies(newEt);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="gen"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] uppercase font-bold text-slate-500">Detail Penjelasan</label>
+                            <input
+                              type="text"
+                              value={et.detail}
+                              onChange={(e) => {
+                                const newEt = [...etymologies];
+                                newEt[idx].detail = e.target.value;
+                                setEtymologies(newEt);
+                              }}
+                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                              placeholder="Komponen makna..."
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeEtymologyRow(idx)}
+                          disabled={etymologies.length === 1}
+                          className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none disabled:opacity-30"
+                        >
+                          <Icon name="delete" className="text-lg block" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
+
+              {/* Kolom Kanan: Kalimat Contoh, Jukugo, Latihan Membaca */}
+              <div className="flex flex-col gap-6 w-full">
+                
+                {/* Section 2: Contoh Kalimat */}
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                  <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
+                    <h4 className="font-label-lg text-label-lg font-bold text-primary">
+                      2. Contoh Kalimat & Tata Bahasa
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={addExampleRow}
+                      className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none animate-pulse-slow"
+                    >
+                      + Kalimat
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {examples.map((ex, idx) => (
+                      <div key={idx} className="flex gap-3 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl animate-scale-up">
+                        <div className="flex-grow grid grid-cols-1 gap-2">
+                          <div className="flex flex-col gap-0.5">
+                            <label className="text-[9px] uppercase font-bold text-slate-500">Bahasa Jepang</label>
+                            <input
+                              type="text"
+                              value={ex.japanese}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const newEx = [...examples];
+                                newEx[idx].japanese = val;
+                                
+                                const match = AUTO_FILL_DICT[val.trim()];
+                                if (match) {
+                                  newEx[idx].romaji = match.romaji;
+                                  newEx[idx].translation = match.translation;
+                                }
+                                setExamples(newEx);
+                              }}
+                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
+                              placeholder="日本語を学びます。"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col gap-0.5">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">Romaji</label>
+                              <input
+                                type="text"
+                                value={ex.romaji}
+                                onChange={(e) => {
+                                  const newEx = [...examples];
+                                  newEx[idx].romaji = e.target.value;
+                                  setExamples(newEx);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Nihongo wo manabimasu."
+                              />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">Terjemahan</label>
+                              <input
+                                type="text"
+                                value={ex.translation}
+                                onChange={(e) => {
+                                  const newEx = [...examples];
+                                  newEx[idx].translation = e.target.value;
+                                  setExamples(newEx);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Belajar bahasa Jepang."
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeExampleRow(idx)}
+                          disabled={examples.length === 1}
+                          className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none mt-3 disabled:opacity-30"
+                        >
+                          <Icon name="delete" className="text-base block" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Section 3: Daftar Jukugo */}
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                  <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+                    <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
+                      3. Daftar Jukugo (Kata Majemuk)
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={addJukugoRow}
+                      className="px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-0.5"
+                    >
+                      <Icon name="add" className="text-xs" />
+                      Jukugo
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto pr-1.5 sidebar-scroll">
+                    {jukugos.map((j, idx) => (
+                      <div key={idx} className="flex gap-3 items-end bg-surface-container-low/40 p-3 rounded-xl border border-outline-variant/20">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-grow">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] uppercase font-bold text-slate-500">Kata Jukugo</label>
+                            <input
+                              type="text"
+                              value={j.word}
+                              onChange={(e) => {
+                                const newJ = [...jukugos];
+                                newJ[idx].word = e.target.value;
+                                setJukugos(newJ);
+                              }}
+                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                              placeholder="試験"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] uppercase font-bold text-slate-500">Pembacaan (Reading)</label>
+                            <input
+                              type="text"
+                              value={j.reading}
+                              onChange={(e) => {
+                                const newJ = [...jukugos];
+                                newJ[idx].reading = e.target.value;
+                                setJukugos(newJ);
+                              }}
+                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                              placeholder="しけん"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] uppercase font-bold text-slate-500">Arti (Meaning)</label>
+                            <input
+                              type="text"
+                              value={j.meaning}
+                              onChange={(e) => {
+                                const newJ = [...jukugos];
+                                newJ[idx].meaning = e.target.value;
+                                setJukugos(newJ);
+                              }}
+                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                              placeholder="Ujian"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeJukugoRow(idx)}
+                          disabled={jukugos.length === 1}
+                          className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none disabled:opacity-30 animate-pulse-slow"
+                        >
+                          <Icon name="delete" className="text-base block" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Section 4: Latihan Membaca */}
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                  <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
+                    <h4 className="font-label-lg text-label-lg font-bold text-primary">
+                      4. Latihan Membaca (Speech-to-Text)
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={addReadingExampleRow}
+                      className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none animate-pulse-slow"
+                    >
+                      + Latihan Baca
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1.5 sidebar-scroll">
+                    {readingExamples.map((ex, idx) => (
+                      <div key={idx} className="flex gap-3 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl animate-scale-up">
+                        <div className="flex-grow grid grid-cols-1 gap-2">
+                          <div className="flex flex-col gap-0.5">
+                            <label className="text-[9px] uppercase font-bold text-slate-500">Bahasa Jepang</label>
+                            <input
+                              type="text"
+                              value={ex.japanese}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const newEx = [...readingExamples];
+                                newEx[idx].japanese = val;
+                                
+                                const match = AUTO_FILL_DICT[val.trim()];
+                                if (match) {
+                                  newEx[idx].romaji = match.romaji;
+                                  newEx[idx].translation = match.translation;
+                                }
+                                setReadingExamples(newEx);
+                              }}
+                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
+                              placeholder="日本語を学びます。"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col gap-0.5">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">Romaji</label>
+                              <input
+                                type="text"
+                                value={ex.romaji}
+                                onChange={(e) => {
+                                  const newEx = [...readingExamples];
+                                  newEx[idx].romaji = e.target.value;
+                                  setReadingExamples(newEx);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Nihongo wo manabimasu."
+                              />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">Terjemahan</label>
+                              <input
+                                type="text"
+                                value={ex.translation}
+                                onChange={(e) => {
+                                  const newEx = [...readingExamples];
+                                  newEx[idx].translation = e.target.value;
+                                  setReadingExamples(newEx);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Belajar bahasa Jepang."
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeReadingExampleRow(idx)}
+                          disabled={readingExamples.length === 1}
+                          className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none mt-3 disabled:opacity-30"
+                        >
+                          <Icon name="delete" className="text-base block" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
             </div>
 
-            {/* Section 3: Jukugo */}
-            <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+            {/* Section 5: Daftar Kuis Evaluasi Kanji (Full Width) */}
+            <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-6 animate-scale-up">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  3. Daftar Jukugo (Compound Words)
+                  5. Daftar Kuis Evaluasi Kanji
                 </h4>
-                <button
-                  type="button"
-                  onClick={addJukugoRow}
-                  className="px-3.5 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1"
-                >
-                  <Icon name="add" className="text-sm" />
-                  Tambah Jukugo
-                </button>
+                <span className="text-xs text-slate-400 font-medium">{quizQuestions.length} soal total</span>
               </div>
 
-              <div className="flex flex-col gap-4">
-                {jukugos.map((j, idx) => (
-                  <div key={idx} className="flex gap-4 items-end bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-500">Kata Jukugo</label>
-                        <input
-                          type="text"
-                          value={j.word}
-                          onChange={(e) => {
-                            const newJ = [...jukugos];
-                            newJ[idx].word = e.target.value;
-                            setJukugos(newJ);
-                          }}
-                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                          placeholder="試験"
-                        />
+              {/* Render per-type sections */}
+              {[
+                { type: "multiple",   label: "Pilihan Ganda (Multiple Choice)",        icon: "radio_button_checked",  color: "blue",   defaultItem: { type: "multiple",   question: "", options: ["", "", "", ""], correctAnswer: "" } },
+                { type: "fill",       label: "Melengkapi Kalimat (Fill-in-the-blank)", icon: "text_fields",           color: "teal",   defaultItem: { type: "fill",       question: "", options: ["", "", "", ""], correctAnswer: "" } },
+                { type: "unscramble", label: "Susun Kalimat (Unscramble)",             icon: "shuffle",               color: "orange", defaultItem: { type: "unscramble", question: "", words: [],   correctOrder: [] } },
+                { type: "matching",   label: "Menjodohkan (Matching)",                 icon: "compare_arrows",        color: "purple", defaultItem: { type: "matching",   question: "", pairs: [] } },
+                { type: "essay",      label: "Membuat Kalimat (Essay/Writing)",         icon: "edit_note",             color: "green",  defaultItem: { type: "essay",      question: "", targetWord: "" } },
+                { type: "grouping",   label: "Pengelompokan Kata (Grouping)",           icon: "category",              color: "rose",   defaultItem: { type: "grouping",   question: "", words: [],   groups: [] } },
+              ].map(({ type: sectionType, label, icon, color, defaultItem }) => {
+                const colorMap: Record<string, string> = {
+                  blue:   "bg-blue-50   border-blue-200   text-blue-700",
+                  teal:   "bg-teal-50   border-teal-200   text-teal-700",
+                  orange: "bg-orange-50 border-orange-200 text-orange-700",
+                  purple: "bg-purple-50 border-purple-200 text-purple-700",
+                  green:  "bg-green-50  border-green-200  text-green-700",
+                  rose:   "bg-rose-50   border-rose-200   text-rose-700",
+                };
+                const badgeClass = colorMap[color] ?? "bg-slate-50 border-slate-200 text-slate-700";
+                const questionsOfType = quizQuestions.filter(q => q.type === sectionType);
+                return (
+                  <div key={sectionType} className="flex flex-col gap-3">
+                    {/* Sub-section Header */}
+                    <div className="flex items-center justify-between">
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${badgeClass}`}>
+                        <Icon name={icon} className="text-sm" />
+                        {label}
+                        <span className="ml-1 opacity-60">({questionsOfType.length})</span>
                       </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-500">Pembacaan (Furigana / Reading)</label>
-                        <input
-                          type="text"
-                          value={j.reading}
-                          onChange={(e) => {
-                            const newJ = [...jukugos];
-                            newJ[idx].reading = e.target.value;
-                            setJukugos(newJ);
-                          }}
-                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                          placeholder="しけん"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-500">Arti (Meaning)</label>
-                        <input
-                          type="text"
-                          value={j.meaning}
-                          onChange={(e) => {
-                            const newJ = [...jukugos];
-                            newJ[idx].meaning = e.target.value;
-                            setJukugos(newJ);
-                          }}
-                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                          placeholder="Ujian"
-                        />
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setQuizQuestions(prev => [...prev, { ...defaultItem }])}
+                        className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1"
+                      >
+                        <Icon name="add" className="text-xs" />
+                        Tambah
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeJukugoRow(idx)}
-                      disabled={jukugos.length === 1}
-                      className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none mt-4 disabled:opacity-30"
-                    >
-                      <Icon name="delete" className="text-lg block" />
-                    </button>
+
+                    {/* Questions of this type */}
+                    {questionsOfType.length === 0 ? (
+                      <div className="py-4 text-center border border-dashed border-outline-variant/30 rounded-xl text-slate-400 text-xs">
+                        Belum ada soal untuk tipe ini.
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {quizQuestions.map((q, idx) => {
+                          if (q.type !== sectionType) return null;
+                          return (
+                            <div key={idx} className="flex gap-4 items-start bg-surface-container-low/40 p-5 rounded-xl border border-outline-variant/20">
+                              <div className="flex-grow flex flex-col gap-3">
+                                <div className="grid grid-cols-1 gap-4">
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] uppercase font-bold text-slate-500">Pertanyaan</label>
+                                    <input
+                                      type="text"
+                                      value={q.question}
+                                      onChange={(e) => {
+                                        const newQ = [...quizQuestions];
+                                        newQ[idx].question = e.target.value;
+                                        setQuizQuestions(newQ);
+                                      }}
+                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                      placeholder="Isi pertanyaan soal..."
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Type-specific inputs */}
+                                {q.type === "matching" ? (
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] uppercase font-bold text-slate-500">Pasangan Pencocokan (Format: Kiri:Kanan, Pisahkan dengan koma)</label>
+                                    <input
+                                      type="text"
+                                      value={Array.isArray(q.pairs) ? q.pairs.map((p: any) => `${p.left}:${p.right}`).join(", ") : ""}
+                                      onChange={(e) => {
+                                        const newQ = [...quizQuestions];
+                                        newQ[idx].pairs = e.target.value.split(",").map(pairStr => {
+                                          const parts = pairStr.split(":");
+                                          return { left: parts[0]?.trim() || "", right: parts[1]?.trim() || "" };
+                                        });
+                                        setQuizQuestions(newQ);
+                                      }}
+                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                      placeholder="試験:ujian, 受験:Mengikuti ujian"
+                                    />
+                                  </div>
+                                ) : q.type === "grouping" ? (
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] uppercase font-bold text-slate-500">Kelompok &amp; Kosakata (Format: Kelompok1: kata1, kata2 | Kelompok2: kata3)</label>
+                                    <textarea
+                                      value={Array.isArray(q.groups) ? q.groups.map((g: any) => `${g.name}: ${(g.correctWords || []).join(", ")}`).join(" | ") : ""}
+                                      onChange={(e) => {
+                                        const newQ = [...quizQuestions];
+                                        const parts = e.target.value.split("|");
+                                        const groups: any[] = [];
+                                        const allWords: string[] = [];
+                                        for (const part of parts) {
+                                          const subParts = part.split(":");
+                                          if (subParts.length >= 2) {
+                                            const name = subParts[0].trim();
+                                            const correctWords = subParts[1].split(",").map((w: string) => w.trim()).filter(Boolean);
+                                            groups.push({ name, correctWords });
+                                            allWords.push(...correctWords);
+                                          }
+                                        }
+                                        newQ[idx].groups = groups;
+                                        newQ[idx].words = allWords;
+                                        setQuizQuestions(newQ);
+                                      }}
+                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none min-h-[80px]"
+                                      placeholder="Pengujian: 試験, 受験 | Pengalaman: 経験, 体験"
+                                    />
+                                  </div>
+                                ) : q.type === "essay" ? (
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] uppercase font-bold text-slate-500">Kosakata Wajib (Target Word)</label>
+                                    <input
+                                      type="text"
+                                      value={q.targetWord || ""}
+                                      onChange={(e) => {
+                                        const newQ = [...quizQuestions];
+                                        newQ[idx].targetWord = e.target.value;
+                                        setQuizQuestions(newQ);
+                                      }}
+                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                      placeholder="Contoh: 試着"
+                                    />
+                                  </div>
+                                ) : q.type === "unscramble" ? (
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] uppercase font-bold text-slate-500">Urutan Kalimat Benar (Pisahkan dengan spasi)</label>
+                                    <input
+                                      type="text"
+                                      value={Array.isArray(q.correctOrder) ? q.correctOrder.join(" ") : ""}
+                                      onChange={(e) => {
+                                        const newQ = [...quizQuestions];
+                                        const words = e.target.value.split(/[\s,]+/g).filter(Boolean);
+                                        newQ[idx].words = words;
+                                        newQ[idx].correctOrder = words;
+                                        setQuizQuestions(newQ);
+                                      }}
+                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                      placeholder="きのう 試合 が ありました"
+                                    />
+                                  </div>
+                                ) : (
+                                  /* multiple & fill */
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-[10px] uppercase font-bold text-slate-500">Pilihan Jawaban (Pisahkan dengan koma)</label>
+                                      <input
+                                        type="text"
+                                        value={Array.isArray(q.options) ? q.options.join(", ") : ""}
+                                        onChange={(e) => {
+                                          const newQ = [...quizQuestions];
+                                          newQ[idx].options = e.target.value.split(",").map(s => s.trim());
+                                          setQuizQuestions(newQ);
+                                        }}
+                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                        placeholder="Pilihan 1, Pilihan 2, Pilihan 3"
+                                      />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-[10px] uppercase font-bold text-slate-500">Jawaban Benar</label>
+                                      <input
+                                        type="text"
+                                        value={q.correctAnswer}
+                                        onChange={(e) => {
+                                          const newQ = [...quizQuestions];
+                                          newQ[idx].correctAnswer = e.target.value;
+                                          setQuizQuestions(newQ);
+                                        }}
+                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                        placeholder="Harus persis sama dengan salah satu pilihan"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setQuizQuestions(prev => prev.filter((_, i) => i !== idx))}
+                                className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none disabled:opacity-30 self-center"
+                              >
+                                <Icon name="delete" className="text-lg block" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
 
-            {/* Section 4: KanjiGraphNode Visual Drag & Drop Editor */}
-            <div className="flex flex-col gap-4">
+            {/* Section 6: Peta Semantik & Hubungan Kata (Full Width) */}
+            <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 w-full animate-fade-in">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  4. Simpul Grafik Semantik
+                  6. Peta Semantik & Hubungan Kata
                 </h4>
                 <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
                   <button
@@ -765,18 +1385,17 @@ export const KanjiFormPage: React.FC = () => {
                           <input
                             type="text"
                             value={n.character}
-                            disabled={n.type === "root" && kanjiChar !== ""}
                             onChange={(e) => {
                               const newN = [...nodes];
                               newN[idx].character = e.target.value;
                               setNodes(newN);
                             }}
-                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-sm text-on-surface outline-none text-center font-bold"
-                            placeholder="子"
+                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
+                            placeholder="學"
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="text-[10px] uppercase font-bold text-slate-500">Arti / Makna</label>
+                          <label className="text-[10px] uppercase font-bold text-slate-500">Arti</label>
                           <input
                             type="text"
                             value={n.meaning}
@@ -785,8 +1404,8 @@ export const KanjiFormPage: React.FC = () => {
                               newN[idx].meaning = e.target.value;
                               setNodes(newN);
                             }}
-                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-sm text-on-surface outline-none"
-                            placeholder="Anak"
+                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                            placeholder="Belajar"
                           />
                         </div>
                         <div className="flex flex-col gap-1">
@@ -797,20 +1416,14 @@ export const KanjiFormPage: React.FC = () => {
                             onChange={(e) => {
                               const newN = [...nodes];
                               newN[idx].type = e.target.value;
-                              if (e.target.value === "top") {
-                                newN[idx].borderColor = "border-blue-500";
-                                newN[idx].isPill = false;
-                              } else {
-                                newN[idx].borderColor = "border-green-500";
-                                newN[idx].isPill = true;
-                              }
                               setNodes(newN);
                             }}
-                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none h-[34px] disabled:opacity-60"
                           >
-                            <option value="root">root (Utama)</option>
-                            <option value="top">top (Radikal Atas)</option>
-                            <option value="bottom">bottom (Gabungan Bawah)</option>
+                            <option value="root">ROOT (Karakter Ini)</option>
+                            <option value="top">TOP (Radikal/Elemen pembentuk)</option>
+                            <option value="bottom">BOTTOM (Kategori/Relasi)</option>
+                            <option value="sub-bottom">SUB-BOTTOM (Kata gabungan kategori)</option>
                           </select>
                         </div>
                       </div>
@@ -818,250 +1431,188 @@ export const KanjiFormPage: React.FC = () => {
                         type="button"
                         onClick={() => removeNodeRow(idx)}
                         disabled={n.type === "root"}
-                        className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none mt-4 disabled:opacity-30"
+                        className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none disabled:opacity-30"
                       >
-                        <Icon name="delete" className="text-lg block" />
+                        <Icon name="delete" className="text-base block" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* VISUAL DRAG & DROP EDITOR */}
+              {/* VISUAL DRAG AND DROP MODE */}
               {graphEditMode === "visual" && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center text-xs text-slate-500">
-                    <p>
-                      💡 <strong>Drag-Drop</strong> node untuk menyusun posisi. Klik ikon <strong>Rantai (Link)</strong> pada node asal, lalu klik node tujuan untuk menghubungkan (Edge).
-                    </p>
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-center text-xs text-on-surface-variant bg-slate-50 p-3 rounded-xl border border-slate-100 select-none">
+                    <span className="flex items-center gap-1 font-semibold">
+                      <Icon name="tips_and_updates" className="text-amber-500 text-sm" />
+                      Drag-Drop node untuk menyusun posisi. Klik ikon Rantai (Link) pada node asal, lalu klik node tujuan untuk menghubungkan (Edge).
+                    </span>
                     <button
                       type="button"
                       onClick={addNodeRow}
-                      className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none"
+                      className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-bold border-none cursor-pointer flex items-center gap-0.5 transition-all"
                     >
-                      + Tambah Node
+                      <Icon name="add" className="text-xs" />
+                      Tambah Node
                     </button>
                   </div>
 
-                  <div
-                    ref={containerRef}
-                    onMouseDown={handleCanvasMouseDown}
-                    onMouseMove={handleContainerMouseMove}
-                    onMouseUp={handleContainerMouseUp}
-                    onWheel={handleCanvasWheel}
-                    className="relative overflow-hidden w-full h-[350px] bg-slate-50 border border-slate-200 rounded-xl cursor-grab active:cursor-grabbing select-none"
-                  >
-                    <div className="absolute inset-0 grid-crosshair opacity-30 pointer-events-none"></div>
-
-                    {/* Zoom / Pan Control Panel in top-right corner */}
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-white/90 backdrop-blur-xs border border-slate-200 shadow-sm p-1 rounded-lg pointer-events-auto select-none">
+                  <div className="relative border border-outline-variant/30 rounded-2xl bg-slate-900/5 h-[450px] overflow-hidden select-none">
+                    {/* Toolbar zoom */}
+                    <div className="absolute top-4 right-4 z-40 bg-white/95 backdrop-blur-md border border-slate-100 shadow-md p-1.5 rounded-xl flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => setZoomScale((prev) => Math.min(2.0, prev + 0.1))}
-                        className="p-1 hover:bg-slate-100 text-slate-700 rounded border-none bg-transparent cursor-pointer flex items-center justify-center"
-                        title="Zoom In"
+                        onClick={() => setZoomScale((z) => Math.min(2, z + 0.1))}
+                        className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center border-none bg-transparent cursor-pointer"
                       >
-                        <Icon name="add" className="text-sm" />
+                        <Icon name="add" className="text-base text-on-surface" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => setZoomScale((prev) => Math.max(0.4, prev - 0.1))}
-                        className="p-1 hover:bg-slate-100 text-slate-700 rounded border-none bg-transparent cursor-pointer flex items-center justify-center"
-                        title="Zoom Out"
+                        onClick={() => setZoomScale((z) => Math.max(0.4, z - 0.1))}
+                        className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center border-none bg-transparent cursor-pointer"
                       >
-                        <Icon name="remove" className="text-sm" />
+                        <Icon name="remove" className="text-base text-on-surface" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setZoomScale(1);
-                          setPanOffset({ x: 0, y: 0 });
-                        }}
-                        className="px-2 py-1 hover:bg-slate-100 text-[10px] font-bold text-slate-700 rounded border-none bg-transparent cursor-pointer flex items-center justify-center"
-                        title="Reset Pan & Zoom"
-                      >
+                      <span className="text-[10px] font-bold px-2 text-slate-500 w-10 text-center">
                         {Math.round(zoomScale * 100)}%
-                      </button>
+                      </span>
                     </div>
 
-                    {/* Transforming viewport wrapper */}
                     <div
-                      style={{
-                        transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
-                        transformOrigin: "0 0",
-                        width: "100%",
-                        height: "100%",
-                        position: "absolute",
-                        top: 0,
-                        left: 0
-                      }}
+                      ref={containerRef}
+                      className="w-full h-full cursor-grab active:cursor-grabbing overflow-hidden"
+                      onMouseDown={handleCanvasMouseDown}
+                      onMouseMove={handleContainerMouseMove}
+                      onMouseUp={handleContainerMouseUp}
+                      onMouseLeave={handleContainerMouseUp}
+                      onWheel={handleCanvasWheel}
                     >
-                      {/* SVG Connections overlay */}
-                      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ minWidth: "1500px", minHeight: "1500px" }}>
-                        {edges.map((edge, index) => {
-                          const sourceCoord = nodeCoords[edge.source];
-                          const targetCoord = nodeCoords[edge.target];
-                          if (!sourceCoord || !targetCoord) return null;
-
-                          const x1 = sourceCoord.x + 60;
-                          const y1 = sourceCoord.y + 21;
-                          const x2 = targetCoord.x + 60;
-                          const y2 = targetCoord.y + 21;
-
-                          return (
-                            <g key={index} className="cursor-pointer group" style={{ pointerEvents: "auto" }}>
+                      <div
+                        className="w-full h-full relative origin-top-left"
+                        style={{
+                          transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
+                        }}
+                      >
+                        <svg className="absolute inset-0 w-[4000px] h-[4000px] pointer-events-none z-0">
+                          {edges.map((edge, index) => {
+                            const sourceCoord = nodeCoords[edge.source];
+                            const targetCoord = nodeCoords[edge.target];
+                            if (!sourceCoord || !targetCoord) return null;
+                            const x1 = sourceCoord.x + 90;
+                            const y1 = sourceCoord.y + 40;
+                            const x2 = targetCoord.x + 90;
+                            const y2 = targetCoord.y + 40;
+                            return (
                               <line
+                                key={index}
                                 x1={x1}
                                 y1={y1}
                                 x2={x2}
                                 y2={y2}
-                                stroke="#3b82f6"
-                                strokeWidth="3"
-                                className="group-hover:stroke-red-500 group-hover:stroke-[4px] transition-all"
+                                stroke="#1e73be"
+                                strokeWidth="2.5"
+                                strokeDasharray={5}
                               />
-                              <circle
-                                cx={(x1 + x2) / 2}
-                                cy={(y1 + y2) / 2}
-                                r="12"
-                                fill="#ef4444"
-                                style={{ pointerEvents: "auto" }}
-                                className="opacity-80 md:opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeEdge(index);
-                                }}
-                              />
-                              <text
-                                x={(x1 + x2) / 2}
-                                y={(y1 + y2) / 2 - 14}
-                                fill="#ef4444"
-                                textAnchor="middle"
-                                style={{ pointerEvents: "none" }}
-                                className="text-[10px] font-bold opacity-80 md:opacity-0 group-hover:opacity-100 transition-opacity select-none font-mono"
+                            );
+                          })}
+                        </svg>
+
+                        {nodes.map((node) => {
+                          const coord = nodeCoords[node.id] || { x: 100, y: 100 };
+                          let nodeColorClass = "bg-white border-primary text-primary shadow-md";
+                          if (node.type === "top") {
+                            nodeColorClass = "bg-amber-50/80 border-amber-500 text-amber-900";
+                          } else if (node.type === "bottom") {
+                            nodeColorClass = "bg-sky-50/80 border-sky-500 text-sky-900";
+                          } else if (node.type === "sub-bottom") {
+                            nodeColorClass = "bg-emerald-50/80 border-emerald-500 text-emerald-900";
+                          }
+                          const isLinking = linkingSourceId === node.id;
+                          return (
+                            <div
+                              key={node.id}
+                              style={{
+                                left: coord.x,
+                                top: coord.y,
+                                position: "absolute",
+                              }}
+                              className={`w-[180px] p-3 border rounded-xl flex flex-col items-center justify-between gap-1 select-none z-10 transition-shadow ${nodeColorClass} ${
+                                isLinking ? "ring-4 ring-primary animate-pulse" : "hover:shadow-lg"
+                              }`}
+                            >
+                              <div
+                                className="w-full text-center cursor-move font-semibold text-xs py-1 select-none flex items-center justify-between"
+                                onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                               >
-                                Hapus
-                              </text>
-                            </g>
+                                <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">
+                                  {node.type}
+                                </span>
+                                <div className="flex gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleLinkStartOrEnd(node.id)}
+                                    className="p-1 hover:bg-slate-200 rounded text-slate-500 border-none bg-transparent cursor-pointer flex items-center justify-center"
+                                    title="Hubungkan (Edge)"
+                                  >
+                                    <Icon name="link" className="text-xs" />
+                                  </button>
+                                  {node.type !== "root" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeNodeRow(nodes.findIndex((n) => n.id === node.id))}
+                                      className="p-1 hover:bg-red-100 rounded text-red-500 border-none bg-transparent cursor-pointer flex items-center justify-center"
+                                      title="Hapus Node"
+                                    >
+                                      <Icon name="close" className="text-xs" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <input
+                                type="text"
+                                value={node.character}
+                                onChange={(e) => {
+                                  const idx = nodes.findIndex((n) => n.id === node.id);
+                                  const newNodes = [...nodes];
+                                  newNodes[idx].character = e.target.value;
+                                  setNodes(newNodes);
+                                }}
+                                placeholder="Karakter"
+                                className="w-full border-none bg-transparent outline-none text-center font-bold text-base text-on-surface"
+                              />
+
+                              <input
+                                type="text"
+                                value={node.meaning}
+                                onChange={(e) => {
+                                  const idx = nodes.findIndex((n) => n.id === node.id);
+                                  const newNodes = [...nodes];
+                                  newNodes[idx].meaning = e.target.value;
+                                  setNodes(newNodes);
+                                }}
+                                placeholder="Arti"
+                                className="w-full border-none bg-transparent outline-none text-center text-[10px] text-on-surface-variant font-medium mt-0.5"
+                              />
+                            </div>
                           );
                         })}
-                      </svg>
-
-                      {/* Draggable Node elements */}
-                      {nodes.map((n, idx) => {
-                        const coord = nodeCoords[n.id] || { x: 50, y: 50 };
-                        const isRoot = n.type === "root";
-                        const isTop = n.type === "top";
-                        const isLinkingSource = linkingSourceId === n.id;
-                        
-                        return (
-                          <div
-                            key={n.id}
-                            style={{
-                              left: `${coord.x}px`,
-                              top: `${coord.y}px`,
-                              position: "absolute",
-                            }}
-                            className={`w-[120px] p-2 bg-white rounded-lg border-2 shadow-sm flex flex-col items-center justify-between text-center select-none ${
-                              isLinkingSource
-                                ? "border-amber-500 ring-4 ring-amber-200"
-                                : isRoot
-                                ? "border-blue-500 shadow-md"
-                                : isTop
-                                ? "border-purple-500"
-                                : "border-emerald-500"
-                            } ${draggedNodeId === n.id ? "opacity-80 scale-105" : ""}`}
-                          >
-                            <div
-                              onMouseDown={(e) => handleNodeMouseDown(e, n.id)}
-                              className="w-full flex items-center justify-between cursor-move pb-1 border-b border-slate-100"
-                            >
-                              <span className="text-[8px] font-bold uppercase font-mono text-slate-400">
-                                {n.type}
-                              </span>
-                              <div className="flex gap-1">
-                                {!isLinkingSource && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (linkingSourceId) {
-                                        completeConnection(n.id);
-                                      } else {
-                                        startConnection(n.id);
-                                      }
-                                    }}
-                                    className="p-0.5 hover:bg-slate-100 text-slate-500 hover:text-amber-600 rounded bg-transparent border-none cursor-pointer"
-                                    title={linkingSourceId ? "Hubungkan" : "Hubungkan Node"}
-                                  >
-                                    <Icon name={linkingSourceId ? "add" : "link"} className="text-xs block" />
-                                  </button>
-                                )}
-                                {!isRoot && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      removeNodeRow(idx);
-                                    }}
-                                    className="p-0.5 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded bg-transparent border-none cursor-pointer"
-                                    title="Hapus Node"
-                                  >
-                                    <Icon name="close" className="text-xs block" />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="w-full mt-1.5 flex flex-col gap-1">
-                              <input
-                                type="text"
-                                value={n.character}
-                                disabled={isRoot && kanjiChar !== ""}
-                                onChange={(e) => {
-                                  const newN = [...nodes];
-                                  newN[idx].character = e.target.value;
-                                  setNodes(newN);
-                                }}
-                                className="w-full border-none bg-slate-50 rounded p-0.5 text-center text-sm font-bold text-slate-800 outline-none select-all"
-                                placeholder="Char"
-                              />
-                              <input
-                                type="text"
-                                value={n.meaning}
-                                onChange={(e) => {
-                                  const newN = [...nodes];
-                                  newN[idx].meaning = e.target.value;
-                                  setNodes(newN);
-                                }}
-                                className="w-full border-none bg-transparent text-center text-[10px] text-slate-500 outline-none select-all"
-                                placeholder="Makna"
-                              />
-                            </div>
-
-                            {linkingSourceId && !isLinkingSource && (
-                              <div
-                                onClick={() => completeConnection(n.id)}
-                                className="absolute inset-0 bg-amber-500/10 hover:bg-amber-500/25 border-2 border-dashed border-amber-500 rounded-lg cursor-pointer flex items-center justify-center font-bold text-amber-700 text-xs animate-pulse"
-                              >
-                                Pilih Target
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* List of active edges for easy management and unlinking */}
+              {/* Edge Connections Log */}
               {edges.length > 0 && (
-                <div className="flex flex-col gap-2 bg-slate-50 border border-slate-200 p-4 rounded-xl mt-2">
-                  <span className="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-1 select-none">
+                <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-3">
+                  <h5 className="text-xs font-bold text-secondary border-b border-outline-variant/10 pb-1 flex items-center gap-1">
                     <Icon name="link" className="text-primary text-sm" />
                     Koneksi Garis Hubungan Antar Simpul ({edges.length})
-                  </span>
-                  <div className="flex flex-wrap gap-2">
+                  </h5>
+                  <div className="flex gap-2 flex-wrap max-h-[140px] overflow-y-auto pr-1 sidebar-scroll">
                     {edges.map((edge, index) => {
                       const sourceNode = nodes.find((n) => n.id === edge.source);
                       const targetNode = nodes.find((n) => n.id === edge.target);
@@ -1117,8 +1668,7 @@ export const KanjiFormPage: React.FC = () => {
               >
                 {submitting ? "Menyimpan..." : "Simpan Karakter"}
               </button>
-            </div>
-          </form>
+            </div></form>
         </div>
       </main>
     </Layout>

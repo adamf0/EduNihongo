@@ -15,12 +15,32 @@ class SpeechService {
   private initVoice() {
     if (!this.synth) return;
     const voices = this.synth.getVoices();
-    // Look for any Japanese voice
-    const jaVoice = voices.find(
+    // Filter all Japanese voices
+    const jaVoices = voices.filter(
       (v) => v.lang === "ja-JP" || v.lang === "ja_JP" || v.lang.toLowerCase().startsWith("ja")
     );
-    if (jaVoice) {
-      this.voice = jaVoice;
+    
+    if (jaVoices.length === 0) return;
+
+    // Prioritize natural system voices (Kyoko, Otoya, Siri, Nanami) over Google Translate voice
+    const systemVoices = jaVoices.filter((v) => !v.name.includes("Google"));
+    
+    systemVoices.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      if (aName.includes("siri") && !bName.includes("siri")) return -1;
+      if (!aName.includes("siri") && bName.includes("siri")) return 1;
+      if (aName.includes("kyoko") && !bName.includes("kyoko")) return -1;
+      if (!aName.includes("kyoko") && bName.includes("kyoko")) return 1;
+      if (aName.includes("otoya") && !bName.includes("otoya")) return -1;
+      if (!aName.includes("otoya") && bName.includes("otoya")) return 1;
+      return 0;
+    });
+
+    if (systemVoices.length > 0) {
+      this.voice = systemVoices[0];
+    } else {
+      this.voice = jaVoices[0];
     }
   }
 
