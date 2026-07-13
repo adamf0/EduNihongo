@@ -406,9 +406,9 @@ export const verifyReading = async (req: AuthenticatedRequest, res: Response) =>
       }
     }
 
-    // Record activity — award XP once per day per kanji if reading score >= 60%
+    // Record activity — award 10 XP only when reading practice is 100% completed, once per day per kanji
     let xpEarnedReading = 0;
-    if (score >= 60) {
+    if (score >= 100) {
       const startOfToday2 = new Date();
       startOfToday2.setHours(0, 0, 0, 0);
       const hasEarnedReadingXpToday = await prisma.userActivity.findFirst({
@@ -417,11 +417,11 @@ export const verifyReading = async (req: AuthenticatedRequest, res: Response) =>
           activityType: "REVIEW",
           date: { gte: startOfToday2 },
           xpEarned: { gt: 0 },
-          description: { contains: `Kanji ${character}` }
+          description: { contains: `Membaca Kalimat: Menyelesaikan latihan membaca kalimat Kanji ${character}` }
         }
       });
       if (!hasEarnedReadingXpToday) {
-        xpEarnedReading = score >= 100 ? 10 : 5;
+        xpEarnedReading = 10;
       }
     }
 

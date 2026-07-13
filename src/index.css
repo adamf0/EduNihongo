@@ -159,3 +159,54 @@ body {
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
+
+/* Custom Interactive Animations for Kanji Semantics Map */
+@keyframes nodeReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) translateY(20px);
+  }
+  70% {
+    transform: scale(1.05) translateY(-3px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-node-reveal {
+  animation: nodeReveal 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 91, 148, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(255, 91, 148, 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Jukugo Card Reveal Animations */
+@keyframes jukugoReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-jukugo-card {
+  opacity: 0;
+  animation: jukugoReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+

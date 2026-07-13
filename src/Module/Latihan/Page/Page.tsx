@@ -19,7 +19,6 @@ import {
   Award,
   PenTool,
   HelpCircle,
-  CheckCircle2,
   Info,
   X,
   Volume2,
@@ -181,7 +180,6 @@ export const LatihanPage: React.FC = () => {
 
   // Reading tab states
   const [readSentences, setReadSentences] = useState<Record<number, boolean>>({});
-  const [savingReading, setSavingReading] = useState(false);
   const [revealedTranslation, setRevealedTranslation] = useState<Record<number, boolean>>({});
 
   // Reading Speech-to-Text states
@@ -201,6 +199,16 @@ export const LatihanPage: React.FC = () => {
   const [quizFeedback, setQuizFeedback] = useState<any[]>([]);
   const [savingQuiz, setSavingQuiz] = useState(false);
   const [xpNotification, setXpNotification] = useState<{ amount: number; description: string } | null>(null);
+  const [successNotification, setSuccessNotification] = useState<{ score: number; text: string } | null>(null);
+  const [wrongAnswers, setWrongAnswers] = useState<string[]>([]);
+  const [correctAnswerClicked, setCorrectAnswerClicked] = useState<string | null>(null);
+  const [matchingCorrect, setMatchingCorrect] = useState<Record<string, boolean>>({});
+  const [matchingWrong, setMatchingWrong] = useState<Record<string, boolean>>({});
+  const [groupingCorrect, setGroupingCorrect] = useState<Record<string, boolean>>({});
+  const [groupingWrong, setGroupingWrong] = useState<Record<string, boolean>>({});
+  const [unscrambleWrongWord, setUnscrambleWrongWord] = useState<string | null>(null);
+  const [essayStatus, setEssayStatus] = useState<"neutral" | "correct" | "wrong">("neutral");
+  const [hasQuestionMistake, setHasQuestionMistake] = useState(false);
 
   const triggerXpReward = (amount: number, description: string) => {
     if (amount <= 0) return;
@@ -212,6 +220,309 @@ export const LatihanPage: React.FC = () => {
     setXpNotification({ amount, description });
     setTimeout(() => {
       setXpNotification(null);
+    }, 4500);
+  };
+
+  const playSuccessFanfare = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const playNote = (freq: number, startDelay: number, duration: number, volume: number = 0.08) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + startDelay);
+        
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + startDelay);
+        gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + startDelay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startDelay + duration);
+        
+        osc.start(ctx.currentTime + startDelay);
+        osc.stop(ctx.currentTime + startDelay + duration);
+      };
+
+      // "tet" - C5
+      playNote(523.25, 0.0, 0.12);
+      // "te" - E5
+      playNote(659.25, 0.14, 0.10);
+      // "re" - G5
+      playNote(783.99, 0.22, 0.10);
+      // "ret" - C6
+      playNote(1046.50, 0.30, 0.40, 0.10);
+    } catch (e) {
+      console.error("Gagal memutar audio fanfare:", e);
+    }
+  };
+
+  const playPageLoadSound = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const playNote = (freq: number, startDelay: number, duration: number, type: OscillatorType = "sine", volume: number = 0.05) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + startDelay);
+        
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + startDelay);
+        gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + startDelay + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startDelay + duration);
+        
+        osc.start(ctx.currentTime + startDelay);
+        osc.stop(ctx.currentTime + startDelay + duration);
+      };
+
+      // Clean futuristic chime
+      playNote(659.25, 0.0, 0.35, "sine", 0.05);
+      playNote(880.00, 0.12, 0.45, "sine", 0.06);
+    } catch (e) {
+      console.error("Gagal memutar audio load:", e);
+    }
+  };
+
+  const playTabClickSound = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.05);
+      
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
+    } catch (e) {
+      console.error("Gagal memutar suara tab:", e);
+    }
+  };
+
+  const handleTabChange = (tab: "detail" | "reading" | "quiz") => {
+    playTabClickSound();
+    setActiveTab(tab);
+  };
+
+  const playTingTing = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const playNote = (freq: number, startDelay: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + startDelay);
+        
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + startDelay);
+        gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + startDelay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startDelay + duration);
+        
+        osc.start(ctx.currentTime + startDelay);
+        osc.stop(ctx.currentTime + startDelay + duration);
+      };
+
+      playNote(1318.51, 0.0, 0.15);
+      playNote(1567.98, 0.08, 0.25);
+    } catch (e) {
+      console.error("Gagal memutar suara ting-ting:", e);
+    }
+  };
+
+  const playTungTung = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const playNote = (freq: number, startDelay: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + startDelay);
+        
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + startDelay);
+        gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + startDelay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startDelay + duration);
+        
+        osc.start(ctx.currentTime + startDelay);
+        osc.stop(ctx.currentTime + startDelay + duration);
+      };
+
+      playNote(130.81, 0.0, 0.15);
+      playNote(98.00, 0.12, 0.25);
+    } catch (e) {
+      console.error("Gagal memutar suara tung-tung:", e);
+    }
+  };
+
+  const handleMultipleChoiceClick = (opt: string, correctAnswer: string, questions: QuizQuestion[]) => {
+    if (correctAnswerClicked || wrongAnswers.includes(opt)) return;
+
+    if (opt === correctAnswer) {
+      playTingTing();
+      setCorrectAnswerClicked(opt);
+      setTimeout(() => {
+        handleNextQuizQuestion(questions, opt);
+      }, 1000);
+    } else {
+      playTungTung();
+      setHasQuestionMistake(true);
+      setWrongAnswers(prev => [...prev, opt]);
+    }
+  };
+
+  const handleMatchingSelect = (leftItem: string, matchedVal: string, currentQ: QuizQuestion, questions: QuizQuestion[]) => {
+    if (matchingCorrect[leftItem]) return;
+
+    const pair = (currentQ.pairs || []).find(p => p.left === leftItem);
+    if (!pair) return;
+
+    if (matchedVal === pair.right) {
+      playTingTing();
+      setMatchingCorrect(prev => {
+        const next = { ...prev, [leftItem]: true };
+        
+        // Check if all matched correctly
+        const totalPairs = (currentQ.pairs || []).length;
+        const correctCount = Object.keys(next).length;
+        if (correctCount === totalPairs) {
+          setTimeout(() => {
+            handleNextQuizQuestion(questions);
+          }, 1000);
+        }
+        return next;
+      });
+      setMatchingWrong(prev => {
+        const next = { ...prev };
+        delete next[leftItem];
+        return next;
+      });
+      setMatchingAnswers(prev => ({ ...prev, [leftItem]: matchedVal }));
+    } else {
+      playTungTung();
+      setHasQuestionMistake(true);
+      setMatchingWrong(prev => ({ ...prev, [leftItem]: true }));
+      setMatchingAnswers(prev => ({ ...prev, [leftItem]: matchedVal }));
+    }
+  };
+
+  const handleGroupingSelect = (word: string, groupName: string, currentQ: QuizQuestion, questions: QuizQuestion[]) => {
+    if (groupingCorrect[word]) return;
+
+    const groups = currentQ.groups || [];
+    const correctGroup = groups.find(g => (g.correctWords || []).includes(word));
+    const correctGroupName = correctGroup ? correctGroup.name : "";
+
+    if (groupName === correctGroupName) {
+      playTingTing();
+      setGroupingCorrect(prev => {
+        const next = { ...prev, [word]: true };
+        
+        // Check if all words correctly classified
+        const totalWords = (currentQ.words || []).length;
+        const correctCount = Object.keys(next).length;
+        if (correctCount === totalWords) {
+          setTimeout(() => {
+            handleNextQuizQuestion(questions);
+          }, 1000);
+        }
+        return next;
+      });
+      setGroupingWrong(prev => {
+        const next = { ...prev };
+        delete next[word];
+        return next;
+      });
+      setGroupingAnswers(prev => ({ ...prev, [word]: groupName }));
+    } else {
+      playTungTung();
+      setHasQuestionMistake(true);
+      setGroupingWrong(prev => ({ ...prev, [word]: true }));
+      setGroupingAnswers(prev => ({ ...prev, [word]: groupName }));
+    }
+  };
+
+  const handleUnscrambleWordClick = (word: string, currentQ: QuizQuestion, questions: QuizQuestion[]) => {
+    if (unscrambleSelected.includes(word)) return;
+
+    const nextIdx = unscrambleSelected.length;
+    const correctOrder = currentQ.correctOrder || [];
+
+    if (word === correctOrder[nextIdx]) {
+      playTingTing();
+      const nextSelected = [...unscrambleSelected, word];
+      setUnscrambleSelected(nextSelected);
+
+      if (nextSelected.length === correctOrder.length) {
+        setTimeout(() => {
+          handleNextQuizQuestion(questions);
+        }, 1000);
+      }
+    } else {
+      playTungTung();
+      setHasQuestionMistake(true);
+      setUnscrambleWrongWord(word);
+      setTimeout(() => {
+        setUnscrambleWrongWord(null);
+      }, 600);
+    }
+  };
+
+  const handleEssayCheck = (currentQ: QuizQuestion, questions: QuizQuestion[]) => {
+    if (essayStatus === "correct") return;
+
+    const targetWord = currentQ.targetWord || "";
+    const isCorrect = targetWord ? essayAnswer.includes(targetWord) : essayAnswer.trim().length > 0;
+
+    if (isCorrect) {
+      playTingTing();
+      setEssayStatus("correct");
+      setTimeout(() => {
+        handleNextQuizQuestion(questions);
+      }, 1000);
+    } else {
+      playTungTung();
+      setHasQuestionMistake(true);
+      setEssayStatus("wrong");
+    }
+  };
+
+  const triggerSuccessNotification = (score: number, text: string) => {
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.6 }
+    });
+    playSuccessFanfare();
+    setSuccessNotification({ score, text });
+    setTimeout(() => {
+      setSuccessNotification(null);
     }, 4500);
   };
 
@@ -227,6 +538,8 @@ export const LatihanPage: React.FC = () => {
         
         if (data.xpEarned > 0) {
           triggerXpReward(data.xpEarned, "Membuka modul pembelajaran baru");
+        } else {
+          playPageLoadSound();
         }
         
         // Initialize reading completion checkboxes from cache or database percentage
@@ -461,6 +774,11 @@ export const LatihanPage: React.FC = () => {
       if (score >= 70) {
         handleToggleReading(idx, true);
       }
+
+      // If score is > 75%, trigger confetti and learning success modal
+      if (score > 75) {
+        triggerSuccessNotification(score, "Pelafalan sangat baik & akurat!");
+      }
     };
 
     recognition.onerror = (event: any) => {
@@ -499,108 +817,48 @@ export const LatihanPage: React.FC = () => {
     tts.speak(text);
   };
 
-  // Submit Reading progress
-  const handleSubmitReading = async () => {
-    if (!kanjiData || !kanjiData.examples) return;
-    setSavingReading(true);
-    try {
-      const readList = kanjiData.examples.filter((ex: any) => ex.isReading);
-      const totalCount = readList.length > 0 ? readList.length : kanjiData.examples.length;
-      const checkedCount = Object.values(readSentences).filter(Boolean).length;
-      const readingScore = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
 
-      const res = await api.latihan.verifyReading(kanjiData.kanji, readingScore);
-      
-      // Refresh local progress data
-      const updatedData = await api.latihan.get(kanjiData.kanji);
-      setKanjiData(updatedData);
-      
-      if (res.xpEarned > 0) {
-        triggerXpReward(res.xpEarned, `Menyelesaikan latihan membaca kalimat`);
-      } else {
-        confetti();
-        alert(res.message || "Progress membaca berhasil disimpan!");
-      }
-    } catch (err: any) {
-      alert(`Gagal menyimpan progress membaca: ${err.message}`);
-    } finally {
-      setSavingReading(false);
-    }
-  };
 
-  // Stepper Quiz handlers
-  const handleAnswerSelect = (option: any) => {
-    setSelectedAnswer(option);
-  };
-
-  const handleMatchingSelect = (leftItem: string, matchedVal: string) => {
-    setMatchingAnswers(prev => ({
-      ...prev,
-      [leftItem]: matchedVal
-    }));
-  };
-
-  const handleUnscrambleWordClick = (word: string) => {
-    setUnscrambleSelected(prev => {
-      if (prev.includes(word)) {
-        return prev.filter(w => w !== word);
-      }
-      return [...prev, word];
-    });
-  };
-
-  const handleNextQuizQuestion = (questions: QuizQuestion[]) => {
+  const handleNextQuizQuestion = (questions: QuizQuestion[], passedSelectedAnswer?: string) => {
     const currentQ = questions[currentQuestionIdx];
     let isCorrect = false;
     let studentAnswerString = "";
     let correctAnswerString = "";
 
+    const finalAnswer = passedSelectedAnswer || selectedAnswer;
+
     if (currentQ.type === "multiple" || currentQ.type === "fill") {
-      studentAnswerString = selectedAnswer || "(Tidak ada jawaban)";
+      studentAnswerString = finalAnswer || "(Tidak ada jawaban)";
       correctAnswerString = currentQ.correctAnswer || "";
-      isCorrect = selectedAnswer === currentQ.correctAnswer;
     } else if (currentQ.type === "unscramble") {
       studentAnswerString = unscrambleSelected.join("");
       correctAnswerString = (currentQ.correctOrder || []).join("");
-      isCorrect = studentAnswerString === correctAnswerString;
     } else if (currentQ.type === "matching") {
       const pairs = currentQ.pairs || [];
-      let allCorrect = true;
       const matchedDetails: string[] = [];
-      
       pairs.forEach(p => {
         const studentMatch = matchingAnswers[p.left] || "";
         matchedDetails.push(`${p.left} → ${studentMatch || "?"}`);
-        if (studentMatch !== p.right) {
-          allCorrect = false;
-        }
       });
-      isCorrect = allCorrect;
       studentAnswerString = matchedDetails.join(", ");
       correctAnswerString = pairs.map(p => `${p.left} → ${p.right}`).join(", ");
     } else if (currentQ.type === "essay") {
       studentAnswerString = essayAnswer.trim();
       correctAnswerString = `(Kosakata wajib: ${currentQ.targetWord || ""})`;
-      const targetWord = currentQ.targetWord || "";
-      isCorrect = targetWord ? essayAnswer.includes(targetWord) : essayAnswer.trim().length > 0;
     } else if (currentQ.type === "grouping") {
       const groups = currentQ.groups || [];
-      let allCorrect = true;
       const details: string[] = [];
       const words = currentQ.words || [];
       words.forEach(w => {
         const studentGroup = groupingAnswers[w] || "";
-        const correctGroup = groups.find(g => (g.correctWords || []).includes(w));
-        const correctGroupName = correctGroup ? correctGroup.name : "";
         details.push(`${w} → ${studentGroup || "?"}`);
-        if (studentGroup !== correctGroupName) {
-          allCorrect = false;
-        }
       });
-      isCorrect = allCorrect;
       studentAnswerString = details.join(", ");
       correctAnswerString = groups.map(g => `${g.name}: [${(g.correctWords || []).join(", ")}]`).join(" | ");
     }
+
+    // scoring is correct only if student made no mistake on this question
+    isCorrect = !hasQuestionMistake;
 
     setQuizFeedback(prev => [
       ...prev,
@@ -615,9 +873,19 @@ export const LatihanPage: React.FC = () => {
 
     // Reset temporary question selections
     setSelectedAnswer(null);
+    setCorrectAnswerClicked(null);
+    setWrongAnswers([]);
+    setMatchingCorrect({});
+    setMatchingWrong({});
+    setGroupingCorrect({});
+    setGroupingWrong({});
+    setUnscrambleWrongWord(null);
+    setEssayStatus("neutral");
+    setHasQuestionMistake(false);
     setUnscrambleSelected([]);
     setEssayAnswer("");
     setGroupingAnswers({});
+    setMatchingAnswers({});
     
     if (currentQuestionIdx < questions.length - 1) {
       setCurrentQuestionIdx(prev => prev + 1);
@@ -664,6 +932,15 @@ export const LatihanPage: React.FC = () => {
   const handleResetQuiz = () => {
     setCurrentQuestionIdx(0);
     setSelectedAnswer(null);
+    setCorrectAnswerClicked(null);
+    setWrongAnswers([]);
+    setMatchingCorrect({});
+    setMatchingWrong({});
+    setGroupingCorrect({});
+    setGroupingWrong({});
+    setUnscrambleWrongWord(null);
+    setEssayStatus("neutral");
+    setHasQuestionMistake(false);
     setMatchingAnswers({});
     setUnscrambleSelected([]);
     setEssayAnswer("");
@@ -736,6 +1013,34 @@ export const LatihanPage: React.FC = () => {
             background-image: radial-gradient(circle at 100% 150%, #edeef0 24%, white 25%, white 28%, #edeef0 29%, #edeef0 36%, white 36%, white 40%, transparent 40%, transparent);
             background-size: 40px 20px;
           }
+
+          @keyframes slideInLeft {
+            from {
+              opacity: 0;
+              transform: translateX(-60px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+          .animate-slide-in-left {
+            animation: slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+
+          @keyframes zoomIn {
+            from {
+              opacity: 0;
+              transform: scale(0.6);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+          .animate-zoom-in {
+            animation: zoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
         `}</style>
         
         {/* Background Texture */}
@@ -753,7 +1058,7 @@ export const LatihanPage: React.FC = () => {
         {/* Primary Header Card with Detailed Percent Stats */}
         <div className="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
           
-          <div className="flex items-center gap-6 self-start md:self-center">
+          <div className="flex items-center gap-6 self-start md:self-center animate-slide-in-left opacity-0">
             <div className="w-24 h-24 bg-[#8f0020]/5 rounded-2xl flex items-center justify-center text-slate-800 font-bold border border-slate-100 relative shrink-0">
               <span className="font-serif text-5xl leading-none">{kanji}</span>
             </div>
@@ -772,7 +1077,7 @@ export const LatihanPage: React.FC = () => {
           </div>
 
           {/* Progress Breakdown Grid */}
-          <div className="flex flex-wrap items-center gap-4 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 justify-around">
+          <div className="flex flex-wrap items-center gap-4 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 justify-around animate-zoom-in opacity-0">
             
             <div className="flex flex-col items-center select-none bg-slate-50/50 p-3 rounded-2xl border border-slate-100 min-w-[70px]">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total</span>
@@ -802,7 +1107,7 @@ export const LatihanPage: React.FC = () => {
         {/* Tab Navigation Menu */}
         <div className="flex border-b border-slate-200/80 mb-2 bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-xs gap-2">
           <button
-            onClick={() => setActiveTab("detail")}
+            onClick={() => handleTabChange("detail")}
             className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
               activeTab === "detail"
                 ? "bg-[#8f0020] text-white shadow-md"
@@ -813,7 +1118,7 @@ export const LatihanPage: React.FC = () => {
             Menulis & Detail
           </button>
           <button
-            onClick={() => setActiveTab("reading")}
+            onClick={() => handleTabChange("reading")}
             className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
               activeTab === "reading"
                 ? "bg-[#8f0020] text-white shadow-md"
@@ -824,7 +1129,7 @@ export const LatihanPage: React.FC = () => {
             Latihan Membaca
           </button>
           <button
-            onClick={() => setActiveTab("quiz")}
+            onClick={() => handleTabChange("quiz")}
             className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
               activeTab === "quiz"
                 ? "bg-[#8f0020] text-white shadow-md"
@@ -844,7 +1149,7 @@ export const LatihanPage: React.FC = () => {
             <div className="lg:col-span-6 space-y-6">
               
               {/* Onyomi/Kunyomi Card */}
-              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs flex justify-around select-none">
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs flex justify-around select-none animate-zoom-in opacity-0">
                 <div className="flex flex-col items-center">
                   <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1">Onyomi</span>
                   <span className="text-xl font-extrabold text-[#8f0020] font-mono bg-[#8f0020]/5 px-4 py-1.5 rounded-xl border border-[#8f0020]/10">
@@ -873,7 +1178,8 @@ export const LatihanPage: React.FC = () => {
                   {jukugos.map((j: any, idx: number) => (
                     <div 
                       key={idx} 
-                      className="border border-slate-100 hover:border-slate-200 bg-slate-50/20 rounded-2xl p-4 shadow-xs transition-all duration-300 flex items-center justify-between group"
+                      className="animate-jukugo-card border border-slate-100 hover:border-[#8f0020]/20 bg-slate-50/20 hover:bg-white rounded-2xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-between group cursor-default"
+                      style={{ animationDelay: `${idx * 60}ms` }}
                     >
                       <div className="flex flex-col gap-1 text-left">
                         <div className="flex items-baseline gap-1.5">
@@ -1341,14 +1647,10 @@ export const LatihanPage: React.FC = () => {
                 PROGRES: {Object.values(readSentences).filter(Boolean).length} / {examples.filter((ex: any) => ex.isReading).length > 0 ? examples.filter((ex: any) => ex.isReading).length : examples.length} SELESAI
               </div>
               
-              <button
-                onClick={handleSubmitReading}
-                disabled={savingReading || (examples.filter((ex: any) => ex.isReading).length === 0 && examples.length === 0)}
-                className="bg-[#8f0020] text-white px-8 py-3.5 rounded-full font-bold shadow-md hover:brightness-110 active:scale-95 transition-all border-none flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {savingReading ? "Menyimpan..." : "Simpan Progres Membaca"}
-                <CheckCircle2 className="w-5 h-5" />
-              </button>
+              <div className="text-xs font-bold text-emerald-600 flex items-center gap-1.5 select-none">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Progres Tersimpan Otomatis
+              </div>
             </div>
           </div>
         )}
@@ -1389,22 +1691,34 @@ export const LatihanPage: React.FC = () => {
                   {(quizQuestions[currentQuestionIdx].type === "multiple" || quizQuestions[currentQuestionIdx].type === "fill") && (
                     <div className="grid grid-cols-1 gap-3 mt-4">
                       {(quizQuestions[currentQuestionIdx].options || []).map((opt, oIdx) => {
-                        const isSelected = selectedAnswer === opt;
+                        const isCorrect = correctAnswerClicked === opt;
+                        const isWrong = wrongAnswers.includes(opt);
                         return (
                           <button
                             key={oIdx}
-                            onClick={() => handleAnswerSelect(opt)}
+                            onClick={() => handleMultipleChoiceClick(opt, quizQuestions[currentQuestionIdx].correctAnswer || "", quizQuestions)}
+                            disabled={!!correctAnswerClicked}
                             className={`p-4 rounded-2xl border text-left font-bold text-sm transition-all flex items-center justify-between cursor-pointer ${
-                              isSelected
-                                ? "bg-[#8f0020]/5 border-[#8f0020] text-[#8f0020]"
-                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                              isCorrect
+                                ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                                : isWrong
+                                  ? "bg-red-50 border-red-500 text-red-700"
+                                  : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                             }`}
                           >
                             <span>{opt}</span>
                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                              isSelected ? "border-[#8f0020] bg-[#8f0020] text-white" : "border-slate-300 bg-transparent text-transparent"
+                              isCorrect
+                                ? "border-emerald-500 bg-emerald-500 text-white"
+                                : isWrong
+                                  ? "border-red-500 bg-red-500 text-white"
+                                  : "border-slate-300 bg-transparent text-transparent"
                             }`}>
-                              <Check className="w-3.5 h-3.5 stroke-[3px]" />
+                              {isWrong ? (
+                                <X className="w-3.5 h-3.5 stroke-[3px]" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5 stroke-[3px]" />
+                              )}
                             </div>
                           </button>
                         );
@@ -1418,14 +1732,13 @@ export const LatihanPage: React.FC = () => {
                       {/* Selection visual board area */}
                       <div className="min-h-[70px] p-4 bg-slate-50 border border-dashed border-slate-200 rounded-2xl flex flex-wrap gap-2 items-center">
                         {unscrambleSelected.map((word, wIdx) => (
-                          <button
+                          <div
                             key={wIdx}
-                            onClick={() => handleUnscrambleWordClick(word)}
-                            className="bg-[#8f0020] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center gap-1 border-none cursor-pointer hover:brightness-105 active:scale-95"
+                            className="bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center gap-1"
                           >
                             {word}
-                            <X className="w-4 h-4" />
-                          </button>
+                            <Check className="w-3.5 h-3.5 stroke-[3px]" />
+                          </div>
                         ))}
                         {unscrambleSelected.length === 0 && (
                           <span className="text-slate-400 font-medium text-sm italic">Klik tombol kata di bawah untuk menyusun kalimat...</span>
@@ -1436,31 +1749,24 @@ export const LatihanPage: React.FC = () => {
                       <div className="flex flex-wrap gap-2 justify-center pt-2">
                         {(quizQuestions[currentQuestionIdx].words || []).map((word, wIdx) => {
                           const isUsed = unscrambleSelected.includes(word);
+                          const isWrongWord = unscrambleWrongWord === word;
                           return (
                             <button
                               key={wIdx}
-                              onClick={() => handleUnscrambleWordClick(word)}
+                              onClick={() => handleUnscrambleWordClick(word, quizQuestions[currentQuestionIdx], quizQuestions)}
                               disabled={isUsed}
                               className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all border cursor-pointer select-none active:scale-95 ${
                                 isUsed
-                                  ? "bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-700 hover:border-[#8f0020]/30 hover:bg-slate-50"
+                                  ? "bg-emerald-50 border-emerald-200 text-emerald-500 cursor-not-allowed"
+                                  : isWrongWord
+                                    ? "bg-red-50 border-red-500 text-red-600 animate-pulse"
+                                    : "bg-white border-slate-200 text-slate-700 hover:border-[#8f0020]/30 hover:bg-slate-50"
                               }`}
                             >
                               {word}
                             </button>
                           );
                         })}
-                      </div>
-
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => setUnscrambleSelected([])}
-                          disabled={unscrambleSelected.length === 0}
-                          className="text-xs font-bold text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer p-1"
-                        >
-                          Reset Kalimat
-                        </button>
                       </div>
                     </div>
                   )}
@@ -1470,16 +1776,34 @@ export const LatihanPage: React.FC = () => {
                     <div className="space-y-3 mt-4">
                       {(quizQuestions[currentQuestionIdx].pairs || []).map((pair, pIdx) => {
                         const allRightOptions = (quizQuestions[currentQuestionIdx].pairs || []).map(p => p.right);
+                        const isCorrect = matchingCorrect[pair.left];
+                        const isWrong = matchingWrong[pair.left];
                         return (
-                          <div key={pIdx} className="flex items-center justify-between gap-4 p-3 bg-slate-50/50 border border-slate-100 rounded-2xl">
-                            <span className="font-serif text-lg font-bold text-slate-700 px-2 shrink-0 select-none">
+                          <div
+                            key={pIdx}
+                            className={`flex items-center justify-between gap-4 p-3 border rounded-2xl transition-all ${
+                              isCorrect
+                                ? "bg-emerald-50/70 border-emerald-500 text-emerald-700"
+                                : isWrong
+                                  ? "bg-red-50/70 border-red-400 text-red-700"
+                                  : "bg-slate-50/50 border-slate-100 text-slate-700"
+                            }`}
+                          >
+                            <span className="font-serif text-lg font-bold px-2 shrink-0 select-none">
                               {pair.left}
                             </span>
                             
                             <select
                               value={matchingAnswers[pair.left] || ""}
-                              onChange={(e) => handleMatchingSelect(pair.left, e.target.value)}
-                              className="px-4 py-2 border border-slate-200 rounded-xl bg-white text-slate-600 text-sm font-bold focus:outline-none focus:border-[#8f0020]"
+                              disabled={isCorrect}
+                              onChange={(e) => handleMatchingSelect(pair.left, e.target.value, quizQuestions[currentQuestionIdx], quizQuestions)}
+                              className={`px-4 py-2 border rounded-xl text-sm font-bold focus:outline-none bg-white cursor-pointer ${
+                                isCorrect
+                                  ? "border-emerald-500 text-emerald-700 bg-emerald-50/20"
+                                  : isWrong
+                                    ? "border-red-400 text-red-700 bg-red-50/20"
+                                    : "border-slate-200 text-slate-600 focus:border-[#8f0020]"
+                              }`}
                             >
                               <option value="">-- Pilih Arti --</option>
                               {allRightOptions.map((opt, oIdx) => (
@@ -1500,9 +1824,21 @@ export const LatihanPage: React.FC = () => {
                       </p>
                       <textarea
                         value={essayAnswer}
-                        onChange={(e) => setEssayAnswer(e.target.value)}
+                        disabled={essayStatus === "correct"}
+                        onChange={(e) => {
+                          setEssayAnswer(e.target.value);
+                          if (essayStatus === "wrong") {
+                            setEssayStatus("neutral");
+                          }
+                        }}
                         placeholder="Ketik kalimat buatan Anda di sini..."
-                        className="w-full min-h-[100px] p-4 border border-slate-200 rounded-2xl focus:outline-none focus:border-[#8f0020] text-sm font-medium"
+                        className={`w-full min-h-[100px] p-4 border rounded-2xl focus:outline-none text-sm font-medium transition-all ${
+                          essayStatus === "correct"
+                            ? "border-emerald-500 bg-emerald-50/20 text-emerald-800"
+                            : essayStatus === "wrong"
+                              ? "border-red-400 bg-red-50/20 text-red-800"
+                              : "border-slate-200 text-slate-700 focus:border-[#8f0020]"
+                        }`}
                       />
                     </div>
                   )}
@@ -1516,15 +1852,33 @@ export const LatihanPage: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1 sidebar-scroll">
                         {(quizQuestions[currentQuestionIdx].words || []).map((word, wIdx) => {
                           const groupOptions = (quizQuestions[currentQuestionIdx].groups || []).map(g => g.name);
+                          const isCorrect = groupingCorrect[word];
+                          const isWrong = groupingWrong[word];
                           return (
-                            <div key={wIdx} className="flex items-center justify-between gap-4 p-3 bg-slate-50/50 border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                              <span className="font-serif text-sm font-bold text-slate-700 select-none">
+                            <div
+                              key={wIdx}
+                              className={`flex items-center justify-between gap-4 p-3 border rounded-2xl shadow-sm transition-all ${
+                                isCorrect
+                                  ? "bg-emerald-50/70 border-emerald-500 text-emerald-700"
+                                  : isWrong
+                                    ? "bg-red-50/70 border-red-400 text-red-700"
+                                    : "bg-slate-50/50 border-slate-100 text-slate-700"
+                              }`}
+                            >
+                              <span className="font-serif text-sm font-bold select-none">
                                 {word}
                               </span>
                               <select
                                 value={groupingAnswers[word] || ""}
-                                onChange={(e) => setGroupingAnswers(prev => ({ ...prev, [word]: e.target.value }))}
-                                className="px-3 py-1.5 border border-slate-200 rounded-xl bg-white text-slate-600 text-xs font-bold focus:outline-none focus:border-[#8f0020] cursor-pointer"
+                                disabled={isCorrect}
+                                onChange={(e) => handleGroupingSelect(word, e.target.value, quizQuestions[currentQuestionIdx], quizQuestions)}
+                                className={`px-3 py-1.5 border rounded-xl text-xs font-bold focus:outline-none bg-white cursor-pointer ${
+                                  isCorrect
+                                    ? "border-emerald-500 text-emerald-700 bg-emerald-50/20"
+                                    : isWrong
+                                      ? "border-red-400 text-red-700 bg-red-50/20"
+                                      : "border-slate-200 text-slate-600 focus:border-[#8f0020]"
+                                }`}
                               >
                                 <option value="">-- Pilih Kelompok --</option>
                                 {groupOptions.map((gName, gIdx) => (
@@ -1542,20 +1896,16 @@ export const LatihanPage: React.FC = () => {
 
                 {/* Bottom Step Controller action buttons */}
                 <div className="border-t border-slate-100 pt-6 flex justify-end">
-                  <button
-                    onClick={() => handleNextQuizQuestion(quizQuestions)}
-                    disabled={
-                      (quizQuestions[currentQuestionIdx].type === "multiple" || quizQuestions[currentQuestionIdx].type === "fill") && !selectedAnswer
-                      || (quizQuestions[currentQuestionIdx].type === "unscramble" && unscrambleSelected.length === 0)
-                      || (quizQuestions[currentQuestionIdx].type === "matching" && Object.keys(matchingAnswers).length < (quizQuestions[currentQuestionIdx].pairs || []).length)
-                      || (quizQuestions[currentQuestionIdx].type === "essay" && !essayAnswer.trim())
-                      || (quizQuestions[currentQuestionIdx].type === "grouping" && Object.keys(groupingAnswers).length < (quizQuestions[currentQuestionIdx].words || []).length)
-                    }
-                    className="bg-[#8f0020] text-white px-8 py-3 rounded-full font-bold shadow-md hover:brightness-110 active:scale-95 transition-all border-none flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  >
-                    <span>Lanjut</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                  {quizQuestions[currentQuestionIdx].type === "essay" && essayStatus !== "correct" && (
+                    <button
+                      onClick={() => handleEssayCheck(quizQuestions[currentQuestionIdx], quizQuestions)}
+                      disabled={!essayAnswer.trim()}
+                      className="bg-[#8f0020] text-white px-8 py-3 rounded-full font-bold shadow-md hover:brightness-110 active:scale-95 transition-all border-none flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <span>Periksa</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
               </div>
@@ -1613,7 +1963,7 @@ export const LatihanPage: React.FC = () => {
                     {savingQuiz ? "Menyimpan Nilai..." : "Ulangi Kuis"}
                   </button>
                   <button
-                    onClick={() => setActiveTab("detail")}
+                    onClick={() => handleTabChange("detail")}
                     className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-full font-bold shadow-xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
                   >
                     Kembali Ke Detail
@@ -1645,6 +1995,25 @@ export const LatihanPage: React.FC = () => {
           </div>
           <button
             onClick={() => setXpNotification(null)}
+            className="text-white/50 hover:text-white transition-all bg-transparent border-none cursor-pointer p-1 rounded-full hover:bg-white/10"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Floating Learning Success Notification Toast */}
+      {successNotification && (
+        <div className={`fixed ${xpNotification ? 'top-24' : 'top-6'} left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur text-white px-6 py-3.5 rounded-full border border-emerald-500/35 shadow-2xl flex items-center gap-3 animate-fade-in animate-bounce`}>
+          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-black shadow-md">
+            <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="font-extrabold text-sm text-emerald-400">Keberhasilan Belajar! ({successNotification.score}%)</span>
+            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{successNotification.text}</span>
+          </div>
+          <button
+            onClick={() => setSuccessNotification(null)}
             className="text-white/50 hover:text-white transition-all bg-transparent border-none cursor-pointer p-1 rounded-full hover:bg-white/10"
           >
             <X className="w-4 h-4" />
