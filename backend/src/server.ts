@@ -82,6 +82,11 @@ app.get("/health", (req, res) => {
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error("Unhandled error:", err);
+  
+  if (err instanceof Error && (err.message.includes("tidak diperbolehkan") || err.name === "MulterError")) {
+    return res.status(400).json({ error: err.message });
+  }
+
   res.status(500).json({ error: "Terjadi kesalahan internal server" });
 });
 
