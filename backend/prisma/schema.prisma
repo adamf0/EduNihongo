@@ -24,6 +24,8 @@ model User {
   activities        UserActivity[]
   modules           UserModuleProgress[]
   kanjiProgress     UserKanjiProgress[]
+  submissions       Submission[]
+  comments          Comment[]
 }
 
 model UserActivity {
@@ -46,6 +48,8 @@ model Module {
   tujuanPembelajaran String?              @db.Text
   userProgress       UserModuleProgress[]
   kanjis             Kanji[]
+  assignments        Assignment[]
+  comments           Comment[]
 }
 
 model UserModuleProgress {
@@ -78,6 +82,8 @@ model Kanji {
   etymologies    Etymology[]
   jukugos        Jukugo[]
   quizData       String?             @db.Text
+  assignments    Assignment[]
+  comments       Comment[]
 }
 
 model UserKanjiProgress {
@@ -144,4 +150,59 @@ model Jukugo {
   word        String
   reading     String
   meaning     String @db.Text
+}
+
+model Assignment {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String       @db.Text
+  dueDate     DateTime?
+  createdAt   DateTime     @default(now())
+  
+  moduleId    Int?
+  module      Module?      @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  
+  kanjiId     Int?
+  kanji       Kanji?       @relation(fields: [kanjiId], references: [id], onDelete: SetNull)
+  
+  submissions Submission[]
+  comments    Comment[]
+}
+
+model Submission {
+  id           Int        @id @default(autoincrement())
+  assignmentId Int
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  userId       Int
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content      String     @db.Text
+  submittedAt  DateTime   @default(now())
+  
+  grade        String?    // e.g. A, B, 0-100
+  feedback     String?    @db.Text
+  
+  comments     Comment[]
+}
+
+model Comment {
+  id           Int         @id @default(autoincrement())
+  userId       Int
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content      String      @db.Text
+  createdAt    DateTime    @default(now())
+  
+  moduleId     Int?
+  module       Module?     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  
+  kanjiId      Int?
+  kanji        Kanji?      @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  
+  assignmentId Int?
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  submissionId Int?
+  submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 }

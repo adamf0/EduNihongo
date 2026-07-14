@@ -25,7 +25,11 @@ import {
   RotateCcw,
   Sparkles,
   Check,
-  ArrowRight
+  ArrowRight,
+  MessageSquare,
+  FileText,
+  Calendar,
+  Send
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -176,7 +180,7 @@ export const LatihanPage: React.FC = () => {
   const [verification, setVerificationInfo] = useState<any | null>(null);
   const [showGuide, setShowGuide] = useState(true);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"detail" | "reading" | "quiz">("detail");
+  const [activeTab, setActiveTab] = useState<"detail" | "reading" | "quiz" | "lms">("detail");
 
   // Reading tab states
   const [readSentences, setReadSentences] = useState<Record<number, boolean>>({});
@@ -209,6 +213,107 @@ export const LatihanPage: React.FC = () => {
   const [unscrambleWrongWord, setUnscrambleWrongWord] = useState<string | null>(null);
   const [essayStatus, setEssayStatus] = useState<"neutral" | "correct" | "wrong">("neutral");
   const [hasQuestionMistake, setHasQuestionMistake] = useState(false);
+
+  // LMS states
+  const [lmsAssignments, setLmsAssignments] = useState<any[]>([]);
+  const [lmsComments, setLmsComments] = useState<any[]>([]);
+  const [newCommentContent, setNewCommentContent] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [submittingSubmission, setSubmittingSubmission] = useState<Record<number, boolean>>({});
+  const [submissionContents, setSubmissionContents] = useState<Record<number, string>>({});
+  const [loadingLms, setLoadingLms] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const loadLmsData = async () => {
+    if (!kanjiData) return;
+    try {
+      setLoadingLms(true);
+      const assigns = await api.lms.assignments.list({
+        kanjiId: kanjiData.id,
+        moduleId: kanjiData.moduleId || undefined
+      });
+      setLmsAssignments(assigns);
+
+      const comms = await api.lms.comments.list({
+        kanjiId: kanjiData.id
+      });
+      setLmsComments(comms);
+    } catch (err) {
+      console.error("Gagal memuat data LMS:", err);
+    } finally {
+      setLoadingLms(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const profile = await api.profile.get();
+        setCurrentUser(profile);
+      } catch (e) {
+        console.error("Gagal memuat profil pengguna:", e);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "lms" && kanjiData) {
+      loadLmsData();
+    }
+  }, [activeTab, kanjiData]);
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCommentContent.trim() || !kanjiData) return;
+
+    try {
+      setSubmittingComment(true);
+      const res = await api.lms.comments.create({
+        content: newCommentContent,
+        kanjiId: kanjiData.id
+      });
+      setLmsComments(prev => [...prev, res]);
+      setNewCommentContent("");
+    } catch (err: any) {
+      alert(err.message || "Gagal mengirim komentar.");
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (id: number) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus komentar ini?")) return;
+
+    try {
+      await api.lms.comments.delete(id);
+      setLmsComments(prev => prev.filter(c => c.id !== id));
+    } catch (err: any) {
+      alert(err.message || "Gagal menghapus komentar.");
+    }
+  };
+
+  const handleSubmitAssignment = async (assignmentId: number) => {
+    const textContent = submissionContents[assignmentId];
+    if (!textContent || !textContent.trim()) {
+      alert("Harap masukkan jawaban tugas Anda.");
+      return;
+    }
+
+    try {
+      setSubmittingSubmission(prev => ({ ...prev, [assignmentId]: true }));
+      await api.lms.submissions.submit({
+        assignmentId,
+        content: textContent
+      });
+      alert("Tugas berhasil dikumpulkan!");
+      loadLmsData();
+    } catch (err: any) {
+      alert(err.message || "Gagal mengumpulkan tugas.");
+    } finally {
+      setSubmittingSubmission(prev => ({ ...prev, [assignmentId]: false }));
+    }
+  };
 
   const triggerXpReward = (amount: number, description: string) => {
     if (amount <= 0) return;
@@ -316,7 +421,7 @@ export const LatihanPage: React.FC = () => {
     }
   };
 
-  const handleTabChange = (tab: "detail" | "reading" | "quiz") => {
+  const handleTabChange = (tab: "detail" | "reading" | "quiz" | "lms") => {
     playTabClickSound();
     setActiveTab(tab);
   };
@@ -1138,6 +1243,17 @@ export const LatihanPage: React.FC = () => {
           >
             <HelpCircle className="w-4 h-4" />
             Kuis Evaluasi
+          </button>
+          <button
+            onClick={() => handleTabChange("lms")}
+            className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+              activeTab === "lms"
+                ? "bg-[#8f0020] text-white shadow-md"
+                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Tugas & Diskusi
           </button>
         </div>
 
@@ -1977,6 +2093,216 @@ export const LatihanPage: React.FC = () => {
                 <p className="text-sm text-slate-400 italic">Gagal memuat atau menyusun soal kuis latihan.</p>
               </div>
             )}
+
+          </div>
+        )}
+
+        {/* ================= TAB CONTENT: LMS TUGAS & DISKUSI ================= */}
+        {activeTab === "lms" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in select-text">
+            
+            {/* Left Column: Assignments */}
+            <div className="lg:col-span-7 space-y-6 text-left">
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
+                  <FileText className="text-[#8f0020] w-6 h-6 shrink-0" />
+                  <h3 className="font-extrabold text-slate-800 text-lg">Tugas & Latihan LMS</h3>
+                </div>
+
+                {loadingLms ? (
+                  <div className="text-center py-8 text-slate-400 font-bold animate-pulse text-sm">
+                    Memuat tugas modul...
+                  </div>
+                ) : lmsAssignments.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 font-medium italic text-sm">
+                    Belum ada tugas yang diberikan untuk Modul atau Kanji ini.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {lmsAssignments.map((assign) => {
+                      const hasSubmitted = assign.submissions && assign.submissions.length > 0;
+                      const submission = hasSubmitted ? assign.submissions[0] : null;
+                      const dueDateText = assign.dueDate ? new Date(assign.dueDate).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric"
+                      }) : "Tidak ada";
+
+                      return (
+                        <div key={assign.id} className="border border-slate-100 rounded-2xl p-5 bg-slate-50/50 hover:bg-slate-50 transition-all">
+                          <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                            <h4 className="font-black text-slate-800 text-base">{assign.title}</h4>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                              hasSubmitted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                            }`}>
+                              {hasSubmitted ? "Sudah Mengumpulkan" : "Belum Mengumpulkan"}
+                            </span>
+                          </div>
+
+                          <p className="text-slate-600 text-sm whitespace-pre-wrap leading-relaxed mb-4">
+                            {assign.description}
+                          </p>
+
+                          <div className="flex items-center gap-1 text-xs text-slate-400 font-bold mb-4">
+                            <Calendar className="w-3.5 h-3.5" />
+                            Batas Waktu: {dueDateText}
+                          </div>
+
+                          {/* Submission state/form */}
+                          {hasSubmitted ? (
+                            <div className="border border-slate-200/60 rounded-xl p-4 bg-white space-y-3">
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Jawaban Anda</span>
+                                <p className="text-slate-700 text-sm font-medium whitespace-pre-wrap mt-0.5">
+                                  {submission.content}
+                                </p>
+                              </div>
+                              {submission.grade && (
+                                <div className="border-t border-slate-100 pt-3 flex flex-wrap gap-4 items-center">
+                                  <div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nilai</span>
+                                    <span className="block font-black text-[#8f0020] text-lg">{submission.grade}</span>
+                                  </div>
+                                  {submission.feedback && (
+                                    <div className="flex-1">
+                                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Catatan Dosen</span>
+                                      <p className="text-slate-600 text-xs italic font-medium whitespace-pre-wrap mt-0.5">
+                                        {submission.feedback}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {!submission.grade && (
+                                <p className="text-slate-400 text-xs italic font-medium pt-2 border-t border-slate-100">
+                                  Menunggu penilaian & feedback dari Dosen...
+                                </p>
+                              )}
+                              
+                              {/* Re-submit option if not graded */}
+                              {!submission.grade && (
+                                <div className="mt-3">
+                                  <textarea
+                                    value={submissionContents[assign.id] !== undefined ? submissionContents[assign.id] : submission.content}
+                                    onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                    placeholder="Perbarui jawaban Anda di sini..."
+                                    className="w-full min-h-[80px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] mb-2 font-medium"
+                                  />
+                                  <button
+                                    onClick={() => handleSubmitAssignment(assign.id)}
+                                    disabled={submittingSubmission[assign.id]}
+                                    className="bg-[#8f0020] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer disabled:opacity-50"
+                                  >
+                                    {submittingSubmission[assign.id] ? "Memperbarui..." : "Perbarui Jawaban"}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="border border-slate-200/60 rounded-xl p-4 bg-white space-y-2">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Kumpulkan Jawaban</span>
+                              <textarea
+                                value={submissionContents[assign.id] || ""}
+                                onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                placeholder="Ketik jawaban tugas Anda di sini..."
+                                className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] mb-2 font-medium"
+                              />
+                              <button
+                                onClick={() => handleSubmitAssignment(assign.id)}
+                                disabled={submittingSubmission[assign.id]}
+                                className="bg-[#8f0020] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer disabled:opacity-50"
+                              >
+                                {submittingSubmission[assign.id] ? "Mengirim..." : "Kumpulkan Tugas"}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Discussion / Comments */}
+            <div className="lg:col-span-5 space-y-6 text-left">
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
+                  <MessageSquare className="text-[#8f0020] w-6 h-6 shrink-0" />
+                  <h3 className="font-extrabold text-slate-800 text-lg">Forum Diskusi Kanji</h3>
+                </div>
+
+                {/* Comments List */}
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1 sidebar-scroll mb-4">
+                  {lmsComments.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 font-medium italic text-xs">
+                      Belum ada diskusi. Mulai kirim komentar pertama Anda!
+                    </div>
+                  ) : (
+                    lmsComments.map((comm) => {
+                      const isOwner = currentUser && comm.userId === currentUser.id;
+                      const isAdmin = currentUser && currentUser.role === "ADMIN";
+
+                      return (
+                        <div key={comm.id} className="flex gap-3 items-start border-b border-slate-50 pb-3">
+                          <img
+                            src={comm.user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150"}
+                            alt={comm.user?.name}
+                            className="w-8 h-8 rounded-full object-cover shadow-xs border border-slate-200"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-extrabold text-slate-800 text-xs">{comm.user?.name}</span>
+                                {comm.user?.role === "ADMIN" && (
+                                  <span className="px-1.5 py-0.5 rounded-md bg-[#8f0020]/10 text-[#8f0020] text-[9px] font-black uppercase tracking-wider">
+                                    Dosen
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium font-mono">
+                                {new Date(comm.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 text-xs font-medium mt-1 leading-relaxed whitespace-pre-wrap">
+                              {comm.content}
+                            </p>
+                            
+                            {(isOwner || isAdmin) && (
+                              <button
+                                onClick={() => handleDeleteComment(comm.id)}
+                                className="text-[10px] text-red-500 hover:text-red-700 bg-transparent border-none cursor-pointer mt-1 font-bold p-0"
+                              >
+                                Hapus
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Post New Comment Form */}
+                <form onSubmit={handlePostComment} className="border-t border-slate-100 pt-4 flex gap-2">
+                  <input
+                    type="text"
+                    value={newCommentContent}
+                    onChange={(e) => setNewCommentContent(e.target.value)}
+                    placeholder="Tulis tanggapan atau pertanyaan..."
+                    className="flex-1 p-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-medium"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={submittingComment || !newCommentContent.trim()}
+                    className="bg-[#8f0020] text-white p-3 rounded-xl hover:brightness-105 active:scale-95 transition-all cursor-pointer border-none flex items-center justify-center disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
+            </div>
 
           </div>
         )}

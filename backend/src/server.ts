@@ -10,6 +10,7 @@ import latihanRoutes from "./routes/latihan";
 import progressRoutes from "./routes/progress";
 import profileRoutes from "./routes/profile";
 import adminRoutes from "./routes/admin";
+import lmsRoutes from "./routes/lms";
 
 dotenv.config();
 
@@ -66,6 +67,7 @@ app.use("/api/latihan", latihanRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/lms", lmsRoutes);
 
 // Serve Swagger Documentation
 app.get("/docs", (req, res) => {

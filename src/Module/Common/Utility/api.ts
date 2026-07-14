@@ -215,5 +215,101 @@ export const api = {
         return handleResponse(res);
       }
     }
+  },
+  lms: {
+    assignments: {
+      list: async (filters: { moduleId?: number; kanjiId?: number }) => {
+        const queryParams = new URLSearchParams();
+        if (filters.moduleId) queryParams.append("moduleId", filters.moduleId.toString());
+        if (filters.kanjiId) queryParams.append("kanjiId", filters.kanjiId.toString());
+        
+        const res = await fetch(`${BASE_URL}/lms/assignments?${queryParams.toString()}`, {
+          method: "GET",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      },
+      create: async (data: { title: string; description: string; dueDate?: string | null; moduleId?: number | null; kanjiId?: number | null }) => {
+        const res = await fetch(`${BASE_URL}/lms/assignments`, {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      update: async (id: number, data: { title: string; description: string; dueDate?: string | null; moduleId?: number | null; kanjiId?: number | null }) => {
+        const res = await fetch(`${BASE_URL}/lms/assignments/${id}`, {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      delete: async (id: number) => {
+        const res = await fetch(`${BASE_URL}/lms/assignments/${id}`, {
+          method: "DELETE",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      }
+    },
+    submissions: {
+      list: async (filters: { assignmentId?: number }) => {
+        const queryParams = new URLSearchParams();
+        if (filters.assignmentId) queryParams.append("assignmentId", filters.assignmentId.toString());
+        
+        const res = await fetch(`${BASE_URL}/lms/submissions?${queryParams.toString()}`, {
+          method: "GET",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      },
+      submit: async (data: { assignmentId: number; content: string }) => {
+        const res = await fetch(`${BASE_URL}/lms/submissions`, {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      grade: async (id: number, data: { grade: string | null; feedback: string | null }) => {
+        const res = await fetch(`${BASE_URL}/lms/submissions/${id}/grade`, {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      }
+    },
+    comments: {
+      list: async (filters: { moduleId?: number; kanjiId?: number; assignmentId?: number; submissionId?: number }) => {
+        const queryParams = new URLSearchParams();
+        if (filters.moduleId) queryParams.append("moduleId", filters.moduleId.toString());
+        if (filters.kanjiId) queryParams.append("kanjiId", filters.kanjiId.toString());
+        if (filters.assignmentId) queryParams.append("assignmentId", filters.assignmentId.toString());
+        if (filters.submissionId) queryParams.append("submissionId", filters.submissionId.toString());
+
+        const res = await fetch(`${BASE_URL}/lms/comments?${queryParams.toString()}`, {
+          method: "GET",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      },
+      create: async (data: { content: string; moduleId?: number | null; kanjiId?: number | null; assignmentId?: number | null; submissionId?: number | null }) => {
+        const res = await fetch(`${BASE_URL}/lms/comments`, {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      delete: async (id: number) => {
+        const res = await fetch(`${BASE_URL}/lms/comments/${id}`, {
+          method: "DELETE",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      }
+    }
   }
 };
