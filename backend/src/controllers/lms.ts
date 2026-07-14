@@ -5,7 +5,7 @@ import { sanitizeObject } from "../utils/sanitize";
 
 const prisma = new PrismaClient();
 
-// ================= TASKS (ASSIGNMENTS) CRUD =================
+// ================= ASSIGNMENTS (TASKS) CRUD =================
 
 export const getAssignments = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -28,13 +28,21 @@ export const getAssignments = async (req: AuthenticatedRequest, res: Response) =
       orderBy: { createdAt: "desc" }
     });
 
-    // Map `TaskSubmission` to `submissions` to match the frontend expectations
-    const assignments = tasks.map(t => ({
-      ...t,
-      submissions: t.TaskSubmission
+    // Map fields back to frontend expected keys (e.g. assignments & submissions)
+    const formatted = tasks.map(task => ({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      dueDate: task.dueDate,
+      createdAt: task.createdAt,
+      moduleId: task.moduleId,
+      kanjiId: task.kanjiId,
+      module: task.Module,
+      kanji: task.Kanji,
+      submissions: task.TaskSubmission
     }));
 
-    res.json(assignments);
+    res.json(formatted);
   } catch (error: any) {
     console.error("LMS getAssignments error:", error);
     res.status(500).json({ error: "Gagal mengambil data tugas." });
@@ -152,7 +160,7 @@ export const getSubmissions = async (req: AuthenticatedRequest, res: Response) =
       whereClause.userId = user.id;
     }
 
-    const taskSubmissions = await prisma.taskSubmission.findMany({
+    const submissions = await prisma.taskSubmission.findMany({
       where: whereClause,
       include: {
         User: { select: { id: true, name: true, email: true, avatar: true } },
@@ -161,14 +169,20 @@ export const getSubmissions = async (req: AuthenticatedRequest, res: Response) =
       orderBy: { submittedAt: "desc" }
     });
 
-    // Map keys to match frontend (user and assignment fields instead of capitalized User and Task)
-    const submissions = taskSubmissions.map(s => ({
-      ...s,
-      user: s.User,
-      assignment: s.Task
+    // Map keys for frontend
+    const formatted = submissions.map(sub => ({
+      id: sub.id,
+      assignmentId: sub.taskId,
+      userId: sub.userId,
+      content: sub.content,
+      submittedAt: sub.submittedAt,
+      grade: sub.grade,
+      feedback: sub.feedback,
+      user: sub.User,
+      assignment: sub.Task
     }));
 
-    res.json(submissions);
+    res.json(formatted);
   } catch (error: any) {
     console.error("LMS getSubmissions error:", error);
     res.status(500).json({ error: "Gagal mengambil data pengumpulan tugas." });
@@ -186,9 +200,11 @@ export const submitAssignment = async (req: AuthenticatedRequest, res: Response)
       return res.status(400).json({ error: "Assignment ID dan konten jawaban wajib diisi." });
     }
 
+    const taskId = parseInt(assignmentId, 10);
+
     // Check if task exists
     const task = await prisma.task.findUnique({
-      where: { id: parseInt(assignmentId, 10) }
+      where: { id: taskId }
     });
     if (!task) {
       return res.status(404).json({ error: "Tugas tidak ditemukan." });
@@ -197,7 +213,7 @@ export const submitAssignment = async (req: AuthenticatedRequest, res: Response)
     // Upsert submission
     const existing = await prisma.taskSubmission.findFirst({
       where: {
-        taskId: parseInt(assignmentId, 10),
+        taskId,
         userId: req.user.id
       }
     });
@@ -216,7 +232,7 @@ export const submitAssignment = async (req: AuthenticatedRequest, res: Response)
     } else {
       submission = await prisma.taskSubmission.create({
         data: {
-          taskId: parseInt(assignmentId, 10),
+          taskId,
           userId: req.user.id,
           content
         }
@@ -259,63 +275,35 @@ export const gradeSubmission = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
-// ================= COMMENTS / DISCUSSIONS =================
+// ================= COMMENTS / DISCUSSIONS (TASK COMMENTS) =================
 
 export const getComments = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { moduleId, kanjiId, assignmentId } = req.query;
+    const { assignmentId } = req.query;
 
-    let comments: any[] = [];
-
-    if (assignmentId) {
-      const taskComments = await prisma.taskComment.findMany({
-        where: { taskId: parseInt(assignmentId as string, 10) },
-        include: {
-          User: { select: { id: true, name: true, role: true, avatar: true } }
-        },
-        orderBy: { createdAt: "asc" }
-      });
-      comments = taskComments.map(c => ({
-        ...c,
-        user: c.User
-      }));
-    } else {
-      // If fetching general module or kanji discussions, find or create a default "Discussion Board" Task
-      // specifically for that module or kanji!
-      const targetWhere: any = {};
-      if (moduleId) targetWhere.moduleId = parseInt(moduleId as string, 10);
-      if (kanjiId) targetWhere.kanjiId = parseInt(kanjiId as string, 10);
-
-      // Find tasks matching target
-      const tasks = await prisma.task.findMany({ where: targetWhere });
-      let discussTask = tasks.find(t => t.title.includes("Forum Diskusi"));
-
-      if (!discussTask) {
-        // Create a default discussion board task
-        discussTask = await prisma.task.create({
-          data: {
-            title: "Forum Diskusi & Tanya Jawab",
-            description: "Gunakan thread ini untuk berdiskusi, bertanya, dan berbagi informasi terkait materi.",
-            moduleId: moduleId ? parseInt(moduleId as string, 10) : null,
-            kanjiId: kanjiId ? parseInt(kanjiId as string, 10) : null,
-          }
-        });
-      }
-
-      const taskComments = await prisma.taskComment.findMany({
-        where: { taskId: discussTask.id },
-        include: {
-          User: { select: { id: true, name: true, role: true, avatar: true } }
-        },
-        orderBy: { createdAt: "asc" }
-      });
-      comments = taskComments.map(c => ({
-        ...c,
-        user: c.User
-      }));
+    if (!assignmentId) {
+      return res.status(400).json({ error: "Parameter assignmentId wajib disertakan." });
     }
 
-    res.json(comments);
+    const comments = await prisma.taskComment.findMany({
+      where: { taskId: parseInt(assignmentId as string, 10) },
+      include: {
+        User: { select: { id: true, name: true, role: true, avatar: true } }
+      },
+      orderBy: { createdAt: "asc" }
+    });
+
+    // Map keys for frontend
+    const formatted = comments.map(comm => ({
+      id: comm.id,
+      assignmentId: comm.taskId,
+      userId: comm.userId,
+      content: comm.content,
+      createdAt: comm.createdAt,
+      user: comm.User
+    }));
+
+    res.json(formatted);
   } catch (error: any) {
     console.error("LMS getComments error:", error);
     res.status(500).json({ error: "Gagal mengambil komentar." });
@@ -327,42 +315,16 @@ export const createComment = async (req: AuthenticatedRequest, res: Response) =>
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
     const body = sanitizeObject(req.body);
-    const { content, moduleId, kanjiId, assignmentId } = body;
+    const { content, assignmentId } = body;
 
-    if (!content || !content.trim()) {
-      return res.status(400).json({ error: "Konten komentar wajib diisi." });
-    }
-
-    let targetTaskId: number;
-
-    if (assignmentId) {
-      targetTaskId = parseInt(assignmentId, 10);
-    } else {
-      // Find or create discussion board Task
-      const targetWhere: any = {};
-      if (moduleId) targetWhere.moduleId = parseInt(moduleId, 10);
-      if (kanjiId) targetWhere.kanjiId = parseInt(kanjiId, 10);
-
-      const tasks = await prisma.task.findMany({ where: targetWhere });
-      let discussTask = tasks.find(t => t.title.includes("Forum Diskusi"));
-
-      if (!discussTask) {
-        discussTask = await prisma.task.create({
-          data: {
-            title: "Forum Diskusi & Tanya Jawab",
-            description: "Gunakan thread ini untuk berdiskusi, bertanya, dan berbagi informasi terkait materi.",
-            moduleId: moduleId ? parseInt(moduleId, 10) : null,
-            kanjiId: kanjiId ? parseInt(kanjiId, 10) : null,
-          }
-        });
-      }
-      targetTaskId = discussTask.id;
+    if (!content || !content.trim() || !assignmentId) {
+      return res.status(400).json({ error: "Konten komentar dan assignmentId wajib diisi." });
     }
 
     const comment = await prisma.taskComment.create({
       data: {
         userId: req.user.id,
-        taskId: targetTaskId,
+        taskId: parseInt(assignmentId, 10),
         content
       },
       include: {
@@ -370,10 +332,16 @@ export const createComment = async (req: AuthenticatedRequest, res: Response) =>
       }
     });
 
-    res.status(201).json({
-      ...comment,
+    const formatted = {
+      id: comment.id,
+      assignmentId: comment.taskId,
+      userId: comment.userId,
+      content: comment.content,
+      createdAt: comment.createdAt,
       user: comment.User
-    });
+    };
+
+    res.status(201).json(formatted);
   } catch (error: any) {
     console.error("LMS createComment error:", error);
     res.status(500).json({ error: "Gagal mengirim komentar baru." });
