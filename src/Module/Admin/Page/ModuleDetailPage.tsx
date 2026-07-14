@@ -23,6 +23,12 @@ interface KanjiData {
   graphEdges: any[];
 }
 
+const getFileUrl = (pathUrl: string | null | undefined) => {
+  if (!pathUrl) return "";
+  const origin = window.location.hostname === "localhost" ? "http://localhost:5001" : window.location.origin;
+  return `${origin}${pathUrl}`;
+};
+
 export const ModuleDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -55,6 +61,7 @@ export const ModuleDetailPage: React.FC = () => {
   const [assignDueDate, setAssignDueDate] = useState("");
   const [assignKanjiId, setAssignKanjiId] = useState<string>(""); // empty string means Module-level
   const [isKanjiTargetLocked, setIsKanjiTargetLocked] = useState(false);
+  const [assignFile, setAssignFile] = useState<File | null>(null);
 
   // Grading Modal & Form states
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
@@ -158,6 +165,7 @@ export const ModuleDetailPage: React.FC = () => {
     setAssignTitle("");
     setAssignDesc("");
     setAssignDueDate("");
+    setAssignFile(null);
     if (targetKanjiId !== null) {
       setAssignKanjiId(targetKanjiId.toString());
       setIsKanjiTargetLocked(true);
@@ -175,6 +183,7 @@ export const ModuleDetailPage: React.FC = () => {
     setAssignDueDate(assign.dueDate ? new Date(assign.dueDate).toISOString().split("T")[0] : "");
     setAssignKanjiId(assign.kanjiId ? assign.kanjiId.toString() : "");
     setIsKanjiTargetLocked(true);
+    setAssignFile(null);
     setIsAssignModalOpen(true);
   };
 
@@ -185,21 +194,22 @@ export const ModuleDetailPage: React.FC = () => {
       return;
     }
 
-    const payload = {
-      title: assignTitle,
-      description: assignDesc,
-      dueDate: assignDueDate || null,
-      moduleId,
-      kanjiId: assignKanjiId ? parseInt(assignKanjiId, 10) : null
-    };
+    const formData = new FormData();
+    formData.append("title", assignTitle);
+    formData.append("description", assignDesc);
+    if (assignDueDate) formData.append("dueDate", assignDueDate);
+    formData.append("moduleId", moduleId.toString());
+    if (assignKanjiId) formData.append("kanjiId", assignKanjiId);
+    if (assignFile) formData.append("materialFile", assignFile);
 
     try {
       if (selectedAssign) {
-        await api.lms.assignments.update(selectedAssign.id, payload);
+        await api.lms.assignments.update(selectedAssign.id, formData);
       } else {
-        await api.lms.assignments.create(payload);
+        await api.lms.assignments.create(formData);
       }
       setIsAssignModalOpen(false);
+      setAssignFile(null);
       loadLmsData();
     } catch (err: any) {
       alert(err.message || "Gagal menyimpan tugas.");
@@ -628,7 +638,20 @@ export const ModuleDetailPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="p-4 text-xs text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
-                          {sub.content}
+                          <div>{sub.content}</div>
+                          {sub.fileUrl && (
+                            <div className="mt-2 flex items-center gap-1.5">
+                              <Icon name="attachment" className="text-sm text-primary" />
+                              <a
+                                href={getFileUrl(sub.fileUrl)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-primary font-bold hover:underline"
+                              >
+                                Unduh Berkas Jawaban
+                              </a>
+                            </div>
+                          )}
                         </td>
                         <td className="p-4 text-center">
                           {sub.grade ? (
@@ -710,6 +733,30 @@ export const ModuleDetailPage: React.FC = () => {
                   placeholder="Tuliskan petunjuk pengerjaan tugas kuliah di sini..."
                   required
                 />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-label-md text-label-md font-bold text-on-surface">
+                  Unggah Berkas Pendukung (Opsional - Gambar, PDF, Word, Teks, Maks 10MB)
+                </label>
+                <input
+                  type="file"
+                  onChange={(e) => setAssignFile(e.target.files?.[0] || null)}
+                  className="bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl p-2.5 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-medium text-sm cursor-pointer"
+                />
+                {selectedAssign?.fileUrl && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-slate-500 font-semibold">Berkas terunggah:</span>
+                    <a
+                      href={getFileUrl(selectedAssign.fileUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-primary font-bold hover:underline"
+                    >
+                      Lihat Berkas Saat Ini
+                    </a>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -904,6 +951,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
         <p className="text-slate-600 text-xs font-semibold whitespace-pre-wrap leading-relaxed mb-4">
           {task.description}
         </p>
+
+        {task.fileUrl && (
+          <div className="mb-4">
+            <a
+              href={getFileUrl(task.fileUrl)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8f0020]/5 hover:bg-[#8f0020]/10 text-[#8f0020] rounded-xl text-xs font-black decoration-none border border-[#8f0020]/15"
+            >
+              <Icon name="download" className="text-sm" />
+              Unduh Lampiran Tugas
+            </a>
+          </div>
+        )}
 
         <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold mb-4 uppercase tracking-wider">
           <Icon name="calendar_today" className="text-xs" />

@@ -29,7 +29,9 @@ import {
   MessageSquare,
   FileText,
   Calendar,
-  Send
+  Send,
+  Download,
+  Paperclip
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -221,8 +223,15 @@ export const LatihanPage: React.FC = () => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [submittingSubmission, setSubmittingSubmission] = useState<Record<number, boolean>>({});
   const [submissionContents, setSubmissionContents] = useState<Record<number, string>>({});
+  const [submissionFiles, setSubmissionFiles] = useState<Record<number, File | null>>({});
   const [loadingLms, setLoadingLms] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const getFileUrl = (pathUrl: string | null | undefined) => {
+    if (!pathUrl) return "";
+    const origin = window.location.hostname === "localhost" ? "http://localhost:5001" : window.location.origin;
+    return `${origin}${pathUrl}`;
+  };
 
   const loadLmsData = async () => {
     if (!kanjiData) return;
@@ -295,18 +304,26 @@ export const LatihanPage: React.FC = () => {
 
   const handleSubmitAssignment = async (assignmentId: number) => {
     const textContent = submissionContents[assignmentId];
-    if (!textContent || !textContent.trim()) {
-      alert("Harap masukkan jawaban tugas Anda.");
+    const file = submissionFiles[assignmentId];
+    
+    if ((!textContent || !textContent.trim()) && !file) {
+      alert("Harap masukkan jawaban teks atau unggah file tugas Anda.");
       return;
+    }
+
+    const formData = new FormData();
+    formData.append("assignmentId", assignmentId.toString());
+    formData.append("content", textContent || "");
+    if (file) {
+      formData.append("submissionFile", file);
     }
 
     try {
       setSubmittingSubmission(prev => ({ ...prev, [assignmentId]: true }));
-      await api.lms.submissions.submit({
-        assignmentId,
-        content: textContent
-      });
+      await api.lms.submissions.submit(formData);
       alert("Tugas berhasil dikumpulkan!");
+      // Reset file upload state
+      setSubmissionFiles(prev => ({ ...prev, [assignmentId]: null }));
       loadLmsData();
     } catch (err: any) {
       alert(err.message || "Gagal mengumpulkan tugas.");
@@ -2143,6 +2160,20 @@ export const LatihanPage: React.FC = () => {
                             {assign.description}
                           </p>
 
+                          {assign.fileUrl && (
+                            <div className="mb-4">
+                              <a
+                                href={getFileUrl(assign.fileUrl)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8f0020]/5 hover:bg-[#8f0020]/10 text-[#8f0020] rounded-xl text-xs font-black decoration-none border border-[#8f0020]/10"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                Unduh Lampiran Tugas
+                              </a>
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-1 text-xs text-slate-400 font-bold mb-4">
                             <Calendar className="w-3.5 h-3.5" />
                             Batas Waktu: {dueDateText}
@@ -2156,6 +2187,19 @@ export const LatihanPage: React.FC = () => {
                                 <p className="text-slate-700 text-sm font-medium whitespace-pre-wrap mt-0.5">
                                   {submission.content}
                                 </p>
+                                {submission.fileUrl && (
+                                  <div className="mt-2 flex items-center gap-1.5">
+                                    <Paperclip className="w-3.5 h-3.5 text-[#8f0020]" />
+                                    <a
+                                      href={getFileUrl(submission.fileUrl)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-xs text-[#8f0020] font-black hover:underline"
+                                    >
+                                      Unduh Berkas Jawaban Anda
+                                    </a>
+                                  </div>
+                                )}
                               </div>
                               {submission.grade && (
                                 <div className="border-t border-slate-100 pt-3 flex flex-wrap gap-4 items-center">
@@ -2181,17 +2225,25 @@ export const LatihanPage: React.FC = () => {
                               
                               {/* Re-submit option if not graded */}
                               {!submission.grade && (
-                                <div className="mt-3">
+                                <div className="mt-3 space-y-2">
                                   <textarea
                                     value={submissionContents[assign.id] !== undefined ? submissionContents[assign.id] : submission.content}
                                     onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
                                     placeholder="Perbarui jawaban Anda di sini..."
-                                    className="w-full min-h-[80px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] mb-2 font-medium"
+                                    className="w-full min-h-[80px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-medium"
                                   />
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Unggah Berkas Baru (Opsional)</span>
+                                    <input
+                                      type="file"
+                                      onChange={(e) => setSubmissionFiles(prev => ({ ...prev, [assign.id]: e.target.files?.[0] || null }))}
+                                      className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-2 w-full text-xs font-semibold cursor-pointer outline-none"
+                                    />
+                                  </div>
                                   <button
                                     onClick={() => handleSubmitAssignment(assign.id)}
                                     disabled={submittingSubmission[assign.id]}
-                                    className="bg-[#8f0020] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer disabled:opacity-50"
+                                    className="bg-[#8f0020] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer disabled:opacity-50 mt-1"
                                   >
                                     {submittingSubmission[assign.id] ? "Memperbarui..." : "Perbarui Jawaban"}
                                   </button>
@@ -2199,14 +2251,31 @@ export const LatihanPage: React.FC = () => {
                               )}
                             </div>
                           ) : (
-                            <div className="border border-slate-200/60 rounded-xl p-4 bg-white space-y-2">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Kumpulkan Jawaban</span>
-                              <textarea
-                                value={submissionContents[assign.id] || ""}
-                                onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
-                                placeholder="Ketik jawaban tugas Anda di sini..."
-                                className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] mb-2 font-medium"
-                              />
+                            <div className="border border-slate-200/60 rounded-xl p-4 bg-white space-y-3">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Ketik Jawaban (Opsional jika mengunggah file)</span>
+                                <textarea
+                                  value={submissionContents[assign.id] || ""}
+                                  onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                  placeholder="Ketik jawaban tugas Anda di sini..."
+                                  className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-medium"
+                                />
+                              </div>
+                              
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Unggah Berkas Jawaban (Gambar, PDF, Word, Teks - Maks 10MB)</span>
+                                <input
+                                  type="file"
+                                  onChange={(e) => setSubmissionFiles(prev => ({ ...prev, [assign.id]: e.target.files?.[0] || null }))}
+                                  className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-2 w-full text-xs font-semibold cursor-pointer outline-none"
+                                />
+                                {submissionFiles[assign.id] && (
+                                  <span className="text-[10px] text-emerald-600 font-bold block mt-1">
+                                    Berkas terpilih: {submissionFiles[assign.id]?.name}
+                                  </span>
+                                )}
+                              </div>
+
                               <button
                                 onClick={() => handleSubmitAssignment(assign.id)}
                                 disabled={submittingSubmission[assign.id]}

@@ -229,19 +229,25 @@ export const api = {
         });
         return handleResponse(res);
       },
-      create: async (data: { title: string; description: string; dueDate?: string | null; moduleId?: number | null; kanjiId?: number | null }) => {
+      create: async (data: FormData) => {
+        const token = localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/assignments`, {
           method: "POST",
-          headers: getHeaders(),
-          body: JSON.stringify(data),
+          headers: {
+            ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+          },
+          body: data,
         });
         return handleResponse(res);
       },
-      update: async (id: number, data: { title: string; description: string; dueDate?: string | null; moduleId?: number | null; kanjiId?: number | null }) => {
+      update: async (id: number, data: FormData) => {
+        const token = localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/assignments/${id}`, {
           method: "PUT",
-          headers: getHeaders(),
-          body: JSON.stringify(data),
+          headers: {
+            ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+          },
+          body: data,
         });
         return handleResponse(res);
       },
@@ -264,11 +270,14 @@ export const api = {
         });
         return handleResponse(res);
       },
-      submit: async (data: { assignmentId: number; content: string }) => {
+      submit: async (data: FormData) => {
+        const token = localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/submissions`, {
           method: "POST",
-          headers: getHeaders(),
-          body: JSON.stringify(data),
+          headers: {
+            ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+          },
+          body: data,
         });
         return handleResponse(res);
       },
