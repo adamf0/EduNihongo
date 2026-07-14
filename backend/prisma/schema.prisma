@@ -1,10 +1,10 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 model User {
@@ -19,190 +19,202 @@ model User {
   masteryVocabulary Int                  @default(0)
   dailyTargetKanji  Int                  @default(5)
   avatar            String               @default("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150")
-  role              String               @default("USER") // "USER" or "ADMIN"
-  
+  role              String               @default("USER")
+  SubmissionComment SubmissionComment[]
+  TaskComment       TaskComment[]
+  TaskSubmission    TaskSubmission[]
   activities        UserActivity[]
-  modules           UserModuleProgress[]
   kanjiProgress     UserKanjiProgress[]
-  submissions       Submission[]
-  comments          Comment[]
+  modules           UserModuleProgress[]
 }
 
 model UserActivity {
   id           Int      @id @default(autoincrement())
   userId       Int
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date         DateTime @default(now())
   kanjiCount   Int      @default(0)
   vocabCount   Int      @default(0)
   xpEarned     Int      @default(0)
-  activityType String   // "LESSON", "REVIEW", "ACHIEVEMENT"
+  activityType String
   description  String   @db.Text
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "UserActivity_userId_fkey")
 }
-
-
 
 model Module {
   id                 Int                  @id @default(autoincrement())
   title              String
   tujuanPembelajaran String?              @db.Text
-  userProgress       UserModuleProgress[]
   kanjis             Kanji[]
-  assignments        Assignment[]
-  comments           Comment[]
+  Task               Task[]
+  userProgress       UserModuleProgress[]
 }
 
 model UserModuleProgress {
   userId          Int
-  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   moduleId        Int
-  module          Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   isCompleted     Boolean @default(false)
   isLocked        Boolean @default(false)
   progressPercent Int     @default(0)
+  module          Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, moduleId])
+  @@index([moduleId], map: "UserModuleProgress_moduleId_fkey")
 }
 
 model Kanji {
-  id             Int                 @id @default(autoincrement())
-  character      String              @unique // e.g. "情報"
-  romaji         String
-  meaning        String              @db.Text
-  isJukugo       Boolean             @default(false)
-  border         String?             // e.g. "border-l-4 border-secondary"
-  
-  moduleId       Int?
-  module         Module?             @relation(fields: [moduleId], references: [id], onDelete: SetNull)
-  
-  examples       ExampleSentence[]
-  userProgress   UserKanjiProgress[]
-  graphNodes     KanjiGraphNode[]
-  graphEdges     KanjiGraphEdge[]
-  etymologies    Etymology[]
-  jukugos        Jukugo[]
-  quizData       String?             @db.Text
-  assignments    Assignment[]
-  comments       Comment[]
+  id           Int                 @id @default(autoincrement())
+  character    String              @unique
+  romaji       String
+  meaning      String              @db.Text
+  isJukugo     Boolean             @default(false)
+  border       String?
+  moduleId     Int?
+  quizData     String?             @db.Text
+  etymologies  Etymology[]
+  examples     ExampleSentence[]
+  jukugos      Jukugo[]
+  module       Module?             @relation(fields: [moduleId], references: [id])
+  graphEdges   KanjiGraphEdge[]
+  graphNodes   KanjiGraphNode[]
+  Task         Task[]
+  userProgress UserKanjiProgress[]
+
+  @@index([moduleId], map: "Kanji_moduleId_fkey")
 }
 
 model UserKanjiProgress {
   userId         Int
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   kanjiId        Int
-  kanji          Kanji    @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
   masteryPercent Int      @default(0)
   writingPercent Int      @default(0)
   readingPercent Int      @default(0)
   quizPercent    Int      @default(0)
-  status         String   @default("LEARNING") // "MASTERED", "LEARNING", "REVIEW"
+  status         String   @default("LEARNING")
   mistakeCount   Int      @default(0)
   lastPracticed  DateTime @default(now())
+  kanji          Kanji    @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, kanjiId])
+  @@index([kanjiId], map: "UserKanjiProgress_kanjiId_fkey")
 }
 
 model ExampleSentence {
   id          Int     @id @default(autoincrement())
   kanjiId     Int
-  kanji       Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
   japanese    String
   romaji      String
   translation String  @db.Text
   isReading   Boolean @default(false)
+  kanji       Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@index([kanjiId], map: "ExampleSentence_kanjiId_fkey")
 }
 
-
-
 model KanjiGraphNode {
-  id          String   @id // e.g. "root", "top-1"
+  id          String  @id
   kanjiId     Int
-  kanjiRef    Kanji    @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
-  character   String   // "情", "報"
+  character   String
   meaning     String
-  type        String   // "root", "top", "bottom", "sub-bottom"
+  type        String
   borderColor String?
-  isPill      Boolean  @default(false)
+  isPill      Boolean @default(false)
   parentPill  String?
+  kanjiRef    Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@index([kanjiId], map: "KanjiGraphNode_kanjiId_fkey")
 }
 
 model KanjiGraphEdge {
-  id       String @id // e.g. "e-top1-root"
+  id       String @id
   kanjiId  Int
-  kanjiRef Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
   source   String
   target   String
+  kanjiRef Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@index([kanjiId], map: "KanjiGraphEdge_kanjiId_fkey")
 }
 
 model Etymology {
   id        Int    @id @default(autoincrement())
   kanjiId   Int
-  kanji     Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
   character String
   romaji    String
   detail    String @db.Text
+  kanji     Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@index([kanjiId], map: "Etymology_kanjiId_fkey")
 }
 
 model Jukugo {
-  id          Int    @id @default(autoincrement())
-  kanjiId     Int
-  kanji       Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
-  word        String
-  reading     String
-  meaning     String @db.Text
+  id      Int    @id @default(autoincrement())
+  kanjiId Int
+  word    String
+  reading String
+  meaning String @db.Text
+  kanji   Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@index([kanjiId], map: "Jukugo_kanjiId_fkey")
 }
 
-model Assignment {
-  id          Int          @id @default(autoincrement())
-  title       String
-  description String       @db.Text
-  dueDate     DateTime?
-  createdAt   DateTime     @default(now())
-  
-  moduleId    Int?
-  module      Module?      @relation(fields: [moduleId], references: [id], onDelete: SetNull)
-  
-  kanjiId     Int?
-  kanji       Kanji?       @relation(fields: [kanjiId], references: [id], onDelete: SetNull)
-  
-  submissions Submission[]
-  comments    Comment[]
+model SubmissionComment {
+  id             Int            @id @default(autoincrement())
+  submissionId   Int
+  userId         Int
+  content        String         @db.Text
+  createdAt      DateTime       @default(now())
+  TaskSubmission TaskSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  User           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId], map: "SubmissionComment_submissionId_fkey")
+  @@index([userId], map: "SubmissionComment_userId_fkey")
 }
 
-model Submission {
-  id           Int        @id @default(autoincrement())
-  assignmentId Int
-  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  
-  userId       Int
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  content      String     @db.Text
-  submittedAt  DateTime   @default(now())
-  
-  grade        String?    // e.g. A, B, 0-100
-  feedback     String?    @db.Text
-  
-  comments     Comment[]
+model Task {
+  id             Int              @id @default(autoincrement())
+  title          String
+  description    String           @db.Text
+  dueDate        DateTime?
+  createdAt      DateTime         @default(now())
+  moduleId       Int?
+  kanjiId        Int?
+  Kanji          Kanji?           @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  Module         Module?          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  TaskComment    TaskComment[]
+  TaskSubmission TaskSubmission[]
+
+  @@index([kanjiId], map: "Task_kanjiId_fkey")
+  @@index([moduleId], map: "Task_moduleId_fkey")
 }
 
-model Comment {
-  id           Int         @id @default(autoincrement())
-  userId       Int
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  content      String      @db.Text
-  createdAt    DateTime    @default(now())
-  
-  moduleId     Int?
-  module       Module?     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  
-  kanjiId      Int?
-  kanji        Kanji?      @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
-  
-  assignmentId Int?
-  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  
-  submissionId Int?
-  submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+model TaskComment {
+  id        Int      @id @default(autoincrement())
+  taskId    Int
+  userId    Int
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  Task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId], map: "TaskComment_taskId_fkey")
+  @@index([userId], map: "TaskComment_userId_fkey")
+}
+
+model TaskSubmission {
+  id                Int                 @id @default(autoincrement())
+  taskId            Int
+  userId            Int
+  content           String              @db.Text
+  submittedAt       DateTime            @default(now())
+  grade             String?
+  feedback          String?             @db.Text
+  SubmissionComment SubmissionComment[]
+  Task              Task                @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId], map: "TaskSubmission_taskId_fkey")
+  @@index([userId], map: "TaskSubmission_userId_fkey")
 }

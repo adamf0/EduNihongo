@@ -5,7 +5,7 @@ import { sanitizeObject } from "../utils/sanitize";
 
 const prisma = new PrismaClient();
 
-// ================= ASSIGNMENTS CRUD =================
+// ================= TASKS (ASSIGNMENTS) CRUD =================
 
 export const getAssignments = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -15,18 +15,24 @@ export const getAssignments = async (req: AuthenticatedRequest, res: Response) =
     if (moduleId) whereClause.moduleId = parseInt(moduleId as string, 10);
     if (kanjiId) whereClause.kanjiId = parseInt(kanjiId as string, 10);
 
-    const assignments = await prisma.assignment.findMany({
+    const tasks = await prisma.task.findMany({
       where: whereClause,
       include: {
-        module: { select: { title: true } },
-        kanji: { select: { character: true } },
-        submissions: {
+        Module: { select: { title: true } },
+        Kanji: { select: { character: true } },
+        TaskSubmission: {
           where: req.user ? { userId: req.user.id } : undefined,
           select: { id: true, submittedAt: true, grade: true, feedback: true }
         }
       },
       orderBy: { createdAt: "desc" }
     });
+
+    // Map `TaskSubmission` to `submissions` to match the frontend expectations
+    const assignments = tasks.map(t => ({
+      ...t,
+      submissions: t.TaskSubmission
+    }));
 
     res.json(assignments);
   } catch (error: any) {
@@ -52,7 +58,7 @@ export const createAssignment = async (req: AuthenticatedRequest, res: Response)
       return res.status(400).json({ error: "Judul dan deskripsi tugas wajib diisi." });
     }
 
-    const assignment = await prisma.assignment.create({
+    const task = await prisma.task.create({
       data: {
         title,
         description,
@@ -62,7 +68,7 @@ export const createAssignment = async (req: AuthenticatedRequest, res: Response)
       }
     });
 
-    res.status(201).json(assignment);
+    res.status(201).json(task);
   } catch (error: any) {
     console.error("LMS createAssignment error:", error);
     res.status(500).json({ error: "Gagal membuat tugas baru." });
@@ -87,7 +93,7 @@ export const updateAssignment = async (req: AuthenticatedRequest, res: Response)
       return res.status(400).json({ error: "Judul dan deskripsi wajib diisi." });
     }
 
-    const assignment = await prisma.assignment.update({
+    const task = await prisma.task.update({
       where: { id: parseInt(id, 10) },
       data: {
         title,
@@ -98,7 +104,7 @@ export const updateAssignment = async (req: AuthenticatedRequest, res: Response)
       }
     });
 
-    res.json(assignment);
+    res.json(task);
   } catch (error: any) {
     console.error("LMS updateAssignment error:", error);
     res.status(500).json({ error: "Gagal memperbarui tugas." });
@@ -116,7 +122,7 @@ export const deleteAssignment = async (req: AuthenticatedRequest, res: Response)
     }
 
     const { id } = req.params;
-    await prisma.assignment.delete({
+    await prisma.task.delete({
       where: { id: parseInt(id, 10) }
     });
 
@@ -139,21 +145,28 @@ export const getSubmissions = async (req: AuthenticatedRequest, res: Response) =
     const { assignmentId } = req.query;
 
     const whereClause: any = {};
-    if (assignmentId) whereClause.assignmentId = parseInt(assignmentId as string, 10);
+    if (assignmentId) whereClause.taskId = parseInt(assignmentId as string, 10);
 
     // If student, filter by their userId. If Admin/Lecturer, they can view all submissions.
     if (user.role !== "ADMIN") {
       whereClause.userId = user.id;
     }
 
-    const submissions = await prisma.submission.findMany({
+    const taskSubmissions = await prisma.taskSubmission.findMany({
       where: whereClause,
       include: {
-        user: { select: { id: true, name: true, email: true, avatar: true } },
-        assignment: { select: { id: true, title: true, moduleId: true, kanjiId: true } }
+        User: { select: { id: true, name: true, email: true, avatar: true } },
+        Task: { select: { id: true, title: true, moduleId: true, kanjiId: true } }
       },
       orderBy: { submittedAt: "desc" }
     });
+
+    // Map keys to match frontend (user and assignment fields instead of capitalized User and Task)
+    const submissions = taskSubmissions.map(s => ({
+      ...s,
+      user: s.User,
+      assignment: s.Task
+    }));
 
     res.json(submissions);
   } catch (error: any) {
@@ -173,37 +186,37 @@ export const submitAssignment = async (req: AuthenticatedRequest, res: Response)
       return res.status(400).json({ error: "Assignment ID dan konten jawaban wajib diisi." });
     }
 
-    // Check if assignment exists
-    const assignment = await prisma.assignment.findUnique({
+    // Check if task exists
+    const task = await prisma.task.findUnique({
       where: { id: parseInt(assignmentId, 10) }
     });
-    if (!assignment) {
+    if (!task) {
       return res.status(404).json({ error: "Tugas tidak ditemukan." });
     }
 
-    // Upsert submission (allow student to update their submission if they re-submit)
-    const existing = await prisma.submission.findFirst({
+    // Upsert submission
+    const existing = await prisma.taskSubmission.findFirst({
       where: {
-        assignmentId: parseInt(assignmentId, 10),
+        taskId: parseInt(assignmentId, 10),
         userId: req.user.id
       }
     });
 
     let submission;
     if (existing) {
-      submission = await prisma.submission.update({
+      submission = await prisma.taskSubmission.update({
         where: { id: existing.id },
         data: {
           content,
           submittedAt: new Date(),
-          grade: null, // Reset grade upon resubmission
-          feedback: null // Reset feedback upon resubmission
+          grade: null,
+          feedback: null
         }
       });
     } else {
-      submission = await prisma.submission.create({
+      submission = await prisma.taskSubmission.create({
         data: {
-          assignmentId: parseInt(assignmentId, 10),
+          taskId: parseInt(assignmentId, 10),
           userId: req.user.id,
           content
         }
@@ -231,7 +244,7 @@ export const gradeSubmission = async (req: AuthenticatedRequest, res: Response) 
     const body = sanitizeObject(req.body);
     const { grade, feedback } = body;
 
-    const submission = await prisma.submission.update({
+    const submission = await prisma.taskSubmission.update({
       where: { id: parseInt(id, 10) },
       data: {
         grade: grade || null,
@@ -250,26 +263,57 @@ export const gradeSubmission = async (req: AuthenticatedRequest, res: Response) 
 
 export const getComments = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { moduleId, kanjiId, assignmentId, submissionId } = req.query;
+    const { moduleId, kanjiId, assignmentId } = req.query;
 
-    const whereClause: any = {};
-    if (moduleId) whereClause.moduleId = parseInt(moduleId as string, 10);
-    if (kanjiId) whereClause.kanjiId = parseInt(kanjiId as string, 10);
-    if (assignmentId) whereClause.assignmentId = parseInt(assignmentId as string, 10);
-    if (submissionId) whereClause.submissionId = parseInt(submissionId as string, 10);
+    let comments: any[] = [];
 
-    // If no query parameters, return an error to prevent querying all comments
-    if (Object.keys(whereClause).length === 0) {
-      return res.status(400).json({ error: "Parameter penyaring wajib disertakan." });
+    if (assignmentId) {
+      const taskComments = await prisma.taskComment.findMany({
+        where: { taskId: parseInt(assignmentId as string, 10) },
+        include: {
+          User: { select: { id: true, name: true, role: true, avatar: true } }
+        },
+        orderBy: { createdAt: "asc" }
+      });
+      comments = taskComments.map(c => ({
+        ...c,
+        user: c.User
+      }));
+    } else {
+      // If fetching general module or kanji discussions, find or create a default "Discussion Board" Task
+      // specifically for that module or kanji!
+      const targetWhere: any = {};
+      if (moduleId) targetWhere.moduleId = parseInt(moduleId as string, 10);
+      if (kanjiId) targetWhere.kanjiId = parseInt(kanjiId as string, 10);
+
+      // Find tasks matching target
+      const tasks = await prisma.task.findMany({ where: targetWhere });
+      let discussTask = tasks.find(t => t.title.includes("Forum Diskusi"));
+
+      if (!discussTask) {
+        // Create a default discussion board task
+        discussTask = await prisma.task.create({
+          data: {
+            title: "Forum Diskusi & Tanya Jawab",
+            description: "Gunakan thread ini untuk berdiskusi, bertanya, dan berbagi informasi terkait materi.",
+            moduleId: moduleId ? parseInt(moduleId as string, 10) : null,
+            kanjiId: kanjiId ? parseInt(kanjiId as string, 10) : null,
+          }
+        });
+      }
+
+      const taskComments = await prisma.taskComment.findMany({
+        where: { taskId: discussTask.id },
+        include: {
+          User: { select: { id: true, name: true, role: true, avatar: true } }
+        },
+        orderBy: { createdAt: "asc" }
+      });
+      comments = taskComments.map(c => ({
+        ...c,
+        user: c.User
+      }));
     }
-
-    const comments = await prisma.comment.findMany({
-      where: whereClause,
-      include: {
-        user: { select: { id: true, name: true, role: true, avatar: true } }
-      },
-      orderBy: { createdAt: "asc" }
-    });
 
     res.json(comments);
   } catch (error: any) {
@@ -283,27 +327,53 @@ export const createComment = async (req: AuthenticatedRequest, res: Response) =>
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
     const body = sanitizeObject(req.body);
-    const { content, moduleId, kanjiId, assignmentId, submissionId } = body;
+    const { content, moduleId, kanjiId, assignmentId } = body;
 
     if (!content || !content.trim()) {
       return res.status(400).json({ error: "Konten komentar wajib diisi." });
     }
 
-    const comment = await prisma.comment.create({
+    let targetTaskId: number;
+
+    if (assignmentId) {
+      targetTaskId = parseInt(assignmentId, 10);
+    } else {
+      // Find or create discussion board Task
+      const targetWhere: any = {};
+      if (moduleId) targetWhere.moduleId = parseInt(moduleId, 10);
+      if (kanjiId) targetWhere.kanjiId = parseInt(kanjiId, 10);
+
+      const tasks = await prisma.task.findMany({ where: targetWhere });
+      let discussTask = tasks.find(t => t.title.includes("Forum Diskusi"));
+
+      if (!discussTask) {
+        discussTask = await prisma.task.create({
+          data: {
+            title: "Forum Diskusi & Tanya Jawab",
+            description: "Gunakan thread ini untuk berdiskusi, bertanya, dan berbagi informasi terkait materi.",
+            moduleId: moduleId ? parseInt(moduleId, 10) : null,
+            kanjiId: kanjiId ? parseInt(kanjiId, 10) : null,
+          }
+        });
+      }
+      targetTaskId = discussTask.id;
+    }
+
+    const comment = await prisma.taskComment.create({
       data: {
         userId: req.user.id,
-        content,
-        moduleId: moduleId ? parseInt(moduleId, 10) : null,
-        kanjiId: kanjiId ? parseInt(kanjiId, 10) : null,
-        assignmentId: assignmentId ? parseInt(assignmentId, 10) : null,
-        submissionId: submissionId ? parseInt(submissionId, 10) : null,
+        taskId: targetTaskId,
+        content
       },
       include: {
-        user: { select: { id: true, name: true, role: true, avatar: true } }
+        User: { select: { id: true, name: true, role: true, avatar: true } }
       }
     });
 
-    res.status(201).json(comment);
+    res.status(201).json({
+      ...comment,
+      user: comment.User
+    });
   } catch (error: any) {
     console.error("LMS createComment error:", error);
     res.status(500).json({ error: "Gagal mengirim komentar baru." });
@@ -317,7 +387,7 @@ export const deleteComment = async (req: AuthenticatedRequest, res: Response) =>
     const { id } = req.params;
     const commentId = parseInt(id, 10);
 
-    const comment = await prisma.comment.findUnique({
+    const comment = await prisma.taskComment.findUnique({
       where: { id: commentId }
     });
     if (!comment) {
@@ -330,7 +400,7 @@ export const deleteComment = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(403).json({ error: "Akses ditolak: Hanya pemilik komentar atau admin yang dapat menghapusnya." });
     }
 
-    await prisma.comment.delete({
+    await prisma.taskComment.delete({
       where: { id: commentId }
     });
 
