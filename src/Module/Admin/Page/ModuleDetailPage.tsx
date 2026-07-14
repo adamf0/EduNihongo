@@ -61,7 +61,10 @@ export const ModuleDetailPage: React.FC = () => {
   const [assignDueDate, setAssignDueDate] = useState("");
   const [assignKanjiId, setAssignKanjiId] = useState<string>(""); // empty string means Module-level
   const [isKanjiTargetLocked, setIsKanjiTargetLocked] = useState(false);
-  const [assignFile, setAssignFile] = useState<File | null>(null);
+  const [assignFiles, setAssignFiles] = useState<File[]>([]);
+  const [youtubeLink, setYoutubeLink] = useState("");
+  const [gdriveLink, setGdriveLink] = useState("");
+  const [existingMaterials, setExistingMaterials] = useState<any[]>([]);
 
   // Grading Modal & Form states
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
@@ -165,7 +168,10 @@ export const ModuleDetailPage: React.FC = () => {
     setAssignTitle("");
     setAssignDesc("");
     setAssignDueDate("");
-    setAssignFile(null);
+    setAssignFiles([]);
+    setYoutubeLink("");
+    setGdriveLink("");
+    setExistingMaterials([]);
     if (targetKanjiId !== null) {
       setAssignKanjiId(targetKanjiId.toString());
       setIsKanjiTargetLocked(true);
@@ -183,7 +189,24 @@ export const ModuleDetailPage: React.FC = () => {
     setAssignDueDate(assign.dueDate ? new Date(assign.dueDate).toISOString().split("T")[0] : "");
     setAssignKanjiId(assign.kanjiId ? assign.kanjiId.toString() : "");
     setIsKanjiTargetLocked(true);
-    setAssignFile(null);
+    setAssignFiles([]);
+    
+    // Parse materials
+    let mats = [];
+    if (assign.materialsData) {
+      try {
+        mats = JSON.parse(assign.materialsData);
+      } catch (e) {}
+    } else if (assign.fileUrl) {
+      mats = [{ type: "file", url: assign.fileUrl, name: "Lampiran Tugas" }];
+    }
+    setExistingMaterials(mats);
+
+    const yt = mats.find((m: any) => m.type === "youtube")?.url || "";
+    const gd = mats.find((m: any) => m.type === "gdrive")?.url || "";
+    setYoutubeLink(yt);
+    setGdriveLink(gd);
+
     setIsAssignModalOpen(true);
   };
 
@@ -200,7 +223,18 @@ export const ModuleDetailPage: React.FC = () => {
     if (assignDueDate) formData.append("dueDate", assignDueDate);
     formData.append("moduleId", moduleId.toString());
     if (assignKanjiId) formData.append("kanjiId", assignKanjiId);
-    if (assignFile) formData.append("materialFile", assignFile);
+    
+    formData.append("youtubeLink", youtubeLink);
+    formData.append("gdriveLink", gdriveLink);
+
+    // Keep existing files that are still present
+    const filesToKeep = existingMaterials.filter((m: any) => m.type === "file");
+    formData.append("keepMaterials", JSON.stringify(filesToKeep));
+
+    // Append newly selected files
+    assignFiles.forEach((file) => {
+      formData.append("materialFiles", file);
+    });
 
     try {
       if (selectedAssign) {
@@ -209,7 +243,9 @@ export const ModuleDetailPage: React.FC = () => {
         await api.lms.assignments.create(formData);
       }
       setIsAssignModalOpen(false);
-      setAssignFile(null);
+      setAssignFiles([]);
+      setYoutubeLink("");
+      setGdriveLink("");
       loadLmsData();
     } catch (err: any) {
       alert(err.message || "Gagal menyimpan tugas.");
@@ -638,17 +674,43 @@ export const ModuleDetailPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="p-4 text-xs text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
-                          <div>{sub.content}</div>
-                          {sub.fileUrl && (
-                            <div className="mt-2 flex items-center gap-1.5">
+                          {sub.content && <div className="mb-2">{sub.content}</div>}
+                          {sub.submissionType === "file" && sub.fileUrl && (
+                            <div className="flex items-center gap-1.5 mt-1 bg-slate-50 border border-slate-200/50 rounded-lg p-2 max-w-[320px]">
                               <Icon name="attachment" className="text-sm text-primary" />
                               <a
                                 href={getFileUrl(sub.fileUrl)}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-xs text-primary font-bold hover:underline"
+                                className="text-xs text-primary font-bold hover:underline truncate"
                               >
-                                Unduh Berkas Jawaban
+                                Unduh File Jawaban
+                              </a>
+                            </div>
+                          )}
+                          {sub.submissionType === "youtube" && sub.submissionLink && (
+                            <div className="flex items-center gap-1.5 mt-1 bg-red-50 border border-red-200/50 rounded-lg p-2 max-w-[320px]">
+                              <Icon name="play_circle" className="text-sm text-red-600" />
+                              <a
+                                href={sub.submissionLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-red-700 font-bold hover:underline truncate"
+                              >
+                                Tonton Link YouTube Jawaban
+                              </a>
+                            </div>
+                          )}
+                          {sub.submissionType === "gdrive" && sub.submissionLink && (
+                            <div className="flex items-center gap-1.5 mt-1 bg-blue-50 border border-blue-200/50 rounded-lg p-2 max-w-[320px]">
+                              <Icon name="cloud" className="text-sm text-blue-600" />
+                              <a
+                                href={sub.submissionLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-blue-700 font-bold hover:underline truncate"
+                              >
+                                Buka Link Google Drive Jawaban
                               </a>
                             </div>
                           )}
@@ -735,26 +797,83 @@ export const ModuleDetailPage: React.FC = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="font-label-md text-label-md font-bold text-on-surface">
-                  Unggah Berkas Pendukung (Opsional - Gambar, PDF, Word, Teks, Maks 10MB)
-                </label>
-                <input
-                  type="file"
-                  onChange={(e) => setAssignFile(e.target.files?.[0] || null)}
-                  className="bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl p-2.5 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-medium text-sm cursor-pointer"
-                />
-                {selectedAssign?.fileUrl && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-slate-500 font-semibold">Berkas terunggah:</span>
-                    <a
-                      href={getFileUrl(selectedAssign.fileUrl)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-primary font-bold hover:underline"
-                    >
-                      Lihat Berkas Saat Ini
-                    </a>
+              <div className="flex flex-col gap-1.5 border border-slate-100 rounded-2xl p-4 bg-slate-50/40">
+                <span className="font-bold text-xs text-slate-800 uppercase tracking-wide">Materi & Sumber Pendukung (LMS)</span>
+                
+                {/* Multi file upload */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <label className="font-label-sm text-xs font-bold text-slate-700">
+                    Unggah Berkas Pendukung (Bisa pilih lebih dari 1 file - Maks 5 berkas, @10MB)
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setAssignFiles(Array.from(e.target.files));
+                      }
+                    }}
+                    className="bg-white border border-outline-variant/30 text-on-surface rounded-xl p-2.5 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-medium text-xs cursor-pointer"
+                  />
+                  
+                  {/* Selected files preview */}
+                  {assignFiles.length > 0 && (
+                    <div className="text-xs text-slate-500 font-medium mt-1">
+                      Berkas baru dipilih: <span className="font-bold text-primary">{assignFiles.map(f => f.name).join(", ")}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Youtube link */}
+                <div className="flex flex-col gap-1 mt-2">
+                  <label className="font-label-sm text-xs font-bold text-slate-700">
+                    Link Video YouTube (Opsional)
+                  </label>
+                  <input
+                    type="url"
+                    value={youtubeLink}
+                    onChange={(e) => setYoutubeLink(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="bg-white border border-outline-variant/30 text-on-surface rounded-xl p-2.5 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-medium text-xs"
+                  />
+                </div>
+
+                {/* Google drive link */}
+                <div className="flex flex-col gap-1 mt-2">
+                  <label className="font-label-sm text-xs font-bold text-slate-700">
+                    Link Google Drive (Opsional)
+                  </label>
+                  <input
+                    type="url"
+                    value={gdriveLink}
+                    onChange={(e) => setGdriveLink(e.target.value)}
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    className="bg-white border border-outline-variant/30 text-on-surface rounded-xl p-2.5 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-medium text-xs"
+                  />
+                </div>
+
+                {/* List of currently uploaded files when editing */}
+                {existingMaterials.filter((m: any) => m.type === "file").length > 0 && (
+                  <div className="mt-3 border-t border-slate-200/60 pt-3 space-y-2">
+                    <span className="text-xs font-bold text-slate-600 block">Berkas yang Sudah Terunggah:</span>
+                    <div className="space-y-1">
+                      {existingMaterials.filter((m: any) => m.type === "file").map((m: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between bg-white border border-slate-100 rounded-lg p-2">
+                          <a href={getFileUrl(m.url)} target="_blank" rel="noreferrer" className="text-xs text-primary font-bold hover:underline truncate max-w-[280px]">
+                            {m.name || "Berkas"}
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setExistingMaterials(prev => prev.filter(item => item.url !== m.url));
+                            }}
+                            className="text-red-500 hover:text-red-700 font-bold text-xs bg-transparent border-none cursor-pointer flex items-center gap-0.5"
+                          >
+                            <Icon name="delete" className="text-sm" /> Hapus
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -952,19 +1071,54 @@ const TaskCard: React.FC<TaskCardProps> = ({
           {task.description}
         </p>
 
-        {task.fileUrl && (
-          <div className="mb-4">
-            <a
-              href={getFileUrl(task.fileUrl)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8f0020]/5 hover:bg-[#8f0020]/10 text-[#8f0020] rounded-xl text-xs font-black decoration-none border border-[#8f0020]/15"
-            >
-              <Icon name="download" className="text-sm" />
-              Unduh Lampiran Tugas
-            </a>
-          </div>
-        )}
+        {(() => {
+          const materials = [];
+          if (task.materialsData) {
+            try {
+              materials.push(...JSON.parse(task.materialsData));
+            } catch (e) {}
+          } else if (task.fileUrl) {
+            materials.push({ type: "file", url: task.fileUrl, name: "Lampiran Berkas" });
+          }
+
+          if (materials.length === 0) return null;
+
+          return (
+            <div className="mb-4 space-y-1.5">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block">Materi Pendukung ({materials.length})</span>
+              <div className="flex flex-wrap gap-2">
+                {materials.map((m: any, idx: number) => {
+                  let iconName = "file_present";
+                  let bgClass = "bg-slate-50 border-slate-200 text-slate-700";
+                  let targetUrl = m.url;
+
+                  if (m.type === "youtube") {
+                    iconName = "play_circle";
+                    bgClass = "bg-red-50 border-red-200/50 text-red-700";
+                  } else if (m.type === "gdrive") {
+                    iconName = "cloud";
+                    bgClass = "bg-blue-50 border-blue-200/50 text-blue-700";
+                  } else {
+                    targetUrl = getFileUrl(m.url);
+                  }
+
+                  return (
+                    <a
+                      key={idx}
+                      href={targetUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 border rounded-lg text-xs font-extrabold decoration-none transition-colors ${bgClass}`}
+                    >
+                      <Icon name={iconName} className="text-sm" />
+                      <span className="truncate max-w-[150px]">{m.name || "Berkas"}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold mb-4 uppercase tracking-wider">
           <Icon name="calendar_today" className="text-xs" />

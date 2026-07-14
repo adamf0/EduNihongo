@@ -182,6 +182,7 @@ model Task {
   moduleId       Int?
   kanjiId        Int?
   fileUrl        String?
+  materialsData  String?          @db.Text
   Kanji          Kanji?           @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
   Module         Module?          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   TaskComment    TaskComment[]
@@ -213,6 +214,8 @@ model TaskSubmission {
   grade             String?
   feedback          String?             @db.Text
   fileUrl           String?
+  submissionLink    String?
+  submissionType    String?             @default("text")
   SubmissionComment SubmissionComment[]
   Task              Task                @relation(fields: [taskId], references: [id], onDelete: Cascade)
   User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)

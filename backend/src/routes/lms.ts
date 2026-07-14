@@ -69,8 +69,8 @@ router.use(authenticateToken);
 
 // Assignments CRUD
 router.get("/assignments", getAssignments);
-router.post("/assignments", upload.single("materialFile"), createAssignment);
-router.put("/assignments/:id", upload.single("materialFile"), updateAssignment);
+router.post("/assignments", upload.array("materialFiles", 5), createAssignment);
+router.put("/assignments/:id", upload.array("materialFiles", 5), updateAssignment);
 router.delete("/assignments/:id", deleteAssignment);
 
 // Submissions

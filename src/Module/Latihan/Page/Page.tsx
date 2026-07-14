@@ -224,6 +224,8 @@ export const LatihanPage: React.FC = () => {
   const [submittingSubmission, setSubmittingSubmission] = useState<Record<number, boolean>>({});
   const [submissionContents, setSubmissionContents] = useState<Record<number, string>>({});
   const [submissionFiles, setSubmissionFiles] = useState<Record<number, File | null>>({});
+  const [activeSubmissionTypes, setActiveSubmissionTypes] = useState<Record<number, 'file' | 'youtube' | 'gdrive' | 'text'>>({});
+  const [submissionLinks, setSubmissionLinks] = useState<Record<number, string>>({});
   const [loadingLms, setLoadingLms] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -305,25 +307,40 @@ export const LatihanPage: React.FC = () => {
   const handleSubmitAssignment = async (assignmentId: number) => {
     const textContent = submissionContents[assignmentId];
     const file = submissionFiles[assignmentId];
+    const type = activeSubmissionTypes[assignmentId] || "text";
+    const link = submissionLinks[assignmentId] || "";
     
-    if ((!textContent || !textContent.trim()) && !file) {
-      alert("Harap masukkan jawaban teks atau unggah file tugas Anda.");
+    if (type === "text" && (!textContent || !textContent.trim())) {
+      alert("Harap masukkan jawaban teks Anda.");
+      return;
+    }
+    if (type === "file" && !file) {
+      alert("Harap pilih berkas jawaban yang ingin diunggah.");
+      return;
+    }
+    if ((type === "youtube" || type === "gdrive") && (!link || !link.trim())) {
+      alert("Harap isi tautan (link) jawaban Anda.");
       return;
     }
 
     const formData = new FormData();
     formData.append("assignmentId", assignmentId.toString());
     formData.append("content", textContent || "");
-    if (file) {
+    formData.append("submissionType", type);
+    
+    if (type === "file" && file) {
       formData.append("submissionFile", file);
+    } else if (type === "youtube" || type === "gdrive") {
+      formData.append("submissionLink", link);
     }
 
     try {
       setSubmittingSubmission(prev => ({ ...prev, [assignmentId]: true }));
       await api.lms.submissions.submit(formData);
       alert("Tugas berhasil dikumpulkan!");
-      // Reset file upload state
+      // Reset upload states
       setSubmissionFiles(prev => ({ ...prev, [assignmentId]: null }));
+      setSubmissionLinks(prev => ({ ...prev, [assignmentId]: "" }));
       loadLmsData();
     } catch (err: any) {
       alert(err.message || "Gagal mengumpulkan tugas.");
@@ -2160,19 +2177,57 @@ export const LatihanPage: React.FC = () => {
                             {assign.description}
                           </p>
 
-                          {assign.fileUrl && (
-                            <div className="mb-4">
-                              <a
-                                href={getFileUrl(assign.fileUrl)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8f0020]/5 hover:bg-[#8f0020]/10 text-[#8f0020] rounded-xl text-xs font-black decoration-none border border-[#8f0020]/10"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                                Unduh Lampiran Tugas
-                              </a>
-                            </div>
-                          )}
+                          {(() => {
+                            const materials = [];
+                            if (assign.materialsData) {
+                              try {
+                                materials.push(...JSON.parse(assign.materialsData));
+                              } catch (e) {}
+                            } else if (assign.fileUrl) {
+                              materials.push({ type: "file", url: assign.fileUrl, name: "Lampiran Berkas" });
+                            }
+
+                            if (materials.length === 0) return null;
+
+                            return (
+                              <div className="mb-4 space-y-1.5 text-left">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Materi Pendukung ({materials.length})</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {materials.map((m: any, idx: number) => {
+                                    let bgClass = "bg-slate-100 border-slate-200 text-slate-700";
+                                    let targetUrl = m.url;
+
+                                    if (m.type === "youtube") {
+                                      bgClass = "bg-red-50 border-red-200/45 text-red-700";
+                                    } else if (m.type === "gdrive") {
+                                      bgClass = "bg-blue-50 border-blue-200/45 text-blue-700";
+                                    } else {
+                                      targetUrl = getFileUrl(m.url);
+                                    }
+
+                                    return (
+                                      <a
+                                        key={idx}
+                                        href={targetUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-black decoration-none transition-all ${bgClass}`}
+                                      >
+                                        {m.type === "youtube" ? (
+                                          <Volume2 className="w-3.5 h-3.5" />
+                                        ) : m.type === "gdrive" ? (
+                                          <Sparkles className="w-3.5 h-3.5" />
+                                        ) : (
+                                          <Download className="w-3.5 h-3.5" />
+                                        )}
+                                        <span className="truncate max-w-[150px]">{m.name || "Berkas"}</span>
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           <div className="flex items-center gap-1 text-xs text-slate-400 font-bold mb-4">
                             <Calendar className="w-3.5 h-3.5" />
@@ -2184,10 +2239,12 @@ export const LatihanPage: React.FC = () => {
                             <div className="border border-slate-200/60 rounded-xl p-4 bg-white space-y-3">
                               <div>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Jawaban Anda</span>
-                                <p className="text-slate-700 text-sm font-medium whitespace-pre-wrap mt-0.5">
-                                  {submission.content}
-                                </p>
-                                {submission.fileUrl && (
+                                {submission.content && (
+                                  <p className="text-slate-700 text-sm font-medium whitespace-pre-wrap mt-0.5">
+                                    {submission.content}
+                                  </p>
+                                )}
+                                {submission.submissionType === "file" && submission.fileUrl && (
                                   <div className="mt-2 flex items-center gap-1.5">
                                     <Paperclip className="w-3.5 h-3.5 text-[#8f0020]" />
                                     <a
@@ -2197,6 +2254,32 @@ export const LatihanPage: React.FC = () => {
                                       className="text-xs text-[#8f0020] font-black hover:underline"
                                     >
                                       Unduh Berkas Jawaban Anda
+                                    </a>
+                                  </div>
+                                )}
+                                {submission.submissionType === "youtube" && submission.submissionLink && (
+                                  <div className="mt-2 flex items-center gap-1.5">
+                                    <Volume2 className="w-3.5 h-3.5 text-red-600 animate-pulse" />
+                                    <a
+                                      href={submission.submissionLink}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-xs text-red-700 font-black hover:underline"
+                                    >
+                                      Buka Video YouTube Jawaban Anda
+                                    </a>
+                                  </div>
+                                )}
+                                {submission.submissionType === "gdrive" && submission.submissionLink && (
+                                  <div className="mt-2 flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                                    <a
+                                      href={submission.submissionLink}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-xs text-blue-700 font-black hover:underline"
+                                    >
+                                      Buka Google Drive Jawaban Anda
                                     </a>
                                   </div>
                                 )}
@@ -2225,25 +2308,82 @@ export const LatihanPage: React.FC = () => {
                               
                               {/* Re-submit option if not graded */}
                               {!submission.grade && (
-                                <div className="mt-3 space-y-2">
-                                  <textarea
-                                    value={submissionContents[assign.id] !== undefined ? submissionContents[assign.id] : submission.content}
-                                    onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
-                                    placeholder="Perbarui jawaban Anda di sini..."
-                                    className="w-full min-h-[80px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-medium"
-                                  />
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Unggah Berkas Baru (Opsional)</span>
-                                    <input
-                                      type="file"
-                                      onChange={(e) => setSubmissionFiles(prev => ({ ...prev, [assign.id]: e.target.files?.[0] || null }))}
-                                      className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-2 w-full text-xs font-semibold cursor-pointer outline-none"
-                                    />
+                                <div className="mt-3 border-t border-slate-100 pt-3 space-y-3">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Perbarui Jawaban</span>
+                                  
+                                  {/* Selector buttons */}
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-50 p-1 rounded-xl">
+                                    {([
+                                      { id: "text", label: "Teks", icon: FileText },
+                                      { id: "file", label: "File", icon: Paperclip },
+                                      { id: "youtube", label: "YouTube", icon: Volume2 },
+                                      { id: "gdrive", label: "GDrive", icon: Sparkles }
+                                    ] as const).map((typeItem) => {
+                                      const IconComp = typeItem.icon;
+                                      const isSelected = (activeSubmissionTypes[assign.id] || "text") === typeItem.id;
+                                      return (
+                                        <button
+                                          key={typeItem.id}
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveSubmissionTypes(prev => ({ ...prev, [assign.id]: typeItem.id }));
+                                          }}
+                                          className={`py-1.5 rounded-lg text-[10px] font-black border-none cursor-pointer flex items-center justify-center gap-1 transition-all ${
+                                            isSelected
+                                              ? "bg-[#8f0020] text-white shadow-sm"
+                                              : "bg-transparent text-slate-500 hover:bg-slate-100"
+                                          }`}
+                                        >
+                                          <IconComp className="w-3 h-3" />
+                                          {typeItem.label}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
+
+                                  {((activeSubmissionTypes[assign.id] || "text") === "text") && (
+                                    <textarea
+                                      value={submissionContents[assign.id] !== undefined ? submissionContents[assign.id] : submission.content}
+                                      onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                      placeholder="Perbarui jawaban teks Anda..."
+                                      className="w-full min-h-[80px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-medium"
+                                    />
+                                  )}
+
+                                  {((activeSubmissionTypes[assign.id] || "text") === "file") && (
+                                    <div className="flex flex-col gap-1">
+                                      <input
+                                        type="file"
+                                        onChange={(e) => setSubmissionFiles(prev => ({ ...prev, [assign.id]: e.target.files?.[0] || null }))}
+                                        className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-2 w-full text-xs font-semibold cursor-pointer outline-none"
+                                      />
+                                    </div>
+                                  )}
+
+                                  {((activeSubmissionTypes[assign.id] || "text") === "youtube") && (
+                                    <input
+                                      type="url"
+                                      value={submissionLinks[assign.id] || ""}
+                                      onChange={(e) => setSubmissionLinks(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                      placeholder="https://www.youtube.com/watch?v=..."
+                                      className="w-full p-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-semibold"
+                                    />
+                                  )}
+
+                                  {((activeSubmissionTypes[assign.id] || "text") === "gdrive") && (
+                                    <input
+                                      type="url"
+                                      value={submissionLinks[assign.id] || ""}
+                                      onChange={(e) => setSubmissionLinks(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                      placeholder="https://drive.google.com/drive/folders/..."
+                                      className="w-full p-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-semibold"
+                                    />
+                                  )}
+
                                   <button
                                     onClick={() => handleSubmitAssignment(assign.id)}
                                     disabled={submittingSubmission[assign.id]}
-                                    className="bg-[#8f0020] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer disabled:opacity-50 mt-1"
+                                    className="bg-[#8f0020] text-white w-full py-2 rounded-lg text-xs font-bold shadow-sm hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer disabled:opacity-50 mt-1"
                                   >
                                     {submittingSubmission[assign.id] ? "Memperbarui..." : "Perbarui Jawaban"}
                                   </button>
@@ -2251,35 +2391,98 @@ export const LatihanPage: React.FC = () => {
                               )}
                             </div>
                           ) : (
-                            <div className="border border-slate-200/60 rounded-xl p-4 bg-white space-y-3">
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Ketik Jawaban (Opsional jika mengunggah file)</span>
-                                <textarea
-                                  value={submissionContents[assign.id] || ""}
-                                  onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
-                                  placeholder="Ketik jawaban tugas Anda di sini..."
-                                  className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-medium"
-                                />
-                              </div>
+                            <div className="border border-slate-200/60 rounded-xl p-4 bg-white space-y-4 text-left">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Metode Pengumpulan Jawaban</span>
                               
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Unggah Berkas Jawaban (Gambar, PDF, Word, Teks - Maks 10MB)</span>
-                                <input
-                                  type="file"
-                                  onChange={(e) => setSubmissionFiles(prev => ({ ...prev, [assign.id]: e.target.files?.[0] || null }))}
-                                  className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-2 w-full text-xs font-semibold cursor-pointer outline-none"
-                                />
-                                {submissionFiles[assign.id] && (
-                                  <span className="text-[10px] text-emerald-600 font-bold block mt-1">
-                                    Berkas terpilih: {submissionFiles[assign.id]?.name}
-                                  </span>
-                                )}
+                              {/* Selector buttons */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-50 p-1 rounded-xl">
+                                {([
+                                  { id: "text", label: "Teks", icon: FileText },
+                                  { id: "file", label: "File", icon: Paperclip },
+                                  { id: "youtube", label: "YouTube", icon: Volume2 },
+                                  { id: "gdrive", label: "GDrive", icon: Sparkles }
+                                ] as const).map((typeItem) => {
+                                  const IconComp = typeItem.icon;
+                                  const isSelected = (activeSubmissionTypes[assign.id] || "text") === typeItem.id;
+                                  return (
+                                    <button
+                                      key={typeItem.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveSubmissionTypes(prev => ({ ...prev, [assign.id]: typeItem.id }));
+                                      }}
+                                      className={`py-1.5 rounded-lg text-[11px] font-black border-none cursor-pointer flex items-center justify-center gap-1 transition-all ${
+                                        isSelected
+                                          ? "bg-[#8f0020] text-white shadow-sm"
+                                          : "bg-transparent text-slate-500 hover:bg-slate-100"
+                                      }`}
+                                    >
+                                      <IconComp className="w-3 h-3" />
+                                      {typeItem.label}
+                                    </button>
+                                  );
+                                })}
                               </div>
+
+                              {/* Type conditional input */}
+                              {((activeSubmissionTypes[assign.id] || "text") === "text") && (
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Ketik Jawaban Teks</span>
+                                  <textarea
+                                    value={submissionContents[assign.id] || ""}
+                                    onChange={(e) => setSubmissionContents(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                    placeholder="Ketik jawaban tugas Anda di sini..."
+                                    className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-medium"
+                                  />
+                                </div>
+                              )}
+
+                              {((activeSubmissionTypes[assign.id] || "text") === "file") && (
+                                <div className="flex flex-col gap-1.5">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Pilih Berkas Jawaban (Gambar, PDF, Word, Teks - Maks 1 berkas, 10MB)</span>
+                                  <input
+                                    type="file"
+                                    onChange={(e) => setSubmissionFiles(prev => ({ ...prev, [assign.id]: e.target.files?.[0] || null }))}
+                                    className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl p-2 w-full text-xs font-semibold cursor-pointer outline-none"
+                                  />
+                                  {submissionFiles[assign.id] && (
+                                    <span className="text-[10px] text-emerald-600 font-bold block">
+                                      Terpilih: {submissionFiles[assign.id]?.name}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
+                              {((activeSubmissionTypes[assign.id] || "text") === "youtube") && (
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Link Video YouTube</span>
+                                  <input
+                                    type="url"
+                                    value={submissionLinks[assign.id] || ""}
+                                    onChange={(e) => setSubmissionLinks(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                    placeholder="https://www.youtube.com/watch?v=..."
+                                    className="w-full p-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-semibold"
+                                  />
+                                </div>
+                              )}
+
+                              {((activeSubmissionTypes[assign.id] || "text") === "gdrive") && (
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Link Google Drive</span>
+                                  <input
+                                    type="url"
+                                    value={submissionLinks[assign.id] || ""}
+                                    onChange={(e) => setSubmissionLinks(prev => ({ ...prev, [assign.id]: e.target.value }))}
+                                    placeholder="https://drive.google.com/drive/folders/..."
+                                    className="w-full p-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-semibold"
+                                  />
+                                </div>
+                              )}
 
                               <button
                                 onClick={() => handleSubmitAssignment(assign.id)}
                                 disabled={submittingSubmission[assign.id]}
-                                className="bg-[#8f0020] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer disabled:opacity-50"
+                                className="bg-[#8f0020] text-white w-full py-2.5 rounded-xl text-sm font-bold shadow-md hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer disabled:opacity-50 mt-2"
                               >
                                 {submittingSubmission[assign.id] ? "Mengirim..." : "Kumpulkan Tugas"}
                               </button>

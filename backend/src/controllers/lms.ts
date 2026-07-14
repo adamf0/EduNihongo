@@ -22,7 +22,7 @@ export const getAssignments = async (req: AuthenticatedRequest, res: Response) =
         Kanji: { select: { character: true } },
         TaskSubmission: {
           where: req.user ? { userId: req.user.id } : undefined,
-          select: { id: true, submittedAt: true, grade: true, feedback: true, fileUrl: true, content: true }
+          select: { id: true, submittedAt: true, grade: true, feedback: true, fileUrl: true, submissionLink: true, submissionType: true, content: true }
         }
       },
       orderBy: { createdAt: "desc" }
@@ -38,6 +38,7 @@ export const getAssignments = async (req: AuthenticatedRequest, res: Response) =
       moduleId: task.moduleId,
       kanjiId: task.kanjiId,
       fileUrl: task.fileUrl,
+      materialsData: task.materialsData,
       module: task.Module,
       kanji: task.Kanji,
       submissions: task.TaskSubmission
@@ -61,13 +62,30 @@ export const createAssignment = async (req: AuthenticatedRequest, res: Response)
     }
 
     const body = sanitizeObject(req.body);
-    const { title, description, dueDate, moduleId, kanjiId } = body;
+    const { title, description, dueDate, moduleId, kanjiId, youtubeLink, gdriveLink } = body;
 
     if (!title || !description) {
       return res.status(400).json({ error: "Judul dan deskripsi tugas wajib diisi." });
     }
 
-    const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    // Process uploaded files
+    const files = req.files as Express.Multer.File[] || [];
+    const uploadedMaterials = files.map(f => ({
+      type: "file",
+      url: `/uploads/${f.filename}`,
+      name: f.originalname
+    }));
+
+    // Add links as alternatives
+    const materials = [...uploadedMaterials];
+    if (youtubeLink && youtubeLink.trim()) {
+      materials.push({ type: "youtube", url: youtubeLink.trim(), name: "Video YouTube Pendukung" });
+    }
+    if (gdriveLink && gdriveLink.trim()) {
+      materials.push({ type: "gdrive", url: gdriveLink.trim(), name: "Folder Google Drive Pendukung" });
+    }
+
+    const materialsData = JSON.stringify(materials);
 
     const task = await prisma.task.create({
       data: {
@@ -76,7 +94,8 @@ export const createAssignment = async (req: AuthenticatedRequest, res: Response)
         dueDate: dueDate ? new Date(dueDate) : null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
         kanjiId: kanjiId ? parseInt(kanjiId, 10) : null,
-        fileUrl: fileUrl,
+        materialsData: materialsData,
+        fileUrl: files[0] ? `/uploads/${files[0].filename}` : null // fallback compatibility
       }
     });
 
@@ -99,19 +118,54 @@ export const updateAssignment = async (req: AuthenticatedRequest, res: Response)
 
     const { id } = req.params;
     const body = sanitizeObject(req.body);
-    const { title, description, dueDate, moduleId, kanjiId, removeFile } = body;
+    const { title, description, dueDate, moduleId, kanjiId, youtubeLink, gdriveLink, keepMaterials } = body;
 
     if (!title || !description) {
       return res.status(400).json({ error: "Judul dan deskripsi wajib diisi." });
     }
 
-    // Determine file action
-    let fileUrlUpdate: any = undefined;
-    if (removeFile === "true") {
-      fileUrlUpdate = null;
-    } else if (req.file) {
-      fileUrlUpdate = `/uploads/${req.file.filename}`;
+    // Process keep materials
+    let materials: any[] = [];
+    if (keepMaterials) {
+      try {
+        materials = JSON.parse(keepMaterials);
+      } catch (e) {
+        materials = [];
+      }
     }
+
+    // Process newly uploaded files
+    const files = req.files as Express.Multer.File[] || [];
+    const newFiles = files.map(f => ({
+      type: "file",
+      url: `/uploads/${f.filename}`,
+      name: f.originalname
+    }));
+
+    materials = [...materials, ...newFiles];
+
+    // Append links
+    if (youtubeLink && youtubeLink.trim()) {
+      // remove old youtube if any or just push
+      materials = materials.filter(m => m.type !== "youtube");
+      materials.push({ type: "youtube", url: youtubeLink.trim(), name: "Video YouTube Pendukung" });
+    } else if (youtubeLink === "") {
+      materials = materials.filter(m => m.type !== "youtube");
+    }
+
+    if (gdriveLink && gdriveLink.trim()) {
+      // remove old gdrive if any or just push
+      materials = materials.filter(m => m.type !== "gdrive");
+      materials.push({ type: "gdrive", url: gdriveLink.trim(), name: "Folder Google Drive Pendukung" });
+    } else if (gdriveLink === "") {
+      materials = materials.filter(m => m.type !== "gdrive");
+    }
+
+    const materialsData = JSON.stringify(materials);
+
+    // fallback fileUrl compatibility (first file in materials list)
+    const firstFile = materials.find(m => m.type === "file");
+    const fileUrl = firstFile ? firstFile.url : null;
 
     const task = await prisma.task.update({
       where: { id: parseInt(id, 10) },
@@ -121,7 +175,8 @@ export const updateAssignment = async (req: AuthenticatedRequest, res: Response)
         dueDate: dueDate ? new Date(dueDate) : null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
         kanjiId: kanjiId ? parseInt(kanjiId, 10) : null,
-        ...(fileUrlUpdate !== undefined ? { fileUrl: fileUrlUpdate } : {})
+        materialsData: materialsData,
+        fileUrl: fileUrl
       }
     });
 
@@ -192,6 +247,8 @@ export const getSubmissions = async (req: AuthenticatedRequest, res: Response) =
       grade: sub.grade,
       feedback: sub.feedback,
       fileUrl: sub.fileUrl,
+      submissionLink: sub.submissionLink,
+      submissionType: sub.submissionType,
       user: sub.User,
       assignment: sub.Task
     }));
@@ -208,10 +265,10 @@ export const submitAssignment = async (req: AuthenticatedRequest, res: Response)
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
     const body = sanitizeObject(req.body);
-    const { assignmentId, content } = body;
+    const { assignmentId, content, submissionType, submissionLink } = body;
 
-    if (!assignmentId || !content) {
-      return res.status(400).json({ error: "Assignment ID dan konten jawaban wajib diisi." });
+    if (!assignmentId) {
+      return res.status(400).json({ error: "Assignment ID wajib diisi." });
     }
 
     const taskId = parseInt(assignmentId, 10);
@@ -226,6 +283,11 @@ export const submitAssignment = async (req: AuthenticatedRequest, res: Response)
 
     const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
+    // determine type and links
+    const type = submissionType || "text";
+    const link = (type === "youtube" || type === "gdrive") ? submissionLink : null;
+    const finalFileUrl = (type === "file") ? fileUrl : null;
+
     // Upsert submission
     const existing = await prisma.taskSubmission.findFirst({
       where: {
@@ -239,11 +301,13 @@ export const submitAssignment = async (req: AuthenticatedRequest, res: Response)
       submission = await prisma.taskSubmission.update({
         where: { id: existing.id },
         data: {
-          content,
+          content: content || "",
           submittedAt: new Date(),
           grade: null,
           feedback: null,
-          ...(fileUrl ? { fileUrl } : {})
+          submissionType: type,
+          submissionLink: link,
+          fileUrl: finalFileUrl // if student re-submitted link, fileUrl becomes null
         }
       });
     } else {
@@ -251,8 +315,10 @@ export const submitAssignment = async (req: AuthenticatedRequest, res: Response)
         data: {
           taskId,
           userId: req.user.id,
-          content,
-          fileUrl
+          content: content || "",
+          submissionType: type,
+          submissionLink: link,
+          fileUrl: finalFileUrl
         }
       });
     }
