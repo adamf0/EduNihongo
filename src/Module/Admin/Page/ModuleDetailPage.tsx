@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 interface ModuleData {
   id: number;
   title: string;
+  tujuanPembelajaran?: string | null;
 }
 
 interface KanjiData {
@@ -34,11 +35,18 @@ export const ModuleDetailPage: React.FC = () => {
   const [error, setError] = useState("");
 
   // LMS Admin state
-  const [activeTab, setActiveTab] = useState<"kanjis" | "assignments" | "submissions" | "discussions">("kanjis");
+  const [activeTab, setActiveTab] = useState<"lms-curriculum" | "kanji-list" | "submissions">("lms-curriculum");
   const [assignments, setAssignments] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
-  const [comments, setComments] = useState<any[]>([]);
   
+  // Comments per task map
+  const [commentsMap, setCommentsMap] = useState<Record<number, any[]>>({});
+  const [newCommentTexts, setNewCommentTexts] = useState<Record<number, string>>({});
+  const [expandedComments, setExpandedComments] = useState<Record<number, boolean>>({});
+
+  // Submissions filter state
+  const [filterTaskId, setFilterTaskId] = useState<number | null>(null);
+
   // Assignment Modal & Form states
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedAssign, setSelectedAssign] = useState<any>(null);
@@ -46,15 +54,13 @@ export const ModuleDetailPage: React.FC = () => {
   const [assignDesc, setAssignDesc] = useState("");
   const [assignDueDate, setAssignDueDate] = useState("");
   const [assignKanjiId, setAssignKanjiId] = useState<string>(""); // empty string means Module-level
+  const [isKanjiTargetLocked, setIsKanjiTargetLocked] = useState(false);
 
   // Grading Modal & Form states
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [subGrade, setSubGrade] = useState("");
   const [subFeedback, setSubFeedback] = useState("");
-
-  // Post Discussion Comment state
-  const [newComment, setNewComment] = useState("");
 
   const loadModuleAndKanjis = async () => {
     if (!moduleId) {
@@ -81,22 +87,8 @@ export const ModuleDetailPage: React.FC = () => {
       const filtered = allKanjis.filter((k: any) => k.moduleId === moduleId);
       setKanjis(filtered);
 
-      // Load assignments, submissions, and discussions
-      const assigns = await api.lms.assignments.list({ moduleId });
-      setAssignments(assigns);
-
-      const subs = await api.lms.submissions.list({});
-      const filteredSubs = subs.filter((s: any) => s.assignment?.moduleId === moduleId);
-      setSubmissions(filteredSubs);
-
-      // Load discussions for module
-      const modComms = await api.lms.comments.list({ moduleId });
-      // Load discussions for kanjis in module
-      const kanjiCommsPromises = filtered.map((kj: any) => api.lms.comments.list({ kanjiId: kj.id }).catch(() => []));
-      const kanjiCommsResults = await Promise.all(kanjiCommsPromises);
-      const allComms = [...modComms, ...kanjiCommsResults.flat()];
-      allComms.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      setComments(allComms);
+      // Load LMS Data
+      await loadLmsDataInternal();
 
     } catch (err: any) {
       console.error(err);
@@ -109,32 +101,42 @@ export const ModuleDetailPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    loadModuleAndKanjis();
-  }, [moduleId, navigate]);
-
-  const loadLmsData = async () => {
+  const loadLmsDataInternal = async () => {
     if (!moduleId) return;
     try {
+      // Load assignments for this module
       const assigns = await api.lms.assignments.list({ moduleId });
       setAssignments(assigns);
 
+      // Load submissions
       const subs = await api.lms.submissions.list({});
       const filteredSubs = subs.filter((s: any) => s.assignment?.moduleId === moduleId);
       setSubmissions(filteredSubs);
 
-      // Load discussions for module
-      const modComms = await api.lms.comments.list({ moduleId });
-      // Load discussions for kanjis in module
-      const kanjiCommsPromises = kanjis.map((kj: any) => api.lms.comments.list({ kanjiId: kj.id }).catch(() => []));
-      const kanjiCommsResults = await Promise.all(kanjiCommsPromises);
-      const allComms = [...modComms, ...kanjiCommsResults.flat()];
-      allComms.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      setComments(allComms);
+      // Load comments for each task
+      const commentsPromises = assigns.map((assign: any) =>
+        api.lms.comments.list({ assignmentId: assign.id })
+          .then(comms => ({ id: assign.id, comms }))
+          .catch(() => ({ id: assign.id, comms: [] }))
+      );
+      const commentsResults = await Promise.all(commentsPromises);
+      const newMap: Record<number, any[]> = {};
+      commentsResults.forEach(res => {
+        newMap[res.id] = res.comms;
+      });
+      setCommentsMap(newMap);
     } catch (err) {
       console.error("Gagal memuat data LMS admin:", err);
     }
   };
+
+  const loadLmsData = async () => {
+    await loadLmsDataInternal();
+  };
+
+  useEffect(() => {
+    loadModuleAndKanjis();
+  }, [moduleId, navigate]);
 
   const handleDeleteKanji = async (id: number) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus kanji ini beserta seluruh progres dan grafik terkait?")) {
@@ -150,13 +152,19 @@ export const ModuleDetailPage: React.FC = () => {
     }
   };
 
-  // Assignment handlers
-  const openAddAssignModal = () => {
+  // Assignment Modal launchers
+  const openAddAssignModal = (targetKanjiId: number | null) => {
     setSelectedAssign(null);
     setAssignTitle("");
     setAssignDesc("");
     setAssignDueDate("");
-    setAssignKanjiId("");
+    if (targetKanjiId !== null) {
+      setAssignKanjiId(targetKanjiId.toString());
+      setIsKanjiTargetLocked(true);
+    } else {
+      setAssignKanjiId("");
+      setIsKanjiTargetLocked(true); // Locked because they clicked specifically on Module-level
+    }
     setIsAssignModalOpen(true);
   };
 
@@ -166,6 +174,7 @@ export const ModuleDetailPage: React.FC = () => {
     setAssignDesc(assign.description);
     setAssignDueDate(assign.dueDate ? new Date(assign.dueDate).toISOString().split("T")[0] : "");
     setAssignKanjiId(assign.kanjiId ? assign.kanjiId.toString() : "");
+    setIsKanjiTargetLocked(true);
     setIsAssignModalOpen(true);
   };
 
@@ -234,31 +243,47 @@ export const ModuleDetailPage: React.FC = () => {
   };
 
   // Comment handlers
-  const handlePostComment = async (e: React.FormEvent) => {
+  const handlePostTaskComment = async (e: React.FormEvent, taskId: number) => {
     e.preventDefault();
-    if (!newComment.trim() || !moduleId) return;
+    const commentText = newCommentTexts[taskId];
+    if (!commentText || !commentText.trim()) return;
 
     try {
       const res = await api.lms.comments.create({
-        content: newComment,
-        moduleId
+        content: commentText,
+        assignmentId: taskId
       });
-      setComments(prev => [...prev, res]);
-      setNewComment("");
+      setCommentsMap(prev => ({
+        ...prev,
+        [taskId]: [...(prev[taskId] || []), res]
+      }));
+      setNewCommentTexts(prev => ({ ...prev, [taskId]: "" }));
     } catch (err: any) {
       alert(err.message || "Gagal mengirim komentar.");
     }
   };
 
-  const handleDeleteComment = async (id: number) => {
+  const handleDeleteComment = async (commentId: number, taskId: number) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus komentar ini?")) return;
 
     try {
-      await api.lms.comments.delete(id);
-      setComments(prev => prev.filter(c => c.id !== id));
+      await api.lms.comments.delete(commentId);
+      setCommentsMap(prev => ({
+        ...prev,
+        [taskId]: (prev[taskId] || []).filter(c => c.id !== commentId)
+      }));
     } catch (err: any) {
       alert(err.message || "Gagal menghapus komentar.");
     }
+  };
+
+  const toggleCommentsExpansion = (taskId: number) => {
+    setExpandedComments(prev => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
+
+  const handleViewSubmissionsForTask = (taskId: number) => {
+    setFilterTaskId(taskId);
+    setActiveTab("submissions");
   };
 
   if (loading && !module) {
@@ -271,6 +296,9 @@ export const ModuleDetailPage: React.FC = () => {
     );
   }
 
+  // Filter tasks
+  const moduleLevelTasks = assignments.filter(a => !a.kanjiId);
+
   return (
     <Layout>
       <main className="flex-grow w-full px-4 md:px-6 max-w-[1200px] mx-auto py-6 select-text text-left">
@@ -279,16 +307,16 @@ export const ModuleDetailPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-base border-b border-outline-variant/30 pb-base">
             <div>
               <h2 className="font-headline-lg text-headline-lg font-bold text-on-surface flex items-center gap-sm">
-                <Icon name="folder_open" className="text-primary text-3xl" />
-                Detail Modul: {module?.title || "Loading..."}
+                <Icon name="school" className="text-primary text-3xl animate-bounce" />
+                LMS Dosen: {module?.title || "Loading..."}
               </h2>
-              <p className="text-body-md text-on-surface-variant">
-                Kelola kurikulum daftar karakter kanji, contoh kalimat, tugas LMS, dan diskusi mahasiswa pada modul ini.
+              <p className="text-body-md text-on-surface-variant font-medium">
+                Manajemen kurikulum materi kuliah, penugasan mahasiswa, penilaian tugas, dan diskusi kelas.
               </p>
             </div>
             <button
               onClick={() => navigate("/admin")}
-              className="px-4 py-2 border border-outline hover:bg-surface-container transition-all cursor-pointer font-bold text-on-surface bg-transparent rounded-lg flex items-center gap-sm text-sm"
+              className="px-4 py-2 border border-outline hover:bg-[#8f0020]/5 hover:border-[#8f0020]/50 transition-all cursor-pointer font-bold text-on-surface bg-transparent rounded-lg flex items-center gap-sm text-sm"
             >
               <Icon name="arrow_back" className="text-lg" />
               Kembali ke Kelola Modul
@@ -302,53 +330,170 @@ export const ModuleDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* LMS Admin Tabs */}
+          {/* LMS Admin Ecosystem Navigation Tabs */}
           <div className="flex flex-wrap gap-2 border-b border-outline-variant/30 pb-2">
             <button
-              onClick={() => setActiveTab("kanjis")}
-              className={`px-4 py-2 font-bold text-sm rounded-lg border-none cursor-pointer select-none transition-all ${
-                activeTab === "kanjis"
-                  ? "bg-[#8f0020] text-white shadow-sm"
+              onClick={() => setActiveTab("lms-curriculum")}
+              className={`px-5 py-2.5 rounded-xl font-bold text-sm border-none cursor-pointer select-none transition-all flex items-center gap-2 ${
+                activeTab === "lms-curriculum"
+                  ? "bg-[#8f0020] text-white shadow-md"
                   : "bg-transparent text-slate-600 hover:bg-slate-100"
               }`}
             >
-              Daftar Kanji ({kanjis.length})
+              <Icon name="menu_book" className="text-lg" />
+              Materi & Tugas Modul
             </button>
             <button
-              onClick={() => setActiveTab("assignments")}
-              className={`px-4 py-2 font-bold text-sm rounded-lg border-none cursor-pointer select-none transition-all ${
-                activeTab === "assignments"
-                  ? "bg-[#8f0020] text-white shadow-sm"
+              onClick={() => setActiveTab("kanji-list")}
+              className={`px-5 py-2.5 rounded-xl font-bold text-sm border-none cursor-pointer select-none transition-all flex items-center gap-2 ${
+                activeTab === "kanji-list"
+                  ? "bg-[#8f0020] text-white shadow-md"
                   : "bg-transparent text-slate-600 hover:bg-slate-100"
               }`}
             >
-              Tugas LMS ({assignments.length})
+              <Icon name="table_chart" className="text-lg" />
+              Kelola Kurikulum Kanji ({kanjis.length})
             </button>
             <button
               onClick={() => setActiveTab("submissions")}
-              className={`px-4 py-2 font-bold text-sm rounded-lg border-none cursor-pointer select-none transition-all ${
+              className={`px-5 py-2.5 rounded-xl font-bold text-sm border-none cursor-pointer select-none transition-all flex items-center gap-2 ${
                 activeTab === "submissions"
-                  ? "bg-[#8f0020] text-white shadow-sm"
+                  ? "bg-[#8f0020] text-white shadow-md"
                   : "bg-transparent text-slate-600 hover:bg-slate-100"
               }`}
             >
-              Pengumpulan Tugas ({submissions.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("discussions")}
-              className={`px-4 py-2 font-bold text-sm rounded-lg border-none cursor-pointer select-none transition-all ${
-                activeTab === "discussions"
-                  ? "bg-[#8f0020] text-white shadow-sm"
-                  : "bg-transparent text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              Forum Diskusi ({comments.length})
+              <Icon name="fact_check" className="text-lg" />
+              Pengumpulan Mahasiswa ({submissions.length})
             </button>
           </div>
 
-          {/* TAB 1: KANJIS */}
-          {activeTab === "kanjis" && (
-            <div className="flex flex-col gap-md">
+          {/* ================= TAB 1: LMS CURRICULUM (MATERI KAMPUS) ================= */}
+          {activeTab === "lms-curriculum" && (
+            <div className="space-y-8 animate-fade-in">
+              
+              {/* MODULE LEVEL SECTION */}
+              <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/60 pb-4 mb-5 gap-4">
+                  <div>
+                    <h3 className="font-headline-md text-headline-sm font-black text-slate-800 flex items-center gap-2">
+                      <Icon name="library_books" className="text-[#8f0020]" />
+                      Materi Utama: {module?.title}
+                    </h3>
+                    <p className="text-xs font-semibold text-slate-500 mt-1">
+                      Tujuan: {module?.tujuanPembelajaran || "Belum ada tujuan pembelajaran."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => openAddAssignModal(null)}
+                    className="px-4 py-2 bg-[#8f0020] text-white text-xs font-bold rounded-xl shadow-sm hover:brightness-110 active:scale-95 border-none transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Icon name="add" className="text-base" />
+                    Tambah Tugas Modul
+                  </button>
+                </div>
+
+                {/* Module Tasks List */}
+                {moduleLevelTasks.length === 0 ? (
+                  <p className="text-slate-400 text-xs italic font-medium py-3">
+                    Belum ada tugas tingkat modul utama.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {moduleLevelTasks.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        comments={commentsMap[task.id] || []}
+                        isExpanded={expandedComments[task.id]}
+                        newCommentText={newCommentTexts[task.id] || ""}
+                        setNewCommentText={(text) => setNewCommentTexts(prev => ({ ...prev, [task.id]: text }))}
+                        onToggleComments={() => toggleCommentsExpansion(task.id)}
+                        onPostComment={(e) => handlePostTaskComment(e, task.id)}
+                        onDeleteComment={(commentId) => handleDeleteComment(commentId, task.id)}
+                        onEdit={() => openEditAssignModal(task)}
+                        onDelete={() => handleDeleteAssignment(task.id)}
+                        onViewSubmissions={() => handleViewSubmissionsForTask(task.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* KANJI TOPICS / SUB-SECTIONS */}
+              <div className="space-y-6">
+                <h3 className="font-headline-md text-headline-sm font-black text-slate-800 flex items-center gap-2">
+                  <Icon name="layers" className="text-[#8f0020]" />
+                  Materi Kanji & Sub-Pembelajaran
+                </h3>
+
+                <div className="space-y-4">
+                  {kanjis.map((kj) => {
+                    const kanjiTasks = assignments.filter(a => a.kanjiId === kj.id);
+
+                    return (
+                      <div key={kj.id} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs hover:border-[#8f0020]/20 transition-all">
+                        {/* Kanji Subheader */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-50 pb-4 mb-4 gap-4">
+                          <div className="flex items-center gap-4">
+                            <span className="font-display-kanji text-5xl font-normal text-[#8f0020] bg-[#8f0020]/5 w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner">
+                              {kj.character}
+                            </span>
+                            <div>
+                              <h4 className="font-extrabold text-slate-800 text-base">
+                                Materi Kanji: {kj.character} ({kj.meaning})
+                              </h4>
+                              <p className="text-xs text-slate-500 font-bold mt-0.5">
+                                Romaji: <span className="font-mono text-[#8f0020] font-black">{kj.romaji}</span> • {kj.graphNodes.length} Graf Simpul
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => openAddAssignModal(kj.id)}
+                            className="px-3.5 py-2 bg-slate-100 hover:bg-[#8f0020] hover:text-white text-slate-700 text-xs font-extrabold rounded-xl border-none transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            <Icon name="add" className="text-base" />
+                            Tambah Tugas Kanji ({kj.character})
+                          </button>
+                        </div>
+
+                        {/* Kanji Specific Tasks List */}
+                        {kanjiTasks.length === 0 ? (
+                          <p className="text-slate-400 text-[11px] italic font-semibold pl-2">
+                            Tidak ada tugas khusus untuk Kanji ini.
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {kanjiTasks.map((task) => (
+                              <TaskCard
+                                key={task.id}
+                                task={task}
+                                comments={commentsMap[task.id] || []}
+                                isExpanded={expandedComments[task.id]}
+                                newCommentText={newCommentTexts[task.id] || ""}
+                                setNewCommentText={(text) => setNewCommentTexts(prev => ({ ...prev, [task.id]: text }))}
+                                onToggleComments={() => toggleCommentsExpansion(task.id)}
+                                onPostComment={(e) => handlePostTaskComment(e, task.id)}
+                                onDeleteComment={(commentId) => handleDeleteComment(commentId, task.id)}
+                                onEdit={() => openEditAssignModal(task)}
+                                onDelete={() => handleDeleteAssignment(task.id)}
+                                onViewSubmissions={() => handleViewSubmissionsForTask(task.id)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ================= TAB 2: KANJI LIST (CURRICULUM ADMIN CRUD) ================= */}
+          {activeTab === "kanji-list" && (
+            <div className="flex flex-col gap-md animate-fade-in">
               <div className="flex justify-between items-center">
                 <h3 className="font-headline-md text-headline-md font-bold text-on-surface">
                   Daftar Kanji Terdaftar
@@ -418,77 +563,36 @@ export const ModuleDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: ASSIGNMENTS */}
-          {activeTab === "assignments" && (
-            <div className="flex flex-col gap-md">
-              <div className="flex justify-between items-center">
+          {/* ================= TAB 3: SUBMISSIONS (GRADING) ================= */}
+          {activeTab === "submissions" && (
+            <div className="flex flex-col gap-md animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3 gap-2">
                 <h3 className="font-headline-md text-headline-md font-bold text-on-surface">
-                  Daftar Tugas Modul
+                  Tugas Mahasiswa yang Dikumpulkan
                 </h3>
-                <button
-                  onClick={openAddAssignModal}
-                  className="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-bold shadow-md cursor-pointer hover:brightness-110 active:scale-95 transition-all border-none flex items-center gap-sm text-sm"
-                >
-                  <Icon name="assignment" className="text-lg" />
-                  Tambah Tugas Baru
-                </button>
+                {filterTaskId && (
+                  <button
+                    onClick={() => setFilterTaskId(null)}
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg border-none cursor-pointer transition-all"
+                  >
+                    Tampilkan Semua Tugas
+                  </button>
+                )}
               </div>
 
-              {assignments.length === 0 ? (
-                <div className="bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/30 text-center text-on-surface-variant italic">
-                  Belum ada tugas yang ditambahkan.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {assignments.map((assign) => (
-                    <div key={assign.id} className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
-                      <div>
-                        <div className="flex justify-between items-start gap-2 mb-2">
-                          <h4 className="font-black text-slate-800 text-lg leading-tight">{assign.title}</h4>
-                          <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                            assign.kanjiId ? "bg-slate-100 text-slate-700" : "bg-purple-100 text-purple-700"
-                          }`}>
-                            {assign.kanjiId ? `Kanji: ${assign.kanji?.character || ""}` : "Modul Utama"}
-                          </span>
-                        </div>
-                        <p className="text-slate-600 text-sm whitespace-pre-wrap leading-relaxed mb-4">
-                          {assign.description}
-                        </p>
-                      </div>
-                      <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
-                        <div className="text-xs text-slate-400 font-bold">
-                          Batas Waktu: {assign.dueDate ? new Date(assign.dueDate).toLocaleDateString("id-ID") : "Tidak ada"}
-                        </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => openEditAssignModal(assign)}
-                            className="p-1.5 text-primary hover:bg-slate-50 rounded-lg cursor-pointer bg-transparent border-none"
-                            title="Edit Tugas"
-                          >
-                            <Icon name="edit" className="text-lg" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAssignment(assign.id)}
-                            className="p-1.5 text-error hover:bg-slate-50 rounded-lg cursor-pointer bg-transparent border-none"
-                            title="Hapus Tugas"
-                          >
-                            <Icon name="delete" className="text-lg" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              {filterTaskId && (
+                <div className="bg-[#8f0020]/5 border border-[#8f0020]/15 p-4 rounded-2xl flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">
+                    Menyaring Jawaban Tugas: <span className="underline">{assignments.find(a => a.id === filterTaskId)?.title || ""}</span>
+                  </span>
+                  <button
+                    onClick={() => setFilterTaskId(null)}
+                    className="text-xs font-bold text-[#8f0020] bg-transparent border-none cursor-pointer"
+                  >
+                    Reset Filter
+                  </button>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* TAB 3: SUBMISSIONS */}
-          {activeTab === "submissions" && (
-            <div className="flex flex-col gap-md">
-              <h3 className="font-headline-md text-headline-md font-bold text-on-surface">
-                Tugas Mahasiswa yang Dikumpulkan
-              </h3>
 
               <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden shadow-sm overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[900px]">
@@ -502,7 +606,7 @@ export const ModuleDetailPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10 text-body-md text-on-surface">
-                    {submissions.map((sub) => (
+                    {(filterTaskId ? submissions.filter(s => s.taskId === filterTaskId) : submissions).map((sub) => (
                       <tr key={sub.id} className="hover:bg-surface-container-low/50 align-top">
                         <td className="p-4">
                           <div className="flex items-center gap-sm">
@@ -518,7 +622,7 @@ export const ModuleDetailPage: React.FC = () => {
                           </div>
                         </td>
                         <td className="p-4">
-                          <span className="font-bold text-xs text-slate-700 block leading-snug">{sub.assignment?.title}</span>
+                          <span className="font-bold text-xs text-slate-700 block leading-snug">{sub.assignment?.title || sub.Task?.title}</span>
                           <span className="text-[9px] text-slate-400 block font-mono mt-0.5">
                             Kumpul: {new Date(sub.submittedAt).toLocaleString("id-ID")}
                           </span>
@@ -548,7 +652,7 @@ export const ModuleDetailPage: React.FC = () => {
                         </td>
                       </tr>
                     ))}
-                    {submissions.length === 0 && (
+                    {(filterTaskId ? submissions.filter(s => s.taskId === filterTaskId) : submissions).length === 0 && (
                       <tr>
                         <td colSpan={5} className="p-8 text-center text-on-surface-variant italic">
                           Belum ada pengumpulan tugas dari mahasiswa.
@@ -557,100 +661,6 @@ export const ModuleDetailPage: React.FC = () => {
                     )}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: DISCUSSIONS */}
-          {activeTab === "discussions" && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Discussion Feed */}
-              <div className="lg:col-span-8 bg-white border border-slate-200/60 rounded-2xl p-6 shadow-xs flex flex-col gap-4">
-                <h3 className="font-extrabold text-slate-800 text-lg border-b border-slate-100 pb-3">Forum Diskusi Modul & Kanji</h3>
-                
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 sidebar-scroll">
-                  {comments.length === 0 ? (
-                    <div className="text-center py-12 text-slate-400 italic text-sm">
-                      Belum ada komentar atau diskusi mahasiswa pada modul ini.
-                    </div>
-                  ) : (
-                    comments.map((comm) => (
-                      <div key={comm.id} className="flex gap-4 items-start border-b border-slate-50 pb-4">
-                        <img
-                          src={comm.user?.avatar}
-                          alt={comm.user?.name}
-                          className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-xs"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-slate-800 text-sm">{comm.user?.name}</span>
-                              {comm.user?.role === "ADMIN" ? (
-                                <span className="px-1.5 py-0.5 rounded-md bg-[#8f0020]/10 text-[#8f0020] text-[9px] font-black uppercase tracking-wider">Dosen</span>
-                              ) : (
-                                <span className="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[9px] font-bold uppercase tracking-wider">Mahasiswa</span>
-                              )}
-                              {comm.kanjiId ? (
-                                <span className="px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-bold">
-                                  Kanji: {comm.kanji?.character || ""}
-                                </span>
-                              ) : (
-                                <span className="px-1.5 py-0.5 rounded bg-purple-50 border border-purple-100 text-purple-700 text-[10px] font-bold">
-                                  Modul Utama
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-xs text-slate-400 font-bold font-mono">
-                              {new Date(comm.createdAt).toLocaleString("id-ID")}
-                            </span>
-                          </div>
-                          <p className="text-slate-600 text-sm font-medium mt-1 leading-relaxed whitespace-pre-wrap">
-                            {comm.content}
-                          </p>
-                          <button
-                            onClick={() => handleDeleteComment(comm.id)}
-                            className="text-xs text-red-500 hover:text-red-700 bg-transparent border-none cursor-pointer mt-2 font-bold p-0 block"
-                          >
-                            Hapus Komentar
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <form onSubmit={handlePostComment} className="border-t border-slate-100 pt-4 flex gap-2">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Tulis komentar/umpan balik dosen untuk diskusi modul utama..."
-                    className="flex-1 p-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020]"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="px-5 py-3 bg-[#8f0020] text-white rounded-xl font-bold shadow-sm hover:brightness-105 active:scale-95 transition-all cursor-pointer border-none flex items-center gap-1 text-sm"
-                  >
-                    Kirim
-                  </button>
-                </form>
-              </div>
-
-              {/* Discussion instructions card */}
-              <div className="lg:col-span-4 bg-slate-50 border border-slate-100 rounded-2xl p-5 text-slate-600 text-sm space-y-3 leading-relaxed">
-                <h4 className="font-extrabold text-slate-800 text-sm uppercase tracking-wide flex items-center gap-1.5">
-                  <Icon name="info" className="text-primary text-base" />
-                  Info Moderasi
-                </h4>
-                <p>
-                  Sebagai <strong>Dosen/Admin</strong>, Anda memiliki hak penuh untuk memoderasi forum diskusi. Anda dapat:
-                </p>
-                <ul className="list-disc pl-4 space-y-1.5 font-medium text-xs">
-                  <li>Membaca seluruh tanggapan mahasiswa di level modul utama maupun kanji spesifik.</li>
-                  <li>Menjawab pertanyaan mahasiswa langsung dari halaman modul ini.</li>
-                  <li>Menghapus komentar yang tidak pantas atau tidak relevan.</li>
-                </ul>
               </div>
             </div>
           )}
@@ -683,7 +693,7 @@ export const ModuleDetailPage: React.FC = () => {
                   value={assignTitle}
                   onChange={(e) => setAssignTitle(e.target.value)}
                   className="bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl p-3 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-medium text-sm"
-                  placeholder="Contoh: Tugas Menulis Kanji"
+                  placeholder="Contoh: Tugas Analisis Kanji 試"
                   required
                 />
               </div>
@@ -697,7 +707,7 @@ export const ModuleDetailPage: React.FC = () => {
                   onChange={(e) => setAssignDesc(e.target.value)}
                   rows={4}
                   className="bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl p-3 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-medium text-sm"
-                  placeholder="Tuliskan petunjuk pengerjaan tugas di sini..."
+                  placeholder="Tuliskan petunjuk pengerjaan tugas kuliah di sini..."
                   required
                 />
               </div>
@@ -722,7 +732,8 @@ export const ModuleDetailPage: React.FC = () => {
                   <select
                     value={assignKanjiId}
                     onChange={(e) => setAssignKanjiId(e.target.value)}
-                    className="bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl p-3 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-medium text-sm cursor-pointer"
+                    disabled={isKanjiTargetLocked}
+                    className="bg-slate-100 border border-outline-variant/30 text-on-surface rounded-xl p-3 w-full outline-none font-semibold text-sm cursor-not-allowed opacity-80"
                   >
                     <option value="">-- Modul Utama (Tingkat Modul) --</option>
                     {kanjis.map((kj) => (
@@ -771,7 +782,7 @@ export const ModuleDetailPage: React.FC = () => {
 
             <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-xs space-y-2 text-slate-600 font-medium">
               <p><strong>Nama Mahasiswa:</strong> {selectedSubmission.user?.name}</p>
-              <p><strong>Tugas:</strong> {selectedSubmission.assignment?.title}</p>
+              <p><strong>Tugas:</strong> {selectedSubmission.assignment?.title || selectedSubmission.Task?.title}</p>
               <p className="border-t border-slate-200/60 pt-2 font-mono whitespace-pre-wrap leading-relaxed">
                 <strong>Jawaban Mahasiswa:</strong><br />
                 {selectedSubmission.content}
@@ -827,6 +838,163 @@ export const ModuleDetailPage: React.FC = () => {
       )}
 
     </Layout>
+  );
+};
+
+// ================= CUSTOM SUB-COMPONENT: TASKCARD =================
+interface TaskCardProps {
+  task: any;
+  comments: any[];
+  isExpanded: boolean;
+  newCommentText: string;
+  setNewCommentText: (text: string) => void;
+  onToggleComments: () => void;
+  onPostComment: (e: React.FormEvent) => void;
+  onDeleteComment: (commentId: number) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onViewSubmissions: () => void;
+}
+
+const TaskCard: React.FC<TaskCardProps> = ({
+  task,
+  comments,
+  isExpanded,
+  newCommentText,
+  setNewCommentText,
+  onToggleComments,
+  onPostComment,
+  onDeleteComment,
+  onEdit,
+  onDelete,
+  onViewSubmissions
+}) => {
+  const dueDateText = task.dueDate ? new Date(task.dueDate).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  }) : "Tidak ada";
+
+  return (
+    <div className="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+      <div>
+        <div className="flex justify-between items-start gap-2 mb-2">
+          <div className="flex items-center gap-1.5">
+            <Icon name="assignment" className="text-[#8f0020] text-xl" />
+            <h4 className="font-black text-slate-800 text-base leading-snug">{task.title}</h4>
+          </div>
+          <div className="flex gap-0.5">
+            <button
+              onClick={onEdit}
+              className="p-1 text-primary hover:bg-slate-50 rounded-lg cursor-pointer bg-transparent border-none"
+              title="Edit Tugas"
+            >
+              <Icon name="edit" className="text-base" />
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-1 text-error hover:bg-slate-50 rounded-lg cursor-pointer bg-transparent border-none"
+              title="Hapus Tugas"
+            >
+              <Icon name="delete" className="text-base" />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-slate-600 text-xs font-semibold whitespace-pre-wrap leading-relaxed mb-4">
+          {task.description}
+        </p>
+
+        <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold mb-4 uppercase tracking-wider">
+          <Icon name="calendar_today" className="text-xs" />
+          Batas Waktu: {dueDateText}
+        </div>
+      </div>
+
+      <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
+        <div className="flex justify-between items-center">
+          <button
+            onClick={onViewSubmissions}
+            className="px-3 py-1.5 bg-[#8f0020]/10 hover:bg-[#8f0020]/20 text-[#8f0020] rounded-xl text-xs font-bold border-none transition-all cursor-pointer flex items-center gap-1"
+          >
+            <Icon name="fact_check" className="text-sm" />
+            Lihat Jawaban Mahasiswa
+          </button>
+          
+          <button
+            onClick={onToggleComments}
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold border-none transition-all cursor-pointer flex items-center gap-1"
+          >
+            <Icon name="forum" className="text-sm" />
+            Diskusi ({comments.length})
+          </button>
+        </div>
+
+        {/* TASK INLINE DISCUSSION BOARD */}
+        {isExpanded && (
+          <div className="border-t border-slate-100 pt-3 space-y-3">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Forum Diskusi Tugas</span>
+            
+            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1 sidebar-scroll">
+              {comments.length === 0 ? (
+                <p className="text-slate-400 text-xs italic font-medium py-1">
+                  Belum ada komentar untuk tugas ini.
+                </p>
+              ) : (
+                comments.map((comm) => (
+                  <div key={comm.id} className="flex gap-2.5 items-start border-b border-slate-50 pb-2.5">
+                    <img
+                      src={comm.user?.avatar}
+                      alt={comm.user?.name}
+                      className="w-7 h-7 rounded-full object-cover border border-slate-200"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 flex-wrap">
+                        <div className="flex items-center gap-1">
+                          <span className="font-extrabold text-slate-800 text-[11px]">{comm.user?.name}</span>
+                          {comm.user?.role === "ADMIN" && (
+                            <span className="px-1 py-0.2 rounded bg-[#8f0020]/10 text-[#8f0020] text-[8px] font-black uppercase">Dosen</span>
+                          )}
+                        </div>
+                        <span className="text-[9px] text-slate-400 font-bold font-mono">
+                          {new Date(comm.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <p className="text-slate-600 text-xs font-medium mt-0.5 leading-relaxed">
+                        {comm.content}
+                      </p>
+                      <button
+                        onClick={() => onDeleteComment(comm.id)}
+                        className="text-[9px] text-red-500 hover:text-red-700 bg-transparent border-none cursor-pointer mt-1 font-bold p-0"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <form onSubmit={onPostComment} className="flex gap-2">
+              <input
+                type="text"
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                placeholder="Ketik balasan/instruksi dosen..."
+                className="flex-1 p-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#8f0020] font-semibold"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-[#8f0020] text-white px-3 py-2 rounded-xl text-xs font-bold hover:brightness-105 active:scale-95 transition-all border-none cursor-pointer"
+              >
+                Kirim
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
