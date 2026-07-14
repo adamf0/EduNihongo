@@ -38,11 +38,19 @@ const storage = multer.diskStorage({
 
 // File validation helper
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+  const allowedExtensions = [".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx"];
   const ext = path.extname(file.originalname).toLowerCase();
-  const blockedExtensions = [".exe", ".bat", ".sh", ".cmd", ".com", ".vbs", ".scr", ".msi"];
 
-  if (blockedExtensions.includes(ext)) {
-    return cb(new Error("Format berkas eksekusi tidak diperbolehkan demi keamanan server."));
+  if (!allowedMimeTypes.includes(file.mimetype) || !allowedExtensions.includes(ext)) {
+    return cb(new Error("File tidak valid. Hanya gambar, PDF atau Word yang diperbolehkan."));
   }
   cb(null, true);
 };

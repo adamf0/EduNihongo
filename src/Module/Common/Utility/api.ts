@@ -14,8 +14,8 @@ const handleResponse = async (response: Response) => {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401 || (response.status === 404 && data.error === "User tidak ditemukan")) {
-      localStorage.removeItem("kanjigraph_token");
-      localStorage.removeItem("kanjigraph_role");
+      // localStorage.removeItem("kanjigraph_token");
+      // localStorage.removeItem("kanjigraph_role");
       window.location.hash = "/login";
     }
     throw new Error(data.error || "Terjadi kesalahan koneksi ke server.");
@@ -218,10 +218,10 @@ export const api = {
   },
   lms: {
     assignments: {
-      list: async (filters: { moduleId?: number; kanjiId?: number }) => {
+      list: async (filters: { moduleId?: number; kanji?: string }) => {
         const queryParams = new URLSearchParams();
         if (filters.moduleId) queryParams.append("moduleId", filters.moduleId.toString());
-        if (filters.kanjiId) queryParams.append("kanjiId", filters.kanjiId.toString());
+        if (filters.kanji) queryParams.append("kanji", filters.kanji.toString());
         
         const res = await fetch(`${BASE_URL}/lms/assignments?${queryParams.toString()}`, {
           method: "GET",

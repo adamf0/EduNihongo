@@ -9,11 +9,15 @@ const prisma = new PrismaClient();
 
 export const getAssignments = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { moduleId, kanjiId } = req.query;
+    const { moduleId, kanji } = req.query;
     
     const whereClause: any = {};
     if (moduleId) whereClause.moduleId = parseInt(moduleId as string, 10);
-    if (kanjiId) whereClause.kanjiId = parseInt(kanjiId as string, 10);
+    if (kanji) {
+      whereClause.Kanji = {
+        character: kanji as string
+      };
+    }
 
     const tasks = await prisma.task.findMany({
       where: whereClause,

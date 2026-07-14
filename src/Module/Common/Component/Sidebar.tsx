@@ -26,8 +26,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         setProfile(data);
       } catch (err) {
         console.error("Failed to load sidebar profile:", err);
-        api.auth.logout();
-        navigate("/login");
+        // api.auth.logout();
+        // navigate("/login");
       }
     };
     if (api.auth.isAuthenticated()) {

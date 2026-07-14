@@ -934,7 +934,7 @@ export const ModuleDetailPage: React.FC = () => {
       {/* ================= MODAL: GRADE SUBMISSION ================= */}
       {isGradeModalOpen && selectedSubmission && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 max-w-xl w-full shadow-2xl relative flex flex-col gap-4 text-left select-text">
+          <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 max-w-2xl w-full shadow-2xl relative flex flex-col gap-4 text-left select-text">
             <button
               onClick={() => setIsGradeModalOpen(false)}
               className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-container transition-colors cursor-pointer border-none bg-transparent"
