@@ -44,6 +44,12 @@ export const ModuleDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"lms-curriculum" | "kanji-list" | "submissions">("lms-curriculum");
   const [assignments, setAssignments] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
+
+  // Local Loading & Error States
+  const [loadingLmsData, setLoadingLmsData] = useState(false);
+  const [lmsDataError, setLmsDataError] = useState("");
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState("");
   
   // Comments per task map
   const [commentsMap, setCommentsMap] = useState<Record<number, any[]>>({});
@@ -72,6 +78,54 @@ export const ModuleDetailPage: React.FC = () => {
   const [subGrade, setSubGrade] = useState("");
   const [subFeedback, setSubFeedback] = useState("");
 
+  const loadAssignmentsAndComments = async () => {
+    if (!moduleId) return;
+    try {
+      setLoadingLmsData(true);
+      setLmsDataError("");
+      
+      // Load assignments for this module
+      const assigns = await api.lms.assignments.list({ moduleId });
+      setAssignments(assigns);
+
+      // Load comments for each task
+      const commentsPromises = assigns.map((assign: any) =>
+        api.lms.comments.list({ assignmentId: assign.id })
+          .then(comms => ({ id: assign.id, comms }))
+          .catch(() => ({ id: assign.id, comms: [] }))
+      );
+      const commentsResults = await Promise.all(commentsPromises);
+      const newMap: Record<number, any[]> = {};
+      commentsResults.forEach(res => {
+        newMap[res.id] = res.comms;
+      });
+      setCommentsMap(newMap);
+    } catch (err: any) {
+      console.error("Gagal memuat tugas LMS admin:", err);
+      setLmsDataError(err.message || "Gagal memuat daftar tugas modul.");
+    } finally {
+      setLoadingLmsData(false);
+    }
+  };
+
+  const loadSubmissionsData = async () => {
+    if (!moduleId) return;
+    try {
+      setLoadingSubmissions(true);
+      setSubmissionsError("");
+      
+      // Load submissions
+      const subs = await api.lms.submissions.list({});
+      const filteredSubs = subs.filter((s: any) => s.assignment?.moduleId === moduleId);
+      setSubmissions(filteredSubs);
+    } catch (err: any) {
+      console.error("Gagal memuat pengumpulan mahasiswa:", err);
+      setSubmissionsError(err.message || "Gagal memuat data pengumpulan tugas.");
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
   const loadModuleAndKanjis = async () => {
     if (!moduleId) {
       setError("ID Modul tidak valid.");
@@ -98,7 +152,10 @@ export const ModuleDetailPage: React.FC = () => {
       setKanjis(filtered);
 
       // Load LMS Data
-      await loadLmsDataInternal();
+      await Promise.all([
+        loadAssignmentsAndComments(),
+        loadSubmissionsData()
+      ]);
 
     } catch (err: any) {
       console.error(err);
@@ -111,37 +168,11 @@ export const ModuleDetailPage: React.FC = () => {
     }
   };
 
-  const loadLmsDataInternal = async () => {
-    if (!moduleId) return;
-    try {
-      // Load assignments for this module
-      const assigns = await api.lms.assignments.list({ moduleId });
-      setAssignments(assigns);
-
-      // Load submissions
-      const subs = await api.lms.submissions.list({});
-      const filteredSubs = subs.filter((s: any) => s.assignment?.moduleId === moduleId);
-      setSubmissions(filteredSubs);
-
-      // Load comments for each task
-      const commentsPromises = assigns.map((assign: any) =>
-        api.lms.comments.list({ assignmentId: assign.id })
-          .then(comms => ({ id: assign.id, comms }))
-          .catch(() => ({ id: assign.id, comms: [] }))
-      );
-      const commentsResults = await Promise.all(commentsPromises);
-      const newMap: Record<number, any[]> = {};
-      commentsResults.forEach(res => {
-        newMap[res.id] = res.comms;
-      });
-      setCommentsMap(newMap);
-    } catch (err) {
-      console.error("Gagal memuat data LMS admin:", err);
-    }
-  };
-
   const loadLmsData = async () => {
-    await loadLmsDataInternal();
+    await Promise.all([
+      loadAssignmentsAndComments(),
+      loadSubmissionsData()
+    ]);
   };
 
   useEffect(() => {
@@ -416,9 +447,30 @@ export const ModuleDetailPage: React.FC = () => {
           {/* ================= TAB 1: LMS CURRICULUM (MATERI KAMPUS) ================= */}
           {activeTab === "lms-curriculum" && (
             <div className="space-y-8 animate-fade-in">
-              
-              {/* MODULE LEVEL SECTION */}
-              <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6">
+              {loadingLmsData ? (
+                <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3">
+                  <Icon name="sync" className="text-4xl text-[#8f0020] animate-spin" />
+                  <span className="font-extrabold text-slate-800 text-sm">Memuat tugas modul dan kanji...</span>
+                </div>
+              ) : lmsDataError ? (
+                <div className="bg-red-50 border border-red-200 rounded-3xl p-8 text-center flex flex-col items-center justify-center gap-4 max-w-lg mx-auto">
+                  <Icon name="error_outline" className="text-4xl text-red-600 animate-pulse" />
+                  <div>
+                    <h4 className="font-extrabold text-slate-800 text-sm">Gagal memuat tugas</h4>
+                    <p className="text-xs text-slate-600 mt-1">{lmsDataError}</p>
+                  </div>
+                  <button 
+                    onClick={loadAssignmentsAndComments}
+                    className="px-5 py-2.5 bg-[#8f0020] text-white text-xs font-bold rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all border-none cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Icon name="replay" className="text-base" />
+                    Coba Lagi
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* MODULE LEVEL SECTION */}
+                  <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/60 pb-4 mb-5 gap-4">
                   <div>
                     <h3 className="font-headline-md text-headline-sm font-black text-slate-800 flex items-center gap-2">
@@ -533,9 +585,10 @@ export const ModuleDetailPage: React.FC = () => {
                   })}
                 </div>
               </div>
-
-            </div>
+            </>
           )}
+        </div>
+      )}
 
           {/* ================= TAB 2: KANJI LIST (CURRICULUM ADMIN CRUD) ================= */}
           {activeTab === "kanji-list" && (
@@ -626,7 +679,29 @@ export const ModuleDetailPage: React.FC = () => {
                 )}
               </div>
 
-              {filterTaskId && (
+              {loadingSubmissions ? (
+                <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3">
+                  <Icon name="sync" className="text-4xl text-[#8f0020] animate-spin" />
+                  <span className="font-extrabold text-slate-800 text-sm">Memuat pengumpulan mahasiswa...</span>
+                </div>
+              ) : submissionsError ? (
+                <div className="bg-red-50 border border-red-200 rounded-3xl p-8 text-center flex flex-col items-center justify-center gap-4 max-w-lg mx-auto">
+                  <Icon name="error_outline" className="text-4xl text-red-600 animate-pulse" />
+                  <div>
+                    <h4 className="font-extrabold text-slate-800 text-sm">Gagal memuat pengumpulan</h4>
+                    <p className="text-xs text-slate-600 mt-1">{submissionsError}</p>
+                  </div>
+                  <button 
+                    onClick={loadSubmissionsData}
+                    className="px-5 py-2.5 bg-[#8f0020] text-white text-xs font-bold rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all border-none cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Icon name="replay" className="text-base" />
+                    Coba Lagi
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {filterTaskId && (
                 <div className="bg-[#8f0020]/5 border border-[#8f0020]/15 p-4 rounded-2xl flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">
                     Menyaring Jawaban Tugas: <span className="underline">{assignments.find(a => a.id === filterTaskId)?.title || ""}</span>
@@ -747,8 +822,10 @@ export const ModuleDetailPage: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </>
           )}
+        </div>
+      )}
 
         </div>
       </main>
