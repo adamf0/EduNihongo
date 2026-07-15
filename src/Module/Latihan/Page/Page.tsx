@@ -2643,17 +2643,43 @@ export const LatihanPage: React.FC = () => {
                           <h4 className="font-black text-slate-800 text-base">
                             {assign.title}
                           </h4>
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                              hasSubmitted
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-amber-100 text-amber-700"
-                            }`}
-                          >
-                            {hasSubmitted
-                              ? "Sudah Mengumpulkan"
-                              : "Belum Mengumpulkan"}
-                          </span>
+                          <div className="flex flex-col items-end gap-1">
+                            {(() => {
+                              const now = new Date();
+                              const due = assign.dueDate ? new Date(assign.dueDate) : null;
+                              const isExpired = due && now > due && !hasSubmitted;
+                              const isLate = due && hasSubmitted && submission && new Date(submission.submittedAt) > due;
+
+                              if (isExpired) {
+                                return (
+                                  <span className="px-2.5 py-1 rounded-full text-xs font-black bg-red-100 text-red-700">
+                                    Expired
+                                  </span>
+                                );
+                              }
+
+                              return (
+                                <>
+                                  <span
+                                    className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                      hasSubmitted
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : "bg-amber-100 text-amber-700"
+                                    }`}
+                                  >
+                                    {hasSubmitted
+                                      ? "Sudah Mengumpulkan"
+                                      : "Belum Mengumpulkan"}
+                                  </span>
+                                  {isLate && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-100 text-red-700 uppercase tracking-wide">
+                                      Terlambat
+                                    </span>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
                         </div>
 
                         <p className="text-slate-600 text-sm whitespace-pre-wrap leading-relaxed mb-4">

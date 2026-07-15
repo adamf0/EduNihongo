@@ -818,15 +818,28 @@ export const ModuleDetailPage: React.FC = () => {
                           )}
                         </td>
                         <td className="p-4 text-center">
-                          {sub.grade ? (
-                            <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">
-                              Grade: {sub.grade}
-                            </span>
-                          ) : (
-                            <span className="inline-block px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
-                              Belum Dinilai
-                            </span>
-                          )}
+                          {(() => {
+                            const dueDate = sub.assignment?.dueDate || sub.Task?.dueDate;
+                            const isLate = dueDate && new Date(sub.submittedAt) > new Date(dueDate);
+                            return (
+                              <div className="flex flex-col items-center gap-1">
+                                {sub.grade ? (
+                                  <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">
+                                    Grade: {sub.grade}
+                                  </span>
+                                ) : (
+                                  <span className="inline-block px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+                                    Belum Dinilai
+                                  </span>
+                                )}
+                                {isLate && (
+                                  <span className="inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wide">
+                                    Terlambat
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="p-4 text-center">
                           <button

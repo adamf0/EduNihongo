@@ -237,7 +237,7 @@ export const getSubmissions = async (req: AuthenticatedRequest, res: Response) =
       where: whereClause,
       include: {
         User: { select: { id: true, name: true, email: true, avatar: true } },
-        Task: { select: { id: true, title: true, moduleId: true, kanjiId: true } }
+        Task: { select: { id: true, title: true, moduleId: true, kanjiId: true, dueDate: true } }
       },
       orderBy: { submittedAt: "desc" }
     });
