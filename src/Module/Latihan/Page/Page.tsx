@@ -3258,7 +3258,7 @@ export const LatihanPage: React.FC = () => {
       {/* Realtime Graded Notification Modal overlay */}
       {gradeNotification && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in select-none">
-          <div className="bg-white border border-amber-200/50 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center flex flex-col items-center gap-5 relative overflow-hidden text-left">
+          <div className="bg-white border border-amber-200/50 rounded-3xl p-8 w-[92vw] max-w-[400px] shadow-2xl text-center flex flex-col items-center gap-5 relative overflow-hidden">
             {/* Ambient gold glow backplate */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#8f0020]/10 rounded-full blur-3xl"></div>

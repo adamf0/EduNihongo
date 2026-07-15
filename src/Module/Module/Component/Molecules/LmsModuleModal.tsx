@@ -825,25 +825,25 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
         </div>
       {/* Realtime Graded Notification Modal overlay */}
       {gradeNotification && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-          <div className="bg-white border border-amber-200/50 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center flex flex-col items-center gap-5 relative overflow-hidden select-none">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in select-none">
+          <div className="bg-white border border-amber-200/50 rounded-3xl p-8 w-[92vw] max-w-[400px] shadow-2xl text-center flex flex-col items-center gap-5 relative overflow-hidden">
             {/* Ambient gold glow backplate */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#8f0020]/10 rounded-full blur-3xl"></div>
 
             {/* Glowing Grade Badge */}
-            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600 shadow-xl shadow-amber-500/20 flex flex-col items-center justify-center border-4 border-white animate-bounce shrink-0">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600 shadow-xl shadow-amber-500/20 flex flex-col items-center justify-center border-4 border-white animate-bounce shrink-0 mx-auto">
               <span className="text-[9px] font-black text-white uppercase tracking-wider leading-none">Nilai</span>
               <span className="text-3xl font-black text-white leading-none mt-1">{gradeNotification.grade}</span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-center">
               <h3 className="font-extrabold text-slate-800 text-lg">Tugas Anda Telah Dinilai!</h3>
               <p className="text-xs font-semibold text-slate-400 leading-snug">{gradeNotification.title}</p>
             </div>
 
             {/* Exp Reward simulation */}
-            <div className="bg-emerald-50 border border-emerald-200/40 rounded-2xl py-2.5 px-6 flex items-center gap-2 animate-pulse">
+            <div className="bg-emerald-50 border border-emerald-200/40 rounded-2xl py-2.5 px-6 flex items-center gap-2 animate-pulse mx-auto">
               <Sparkles className="w-5 h-5 text-emerald-600 fill-emerald-100" />
               <span className="text-sm font-black text-emerald-800">+100 EXP Diperoleh</span>
             </div>
