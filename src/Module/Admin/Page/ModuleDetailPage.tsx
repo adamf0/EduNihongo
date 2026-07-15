@@ -447,30 +447,9 @@ export const ModuleDetailPage: React.FC = () => {
           {/* ================= TAB 1: LMS CURRICULUM (MATERI KAMPUS) ================= */}
           {activeTab === "lms-curriculum" && (
             <div className="space-y-8 animate-fade-in">
-              {loadingLmsData ? (
-                <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3">
-                  <Icon name="sync" className="text-4xl text-[#8f0020] animate-spin" />
-                  <span className="font-extrabold text-slate-800 text-sm">Memuat tugas modul dan kanji...</span>
-                </div>
-              ) : lmsDataError ? (
-                <div className="bg-red-50 border border-red-200 rounded-3xl p-8 text-center flex flex-col items-center justify-center gap-4 max-w-lg mx-auto">
-                  <Icon name="error_outline" className="text-4xl text-red-600 animate-pulse" />
-                  <div>
-                    <h4 className="font-extrabold text-slate-800 text-sm">Gagal memuat tugas</h4>
-                    <p className="text-xs text-slate-600 mt-1">{lmsDataError}</p>
-                  </div>
-                  <button 
-                    onClick={loadAssignmentsAndComments}
-                    className="px-5 py-2.5 bg-[#8f0020] text-white text-xs font-bold rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all border-none cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Icon name="replay" className="text-base" />
-                    Coba Lagi
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {/* MODULE LEVEL SECTION */}
-                  <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6">
+              
+              {/* MODULE LEVEL SECTION */}
+              <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/60 pb-4 mb-5 gap-4">
                   <div>
                     <h3 className="font-headline-md text-headline-sm font-black text-slate-800 flex items-center gap-2">
@@ -491,7 +470,22 @@ export const ModuleDetailPage: React.FC = () => {
                 </div>
 
                 {/* Module Tasks List */}
-                {moduleLevelTasks.length === 0 ? (
+                {loadingLmsData ? (
+                  <div className="py-8 text-center flex flex-col items-center justify-center gap-2 bg-white rounded-2xl border border-slate-100/80 shadow-xs">
+                    <Icon name="sync" className="text-3xl text-[#8f0020] animate-spin" />
+                    <span className="text-xs text-slate-500 font-bold">Memuat tugas modul...</span>
+                  </div>
+                ) : lmsDataError ? (
+                  <div className="py-6 text-center flex flex-col items-center justify-center gap-2 max-w-sm mx-auto bg-white rounded-2xl border border-slate-100/80 p-4 shadow-xs">
+                    <span className="text-xs text-red-600 font-bold">Gagal memuat tugas modul: {lmsDataError}</span>
+                    <button 
+                      onClick={loadAssignmentsAndComments}
+                      className="px-3 py-1.5 bg-[#8f0020] text-white text-[11px] font-bold rounded-lg hover:brightness-110 cursor-pointer border-none flex items-center gap-1"
+                    >
+                      <Icon name="replay" className="text-sm" /> Coba Lagi
+                    </button>
+                  </div>
+                ) : moduleLevelTasks.length === 0 ? (
                   <p className="text-slate-400 text-xs italic font-medium py-3">
                     Belum ada tugas tingkat modul utama.
                   </p>
@@ -556,7 +550,22 @@ export const ModuleDetailPage: React.FC = () => {
                         </div>
 
                         {/* Kanji Specific Tasks List */}
-                        {kanjiTasks.length === 0 ? (
+                        {loadingLmsData ? (
+                          <div className="py-6 text-center flex flex-col items-center justify-center gap-2 bg-slate-50/50 rounded-2xl border border-slate-100/40">
+                            <Icon name="sync" className="text-2xl text-[#8f0020] animate-spin" />
+                            <span className="text-[11px] text-slate-500 font-bold">Memuat tugas kanji...</span>
+                          </div>
+                        ) : lmsDataError ? (
+                          <div className="py-4 text-center flex flex-col items-center justify-center gap-2 max-w-sm mx-auto bg-slate-50/50 rounded-2xl border border-slate-100/40 p-3">
+                            <span className="text-[11px] text-red-600 font-bold">Gagal memuat: {lmsDataError}</span>
+                            <button 
+                              onClick={loadAssignmentsAndComments}
+                              className="px-2.5 py-1 bg-[#8f0020] text-white text-[10px] font-bold rounded-lg hover:brightness-110 cursor-pointer border-none flex items-center gap-1"
+                            >
+                              <Icon name="replay" className="text-xs" /> Coba Lagi
+                            </button>
+                          </div>
+                        ) : kanjiTasks.length === 0 ? (
                           <p className="text-slate-400 text-[11px] italic font-semibold pl-2">
                             Tidak ada tugas khusus untuk Kanji ini.
                           </p>
@@ -585,10 +594,8 @@ export const ModuleDetailPage: React.FC = () => {
                   })}
                 </div>
               </div>
-            </>
+            </div>
           )}
-        </div>
-      )}
 
           {/* ================= TAB 2: KANJI LIST (CURRICULUM ADMIN CRUD) ================= */}
           {activeTab === "kanji-list" && (
@@ -679,29 +686,7 @@ export const ModuleDetailPage: React.FC = () => {
                 )}
               </div>
 
-              {loadingSubmissions ? (
-                <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3">
-                  <Icon name="sync" className="text-4xl text-[#8f0020] animate-spin" />
-                  <span className="font-extrabold text-slate-800 text-sm">Memuat pengumpulan mahasiswa...</span>
-                </div>
-              ) : submissionsError ? (
-                <div className="bg-red-50 border border-red-200 rounded-3xl p-8 text-center flex flex-col items-center justify-center gap-4 max-w-lg mx-auto">
-                  <Icon name="error_outline" className="text-4xl text-red-600 animate-pulse" />
-                  <div>
-                    <h4 className="font-extrabold text-slate-800 text-sm">Gagal memuat pengumpulan</h4>
-                    <p className="text-xs text-slate-600 mt-1">{submissionsError}</p>
-                  </div>
-                  <button 
-                    onClick={loadSubmissionsData}
-                    className="px-5 py-2.5 bg-[#8f0020] text-white text-xs font-bold rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all border-none cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Icon name="replay" className="text-base" />
-                    Coba Lagi
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {filterTaskId && (
+              {filterTaskId && (
                 <div className="bg-[#8f0020]/5 border border-[#8f0020]/15 p-4 rounded-2xl flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">
                     Menyaring Jawaban Tugas: <span className="underline">{assignments.find(a => a.id === filterTaskId)?.title || ""}</span>
@@ -727,8 +712,33 @@ export const ModuleDetailPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10 text-body-md text-on-surface">
-                    {(filterTaskId ? submissions.filter(s => s.taskId === filterTaskId) : submissions).map((sub) => (
-                      <tr key={sub.id} className="hover:bg-surface-container-low/50 align-top">
+                    {loadingSubmissions ? (
+                      <tr>
+                        <td colSpan={5} className="p-12 text-center">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <Icon name="sync" className="text-3xl text-[#8f0020] animate-spin" />
+                            <span className="text-xs text-slate-500 font-bold">Memuat pengumpulan mahasiswa...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : submissionsError ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center">
+                          <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto bg-red-50 border border-red-100 rounded-xl p-4">
+                            <span className="text-xs text-red-600 font-bold">Gagal memuat pengumpulan: {submissionsError}</span>
+                            <button 
+                              type="button"
+                              onClick={loadSubmissionsData}
+                              className="px-3 py-1.5 bg-[#8f0020] text-white text-[11px] font-bold rounded-lg hover:brightness-110 cursor-pointer border-none flex items-center gap-1 mx-auto"
+                            >
+                              <Icon name="replay" className="text-sm" /> Coba Lagi
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      (filterTaskId ? submissions.filter(s => s.taskId === filterTaskId) : submissions).map((sub) => (
+                        <tr key={sub.id} className="hover:bg-surface-container-low/50 align-top">
                         <td className="p-4">
                           <div className="flex items-center gap-sm">
                             <img
@@ -811,22 +821,13 @@ export const ModuleDetailPage: React.FC = () => {
                           </button>
                         </td>
                       </tr>
-                    ))}
-                    {(filterTaskId ? submissions.filter(s => s.taskId === filterTaskId) : submissions).length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="p-8 text-center text-on-surface-variant italic">
-                          Belum ada pengumpulan tugas dari mahasiswa.
-                        </td>
-                      </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
               </div>
-            </>
+            </div>
           )}
-        </div>
-      )}
-
         </div>
       </main>
 
