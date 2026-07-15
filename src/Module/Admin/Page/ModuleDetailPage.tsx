@@ -754,7 +754,7 @@ export const ModuleDetailPage: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      (filterTaskId ? submissions.filter(s => s.taskId === filterTaskId) : submissions).map((sub) => (
+                      (filterTaskId ? submissions.filter(s => s.assignmentId === filterTaskId || s.taskId === filterTaskId) : submissions).map((sub) => (
                         <tr key={sub.id} className="hover:bg-surface-container-low/50 align-top">
                         <td className="p-4">
                           <div className="flex items-center gap-sm">
