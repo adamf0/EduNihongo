@@ -11,6 +11,7 @@ import progressRoutes from "./routes/progress";
 import profileRoutes from "./routes/profile";
 import adminRoutes from "./routes/admin";
 import lmsRoutes from "./routes/lms";
+import { startQueueWorker } from "./utils/mailer";
 
 dotenv.config();
 
@@ -93,6 +94,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Start Server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT} in ${process.env.NODE_ENV || "development"} mode.`);
+  startQueueWorker();
 });
 
 export default app;

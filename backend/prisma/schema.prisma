@@ -223,3 +223,14 @@ model TaskSubmission {
   @@index([taskId], map: "TaskSubmission_taskId_fkey")
   @@index([userId], map: "TaskSubmission_userId_fkey")
 }
+
+model JobQueue {
+  id           Int      @id @default(autoincrement())
+  jobType      String
+  payload      String   @db.Text
+  status       String   @default("PENDING")
+  attempts     Int      @default(0)
+  errorMessage String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

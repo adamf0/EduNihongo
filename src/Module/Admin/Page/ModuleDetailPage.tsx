@@ -78,11 +78,13 @@ export const ModuleDetailPage: React.FC = () => {
   const [subGrade, setSubGrade] = useState("");
   const [subFeedback, setSubFeedback] = useState("");
 
-  const loadAssignmentsAndComments = async () => {
+  const loadAssignmentsAndComments = async (isSilent = false) => {
     if (!moduleId) return;
     try {
-      setLoadingLmsData(true);
-      setLmsDataError("");
+      if (!isSilent) {
+        setLoadingLmsData(true);
+        setLmsDataError("");
+      }
       
       // Load assignments for this module
       const assigns = await api.lms.assignments.list({ moduleId });
@@ -102,17 +104,19 @@ export const ModuleDetailPage: React.FC = () => {
       setCommentsMap(newMap);
     } catch (err: any) {
       console.error("Gagal memuat tugas LMS admin:", err);
-      setLmsDataError(err.message || "Gagal memuat daftar tugas modul.");
+      if (!isSilent) setLmsDataError(err.message || "Gagal memuat daftar tugas modul.");
     } finally {
-      setLoadingLmsData(false);
+      if (!isSilent) setLoadingLmsData(false);
     }
   };
 
-  const loadSubmissionsData = async () => {
+  const loadSubmissionsData = async (isSilent = false) => {
     if (!moduleId) return;
     try {
-      setLoadingSubmissions(true);
-      setSubmissionsError("");
+      if (!isSilent) {
+        setLoadingSubmissions(true);
+        setSubmissionsError("");
+      }
       
       // Load submissions
       const subs = await api.lms.submissions.list({});
@@ -120,9 +124,9 @@ export const ModuleDetailPage: React.FC = () => {
       setSubmissions(filteredSubs);
     } catch (err: any) {
       console.error("Gagal memuat pengumpulan mahasiswa:", err);
-      setSubmissionsError(err.message || "Gagal memuat data pengumpulan tugas.");
+      if (!isSilent) setSubmissionsError(err.message || "Gagal memuat data pengumpulan tugas.");
     } finally {
-      setLoadingSubmissions(false);
+      if (!isSilent) setLoadingSubmissions(false);
     }
   };
 
@@ -178,6 +182,18 @@ export const ModuleDetailPage: React.FC = () => {
   useEffect(() => {
     loadModuleAndKanjis();
   }, [moduleId, navigate]);
+
+  useEffect(() => {
+    if (!moduleId) return;
+    
+    // Poll assignments, comments, and submissions every 4 seconds for realtime updates
+    const intervalId = setInterval(() => {
+      loadAssignmentsAndComments(true);
+      loadSubmissionsData(true);
+    }, 4000);
+
+    return () => clearInterval(intervalId);
+  }, [moduleId]);
 
   const handleDeleteKanji = async (id: number) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus kanji ini beserta seluruh progres dan grafik terkait?")) {
@@ -479,7 +495,7 @@ export const ModuleDetailPage: React.FC = () => {
                   <div className="py-6 text-center flex flex-col items-center justify-center gap-2 max-w-sm mx-auto bg-white rounded-2xl border border-slate-100/80 p-4 shadow-xs">
                     <span className="text-xs text-red-600 font-bold">Gagal memuat tugas modul: {lmsDataError}</span>
                     <button 
-                      onClick={loadAssignmentsAndComments}
+                      onClick={() => loadAssignmentsAndComments()}
                       className="px-3 py-1.5 bg-[#8f0020] text-white text-[11px] font-bold rounded-lg hover:brightness-110 cursor-pointer border-none flex items-center gap-1"
                     >
                       <Icon name="replay" className="text-sm" /> Coba Lagi
@@ -559,7 +575,7 @@ export const ModuleDetailPage: React.FC = () => {
                           <div className="py-4 text-center flex flex-col items-center justify-center gap-2 max-w-sm mx-auto bg-slate-50/50 rounded-2xl border border-slate-100/40 p-3">
                             <span className="text-[11px] text-red-600 font-bold">Gagal memuat: {lmsDataError}</span>
                             <button 
-                              onClick={loadAssignmentsAndComments}
+                              onClick={() => loadAssignmentsAndComments()}
                               className="px-2.5 py-1 bg-[#8f0020] text-white text-[10px] font-bold rounded-lg hover:brightness-110 cursor-pointer border-none flex items-center gap-1"
                             >
                               <Icon name="replay" className="text-xs" /> Coba Lagi
@@ -728,7 +744,7 @@ export const ModuleDetailPage: React.FC = () => {
                             <span className="text-xs text-red-600 font-bold">Gagal memuat pengumpulan: {submissionsError}</span>
                             <button 
                               type="button"
-                              onClick={loadSubmissionsData}
+                              onClick={() => loadSubmissionsData()}
                               className="px-3 py-1.5 bg-[#8f0020] text-white text-[11px] font-bold rounded-lg hover:brightness-110 cursor-pointer border-none flex items-center gap-1 mx-auto"
                             >
                               <Icon name="replay" className="text-sm" /> Coba Lagi

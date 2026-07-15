@@ -2,6 +2,7 @@ import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { sanitizeObject } from "../utils/sanitize";
+import { addEmailToQueue } from "../utils/mailer";
 
 const prisma = new PrismaClient();
 
@@ -428,6 +429,65 @@ export const createComment = async (req: AuthenticatedRequest, res: Response) =>
       createdAt: comment.createdAt,
       user: comment.User
     };
+
+    // Queue email notifications asynchronously via database JobQueue
+    const sender = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const task = await prisma.task.findUnique({ where: { id: comment.taskId } });
+    
+    if (sender && task) {
+      if (sender.role !== "ADMIN") {
+        // Notify admin when a student comments
+        const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
+        admins.forEach(admin => {
+          const emailSubject = `Komentar Diskusi Baru - Tugas: ${task.title}`;
+          const emailHtml = `
+            <div style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+              <h2 style="color: #8f0020; border-bottom: 2px solid #8f0020; padding-bottom: 8px;">Diskusi Baru di EduNihongo</h2>
+              <p>Halo <strong>${admin.name}</strong>,</p>
+              <p>Mahasiswa bernama <strong>${sender.name}</strong> baru saja menulis tanggapan pada forum diskusi tugas <strong>${task.title}</strong>:</p>
+              <blockquote style="background: #f9f9f9; border-left: 4px solid #8f0020; padding: 12px 16px; margin: 15px 0; border-radius: 4px; font-style: italic;">
+                "${content}"
+              </blockquote>
+              <p>Silakan masuk ke panel admin Anda untuk melihat dan membalas komentar mahasiswa.</p>
+              <br/>
+              <p style="border-top: 1px solid #eee; padding-top: 10px; font-size: 12px; color: #777;">
+                Salam hangat,<br/>Tim Pengajar EduNihongo
+              </p>
+            </div>
+          `;
+          addEmailToQueue(admin.email, emailSubject, emailHtml);
+        });
+      } else {
+        // Notify students who are participating in this task's discussion
+        const uniqueInvolvedUsers = await prisma.taskComment.findMany({
+          where: { taskId: task.id },
+          distinct: ["userId"],
+          select: { userId: true, User: { select: { name: true, email: true, role: true } } },
+        });
+
+        uniqueInvolvedUsers.forEach(item => {
+          if (item.userId !== sender.id && item.User.role !== "ADMIN") {
+            const emailSubject = `Tanggapan Baru dari Dosen - Tugas: ${task.title}`;
+            const emailHtml = `
+              <div style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                <h2 style="color: #8f0020; border-bottom: 2px solid #8f0020; padding-bottom: 8px;">Balasan Baru di EduNihongo</h2>
+                <p>Halo <strong>${item.User.name}</strong>,</p>
+                <p>Dosen/Admin baru saja menjawab di forum diskusi tugas <strong>${task.title}</strong>:</p>
+                <blockquote style="background: #f9f9f9; border-left: 4px solid #8f0020; padding: 12px 16px; margin: 15px 0; border-radius: 4px; font-style: italic;">
+                  "${content}"
+                </blockquote>
+                <p>Silakan masuk ke aplikasi EduNihongo untuk melihat detail diskusi.</p>
+                <br/>
+                <p style="border-top: 1px solid #eee; padding-top: 10px; font-size: 12px; color: #777;">
+                  Salam hangat,<br/>Tim Pengajar EduNihongo
+                </p>
+              </div>
+            `;
+            addEmailToQueue(item.User.email, emailSubject, emailHtml);
+          }
+        });
+      }
+    }
 
     res.status(201).json(formatted);
   } catch (error: any) {
