@@ -166,6 +166,8 @@ const diffCharacters = (target: string, spoken: string): DiffPart[] => {
 export const LatihanPage: React.FC = () => {
   const navigate = useNavigate();
   const canvasRef = React.useRef<DrawingCanvasRef>(null);
+  const [searchParams] = useSearchParams();
+  const charParam = searchParams.get("char") || "試";
 
   const renderXpBadge = (isClaimed: boolean, amount: number) => {
     if (isClaimed) {
@@ -282,6 +284,14 @@ export const LatihanPage: React.FC = () => {
   const [loadingLms, setLoadingLms] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  // Realtime graded notification state
+  const [gradeNotification, setGradeNotification] = useState<{ title: string; grade: string; feedback: string | null } | null>(null);
+
+  const assignmentsRef = React.useRef<any[]>([]);
+  useEffect(() => {
+    assignmentsRef.current = lmsAssignments;
+  }, [lmsAssignments]);
+
   const getFileUrl = (pathUrl: string | null | undefined) => {
     if (!pathUrl) return "";
     const origin =
@@ -292,7 +302,7 @@ export const LatihanPage: React.FC = () => {
   };
 
   const loadLmsData = async () => {
-    if (!kanji) return;
+    if (!charParam) return;
 
     try {
       setLoadingLms(true);
@@ -301,15 +311,15 @@ export const LatihanPage: React.FC = () => {
         moduleId: kanjiData.moduleId || undefined,
       })
       const assigns = await api.lms.assignments.list({
-        kanji: kanji,
+        kanji: charParam,
         moduleId: kanjiData.moduleId || undefined,
       });
       console.log({
-        kanji: kanji,
+        kanji: charParam,
         moduleId: kanjiData.moduleId || undefined,
       })
       const filteredAssigns = assigns.filter((item:any) => {
-        return item?.kanji?.character == kanji;
+        return item?.kanji?.character == charParam;
       });
       setLmsAssignments(filteredAssigns);
 
@@ -349,11 +359,69 @@ export const LatihanPage: React.FC = () => {
     fetchUser();
   }, []);
 
+  const triggerGradeNotification = (title: string, grade: string, feedback: string | null) => {
+    confetti({
+      particleCount: 150,
+      spread: 85,
+      origin: { y: 0.6 },
+    });
+    playSuccessFanfare();
+    setGradeNotification({ title, grade, feedback });
+  };
+
   useEffect(() => {
     if (activeTab === "lms" && kanjiData) {
       loadLmsData();
+
+      // Poll every 4 seconds for new grades realtime
+      const intervalId = setInterval(() => {
+        const currentAssigns = assignmentsRef.current;
+        const pollLms = async () => {
+          try {
+            const assigns = await api.lms.assignments.list({
+              kanji: charParam,
+              moduleId: kanjiData.moduleId || undefined,
+            });
+            const filteredAssigns = assigns.filter((item: any) => {
+              return item?.kanji?.character == charParam;
+            });
+
+            if (currentAssigns.length > 0) {
+              filteredAssigns.forEach((newAssign: any) => {
+                const oldAssign = currentAssigns.find((a: any) => a.id === newAssign.id);
+                if (!oldAssign) return;
+
+                const newSub = newAssign.submissions && newAssign.submissions[0];
+                const oldSub = oldAssign.submissions && oldAssign.submissions[0];
+
+                if (newSub && newSub.grade && (!oldSub || !oldSub.grade)) {
+                  triggerGradeNotification(newAssign.title, newSub.grade, newSub.feedback);
+                }
+              });
+            }
+
+            setLmsAssignments(filteredAssigns);
+
+            if (filteredAssigns.length > 0) {
+              const commentPromises = filteredAssigns.map((assign: any) =>
+                api.lms.comments.list({
+                  kanjiId: kanjiData.id,
+                  assignmentId: assign.id,
+                })
+              );
+              const commentsResponses = await Promise.all(commentPromises);
+              setLmsComments(commentsResponses.flat());
+            }
+          } catch (err) {
+            console.error("Gagal melakukan polling data LMS:", err);
+          }
+        };
+        pollLms();
+      }, 4000);
+
+      return () => clearInterval(intervalId);
     }
-  }, [activeTab, kanjiData]);
+  }, [activeTab, kanjiData, charParam]);
 
   const handlePostComment = async (
     e: React.FormEvent,
@@ -816,8 +884,7 @@ export const LatihanPage: React.FC = () => {
     }, 4500);
   };
 
-  const [searchParams] = useSearchParams();
-  const charParam = searchParams.get("char") || "試";
+
 
   useEffect(() => {
     const fetchKanji = async () => {
@@ -3185,6 +3252,50 @@ export const LatihanPage: React.FC = () => {
           >
             <X className="w-4 h-4" />
           </button>
+        </div>
+      )}
+
+      {/* Realtime Graded Notification Modal overlay */}
+      {gradeNotification && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in select-none">
+          <div className="bg-white border border-amber-200/50 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center flex flex-col items-center gap-5 relative overflow-hidden text-left">
+            {/* Ambient gold glow backplate */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#8f0020]/10 rounded-full blur-3xl"></div>
+
+            {/* Glowing Grade Badge */}
+            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600 shadow-xl shadow-amber-500/20 flex flex-col items-center justify-center border-4 border-white animate-bounce shrink-0 mx-auto">
+              <span className="text-[9px] font-black text-white uppercase tracking-wider leading-none">Nilai</span>
+              <span className="text-3xl font-black text-white leading-none mt-1">{gradeNotification.grade}</span>
+            </div>
+
+            <div className="space-y-2 text-center">
+              <h3 className="font-extrabold text-slate-800 text-lg">Tugas Anda Telah Dinilai!</h3>
+              <p className="text-xs font-semibold text-slate-400 leading-snug">{gradeNotification.title}</p>
+            </div>
+
+            {/* Exp Reward simulation */}
+            <div className="bg-emerald-50 border border-emerald-200/40 rounded-2xl py-2.5 px-6 flex items-center gap-2 animate-pulse mx-auto">
+              <Sparkles className="w-5 h-5 text-emerald-600 fill-emerald-100" />
+              <span className="text-sm font-black text-emerald-800">+100 EXP Diperoleh</span>
+            </div>
+
+            {gradeNotification.feedback && (
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 w-full">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Catatan Dosen</span>
+                <p className="text-xs font-medium text-slate-600 italic whitespace-pre-wrap leading-relaxed">
+                  "{gradeNotification.feedback}"
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setGradeNotification(null)}
+              className="w-full py-3 bg-[#8f0020] text-white font-bold rounded-xl shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer border-none text-sm"
+            >
+              Terima Kasih & Lanjutkan
+            </button>
+          </div>
         </div>
       )}
     </Layout>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   X, 
   FileText, 
@@ -10,6 +10,7 @@ import {
   Send,
   MessageSquare
 } from "lucide-react";
+import confetti from "canvas-confetti";
 import { api } from "../../../Common/Utility/api";
 
 interface LmsModuleModalProps {
@@ -35,6 +36,14 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
   const [loadingLms, setLoadingLms] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  // Grade notification modal state
+  const [gradeNotification, setGradeNotification] = useState<{ title: string; grade: string; feedback: string | null } | null>(null);
+
+  const assignmentsRef = useRef<any[]>([]);
+  useEffect(() => {
+    assignmentsRef.current = lmsAssignments;
+  }, [lmsAssignments]);
+
   const getFileUrl = (pathUrl: string | null | undefined) => {
     if (!pathUrl) return "";
     const origin =
@@ -42,6 +51,61 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
         ? "http://localhost:5001"
         : window.location.origin;
     return `${origin}${pathUrl}`;
+  };
+
+  const playSuccessFanfare = () => {
+    try {
+      const AudioContextClass =
+        window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+
+      const playNote = (
+        freq: number,
+        startDelay: number,
+        duration: number,
+        volume: number = 0.08
+      ) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + startDelay);
+
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + startDelay);
+        gain.gain.linearRampToValueAtTime(
+          volume,
+          ctx.currentTime + startDelay + 0.02
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          ctx.currentTime + startDelay + duration
+        );
+
+        osc.start(ctx.currentTime + startDelay);
+        osc.stop(ctx.currentTime + startDelay + duration);
+      };
+
+      // Play major arpeggio fanfare
+      playNote(523.25, 0.0, 0.15); // C5
+      playNote(659.25, 0.1, 0.15); // E5
+      playNote(783.99, 0.2, 0.15); // G5
+      playNote(1046.5, 0.3, 0.4);  // C6
+    } catch (e) {
+      console.error("Audio error:", e);
+    }
+  };
+
+  const triggerGradeNotification = (title: string, grade: string, feedback: string | null) => {
+    confetti({
+      particleCount: 150,
+      spread: 85,
+      origin: { y: 0.6 },
+    });
+    playSuccessFanfare();
+    setGradeNotification({ title, grade, feedback });
   };
 
   const loadLmsData = async () => {
@@ -83,6 +147,47 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
       }
     };
     fetchUser();
+
+    // Set polling interval for realtime updates (every 4 seconds)
+    const intervalId = setInterval(() => {
+      const currentAssigns = assignmentsRef.current;
+      const pollLmsData = async () => {
+        try {
+          const assigns = await api.lms.assignments.list({ moduleId });
+          
+          if (currentAssigns.length > 0) {
+            // Compare grades
+            assigns.forEach((newAssign: any) => {
+              const oldAssign = currentAssigns.find((a: any) => a.id === newAssign.id);
+              if (!oldAssign) return;
+
+              const newSub = newAssign.submissions && newAssign.submissions[0];
+              const oldSub = oldAssign.submissions && oldAssign.submissions[0];
+
+              if (newSub && newSub.grade && (!oldSub || !oldSub.grade)) {
+                triggerGradeNotification(newAssign.title, newSub.grade, newSub.feedback);
+              }
+            });
+          }
+
+          setLmsAssignments(assigns);
+
+          if (assigns.length > 0) {
+            const commentPromises = assigns.map((assign: any) =>
+              api.lms.comments.list({ assignmentId: assign.id })
+            );
+            const commentsResponses = await Promise.all(commentPromises);
+            setLmsComments(commentsResponses.flat());
+          }
+        } catch (e) {
+          console.error("Realtime poll error:", e);
+        }
+      };
+      
+      pollLmsData();
+    }, 4000);
+
+    return () => clearInterval(intervalId);
   }, [moduleId]);
 
   const handlePostComment = async (e: React.FormEvent, assignmentId: number) => {
@@ -718,6 +823,49 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
             </div>
           )}
         </div>
+      {/* Realtime Graded Notification Modal overlay */}
+      {gradeNotification && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-white border border-amber-200/50 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center flex flex-col items-center gap-5 relative overflow-hidden select-none">
+            {/* Ambient gold glow backplate */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#8f0020]/10 rounded-full blur-3xl"></div>
+
+            {/* Glowing Grade Badge */}
+            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600 shadow-xl shadow-amber-500/20 flex flex-col items-center justify-center border-4 border-white animate-bounce shrink-0">
+              <span className="text-[9px] font-black text-white uppercase tracking-wider leading-none">Nilai</span>
+              <span className="text-3xl font-black text-white leading-none mt-1">{gradeNotification.grade}</span>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-extrabold text-slate-800 text-lg">Tugas Anda Telah Dinilai!</h3>
+              <p className="text-xs font-semibold text-slate-400 leading-snug">{gradeNotification.title}</p>
+            </div>
+
+            {/* Exp Reward simulation */}
+            <div className="bg-emerald-50 border border-emerald-200/40 rounded-2xl py-2.5 px-6 flex items-center gap-2 animate-pulse">
+              <Sparkles className="w-5 h-5 text-emerald-600 fill-emerald-100" />
+              <span className="text-sm font-black text-emerald-800">+100 EXP Diperoleh</span>
+            </div>
+
+            {gradeNotification.feedback && (
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 w-full text-left">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Catatan Dosen</span>
+                <p className="text-xs font-medium text-slate-600 italic whitespace-pre-wrap leading-relaxed">
+                  "{gradeNotification.feedback}"
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setGradeNotification(null)}
+              className="w-full py-3 bg-[#8f0020] text-white font-bold rounded-xl shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer border-none text-sm"
+            >
+              Terima Kasih & Lanjutkan
+            </button>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
