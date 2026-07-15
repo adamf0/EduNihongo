@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import Layout from "../../Common/Component/Organism/Layout";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../Common/Utility/api";
-import { CheckCircle2, Lock, BookOpen, ChevronRight, Info, X } from "lucide-react";
+import { CheckCircle2, Lock, BookOpen, ChevronRight, Info, X, FileText } from "lucide-react";
+import { LmsModuleModal } from "../Component/Molecules/LmsModuleModal";
 
 export const ModulePage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,9 @@ export const ModulePage: React.FC = () => {
   // Info modal state
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState({ title: "", objectives: "" });
+  
+  // LMS Modal state
+  const [lmsModal, setLmsModal] = useState<{ isOpen: boolean; moduleId: number; moduleTitle: string } | null>(null);
 
   useEffect(() => {
     const fetchModules = async () => {
@@ -134,6 +138,7 @@ export const ModulePage: React.FC = () => {
                         targetKanji={targetKanji} 
                         navigate={navigate} 
                         onShowInfo={showObjectives}
+                        onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
                       />
                     )}
                   </div>
@@ -158,6 +163,7 @@ export const ModulePage: React.FC = () => {
                         targetKanji={targetKanji} 
                         navigate={navigate} 
                         onShowInfo={showObjectives}
+                        onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
                       />
                     )}
                   </div>
@@ -207,6 +213,14 @@ export const ModulePage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {lmsModal && lmsModal.isOpen && (
+        <LmsModuleModal 
+          moduleId={lmsModal.moduleId}
+          moduleTitle={lmsModal.moduleTitle}
+          onClose={() => setLmsModal(null)}
+        />
+      )}
     </Layout>
   );
 };
@@ -216,12 +230,14 @@ const ModuleCard = ({
   mod, 
   targetKanji, 
   navigate, 
-  onShowInfo 
+  onShowInfo,
+  onShowLms
 }: { 
   mod: any; 
   targetKanji: string; 
   navigate: any; 
   onShowInfo: (title: string, objectives: string) => void;
+  onShowLms: (id: number, title: string) => void;
 }) => {
   return (
     <div className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${mod.isLocked ? 'border-l-slate-300' : (mod.isCompleted ? 'border-l-[#4F7942]' : 'border-l-[#8f0020]')}`}>
@@ -293,14 +309,24 @@ const ModuleCard = ({
 
       {/* Action Button */}
       {!mod.isLocked && (
-        <button 
-          onClick={() => navigate(`/latihan?char=${targetKanji}`)} 
-          className={`w-full py-2.5 rounded-xl font-bold shadow-sm transition-all duration-200 active:scale-[0.98] border-none text-sm text-white flex items-center justify-center gap-1.5 cursor-pointer ${mod.isCompleted ? 'bg-[#4F7942] hover:brightness-105' : 'bg-[#8f0020] hover:brightness-105'}`}
-        >
-          <BookOpen className="w-4 h-4" />
-          {mod.isCompleted ? "Ulas Kembali" : "Mulai Belajar"}
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 mt-4">
+          <button 
+            onClick={() => onShowLms(mod.id, mod.title)}
+            className="flex-1 py-2.5 rounded-xl font-bold border border-slate-200 hover:border-[#8f0020] hover:text-[#8f0020] text-slate-700 bg-white transition-all active:scale-[0.98] text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <FileText className="w-4 h-4 shrink-0" />
+            Tugas & Diskusi
+          </button>
+          
+          <button 
+            onClick={() => navigate(`/latihan?char=${targetKanji}`)} 
+            className={`flex-1 py-2.5 rounded-xl font-bold shadow-sm transition-all duration-200 active:scale-[0.98] border-none text-xs text-white flex items-center justify-center gap-1.5 cursor-pointer ${mod.isCompleted ? 'bg-[#4F7942] hover:brightness-105' : 'bg-[#8f0020] hover:brightness-105'}`}
+          >
+            <BookOpen className="w-4 h-4 shrink-0" />
+            {mod.isCompleted ? "Ulas Kembali" : "Mulai Belajar"}
+            <ChevronRight className="w-4 h-4 shrink-0" />
+          </button>
+        </div>
       )}
 
     </div>
