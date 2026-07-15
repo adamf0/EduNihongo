@@ -114,10 +114,11 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
       const assigns = await api.lms.assignments.list({
         moduleId: moduleId,
       });
-      setLmsAssignments(assigns);
+      const moduleLevelAssigns = assigns.filter((a: any) => !a.kanjiId);
+      setLmsAssignments(moduleLevelAssigns);
 
-      if (assigns.length > 0) {
-        const commentPromises = assigns.map((assign: any) =>
+      if (moduleLevelAssigns.length > 0) {
+        const commentPromises = moduleLevelAssigns.map((assign: any) =>
           api.lms.comments.list({
             assignmentId: assign.id,
           })
@@ -154,10 +155,11 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
       const pollLmsData = async () => {
         try {
           const assigns = await api.lms.assignments.list({ moduleId });
+          const moduleLevelAssigns = assigns.filter((a: any) => !a.kanjiId);
           
           if (currentAssigns.length > 0) {
             // Compare grades
-            assigns.forEach((newAssign: any) => {
+            moduleLevelAssigns.forEach((newAssign: any) => {
               const oldAssign = currentAssigns.find((a: any) => a.id === newAssign.id);
               if (!oldAssign) return;
 
@@ -170,10 +172,10 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
             });
           }
 
-          setLmsAssignments(assigns);
+          setLmsAssignments(moduleLevelAssigns);
 
-          if (assigns.length > 0) {
-            const commentPromises = assigns.map((assign: any) =>
+          if (moduleLevelAssigns.length > 0) {
+            const commentPromises = moduleLevelAssigns.map((assign: any) =>
               api.lms.comments.list({ assignmentId: assign.id })
             );
             const commentsResponses = await Promise.all(commentPromises);
