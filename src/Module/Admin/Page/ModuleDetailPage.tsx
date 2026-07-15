@@ -101,6 +101,7 @@ export const ModuleDetailPage: React.FC = () => {
       commentsResults.forEach(res => {
         newMap[res.id] = res.comms;
       });
+      console.log("[LMS Admin Poll] Loaded comments map:", newMap);
       setCommentsMap(newMap);
     } catch (err: any) {
       console.error("Gagal memuat tugas LMS admin:", err);

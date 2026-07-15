@@ -410,7 +410,9 @@ export const LatihanPage: React.FC = () => {
                 })
               );
               const commentsResponses = await Promise.all(commentPromises);
-              setLmsComments(commentsResponses.flat());
+              const allComms = commentsResponses.flat();
+              console.log("[LMS Student Poll] Loaded comments:", allComms);
+              setLmsComments(allComms);
             }
           } catch (err) {
             console.error("Gagal melakukan polling data LMS:", err);
