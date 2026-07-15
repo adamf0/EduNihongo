@@ -15,7 +15,7 @@ apps:
 
     # Restart otomatis jika crash
     autorestart: true
-    watch: true
+    watch: false
     max_restarts: 10
     restart_delay: 5000
 
