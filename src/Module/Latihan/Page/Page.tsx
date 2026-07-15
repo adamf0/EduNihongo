@@ -3274,12 +3274,6 @@ export const LatihanPage: React.FC = () => {
               <p className="text-xs font-semibold text-slate-400 leading-snug">{gradeNotification.title}</p>
             </div>
 
-            {/* Exp Reward simulation */}
-            <div className="bg-emerald-50 border border-emerald-200/40 rounded-2xl py-2.5 px-6 flex items-center gap-2 animate-pulse mx-auto">
-              <Sparkles className="w-5 h-5 text-emerald-600 fill-emerald-100" />
-              <span className="text-sm font-black text-emerald-800">+100 EXP Diperoleh</span>
-            </div>
-
             {gradeNotification.feedback && (
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 w-full">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Catatan Dosen</span>
