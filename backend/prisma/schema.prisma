@@ -78,15 +78,16 @@ model Kanji {
   isJukugo     Boolean             @default(false)
   border       String?
   moduleId     Int?
-  quizData     String?             @db.Text
-  etymologies  Etymology[]
-  examples     ExampleSentence[]
-  jukugos      Jukugo[]
-  module       Module?             @relation(fields: [moduleId], references: [id])
-  graphEdges   KanjiGraphEdge[]
-  graphNodes   KanjiGraphNode[]
-  Task         Task[]
-  userProgress UserKanjiProgress[]
+  quizData       String?             @db.Text
+  reflectionData String?             @db.Text
+  etymologies    Etymology[]
+  examples       ExampleSentence[]
+  jukugos        Jukugo[]
+  module         Module?             @relation(fields: [moduleId], references: [id])
+  graphEdges     KanjiGraphEdge[]
+  graphNodes     KanjiGraphNode[]
+  Task           Task[]
+  userProgress   UserKanjiProgress[]
 
   @@index([moduleId], map: "Kanji_moduleId_fkey")
 }
@@ -156,12 +157,14 @@ model Etymology {
 }
 
 model Jukugo {
-  id      Int    @id @default(autoincrement())
-  kanjiId Int
-  word    String
-  reading String
-  meaning String @db.Text
-  kanji   Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  id             Int     @id @default(autoincrement())
+  kanjiId        Int
+  word           String
+  reading        String
+  meaning        String  @db.Text
+  kanjiBreakdown String? @db.Text
+  explanation    String? @db.Text
+  kanji          Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
 
   @@index([kanjiId], map: "Jukugo_kanjiId_fkey")
 }

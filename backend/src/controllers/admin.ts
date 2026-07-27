@@ -145,6 +145,7 @@ export const createKanji = async (req: Request, res: Response) => {
       graphEdges,
       etymologies,
       quizData,
+      reflectionData,
     } = body;
 
     if (!character || !romaji || !meaning) {
@@ -173,6 +174,7 @@ export const createKanji = async (req: Request, res: Response) => {
         border: border || null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
         quizData: quizData || null,
+        reflectionData: reflectionData || null,
       },
     });
 
@@ -197,6 +199,8 @@ export const createKanji = async (req: Request, res: Response) => {
           word: j.word || "",
           reading: j.reading || "",
           meaning: j.meaning || "",
+          kanjiBreakdown: j.kanjiBreakdown || null,
+          explanation: j.explanation || null,
         })),
       });
     }
@@ -286,6 +290,7 @@ export const updateKanji = async (req: Request, res: Response) => {
       graphEdges,
       etymologies,
       quizData,
+      reflectionData,
     } = body;
 
     if (!character || !romaji || !meaning) {
@@ -309,6 +314,7 @@ export const updateKanji = async (req: Request, res: Response) => {
         border: border || null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
         quizData: quizData || null,
+        reflectionData: reflectionData || null,
       },
     });
 
@@ -335,6 +341,8 @@ export const updateKanji = async (req: Request, res: Response) => {
           word: j.word || "",
           reading: j.reading || "",
           meaning: j.meaning || "",
+          kanjiBreakdown: j.kanjiBreakdown || null,
+          explanation: j.explanation || null,
         })),
       });
     }

@@ -13,7 +13,8 @@ const kanjiInfo: Record<string, {
   onyomi: string;
   kunyomi: string;
   baseMeaning?: string;
-  jukugos: { word: string; reading: string; meaning: string }[];
+  reflectionData?: string[];
+  jukugos: { word: string; reading: string; meaning: string; kanjiBreakdown?: string; explanation?: string }[];
   examples?: { japanese: string; romaji: string; translation: string }[];
 }> = {
   // Module 1: Akademik dan Evaluasi
@@ -27,23 +28,23 @@ const kanjiInfo: Record<string, {
     kunyomi: "ためす",
     baseMeaning: "Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil (Kanjipedia)",
     jukugos: [
-      { word: "試験", reading: "しけん", meaning: "Ujian" },
-      { word: "入試", reading: "にゅうし", meaning: "Ujian masuk" },
-      { word: "試問", reading: "しもん", meaning: "Ujian lisan" },
-      { word: "試着", reading: "しちゃく", meaning: "Mencoba pakaian" },
-      { word: "試用", reading: "しよう", meaning: "Uji coba penggunaan" },
-      { word: "試乗", reading: "しじょう", meaning: "Uji coba kendaraan (test drive)" },
-      { word: "試食", reading: "ししょく", meaning: "Mencicipi makanan" },
-      { word: "試飲", reading: "しいん", meaning: "Mencicipi minuman" },
-      { word: "試薬", reading: "しやく", meaning: "Bahan uji laboratorium" },
-      { word: "試作", reading: "しさく", meaning: "Pembuatan prototipe" },
-      { word: "試作品", reading: "しさくひん", meaning: "Produk percobaan" },
-      { word: "試製", reading: "しせい", meaning: "Produksi percobaan" },
-      { word: "試合", reading: "しあい", meaning: "Pertandingan" },
-      { word: "試技", reading: "しぎ", meaning: "Uji keterampilan" },
-      { word: "試聴", reading: "しちょう", meaning: "Mendengarkan contoh audio" },
-      { word: "試写", reading: "ししゃ", meaning: "Pemutaran perdana" },
-      { word: "試読", reading: "しどく", meaning: "Membaca contoh naskah" }
+      { word: "試験", reading: "しけん", meaning: "Ujian", kanjiBreakdown: "試 : Menguji | 験 : Memverifikasi hasil", explanation: "Hubungan makna antara kanji 試 dan 験 menjadi 試験 menunjukan gabungan kedua kanji tersebut membentuk sebuah makna 'suatu kegiatan untuk mengukur pengetahuan atau kemampuan seseorang, maka ketika digabungkan mengandung makna ujian'." },
+      { word: "入試", reading: "にゅうし", meaning: "Ujian masuk", kanjiBreakdown: "入 : Masuk | 試 : Ujian", explanation: "Hubungan makna antara kanji 入 dan 試 menjadi 入試, menunjukan gabungan kedua kanji tersebut membentuk sebuah makna 'untuk masuk sekolah atau pun perguruan tinggi harus melalui ujian'." },
+      { word: "試問", reading: "しもん", meaning: "Ujian lisan", kanjiBreakdown: "試 : Menguji | 問 : Bertanya", explanation: "Hubungan makna antar kanji 試 dan 問 menjadi 試問, menunjukan gabungan kedua kanji tersebut membentuk sebuah makna 'ujian dilakukan dengan tanya jawab secara langsung'." },
+      { word: "試着", reading: "しちゃく", meaning: "Mencoba pakaian", kanjiBreakdown: "試 : Mencoba | 着 : Memakai pakaian", explanation: "Hubungan makna antar kanji 試 dan 着 menjadi 試着, menunjukan gabungan kedua kanji tersebut membentuk makna 'mencoba pakaian'." },
+      { word: "試用", reading: "しよう", meaning: "Uji coba penggunaan", kanjiBreakdown: "試 : Mencoba | 用 : Menggunakan", explanation: "Hubungan makna antar kanji 試 dan 用 menjadi 試用, menunjukan gabungan kedua kanji tersebut membentuk makna 'mencoba penggunaan sesuatu'." },
+      { word: "試乗", reading: "しじょう", meaning: "Uji coba kendaraan (test drive)", kanjiBreakdown: "試 : Mencoba | 乗 : Naik kendaraan", explanation: "Hubungan makna antar kanji 試 dan 乗 menjadi 試乗, menunjukan gabungan kedua kanji tersebut membentuk makna 'mencoba kendaraan baru'." },
+      { word: "試食", reading: "ししょく", meaning: "Mencicipi makanan", kanjiBreakdown: "試 : Mencoba | 食 : Makan", explanation: "Hubungan makna antar kanji 試 dan 食 menjadi 試食, menunjukan gabungan kedua kanji tersebut membentuk makna 'mencicipi makanan'." },
+      { word: "試飲", reading: "しいん", meaning: "Mencicipi minuman", kanjiBreakdown: "試 : Mencoba | 飲 : Minum", explanation: "Hubungan makna antar kanji 試 dan 飲 menjadi 試飲, menunjukan gabungan kedua kanji tersebut membentuk makna 'mencicipi minuman'." },
+      { word: "試薬", reading: "しやく", meaning: "Bahan uji laboratorium", kanjiBreakdown: "試 : Menguji | 薬 : Bahan/Obat", explanation: "Hubungan makna antar kanji 試 dan 薬 menjadi 試薬, menunjukan gabungan kedua kanji tersebut membentuk makna 'bahan uji kimia'." },
+      { word: "試作", reading: "しさく", meaning: "Pembuatan prototipe", kanjiBreakdown: "試 : Mencoba | 作 : Membuat", explanation: "Hubungan makna antar kanji 試 dan 作 menjadi 試作, menunjukan gabungan kedua kanji tersebut membentuk makna 'pembuatan prototipe'." },
+      { word: "試作品", reading: "しさくひん", meaning: "Produk percobaan", kanjiBreakdown: "試 : Mencoba | 作 : Membuat | 品 : Barang", explanation: "Hubungan makna antar kanji membentuk makna 'barang hasil percobaan pembuatan'." },
+      { word: "試製", reading: "しせい", meaning: "Produksi percobaan", kanjiBreakdown: "試 : Mencoba | 製 : Memproduksi", explanation: "Hubungan makna antar kanji membentuk makna 'produksi percobaan'." },
+      { word: "試合", reading: "しあい", meaning: "Pertandingan", kanjiBreakdown: "試 : Menguji | 合 : Bertemu/Melawan", explanation: "Hubungan makna antar kanji 試 dan 合 menjadi 試合, menunjukan makna 'menguji kemampuan dengan bertanding bersama'." },
+      { word: "試技", reading: "しぎ", meaning: "Uji keterampilan", kanjiBreakdown: "試 : Menguji | 技 : Keterampilan", explanation: "Hubungan makna antar kanji 試 dan 技 menjadi 試技, menunjukan makna 'menguji keterampilan'." },
+      { word: "試聴", reading: "しちょう", meaning: "Mendengarkan contoh audio", kanjiBreakdown: "試 : Mencoba | 聴 : Mendengar", explanation: "Hubungan makna antar kanji 試 dan 聴 menjadi 試聴, menunjukan makna 'mencoba mendengarkan audio'." },
+      { word: "試写", reading: "ししゃ", meaning: "Pemutaran perdana", kanjiBreakdown: "試 : Mencoba | 写 : Memetakan/Menampilkan", explanation: "Hubungan makna antar kanji 試 dan 写 menjadi 試写, menunjukan makna 'mencoba pemutaran film/gambar'." },
+      { word: "試読", reading: "しどく", meaning: "Membaca contoh naskah", kanjiBreakdown: "試 : Mencoba | 読 : Membaca", explanation: "Hubungan makna antar kanji 試 dan 読 menjadi 試読, menunjukan makna 'mencoba membaca sampel buku'." }
     ],
     examples: [
       {
@@ -927,6 +928,14 @@ async function main() {
       }
 
       // Create Kanji
+      const defaultReflections = [
+        `Apa makna dasar kanji ${char} yang Anda pahami?`,
+        `Jukugo mana yang paling mudah untuk Anda ingat? Mengapa?`,
+        `Apa perbedaan penggunaan antar-jukugo yang mengandung kanji ${char}?`,
+        `Cabang semantic graph mana yang menurut Anda paling mudah dipahami?`,
+        `Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ${char}?`
+      ];
+
       const kanji = await prisma.kanji.create({
         data: {
           character: char,
@@ -938,6 +947,7 @@ async function main() {
           onyomi: info.onyomi || null,
           kunyomi: info.kunyomi || null,
           baseMeaning: info.baseMeaning || null,
+          reflectionData: JSON.stringify(info.reflectionData || defaultReflections),
           isJukugo: false,
           border: borders[borderCounter % 3],
           moduleId: parentModule.id,
@@ -963,6 +973,8 @@ async function main() {
           word: j.word,
           reading: j.reading,
           meaning: j.meaning,
+          kanjiBreakdown: j.kanjiBreakdown || null,
+          explanation: j.explanation || null,
         }))
       });
 

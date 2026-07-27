@@ -214,6 +214,7 @@ export const KanjiFormPage: React.FC = () => {
   const [jukugos, setJukugos] = useState<any[]>([]);
   const [etymologies, setEtymologies] = useState<any[]>([]);
   const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [reflectionQuestions, setReflectionQuestions] = useState<string[]>([]);
   const [nodes, setNodes] = useState<any[]>([]);
   const [edges, setEdges] = useState<any[]>([]);
 
@@ -325,7 +326,17 @@ export const KanjiFormPage: React.FC = () => {
           setExamples(writeEx.length > 0 ? writeEx : [{ japanese: "", romaji: "", translation: "", isReading: false }]);
           setReadingExamples(readEx.length > 0 ? readEx : [{ japanese: "", romaji: "", translation: "", isReading: true }]);
           
-          setJukugos(target.jukugos && target.jukugos.length > 0 ? target.jukugos : [{ word: "", reading: "", meaning: "" }]);
+          setJukugos(
+            target.jukugos && target.jukugos.length > 0
+              ? target.jukugos.map((j: any) => ({
+                  word: j.word,
+                  reading: j.reading,
+                  meaning: j.meaning,
+                  kanjiBreakdown: j.kanjiBreakdown || "",
+                  explanation: j.explanation || ""
+                }))
+              : [{ word: "", reading: "", meaning: "", kanjiBreakdown: "", explanation: "" }]
+          );
           setEtymologies(target.etymologies && target.etymologies.length > 0 ? target.etymologies : [{ character: "", romaji: "", detail: "" }]);
           
           if (target.quizData) {
@@ -336,6 +347,28 @@ export const KanjiFormPage: React.FC = () => {
             }
           } else {
             setQuizQuestions([]);
+          }
+
+          if (target.reflectionData) {
+            try {
+              setReflectionQuestions(JSON.parse(target.reflectionData));
+            } catch (e) {
+              setReflectionQuestions([
+                `Apa makna dasar kanji ${target.character} yang Anda pahami?`,
+                `Jukugo mana yang paling mudah untuk Anda ingat? Mengapa?`,
+                `Apa perbedaan penggunaan antar-jukugo yang mengandung kanji ${target.character}?`,
+                `Cabang semantic graph mana yang menurut Anda paling mudah dipahami?`,
+                `Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ${target.character}?`
+              ]);
+            }
+          } else {
+            setReflectionQuestions([
+              `Apa makna dasar kanji ${target.character} yang Anda pahami?`,
+              `Jukugo mana yang paling mudah untuk Anda ingat? Mengapa?`,
+              `Apa perbedaan penggunaan antar-jukugo yang mengandung kanji ${target.character}?`,
+              `Cabang semantic graph mana yang menurut Anda paling mudah dipahami?`,
+              `Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ${target.character}?`
+            ]);
           }
 
           setNodes(target.graphNodes.length > 0 ? target.graphNodes : [{ id: "root", character: target.character, meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
@@ -354,9 +387,16 @@ export const KanjiFormPage: React.FC = () => {
           setNodeCoords({}); // Reset coordinates
           setExamples([{ japanese: "", romaji: "", translation: "", isReading: false }]);
           setReadingExamples([{ japanese: "", romaji: "", translation: "", isReading: true }]);
-          setJukugos([{ word: "", reading: "", meaning: "" }]);
+          setJukugos([{ word: "", reading: "", meaning: "", kanjiBreakdown: "", explanation: "" }]);
           setEtymologies([{ character: "", romaji: "", detail: "" }]);
           setQuizQuestions([]);
+          setReflectionQuestions([
+            "Apa makna dasar kanji ini yang Anda pahami?",
+            "Jukugo mana yang paling mudah untuk Anda ingat? Mengapa?",
+            "Apa perbedaan penggunaan antar-jukugo yang mengandung kanji ini?",
+            "Cabang semantic graph mana yang menurut Anda paling mudah dipahami?",
+            "Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ini?"
+          ]);
           setNodes([{ id: "root", character: "", meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
           setEdges([]);
           setKanjiBorder(getRandomBorder());
@@ -616,11 +656,18 @@ export const KanjiFormPage: React.FC = () => {
       border: kanjiBorder || null,
       moduleId,
       examples: mergedExamples,
-      jukugos: jukugos.filter((j) => j.word.trim() !== ""),
+      jukugos: jukugos.filter((j) => j.word.trim() !== "").map((j) => ({
+        word: j.word,
+        reading: j.reading,
+        meaning: j.meaning,
+        kanjiBreakdown: j.kanjiBreakdown || null,
+        explanation: j.explanation || null,
+      })),
       etymologies: etymologies.filter((et) => et.character.trim() !== ""),
       graphNodes: formattedNodes,
       graphEdges: formattedEdges,
       quizData: quizQuestions.length > 0 ? JSON.stringify(quizQuestions.filter(q => q.question.trim() !== "")) : null,
+      reflectionData: reflectionQuestions.length > 0 ? JSON.stringify(reflectionQuestions.filter(r => r.trim() !== "")) : null,
     };
 
     try {
@@ -971,58 +1018,92 @@ export const KanjiFormPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto pr-1.5 sidebar-scroll">
+                  <div className="flex flex-col gap-3 max-h-[450px] overflow-y-auto pr-1.5 sidebar-scroll">
                     {jukugos.map((j, idx) => (
-                      <div key={idx} className="flex gap-3 items-end bg-surface-container-low/40 p-3 rounded-xl border border-outline-variant/20">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-grow">
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[10px] uppercase font-bold text-slate-500">Kata Jukugo</label>
-                            <input
-                              type="text"
-                              value={j.word}
-                              onChange={(e) => {
-                                const newJ = [...jukugos];
-                                newJ[idx].word = e.target.value;
-                                setJukugos(newJ);
-                              }}
-                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                              placeholder="試験"
-                            />
+                      <div key={idx} className="flex gap-3 items-start bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20">
+                        <div className="grid grid-cols-1 gap-3 flex-grow">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">Kata Jukugo</label>
+                              <input
+                                type="text"
+                                value={j.word}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].word = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
+                                placeholder="試験"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">Pembacaan (Reading)</label>
+                              <input
+                                type="text"
+                                value={j.reading}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].reading = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="しけん"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">Arti (Meaning)</label>
+                              <input
+                                type="text"
+                                value={j.meaning}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].meaning = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Ujian"
+                              />
+                            </div>
                           </div>
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[10px] uppercase font-bold text-slate-500">Pembacaan (Reading)</label>
-                            <input
-                              type="text"
-                              value={j.reading}
-                              onChange={(e) => {
-                                const newJ = [...jukugos];
-                                newJ[idx].reading = e.target.value;
-                                setJukugos(newJ);
-                              }}
-                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                              placeholder="しけん"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[10px] uppercase font-bold text-slate-500">Arti (Meaning)</label>
-                            <input
-                              type="text"
-                              value={j.meaning}
-                              onChange={(e) => {
-                                const newJ = [...jukugos];
-                                newJ[idx].meaning = e.target.value;
-                                setJukugos(newJ);
-                              }}
-                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                              placeholder="Ujian"
-                            />
+
+                          {/* e. Hubungan Makna antar kanji */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/50">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-[#8f0020]">Breakdown Kanji (e. Hubungan Makna)</label>
+                              <input
+                                type="text"
+                                value={j.kanjiBreakdown || ""}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].kanjiBreakdown = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: 試 : Menguji | 験 : Memverifikasi hasil"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-[#8f0020]">Penjelasan Hubungan Makna Jukugo</label>
+                              <textarea
+                                value={j.explanation || ""}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].explanation = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                rows={2}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none leading-relaxed"
+                                placeholder="Contoh: Hubungan makna antara kanji 試 dan 験 menjadi 試験 menunjukan..."
+                              />
+                            </div>
                           </div>
                         </div>
                         <button
                           type="button"
                           onClick={() => removeJukugoRow(idx)}
                           disabled={jukugos.length === 1}
-                          className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none disabled:opacity-30 animate-pulse-slow"
+                          className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none disabled:opacity-30 mt-1"
                         >
                           <Icon name="delete" className="text-base block" />
                         </button>
@@ -1648,6 +1729,53 @@ export const KanjiFormPage: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Section 6: h. Pertanyaan Refleksi Siswa */}
+            <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+              <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+                <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-2">
+                  <Icon name="help" className="text-primary text-base" />
+                  h. Pertanyaan Refleksi Siswa
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setReflectionQuestions([...reflectionQuestions, ""])}
+                  className="px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-0.5"
+                >
+                  <Icon name="add" className="text-xs" />
+                  Tambah Pertanyaan
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {reflectionQuestions.map((q, qIdx) => (
+                  <div key={qIdx} className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                      {qIdx + 1}
+                    </span>
+                    <input
+                      type="text"
+                      value={q}
+                      onChange={(e) => {
+                        const newQ = [...reflectionQuestions];
+                        newQ[qIdx] = e.target.value;
+                        setReflectionQuestions(newQ);
+                      }}
+                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-xs text-on-surface outline-none flex-grow"
+                      placeholder={`Pertanyaan refleksi ${qIdx + 1}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setReflectionQuestions(reflectionQuestions.filter((_, idx) => idx !== qIdx))}
+                      className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none"
+                      title="Hapus Pertanyaan"
+                    >
+                      <Icon name="delete" className="text-base block" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {actionError && (
