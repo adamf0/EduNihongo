@@ -73,6 +73,7 @@ model Kanji {
   onyomi         String?
   kunyomi        String?
   baseMeaning    String?             @db.Text
+  meaningRelation String?            @db.Text
   isJukugo       Boolean             @default(false)
   border         String?
   moduleId       Int?

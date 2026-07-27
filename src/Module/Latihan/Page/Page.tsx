@@ -1691,6 +1691,45 @@ export const LatihanPage: React.FC = () => {
                 <KanjiEtymology etymologies={etymologies} />
               )}
 
+              {/* e. Hubungan Makna antar kanji Card */}
+              {(kanjiData?.meaningRelation || (jukugos && jukugos.some((j: any) => j.kanjiBreakdown || j.explanation))) && (
+                <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs select-none animate-zoom-in space-y-4">
+                  <h4 className="font-extrabold text-lg text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3">
+                    <span className="flex items-center gap-2">
+                      <Icon name="hub" className="text-[#8f0020] text-xl" />
+                      e. Hubungan Makna antar kanji
+                    </span>
+                  </h4>
+                  {kanjiData?.meaningRelation && (
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100/80 text-xs text-slate-700 font-medium leading-relaxed">
+                      {kanjiData.meaningRelation}
+                    </div>
+                  )}
+                  <div className="space-y-3">
+                    {jukugos
+                      .filter((j: any) => j.kanjiBreakdown || j.explanation)
+                      .map((j: any, idx: number) => (
+                        <div key={idx} className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100 flex flex-col gap-1.5 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-extrabold text-[#8f0020] text-sm">{j.word} ({j.reading})</span>
+                            <span className="font-semibold text-slate-600">{j.meaning}</span>
+                          </div>
+                          {j.kanjiBreakdown && (
+                            <p className="text-slate-600 font-medium">
+                              <strong className="text-slate-700">Breakdown Kanji:</strong> {j.kanjiBreakdown}
+                            </p>
+                          )}
+                          {j.explanation && (
+                            <p className="text-slate-600 font-medium">
+                              <strong className="text-slate-700">Hubungan Makna:</strong> {j.explanation}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
               {/* h. Refleksi Card */}
               {(() => {
                 let reflections: string[] = [];

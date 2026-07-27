@@ -26,6 +26,7 @@ export const KanjiFormPage: React.FC = () => {
   const [kanjiOnyomi, setKanjiOnyomi] = useState("");
   const [kanjiKunyomi, setKanjiKunyomi] = useState("");
   const [kanjiBaseMeaning, setKanjiBaseMeaning] = useState("");
+  const [kanjiMeaningRelation, setKanjiMeaningRelation] = useState("");
 
   
   // Random border initialization helper
@@ -140,6 +141,7 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiOnyomi(target.onyomi || "");
           setKanjiKunyomi(target.kunyomi || "");
           setKanjiBaseMeaning(target.baseMeaning || "");
+          setKanjiMeaningRelation(target.meaningRelation || "");
 
           setKanjiBorder(target.border || "border-l-4 border-primary");
           
@@ -178,22 +180,10 @@ export const KanjiFormPage: React.FC = () => {
             try {
               setReflectionQuestions(JSON.parse(target.reflectionData));
             } catch (e) {
-              setReflectionQuestions([
-                `Apa makna dasar kanji ${target.character} yang Anda pahami?`,
-                `Jukugo mana yang paling mudah untuk Anda ingat? Mengapa?`,
-                `Apa perbedaan penggunaan antar-jukugo yang mengandung kanji ${target.character}?`,
-                `Cabang semantic graph mana yang menurut Anda paling mudah dipahami?`,
-                `Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ${target.character}?`
-              ]);
+              setReflectionQuestions([]);
             }
           } else {
-            setReflectionQuestions([
-              `Apa makna dasar kanji ${target.character} yang Anda pahami?`,
-              `Jukugo mana yang paling mudah untuk Anda ingat? Mengapa?`,
-              `Apa perbedaan penggunaan antar-jukugo yang mengandung kanji ${target.character}?`,
-              `Cabang semantic graph mana yang menurut Anda paling mudah dipahami?`,
-              `Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ${target.character}?`
-            ]);
+            setReflectionQuestions([]);
           }
 
           setNodes(target.graphNodes.length > 0 ? target.graphNodes : [{ id: "root", character: target.character, meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
@@ -207,6 +197,7 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiOnyomi("");
           setKanjiKunyomi("");
           setKanjiBaseMeaning("");
+          setKanjiMeaningRelation("");
           setNodeCoords({}); // Reset coordinates
           setExamples([{ japanese: "", romaji: "", translation: "", isReading: false }]);
           setReadingExamples([{ japanese: "", romaji: "", translation: "", isReading: true }]);
@@ -472,6 +463,7 @@ export const KanjiFormPage: React.FC = () => {
       onyomi: kanjiOnyomi,
       kunyomi: kanjiKunyomi,
       baseMeaning: kanjiBaseMeaning,
+      meaningRelation: kanjiMeaningRelation,
 
       isJukugo: kanjiChar.length > 1, // Automatically set based on character length
       border: kanjiBorder || null,
@@ -796,11 +788,11 @@ export const KanjiFormPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Section 3: Daftar Jukugo */}
+                {/* Section 3: Daftar Jukugo & e. Hubungan Makna antar Kanji */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
                   <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                      3. Daftar Jukugo (Kata Majemuk)
+                      3. Daftar Jukugo &amp; e. Hubungan Makna antar Kanji
                     </h4>
                     <button
                       type="button"
@@ -812,7 +804,22 @@ export const KanjiFormPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="flex flex-col gap-3 max-h-[450px] overflow-y-auto pr-1.5 sidebar-scroll">
+                  {/* Form Ringkasan e. Hubungan Makna antar Kanji */}
+                  <div className="flex flex-col gap-1.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                    <label className="font-label-sm text-label-sm font-bold text-primary flex items-center gap-1.5">
+                      <Icon name="hub" className="text-sm" />
+                      e. Hubungan Makna antar Kanji (Ringkasan Relasi Makna Utama)
+                    </label>
+                    <textarea
+                      value={kanjiMeaningRelation}
+                      onChange={(e) => setKanjiMeaningRelation(e.target.value)}
+                      rows={2}
+                      className="bg-white border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs leading-relaxed font-medium"
+                      placeholder="Contoh: Makna yang terkandung dalam jukugo yang dibentuk oleh kanji 試, 験, 問, 題, 答, 点 berhubungan dengan proses evaluasi..."
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-1.5 sidebar-scroll">
                     {jukugos.map((j, idx) => (
                       <div key={idx} className="flex gap-3 items-start bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20">
                         <div className="grid grid-cols-1 gap-3 flex-grow">
@@ -857,6 +864,37 @@ export const KanjiFormPage: React.FC = () => {
                                 }}
                                 className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
                                 placeholder="Ujian"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-100 pt-2">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">Breakdown Kanji (Susunan Kanji)</label>
+                              <input
+                                type="text"
+                                value={j.kanjiBreakdown || ""}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].kanjiBreakdown = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: 試 (Menguji) + 験 (Memverifikasi)"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">Penjelasan Hubungan Makna Jukugo</label>
+                              <input
+                                type="text"
+                                value={j.explanation || ""}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].explanation = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: Kegiatan mengukur pengetahuan sehingga dinamakan ujian"
                               />
                             </div>
                           </div>
