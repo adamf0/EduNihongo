@@ -4,177 +4,6 @@ import Icon from "../../Common/Component/Icon";
 import { api } from "../../Common/Utility/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-const AUTO_FILL_DICT: Record<string, { romaji: string; translation: string }> = {
-  "来週、日本語 of 試験がありますから、今晩 dari 準備します。": {
-    romaji: "Raishuu, nihongo no shiken ga arimasu kara, konban kara junbi shimasu.",
-    translation: "Karena minggu depan ada ujian bahasa Jepang, saya akan bersiap-siap mulai malam ini."
-  },
-  "来週、日本語の試験がありますから、今晩から準備します。": {
-    romaji: "Raishuu, nihongo no shiken ga arimasu kara, konban kara junbi shimasu.",
-    translation: "Karena minggu depan ada ujian bahasa Jepang, saya akan bersiap-siap mulai malam ini."
-  },
-  "服を買う前に、お店のここで試着することができます。": {
-    romaji: "Fuku wo kau mae ni, omise no koko de shichaku suru koto ga dekimasu.",
-    translation: "Sebelum membeli pakaian, Anda dapat mencobanya di bagian toko ini."
-  },
-  "この新しいアプリは、1か月無料で試用できます。": {
-    romaji: "Kono atarashii apuri wa, ikkagetsu muryou de shiyou dekimasu.",
-    translation: "Aplikasi baru ini dapat dicoba secara gratis selama 1 bulan."
-  },
-  "デパ地下で新しいケーキの試食をしました。": {
-    romaji: "Depachika de atarashii keeki no shishoku wo shimashita.",
-    translation: "Saya mencicipi kue baru di lantai bawah tanah department store."
-  },
-  "新しいジュース of 試飲をお客さんにしてもらいます。": {
-    romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
-    translation: "Kami meminta pelanggan untuk mencicipi jus baru."
-  },
-  "新しいジュースの試inをお客さんにしてもらいます。": {
-    romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
-    translation: "Kami meminta pelanggan untuk mencicipi jus baru."
-  },
-  "新しいジュースの試inをお客さんいしてもらいます。": {
-    romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
-    translation: "Kami meminta pelanggan untuk mencicipi jus baru."
-  },
-  "新しいジュースの試飲をお客さんにしてもらいます。": {
-    romaji: "Atarashii juusu no shiin wo okyakusan ni shitemoraimasu.",
-    translation: "Kami meminta pelanggan untuk mencicipi jus baru."
-  },
-  "明日の試験 is とても難しいですから、頑張ってください。": {
-    romaji: "Ashita no shiken wa totemo muzukashii desu kara, ganbatte kudasai.",
-    translation: "Karena ujian besok sangat sulit, berjuanglah."
-  },
-  "明日の試験は原型と同じです。": {
-    romaji: "Ashita no shiken wa totemo muzukashii desu kara, ganbatte kudasai.",
-    translation: "Karena ujian besok sangat sulit, berjuanglah."
-  },
-  "明日の試験はとても難しいですから、頑張ってください。": {
-    romaji: "Ashita no shiken wa totemo muzukashii desu kara, ganbatte kudasai.",
-    translation: "Karena ujian besok sangat sulit, berjuanglah."
-  },
-  "日本の大学の入学試験のために、毎日5時間 belajar。": {
-    romaji: "Nihon no daigaku no nyuugaku shiken no tame ni, mainichi gojikan benkyou shiteimasu.",
-    translation: "Demi ujian masuk universitas Jepang, saya belajar 5 jam setiap hari."
-  },
-  "日本の大学 of 入学試験のために、毎日5時間勉強しています。": {
-    romaji: "Nihon no daigaku no nyuugaku shiken no tame ni, mainichi gojikan benkyou shiteimasu.",
-    translation: "Demi ujian masuk universitas Jepang, saya belajar 5 jam setiap hari."
-  },
-  "日本の大学の入学試験のために、毎日5時間勉強しています。": {
-    romaji: "Nihon no daigaku no nyuugaku shiken no tame ni, mainichi gojikan benkyou shiteimasu.",
-    translation: "Demi ujian masuk universitas Jepang, saya belajar 5 jam setiap hari."
-  },
-  "卒業するために、来月面接試験を受けます。": {
-    romaji: "Sotsugyou suru tame ni,来月面接試験を受けます。",
-    translation: "Untuk lulus, saya akan mengikuti ujian wawancara bulan depan."
-  },
-  "日本へ留学したことは、私にとって良い経験になりました。": {
-    romaji: "Nihon he ryuugaku shita koto wa, watashi ni totte yoi keiken ni narimashita.",
-    translation: "Belajar di Jepang telah menjadi pengalaman yang baik bagi saya."
-  },
-  "化学の授業で、水の性質を調べる実験を行いました。": {
-    romaji: "Kagaku no jugyou de, mizu no seishitsu wo shiraberu jikken wo okonaimashita.",
-    translation: "Dalam kelas kimia, kami melakukan eksperimen untuk memeriksa sifat-sifat air."
-  },
-  "化学の授業で, 水의性質を調べる実験を行いました。": {
-    romaji: "Kagaku no jugyou de, mizu no seishitsu wo shiraberu jikken wo okonaimashita.",
-    translation: "Dalam kelas kimia, kami melakukan eksperimen untuk memeriksa sifat-sifat air."
-  },
-  "この問題は少し難しいです。": {
-    romaji: "Kono mondai wa sukoshi muzukashii desu.",
-    translation: "Soal ini sedikit sulit."
-  },
-  "先生に質問してください。": {
-    romaji: "Sensei ni shitsumon shitekudasai.",
-    translation: "Silakan bertanya kepada guru."
-  },
-  "日本では環境問題が重要です。": {
-    romaji: "Nihon dewa kankyou mondai ga juuyou desu.",
-    translation: "Di Jepang, masalah lingkungan adalah hal yang penting."
-  },
-  "この問題集で勉強します。": {
-    romaji: "Kono mondaishuu de benkyou shimasu.",
-    translation: "Saya belajar menggunakan buku kumpulan soal ini."
-  },
-  "電話で問い合わせをしました。": {
-    romaji: "Denwa de toiawase wo shimashita.",
-    translation: "Saya mengajukan pertanyaan via telepon."
-  },
-  "宿題g gが多すぎて、昨日は寝る時間がありませんでした。": {
-    romaji: "Shukudai ga oosugite, kinou wa neru jikan ga arimasen deshita.",
-    translation: "Karena PR terlalu banyak, kemarin saya tidak punya waktu tidur."
-  },
-  "宿題が多すぎて、昨日は寝る時間がありませんでした。": {
-    romaji: "Shukudai ga oosugite, kinou wa neru jikan ga arimasen deshita.",
-    translation: "Karena PR terlalu banyak, kemarin saya tidak punya waktu tidur."
-  },
-  "今日のゼミでは、卒業論文の論題について議論します。": {
-    romaji: "Kyou no zemi dewa, sotsugyou ronbun no rondai ni tsuite giron shimasu.",
-    translation: "Di seminar hari ini, kami akan mendiskusikan tema tesis kelulusan."
-  },
-  "面接試験では、最近 of 時事問題について質問されました。": {
-    romaji: "Mensetsu shiken dewa, saikin no jiji mondai ni tsuite shitsumon saremashita.",
-    translation: "Dalam ujian wawancara, saya ditanya tentang isu-isu aktual baru-baru ini."
-  },
-  "面接試験では、最近の時事問題について質問されました。": {
-    romaji: "Mensetsu shiken dewa, saikin no jiji mondai ni tsuite shitsumon saremashita.",
-    translation: "Dalam ujian wawancara, saya ditanya tentang isu-isu aktual baru-baru ini."
-  },
-  "彼女は自分の留学経験を題材にして小説を書きました。": {
-    romaji: "Kanojo wa jibun no ryuugaku keiken wo daizai ni shite shousetsu wo kakimashita.",
-    translation: "Dia menulis novel berdasarkan pengalaman belajarnya di luar negeri."
-  },
-  "今週は課題がたくさんありますから、とても忙しいです。": {
-    romaji: "Konshuu wa kadai ga takusan arimasu kara, totemo isogashii desu.",
-    translation: "Karena minggu ini ada banyak tugas, saya sangat sibuk."
-  },
-  "先生の質問に答えました。": {
-    romaji: "Sensei no shitsumon ni kotaemashita.",
-    translation: "Saya menjawab pertanyaan guru."
-  },
-  "正しい答えを書いてください。": {
-    romaji: "Tadashii kotae wo kaite kudasai.",
-    translation: "Silakan tulis jawaban yang benar."
-  },
-  "回答をメールで送りました。": {
-    romaji: "Kaitou wo meeru de okurimashita.",
-    translation: "Saya mengirimkan jawaban melalui email."
-  },
-  "応答 is なかなかありません。": {
-    romaji: "Outou wa naka naka arimasen.",
-    translation: "Responnya tidak kunjung datang."
-  },
-  "応答はなかなかありません。": {
-    romaji: "Outou wa naka naka arimasen.",
-    translation: "Responnya tidak kunjung datang."
-  },
-  "一問一答はどういう意味ですか。": {
-    romaji: "Ichimon ittou wa dou iu imi desu ka.",
-    translation: "Apa arti dari 'satu pertanyaan satu jawaban'?"
-  },
-  "先生はテストを採点しました。": {
-    romaji: "Sensei wa tesuto wo saiten shimashita.",
-    translation: "Guru menilai ujian tersebut."
-  },
-  "私は百点を取りました。": {
-    romaji: "Watashi wa hyakuten wo torimashita.",
-    translation: "Saya mendapatkan nilai 100."
-  },
-  "この作文の要点を書いてください。": {
-    romaji: "Kono sakubun no youten wo kaite kudasai.",
-    translation: "Silakan tulis poin penting dari esai ini."
-  },
-  "先生は問題点を説明しました。": {
-    romaji: "Sensei wa mondaiten wo setsumei shimashita.",
-    translation: "Guru menjelaskan titik permasalahannya."
-  },
-  "出発地点は駅です。": {
-    romaji: "Shuppatsu chiten wa eki desu.",
-    translation: "Titik keberangkatannya adalah stasiun."
-  }
-};
-
 export const KanjiFormPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -915,15 +744,8 @@ export const KanjiFormPage: React.FC = () => {
                               type="text"
                               value={ex.japanese}
                               onChange={(e) => {
-                                const val = e.target.value;
                                 const newEx = [...examples];
-                                newEx[idx].japanese = val;
-                                
-                                const match = AUTO_FILL_DICT[val.trim()];
-                                if (match) {
-                                  newEx[idx].romaji = match.romaji;
-                                  newEx[idx].translation = match.translation;
-                                }
+                                newEx[idx].japanese = e.target.value;
                                 setExamples(newEx);
                               }}
                               className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
@@ -1077,15 +899,8 @@ export const KanjiFormPage: React.FC = () => {
                               type="text"
                               value={ex.japanese}
                               onChange={(e) => {
-                                const val = e.target.value;
                                 const newEx = [...readingExamples];
-                                newEx[idx].japanese = val;
-                                
-                                const match = AUTO_FILL_DICT[val.trim()];
-                                if (match) {
-                                  newEx[idx].romaji = match.romaji;
-                                  newEx[idx].translation = match.translation;
-                                }
+                                newEx[idx].japanese = e.target.value;
                                 setReadingExamples(newEx);
                               }}
                               className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
