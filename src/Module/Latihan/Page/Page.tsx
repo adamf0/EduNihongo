@@ -1662,7 +1662,9 @@ export const LatihanPage: React.FC = () => {
               </div>
 
               {/* Etymology Breakdown */}
-              <KanjiEtymology etymologies={etymologies} />
+              {etymologies && etymologies.length > 0 && (
+                <KanjiEtymology etymologies={etymologies} />
+              )}
             </div>
 
             {/* Right Column: Drawing Workspace + Stroke by Stroke + Semantic Graph */}

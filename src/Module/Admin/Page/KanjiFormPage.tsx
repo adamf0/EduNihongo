@@ -448,12 +448,6 @@ export const KanjiFormPage: React.FC = () => {
     setJukugos((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const addEtymologyRow = () => {
-    setEtymologies((prev) => [...prev, { character: "", romaji: "", detail: "" }]);
-  };
-  const removeEtymologyRow = (idx: number) => {
-    setEtymologies((prev) => prev.filter((_, i) => i !== idx));
-  };
 
   const handleLinkStartOrEnd = (nodeId: string) => {
     if (linkingSourceId === null) {
@@ -781,84 +775,6 @@ export const KanjiFormPage: React.FC = () => {
                         required
                       />
                     </div>
-                  </div>
-                </div>
-
-                {/* Section 7: Analisis Etimologi */}
-                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
-                  <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
-                    <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                      7. Analisis Etimologi (Etymology Breakdown)
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={addEtymologyRow}
-                      className="px-3.5 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1"
-                    >
-                      <Icon name="add" className="text-sm" />
-                      Tambah
-                    </button>
-                  </div>
-
-                  <div className="flex flex-col gap-4">
-                    {etymologies.map((et, idx) => (
-                      <div key={idx} className="flex gap-3 items-end bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20">
-                        <div className="grid grid-cols-1 gap-2 flex-grow">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">Elemen / Karakter</label>
-                              <input
-                                type="text"
-                                value={et.character}
-                                onChange={(e) => {
-                                  const newEt = [...etymologies];
-                                  newEt[idx].character = e.target.value;
-                                  setEtymologies(newEt);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
-                                placeholder="言"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">Romaji</label>
-                              <input
-                                type="text"
-                                value={et.romaji}
-                                onChange={(e) => {
-                                  const newEt = [...etymologies];
-                                  newEt[idx].romaji = e.target.value;
-                                  setEtymologies(newEt);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="gen"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[10px] uppercase font-bold text-slate-500">Detail Penjelasan</label>
-                            <input
-                              type="text"
-                              value={et.detail}
-                              onChange={(e) => {
-                                const newEt = [...etymologies];
-                                newEt[idx].detail = e.target.value;
-                                setEtymologies(newEt);
-                              }}
-                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                              placeholder="Komponen makna..."
-                            />
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeEtymologyRow(idx)}
-                          disabled={etymologies.length === 1}
-                          className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none disabled:opacity-30"
-                        >
-                          <Icon name="delete" className="text-lg block" />
-                        </button>
-                      </div>
-                    ))}
                   </div>
                 </div>
 

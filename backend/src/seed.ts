@@ -957,28 +957,7 @@ async function main() {
         }))
       });
 
-      // Generate etymologies
-      const etymologyData = [
-        {
-          character: char,
-          romaji: info.onyomi,
-          detail: `Karakter utama kanji ${char} dengan pembacaan onyomi ${info.onyomi}.`
-        },
-        {
-          character: "Radikal",
-          romaji: info.kunyomi,
-          detail: `Komponen makna dasar dengan pembacaan kunyomi ${info.kunyomi}.`
-        }
-      ];
-
-      await prisma.etymology.createMany({
-        data: etymologyData.map(et => ({
-          kanjiId: kanji.id,
-          character: et.character,
-          romaji: et.romaji,
-          detail: et.detail
-        }))
-      });
+      // Skip etymologies as per document revision (Section 7 Etymology Breakdown removed)
 
       // Custom Semantic Graphs for Modul 1 Kanjis (matching document diagrams)
       const customGraphs: Record<string, {
