@@ -326,37 +326,37 @@ const kanjiInfo: Record<string, {
   },
 
   // Module 2: Penelitian dan Pembuktian Ilmiah
-  "研": { romaji: "Ken", meaning: "Mengasah / Penelitian", onyomi: "KEN", kunyomi: "to.gu", jukugos: [
+  "研": { romaji: "Ken", meaning: "Mengasah / Penelitian", bushuu: "石", onyomi: "KEN", kunyomi: "to.gu", jukugos: [
     { word: "研究", reading: "けんきゅう", meaning: "Penelitian" },
     { word: "研修", reading: "けんしゅう", meaning: "Pelatihan" },
     { word: "研磨", reading: "けんま", meaning: "Pengasahan" },
     { word: "研究者", reading: "けんきゅうしゃ", meaning: "Peneliti" }
   ]},
-  "究": { romaji: "Kyuu", meaning: "Menyelidiki Mendalam", onyomi: "KYUU", kunyomi: "kiwa.meru", jukugos: [
+  "究": { romaji: "Kyuu", meaning: "Menyelidiki Mendalam", bushuu: "穴", onyomi: "KYUU", kunyomi: "kiwa.meru", jukugos: [
     { word: "研究", reading: "けんきゅう", meaning: "Penelitian" },
     { word: "探究", reading: "たんきゅう", meaning: "Pencarian" },
     { word: "究極", reading: "きゅうきょく", meaning: "Ultimatum / Ekstrem" },
     { word: "追究", reading: "ついきゅう", meaning: "Pengejaran Kebenaran" }
   ]},
-  "集": { romaji: "Shuu", meaning: "Mengumpulkan", onyomi: "SHUU", kunyomi: "atsu.maru", jukugos: [
+  "集": { romaji: "Shuu", meaning: "Mengumpulkan", bushuu: "隹", onyomi: "SHUU", kunyomi: "atsu.maru", jukugos: [
     { word: "集会", reading: "しゅうかい", meaning: "Pertemuan" },
     { word: "集合", reading: "しゅうごう", meaning: "Berkumpul" },
     { word: "集中", reading: "しゅうちゅう", meaning: "Konsentrasi" },
     { word: "編集", reading: "へんしゅう", meaning: "Mengedit" }
   ]},
-  "調": { romaji: "Chou", meaning: "Menyelidiki / Nada", onyomi: "CHOU", kunyomi: "shira.beru", jukugos: [
+  "調": { romaji: "Chou", meaning: "Menyelidiki / Nada", bushuu: "言", onyomi: "CHOU", kunyomi: "shira.beru", jukugos: [
     { word: "調査", reading: "ちょうさ", meaning: "Investigasi" },
     { word: "調整", reading: "ちょうせい", meaning: "Penyesuaian" },
     { word: "調子", reading: "ちょうし", meaning: "Kondisi" },
     { word: "調和", reading: "ちょうわ", meaning: "Harmoni" }
   ]},
-  "査": { romaji: "Sa", meaning: "Memeriksa", onyomi: "SA", kunyomi: "-", jukugos: [
+  "査": { romaji: "Sa", meaning: "Memeriksa", bushuu: "木", onyomi: "SA", kunyomi: "-", jukugos: [
     { word: "調査", reading: "ちょうさ", meaning: "Investigasi" },
     { word: "検査", reading: "けんさ", meaning: "Pemeriksaan" },
     { word: "審査", reading: "しんさ", meaning: "Penilaian / Audit" },
     { word: "査定", reading: "さてい", meaning: "Evaluasi/Asesmen" }
   ]},
-  "実": { romaji: "Jitsu", meaning: "Kenyataan / Kebenaran", onyomi: "JITSU", kunyomi: "mi", jukugos: [
+  "実": { romaji: "Jitsu", meaning: "Kenyataan / Kebenaran", bushuu: "宀", onyomi: "JITSU", kunyomi: "mi", jukugos: [
     { word: "実験", reading: "じっけん", meaning: "Eksperimen" },
     { word: "現実", reading: "げんじつ", meaning: "Kenyataan" },
     { word: "事実", reading: "じじつ", meaning: "Fakta" },
@@ -364,37 +364,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 3: Informasi dan Data
-  "情": { romaji: "Jou", meaning: "Perasaan / Keadaan", onyomi: "JOU", kunyomi: "nasake", jukugos: [
+  "情": { romaji: "Jou", meaning: "Perasaan / Keadaan", bushuu: "心 (忄)", onyomi: "JOU", kunyomi: "nasake", jukugos: [
     { word: "情報", reading: "じょうほう", meaning: "Informasi" },
     { word: "感情", reading: "かんじょう", meaning: "Emosi" },
     { word: "友情", reading: "ゆうじょう", meaning: "Persahabatan" },
     { word: "同情", reading: "どうじょう", meaning: "Simpati" }
   ]},
-  "報": { romaji: "Hou", meaning: "Laporan / Balasan", onyomi: "HOU", kunyomi: "muku.iru", jukugos: [
+  "報": { romaji: "Hou", meaning: "Laporan / Balasan", bushuu: "土", onyomi: "HOU", kunyomi: "muku.iru", jukugos: [
     { word: "情報", reading: "じょうほう", meaning: "Informasi" },
     { word: "報告", reading: "ほうこく", meaning: "Laporan" },
     { word: "報道", reading: "ほうどう", meaning: "Pemberitaan" },
     { word: "予報", reading: "よほう", meaning: "Prakiraan" }
   ]},
-  "伝": { romaji: "Den", meaning: "Menyampaikan", onyomi: "DEN", kunyomi: "tsuta.eru", jukugos: [
+  "伝": { romaji: "Den", meaning: "Menyampaikan", bushuu: "人 (亻)", onyomi: "DEN", kunyomi: "tsuta.eru", jukugos: [
     { word: "伝言", reading: "でんごん", meaning: "Pesan" },
     { word: "伝統", reading: "でんとう", meaning: "Tradisi" },
     { word: "伝達", reading: "でんたつ", meaning: "Penyampaian" },
     { word: "手伝う", reading: "てつだう", meaning: "Membantu" }
   ]},
-  "信": { romaji: "Shin", meaning: "Percaya", onyomi: "SHIN", kunyomi: "shin.jiru", jukugos: [
+  "信": { romaji: "Shin", meaning: "Percaya", bushuu: "人 (亻)", onyomi: "SHIN", kunyomi: "shin.jiru", jukugos: [
     { word: "信用", reading: "しんよう", meaning: "Kepercayaan" },
     { word: "信号", reading: "しんごう", meaning: "Lampu Lalu Lintas" },
     { word: "自信", reading: "じしん", meaning: "Percaya Diri" },
     { word: "通信", reading: "つうしん", meaning: "Telekomunikasi" }
   ]},
-  "受": { romaji: "Ju", meaning: "Menerima", onyomi: "JU", kunyomi: "u.keru", jukugos: [
+  "受": { romaji: "Ju", meaning: "Menerima", bushuu: "又", onyomi: "JU", kunyomi: "u.keru", jukugos: [
     { word: "受信", reading: "じゅしん", meaning: "Menerima Pesan" },
     { word: "受験", reading: "じゅけん", meaning: "Mengikuti Ujian" },
     { word: "受取", reading: "うけとり", meaning: "Tanda Terima" },
     { word: "授業", reading: "じゅぎょう", meaning: "Kelas / Pelajaran" }
   ]},
-  "送": { romaji: "Sou", meaning: "Mengirim", onyomi: "SOU", kunyomi: "oku.ru", jukugos: [
+  "送": { romaji: "Sou", meaning: "Mengirim", bushuu: "辵 (⻌)", onyomi: "SOU", kunyomi: "oku.ru", jukugos: [
     { word: "送信", reading: "そうしん", meaning: "Mengirim Pesan" },
     { word: "送金", reading: "そうきん", meaning: "Transfer Uang" },
     { word: "配送", reading: "はいそう", meaning: "Pengiriman barang" },
@@ -402,37 +402,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 4: Profesi dan Dunia Kerja
-  "職": { romaji: "Shoku", meaning: "Pekerjaan / Jabatan", onyomi: "SHOKU", kunyomi: "-", jukugos: [
+  "職": { romaji: "Shoku", meaning: "Pekerjaan / Jabatan", bushuu: "耳", onyomi: "SHOKU", kunyomi: "-", jukugos: [
     { word: "職業", reading: "しょくぎょう", meaning: "Profesi" },
     { word: "職場", reading: "しょくば", meaning: "Tempat Kerja" },
     { word: "職員", reading: "しょくいん", meaning: "Staf / Karyawan" },
     { word: "退職", reading: "たいしょく", meaning: "Resign / Pensiun" }
   ]},
-  "業": { romaji: "Gyou", meaning: "Usaha / Industri", onyomi: "GYOU", kunyomi: "waza", jukugos: [
+  "業": { romaji: "Gyou", meaning: "Usaha / Industri", bushuu: "木", onyomi: "GYOU", kunyomi: "waza", jukugos: [
     { word: "職業", reading: "しょくぎょう", meaning: "Profesi" },
     { word: "産業", reading: "さんぎょう", meaning: "Industri" },
     { word: "事業", reading: "じぎょう", meaning: "Bisnis / Proyek" },
     { word: "授業", reading: "じゅぎょう", meaning: "Pelajaran" }
   ]},
-  "働": { romaji: "Dou", meaning: "Bekerja", onyomi: "DOU", kunyomi: "hatara.ku", jukugos: [
+  "働": { romaji: "Dou", meaning: "Bekerja", bushuu: "人 (亻)", onyomi: "DOU", kunyomi: "hatara.ku", jukugos: [
     { word: "労働", reading: "ろうどう", meaning: "Tenaga Kerja" },
     { word: "共働き", reading: "ともばたらき", meaning: "Suami Istri Bekerja" },
     { word: "労働者", reading: "ろうどうしゃ", meaning: "Pekerja" },
     { word: "働く", reading: "はたらく", meaning: "Bekerja" }
   ]},
-  "務": { romaji: "Mu", meaning: "Tugas / Kewajiban", onyomi: "MU", kunyomi: "tsuto.meru", jukugos: [
+  "務": { romaji: "Mu", meaning: "Tugas / Kewajiban", bushuu: "力", onyomi: "MU", kunyomi: "tsuto.meru", jukugos: [
     { word: "義務", reading: "ぎむ", meaning: "Kewajiban" },
     { word: "公務", reading: "こうむ", meaning: "Tugas Publik" },
     { word: "事務所", reading: "じむしょ", meaning: "Kantor" },
     { word: "勤務", reading: "きんむ", meaning: "Dinas / Kerja" }
   ]},
-  "技": { romaji: "Gi", meaning: "Keahlian / Teknik", onyomi: "GI", kunyomi: "waza", jukugos: [
+  "技": { romaji: "Gi", meaning: "Keahlian / Teknik", bushuu: "手 (扌)", onyomi: "GI", kunyomi: "waza", jukugos: [
     { word: "技術", reading: "ぎじゅつ", meaning: "Teknologi" },
     { word: "特技", reading: "とくぎ", meaning: "Keahlian Khusus" },
     { word: "演技", reading: "えんぎ", meaning: "Akting / Peran" },
     { word: "技能", reading: "ぎのう", meaning: "Keterampilan" }
   ]},
-  "術": { romaji: "Jutsu", meaning: "Seni / Cara", onyomi: "JUTSU", kunyomi: "sube", jukugos: [
+  "術": { romaji: "Jutsu", meaning: "Seni / Cara", bushuu: "行", onyomi: "JUTSU", kunyomi: "sube", jukugos: [
     { word: "技術", reading: "ぎじゅつ", meaning: "Teknologi" },
     { word: "美術", reading: "びじゅつ", meaning: "Seni Rupa" },
     { word: "手術", reading: "しゅじゅつ", meaning: "Operasi Medis" },
@@ -930,7 +930,7 @@ async function main() {
           bushuu: info.bushuu || null,
           onyomi: info.onyomi || null,
           kunyomi: info.kunyomi || null,
-          baseMeaning: info.baseMeaning || null,
+          baseMeaning: info.baseMeaning || info.meaning,
           reflectionData: JSON.stringify(info.reflectionData || defaultReflections),
           isJukugo: false,
           border: borders[borderCounter % 3],
