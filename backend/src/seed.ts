@@ -7,8 +7,12 @@ const prisma = new PrismaClient();
 const kanjiInfo: Record<string, {
   romaji: string;
   meaning: string;
+  jlpt?: string;
+  bushuu?: string;
+  strokeCount?: number;
   onyomi: string;
   kunyomi: string;
+  baseMeaning?: string;
   jukugos: { word: string; reading: string; meaning: string }[];
   examples?: { japanese: string; romaji: string; translation: string }[];
 }> = {
@@ -16,8 +20,12 @@ const kanjiInfo: Record<string, {
   "試": {
     romaji: "Shi",
     meaning: "Mencoba",
+    jlpt: "JLPT N4",
+    bushuu: "言",
+    strokeCount: 13,
     onyomi: "シ",
-    kunyomi: "tamesu",
+    kunyomi: "ためす",
+    baseMeaning: "Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil (Kanjipedia)",
     jukugos: [
       { word: "試験", reading: "しけん", meaning: "Ujian" },
       { word: "入試", reading: "にゅうし", meaning: "Ujian masuk" },
@@ -49,7 +57,7 @@ const kanjiInfo: Record<string, {
         translation: "Sebelum membeli pakaian, Anda dapat mencobanya di bagian toko ini."
       },
       {
-        japanese: "この新しいアプリwa、1か月無料で試用できます。",
+        japanese: "この新しいアプリは、1か月無料で試用できます。",
         romaji: "Kono atarashii apuri wa, ikkagetsu muryou de shiyou dekimasu.",
         translation: "Aplikasi baru ini dapat dicoba secara gratis selama 1 bulan."
       },
@@ -68,8 +76,12 @@ const kanjiInfo: Record<string, {
   "験": {
     romaji: "Ken",
     meaning: "Menguji, Percobaan",
+    jlpt: "4",
+    bushuu: "馬",
+    strokeCount: 18,
     onyomi: "ケン、ゲン",
     kunyomi: "-",
+    baseMeaning: "Mengalami, membuktikan, memverifikasi sesuatu melalui pengalaman atau pun pengujian (kanji pedia)",
     jukugos: [
       { word: "試験", reading: "しけん", meaning: "Ujian" },
       { word: "受験", reading: "じゅけん", meaning: "Mengikuti ujian" },
@@ -115,8 +127,12 @@ const kanjiInfo: Record<string, {
   "問": {
     romaji: "Mon",
     meaning: "Bertanya, masalah, mempertanyakan",
+    jlpt: "4",
+    bushuu: "口",
+    strokeCount: 11,
     onyomi: "モン",
-    kunyomi: "tou",
+    kunyomi: "と（う）、と（い）",
+    baseMeaning: "Bertanya, mempertanyakan, menanyakan, atau mempermasalahkan sesuatu (Kanji Pedia)",
     jukugos: [
       { word: "問題", reading: "もんだい", meaning: "Masalah, soal" },
       { word: "質問", reading: "しつもん", meaning: "Pertanyaan" },
@@ -165,8 +181,12 @@ const kanjiInfo: Record<string, {
   "題": {
     romaji: "Dai",
     meaning: "Topik, judul, tema, masalah, soal",
+    jlpt: "N4",
+    bushuu: "頁 (Oogai/Kepala, halaman)",
+    strokeCount: 18,
     onyomi: "ダイ",
     kunyomi: "-",
+    baseMeaning: "Topik, judul, tema, dan pokok bahasan yang menjadi objek pembicaraan atau pembelajaran (Kanji Pedia)",
     jukugos: [
       { word: "問題", reading: "もんだい", meaning: "Masalah" },
       { word: "課題", reading: "かだい", meaning: "Topik" },
@@ -215,8 +235,12 @@ const kanjiInfo: Record<string, {
   "答": {
     romaji: "Tou",
     meaning: "Menjawab, membalas, merespon",
+    jlpt: "JLPT N4",
+    bushuu: "竹 (Takekanmuri) Radikal Bambu",
+    strokeCount: 12,
     onyomi: "トウ",
-    kunyomi: "kotaeru",
+    kunyomi: "こた（える）",
+    baseMeaning: "Memberikan jawaban, memberikan respons, atau menyampaikan balasan terhadap suatu pertanyaan maupun permintaan.",
     jukugos: [
       { word: "回答", reading: "かいとう", meaning: "Jawaban" },
       { word: "解答", reading: "かいとう", meaning: "Jawaban soal" },
@@ -262,8 +286,12 @@ const kanjiInfo: Record<string, {
   "点": {
     romaji: "Ten",
     meaning: "Titik, poin, tanda, skor/nilai, fokus spesifik",
+    jlpt: "JLPT N4",
+    bushuu: "灬 (Rengokawa/Empat titik fire)",
+    strokeCount: 9,
     onyomi: "テン",
-    kunyomi: "-",
+    kunyomi: "つ（く）、つ（ける）",
+    baseMeaning: "Penilaian, titik lokasi, sudut pandang, atau poin penting dalam evaluasi (Kanji Pedia)",
     jukugos: [
       { word: "採点", reading: "さいてん", meaning: "Penilaian" },
       { word: "得点", reading: "とくてん", meaning: "Skor" },
@@ -904,6 +932,12 @@ async function main() {
           character: char,
           romaji: info.romaji,
           meaning: info.meaning,
+          jlpt: info.jlpt || null,
+          bushuu: info.bushuu || null,
+          strokeCount: info.strokeCount || null,
+          onyomi: info.onyomi || null,
+          kunyomi: info.kunyomi || null,
+          baseMeaning: info.baseMeaning || null,
           isJukugo: false,
           border: borders[borderCounter % 3],
           moduleId: parentModule.id,

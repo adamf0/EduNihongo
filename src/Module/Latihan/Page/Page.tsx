@@ -1579,24 +1579,57 @@ export const LatihanPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Column: Details + Jukugo + Examples + Etymology */}
             <div className="lg:col-span-6 space-y-6">
-              {/* Onyomi/Kunyomi Card */}
-              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs flex justify-around select-none animate-zoom-in opacity-0">
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1">
-                    Onyomi
+              {/* a. Informasi Kanji Card */}
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs select-none animate-zoom-in">
+                <h4 className="font-extrabold text-lg text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                  <span className="flex items-center gap-2">
+                    <Info className="text-[#8f0020] w-5 h-5" />
+                    a. Informasi Kanji
                   </span>
-                  <span className="text-xl font-extrabold text-[#8f0020] font-mono bg-[#8f0020]/5 px-4 py-1.5 rounded-xl border border-[#8f0020]/10">
-                    {kanjiData.onyomi || etymologies?.[0]?.romaji || "-"}
-                  </span>
-                </div>
-                <div className="w-[1px] bg-slate-100 self-stretch"></div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1">
-                    Kunyomi
-                  </span>
-                  <span className="text-xl font-extrabold text-[#8f0020] font-mono bg-[#8f0020]/5 px-4 py-1.5 rounded-xl border border-[#8f0020]/10">
-                    {kanjiData.kunyomi || etymologies?.[1]?.romaji || "-"}
-                  </span>
+                </h4>
+                <div className="overflow-hidden rounded-2xl border border-slate-200/70">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200/70">
+                        <th className="p-3.5 w-1/3 border-r border-slate-200/70">Informasi</th>
+                        <th className="p-3.5">Isi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-800">
+                      <tr>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Kanji</td>
+                        <td className="p-3.5 font-black text-xl text-[#8f0020] font-mono">{kanjiData?.character}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Arti</td>
+                        <td className="p-3.5 font-semibold text-slate-900">{kanjiData?.meaning}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">JLPT</td>
+                        <td className="p-3.5 font-semibold">{kanjiData?.jlpt || "JLPT N4"}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Bushuu / Radical</td>
+                        <td className="p-3.5 font-bold text-slate-900">{kanjiData?.bushuu || "-"}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Jumlah Coretan</td>
+                        <td className="p-3.5 font-semibold">{kanjiData?.strokeCount ? `${kanjiData.strokeCount}` : "-"}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Onyomi</td>
+                        <td className="p-3.5 font-extrabold text-[#8f0020] font-mono">{kanjiData?.onyomi || "-"}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Kunyomi</td>
+                        <td className="p-3.5 font-extrabold text-[#8f0020] font-mono">{kanjiData?.kunyomi || "-"}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Makna Dasar</td>
+                        <td className="p-3.5 leading-relaxed text-slate-700">{kanjiData?.baseMeaning || kanjiData?.meaning}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 

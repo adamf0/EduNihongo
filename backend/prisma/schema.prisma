@@ -69,6 +69,12 @@ model Kanji {
   character    String              @unique
   romaji       String
   meaning      String              @db.Text
+  jlpt         String?
+  bushuu       String?
+  strokeCount  Int?
+  onyomi       String?
+  kunyomi      String?
+  baseMeaning  String?             @db.Text
   isJukugo     Boolean             @default(false)
   border       String?
   moduleId     Int?

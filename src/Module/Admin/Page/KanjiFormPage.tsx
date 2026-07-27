@@ -193,6 +193,12 @@ export const KanjiFormPage: React.FC = () => {
   const [kanjiChar, setKanjiChar] = useState("");
   const [kanjiRomaji, setKanjiRomaji] = useState("");
   const [kanjiMeaning, setKanjiMeaning] = useState("");
+  const [kanjiJlpt, setKanjiJlpt] = useState("");
+  const [kanjiBushuu, setKanjiBushuu] = useState("");
+  const [kanjiStrokeCount, setKanjiStrokeCount] = useState("");
+  const [kanjiOnyomi, setKanjiOnyomi] = useState("");
+  const [kanjiKunyomi, setKanjiKunyomi] = useState("");
+  const [kanjiBaseMeaning, setKanjiBaseMeaning] = useState("");
 
   
   // Random border initialization helper
@@ -302,6 +308,12 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiChar(target.character);
           setKanjiRomaji(target.romaji);
           setKanjiMeaning(target.meaning);
+          setKanjiJlpt(target.jlpt || "");
+          setKanjiBushuu(target.bushuu || "");
+          setKanjiStrokeCount(target.strokeCount ? String(target.strokeCount) : "");
+          setKanjiOnyomi(target.onyomi || "");
+          setKanjiKunyomi(target.kunyomi || "");
+          setKanjiBaseMeaning(target.baseMeaning || "");
 
           setKanjiBorder(target.border || "border-l-4 border-primary");
           
@@ -330,6 +342,15 @@ export const KanjiFormPage: React.FC = () => {
           setEdges(target.graphEdges);
         } else {
           // Add mode: default initialization
+          setKanjiChar("");
+          setKanjiRomaji("");
+          setKanjiMeaning("");
+          setKanjiJlpt("");
+          setKanjiBushuu("");
+          setKanjiStrokeCount("");
+          setKanjiOnyomi("");
+          setKanjiKunyomi("");
+          setKanjiBaseMeaning("");
           setNodeCoords({}); // Reset coordinates
           setExamples([{ japanese: "", romaji: "", translation: "", isReading: false }]);
           setReadingExamples([{ japanese: "", romaji: "", translation: "", isReading: true }]);
@@ -584,6 +605,12 @@ export const KanjiFormPage: React.FC = () => {
       character: kanjiChar,
       romaji: kanjiRomaji,
       meaning: kanjiMeaning,
+      jlpt: kanjiJlpt,
+      bushuu: kanjiBushuu,
+      strokeCount: kanjiStrokeCount,
+      onyomi: kanjiOnyomi,
+      kunyomi: kanjiKunyomi,
+      baseMeaning: kanjiBaseMeaning,
 
       isJukugo: kanjiChar.length > 1, // Automatically set based on character length
       border: kanjiBorder || null,
@@ -760,21 +787,82 @@ export const KanjiFormPage: React.FC = () => {
                         value={kanjiRomaji}
                         onChange={(e) => setKanjiRomaji(e.target.value)}
                         className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none"
-                        placeholder="Contoh: Manabu"
+                        placeholder="Contoh: Shi"
                         required
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Arti / Makna</label>
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Arti Singkat</label>
                       <input
                         type="text"
                         value={kanjiMeaning}
                         onChange={(e) => setKanjiMeaning(e.target.value)}
                         className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none"
-                        placeholder="Contoh: Belajar"
+                        placeholder="Contoh: Mencoba"
                         required
                       />
                     </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Tingkat JLPT</label>
+                      <input
+                        type="text"
+                        value={kanjiJlpt}
+                        onChange={(e) => setKanjiJlpt(e.target.value)}
+                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
+                        placeholder="Contoh: JLPT N4"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Bushuu / Radical</label>
+                      <input
+                        type="text"
+                        value={kanjiBushuu}
+                        onChange={(e) => setKanjiBushuu(e.target.value)}
+                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
+                        placeholder="Contoh: 言"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Jumlah Coretan</label>
+                      <input
+                        type="number"
+                        value={kanjiStrokeCount}
+                        onChange={(e) => setKanjiStrokeCount(e.target.value)}
+                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
+                        placeholder="Contoh: 13"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Onyomi</label>
+                      <input
+                        type="text"
+                        value={kanjiOnyomi}
+                        onChange={(e) => setKanjiOnyomi(e.target.value)}
+                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
+                        placeholder="Contoh: シ"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Kunyomi</label>
+                      <input
+                        type="text"
+                        value={kanjiKunyomi}
+                        onChange={(e) => setKanjiKunyomi(e.target.value)}
+                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
+                        placeholder="Contoh: ためす"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-2">
+                    <label className="font-label-sm text-label-sm font-semibold text-on-surface">Makna Dasar (Lengkap)</label>
+                    <textarea
+                      value={kanjiBaseMeaning}
+                      onChange={(e) => setKanjiBaseMeaning(e.target.value)}
+                      rows={3}
+                      className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs leading-relaxed"
+                      placeholder="Contoh: Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil (Kanjipedia)"
+                    />
                   </div>
                 </div>
 
