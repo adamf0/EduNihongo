@@ -19,9 +19,7 @@ const kanjiInfo: Record<string, {
   "試": {
     romaji: "Shi",
     meaning: "Mencoba",
-    jlpt: "JLPT N4",
     bushuu: "言",
-    strokeCount: 13,
     onyomi: "シ",
     kunyomi: "ためす",
     baseMeaning: "Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil (Kanjipedia)",
