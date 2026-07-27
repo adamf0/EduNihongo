@@ -26,7 +26,6 @@ export const KanjiFormPage: React.FC = () => {
   const [kanjiOnyomi, setKanjiOnyomi] = useState("");
   const [kanjiKunyomi, setKanjiKunyomi] = useState("");
   const [kanjiBaseMeaning, setKanjiBaseMeaning] = useState("");
-  const [kanjiMeaningRelation, setKanjiMeaningRelation] = useState("");
 
   
   // Random border initialization helper
@@ -141,7 +140,6 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiOnyomi(target.onyomi || "");
           setKanjiKunyomi(target.kunyomi || "");
           setKanjiBaseMeaning(target.baseMeaning || "");
-          setKanjiMeaningRelation(target.meaningRelation || "");
 
           setKanjiBorder(target.border || "border-l-4 border-primary");
           
@@ -197,7 +195,6 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiOnyomi("");
           setKanjiKunyomi("");
           setKanjiBaseMeaning("");
-          setKanjiMeaningRelation("");
           setNodeCoords({}); // Reset coordinates
           setExamples([{ japanese: "", romaji: "", translation: "", isReading: false }]);
           setReadingExamples([{ japanese: "", romaji: "", translation: "", isReading: true }]);
@@ -463,7 +460,6 @@ export const KanjiFormPage: React.FC = () => {
       onyomi: kanjiOnyomi,
       kunyomi: kanjiKunyomi,
       baseMeaning: kanjiBaseMeaning,
-      meaningRelation: kanjiMeaningRelation,
 
       isJukugo: kanjiChar.length > 1, // Automatically set based on character length
       border: kanjiBorder || null,
@@ -788,11 +784,11 @@ export const KanjiFormPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Section 3: Daftar Jukugo & e. Hubungan Makna antar Kanji */}
+                {/* Section 3: Daftar Jukugo */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
                   <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                      3. Daftar Jukugo &amp; e. Hubungan Makna antar Kanji
+                      3. Daftar Jukugo (Kata Majemuk)
                     </h4>
                     <button
                       type="button"
@@ -804,22 +800,7 @@ export const KanjiFormPage: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Form Ringkasan e. Hubungan Makna antar Kanji */}
-                  <div className="flex flex-col gap-1.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
-                    <label className="font-label-sm text-label-sm font-bold text-primary flex items-center gap-1.5">
-                      <Icon name="hub" className="text-sm" />
-                      e. Hubungan Makna antar Kanji (Ringkasan Relasi Makna Utama)
-                    </label>
-                    <textarea
-                      value={kanjiMeaningRelation}
-                      onChange={(e) => setKanjiMeaningRelation(e.target.value)}
-                      rows={2}
-                      className="bg-white border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs leading-relaxed font-medium"
-                      placeholder="Contoh: Makna yang terkandung dalam jukugo yang dibentuk oleh kanji 試, 験, 問, 題, 答, 点 berhubungan dengan proses evaluasi..."
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-1.5 sidebar-scroll">
+                  <div className="flex flex-col gap-3 max-h-[450px] overflow-y-auto pr-1.5 sidebar-scroll">
                     {jukugos.map((j, idx) => (
                       <div key={idx} className="flex gap-3 items-start bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20">
                         <div className="grid grid-cols-1 gap-3 flex-grow">
@@ -867,37 +848,6 @@ export const KanjiFormPage: React.FC = () => {
                               />
                             </div>
                           </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-100 pt-2">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">Breakdown Kanji (Susunan Kanji)</label>
-                              <input
-                                type="text"
-                                value={j.kanjiBreakdown || ""}
-                                onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].kanjiBreakdown = e.target.value;
-                                  setJukugos(newJ);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: 試 (Menguji) + 験 (Memverifikasi)"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">Penjelasan Hubungan Makna Jukugo</label>
-                              <input
-                                type="text"
-                                value={j.explanation || ""}
-                                onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].explanation = e.target.value;
-                                  setJukugos(newJ);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: Kegiatan mengukur pengetahuan sehingga dinamakan ujian"
-                              />
-                            </div>
-                          </div>
                         </div>
                         <button
                           type="button"
@@ -912,11 +862,90 @@ export const KanjiFormPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Section 4: Latihan Membaca */}
+                {/* Section 4: e. Hubungan Makna Antar Kanji */}
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                  <div className="border-b border-outline-variant/20 pb-2 flex justify-between items-center">
+                    <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-2">
+                      <Icon name="account_tree" className="text-primary text-base" />
+                      4. e. Hubungan Makna Antar Kanji
+                    </h4>
+                  </div>
+
+                  <p className="text-xs text-slate-500 font-medium">
+                    Isi penjelasan breakdown kanji penyusun dan hubungan makna untuk setiap kata majemuk (Jukugo) terdaftar.
+                  </p>
+
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1.5 sidebar-scroll">
+                    {jukugos.length === 0 || jukugos.every(j => !j.word.trim()) ? (
+                      <p className="text-slate-400 text-xs italic font-medium py-3 text-center">
+                        Belum ada Jukugo terdaftar. Tambahkan Jukugo di Section 3 terlebih dahulu.
+                      </p>
+                    ) : (
+                      jukugos.map((j, idx) => (
+                        <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex flex-col gap-2.5">
+                          <div className="flex items-center justify-between border-b border-slate-200/50 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-primary/10 text-primary font-bold text-[10px] flex items-center justify-center">
+                                {idx + 1}
+                              </span>
+                              <span className="font-bold text-xs text-slate-800">
+                                {j.word || `Jukugo #${idx + 1}`}
+                              </span>
+                              {j.reading && (
+                                <span className="text-[11px] text-slate-500">({j.reading})</span>
+                              )}
+                            </div>
+                            {j.meaning && (
+                              <span className="text-[10px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-md">
+                                {j.meaning}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] uppercase font-bold text-slate-500">
+                              Breakdown Kanji (e. Hubungan Makna)
+                            </label>
+                            <input
+                              type="text"
+                              value={j.kanjiBreakdown || ""}
+                              onChange={(e) => {
+                                const newJ = [...jukugos];
+                                newJ[idx].kanjiBreakdown = e.target.value;
+                                setJukugos(newJ);
+                              }}
+                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                              placeholder="Contoh: 試 : Menguji, 験 : Memverifikasi"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] uppercase font-bold text-slate-500">
+                              Penjelasan Hubungan Makna Jukugo
+                            </label>
+                            <textarea
+                              value={j.explanation || ""}
+                              onChange={(e) => {
+                                const newJ = [...jukugos];
+                                newJ[idx].explanation = e.target.value;
+                                setJukugos(newJ);
+                              }}
+                              rows={2}
+                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none leading-relaxed"
+                              placeholder="Contoh: Hubungan makna antara kanji 試 dan 験 adalah..."
+                            />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Section 5: Latihan Membaca */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
                   <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary">
-                      4. Latihan Membaca (Speech-to-Text)
+                      5. Latihan Membaca (Speech-to-Text)
                     </h4>
                     <button
                       type="button"
@@ -993,11 +1022,11 @@ export const KanjiFormPage: React.FC = () => {
 
             </div>
 
-            {/* Section 5: Daftar Kuis Evaluasi Kanji (Full Width) */}
+            {/* Section 6: Daftar Kuis Evaluasi Kanji (Full Width) */}
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-6 animate-scale-up">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  5. Daftar Kuis Evaluasi Kanji
+                  6. Daftar Kuis Evaluasi Kanji
                 </h4>
                 <span className="text-xs text-slate-400 font-medium">{quizQuestions.length} soal total</span>
               </div>
@@ -1198,11 +1227,11 @@ export const KanjiFormPage: React.FC = () => {
               })}
             </div>
 
-            {/* Section 6: Peta Semantik & Hubungan Kata (Full Width) */}
+            {/* Section 7: Peta Semantik & Hubungan Kata (Full Width) */}
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 w-full animate-fade-in">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  6. Peta Semantik & Hubungan Kata
+                  7. Peta Semantik & Hubungan Kata
                 </h4>
                 <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
                   <button
