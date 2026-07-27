@@ -175,6 +175,45 @@ const AUTO_FILL_DICT: Record<string, { romaji: string; translation: string }> = 
   }
 };
 
+const defaultKanjiMetadata: Record<string, { bushuu: string; onyomi: string; kunyomi: string; baseMeaning: string }> = {
+  "試": {
+    bushuu: "言",
+    onyomi: "シ",
+    kunyomi: "ためす",
+    baseMeaning: "Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil (Kanjipedia)"
+  },
+  "験": {
+    bushuu: "馬",
+    onyomi: "ケン、ゲン",
+    kunyomi: "-",
+    baseMeaning: "Mengalami, membuktikan, memverifikasi sesuatu melalui pengalaman atau pun pengujian (kanji pedia)"
+  },
+  "問": {
+    bushuu: "口",
+    onyomi: "モン",
+    kunyomi: "と（う）、と（い）",
+    baseMeaning: "Bertanya, mempertanyakan, menanyakan, atau mempermasalahkan sesuatu (Kanji Pedia)"
+  },
+  "題": {
+    bushuu: "頁 (Oogai/Kepala, halaman)",
+    onyomi: "ダイ",
+    kunyomi: "-",
+    baseMeaning: "Topik, judul, tema, dan pokok bahasan yang menjadi objek pembicaraan atau pembelajaran (Kanji Pedia)"
+  },
+  "答": {
+    bushuu: "竹 (Takekanmuri) Radikal Bambu",
+    onyomi: "トウ",
+    kunyomi: "こた（える）",
+    baseMeaning: "Memberikan jawaban, memberikan respons, atau menyampaikan balasan terhadap suatu pertanyaan maupun permintaan."
+  },
+  "点": {
+    bushuu: "灬 (Rengokawa/Empat titik fire)",
+    onyomi: "テン",
+    kunyomi: "つ（く）、つ（ける）",
+    baseMeaning: "Penilaian, titik lokasi, sudut pandang, atau poin penting dalam evaluasi (Kanji Pedia)"
+  }
+};
+
 export const KanjiFormPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -197,6 +236,18 @@ export const KanjiFormPage: React.FC = () => {
   const [kanjiOnyomi, setKanjiOnyomi] = useState("");
   const [kanjiKunyomi, setKanjiKunyomi] = useState("");
   const [kanjiBaseMeaning, setKanjiBaseMeaning] = useState("");
+
+  // Helper when user types or selects a character
+  const applyCharacterDefaults = (char: string) => {
+    setKanjiChar(char);
+    if (defaultKanjiMetadata[char]) {
+      const defs = defaultKanjiMetadata[char];
+      if (!kanjiBushuu) setKanjiBushuu(defs.bushuu);
+      if (!kanjiOnyomi) setKanjiOnyomi(defs.onyomi);
+      if (!kanjiKunyomi) setKanjiKunyomi(defs.kunyomi);
+      if (!kanjiBaseMeaning) setKanjiBaseMeaning(defs.baseMeaning);
+    }
+  };
 
   
   // Random border initialization helper
@@ -298,19 +349,20 @@ export const KanjiFormPage: React.FC = () => {
         if (kanjiId) {
           // Edit mode: fetch all kanjis and find the matches
           const allKanjis = await api.admin.kanjis.list();
-          const target = allKanjis.find((k: any) => k.id === kanjiId);
+          const target = allKanjis.find((k: any) => Number(k.id) === Number(kanjiId));
           if (!target) {
             setError("Karakter Kanji tidak ditemukan.");
             return;
           }
           
+          const defs = defaultKanjiMetadata[target.character] || {};
           setKanjiChar(target.character);
           setKanjiRomaji(target.romaji);
           setKanjiMeaning(target.meaning);
-          setKanjiBushuu(target.bushuu || "");
-          setKanjiOnyomi(target.onyomi || "");
-          setKanjiKunyomi(target.kunyomi || "");
-          setKanjiBaseMeaning(target.baseMeaning || "");
+          setKanjiBushuu(target.bushuu || defs.bushuu || "");
+          setKanjiOnyomi(target.onyomi || defs.onyomi || "");
+          setKanjiKunyomi(target.kunyomi || defs.kunyomi || "");
+          setKanjiBaseMeaning(target.baseMeaning || defs.baseMeaning || target.meaning || "");
 
           setKanjiBorder(target.border || "border-l-4 border-primary");
           
@@ -476,7 +528,7 @@ export const KanjiFormPage: React.FC = () => {
   }, [nodes]);
 
   const handleCharInput = (val: string) => {
-    setKanjiChar(val);
+    applyCharacterDefaults(val);
     setNodes((prev) =>
       prev.map((n) => (n.type === "root" ? { ...n, character: val } : n))
     );
