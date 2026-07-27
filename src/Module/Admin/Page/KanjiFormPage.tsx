@@ -869,39 +869,101 @@ export const KanjiFormPage: React.FC = () => {
                       <Icon name="account_tree" className="text-primary text-base" />
                       4. e. Hubungan Makna Antar Kanji
                     </h4>
+                    <button
+                      type="button"
+                      onClick={addJukugoRow}
+                      className="px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-0.5"
+                    >
+                      <Icon name="add" className="text-xs" />
+                      Hubungan Makna
+                    </button>
                   </div>
 
                   <p className="text-xs text-slate-500 font-medium">
-                    Isi penjelasan breakdown kanji penyusun dan hubungan makna untuk setiap kata majemuk (Jukugo) terdaftar.
+                    Isi rincian kata majemuk, hiragana, breakdown kanji penyusun, dan penjelasan hubungan makna.
                   </p>
 
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1.5 sidebar-scroll">
-                    {jukugos.length === 0 || jukugos.every(j => !j.word.trim()) ? (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1.5 sidebar-scroll">
+                    {jukugos.length === 0 ? (
                       <p className="text-slate-400 text-xs italic font-medium py-3 text-center">
-                        Belum ada Jukugo terdaftar. Tambahkan Jukugo di Section 3 terlebih dahulu.
+                        Belum ada data Hubungan Makna. Klik "+ Hubungan Makna" di atas untuk menambah.
                       </p>
                     ) : (
                       jukugos.map((j, idx) => (
-                        <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex flex-col gap-2.5">
+                        <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex flex-col gap-3 relative animate-scale-up">
+                          {/* Card Sub-header */}
                           <div className="flex items-center justify-between border-b border-slate-200/50 pb-2">
                             <div className="flex items-center gap-2">
                               <span className="w-5 h-5 rounded-full bg-primary/10 text-primary font-bold text-[10px] flex items-center justify-center">
                                 {idx + 1}
                               </span>
                               <span className="font-bold text-xs text-slate-800">
-                                {j.word || `Jukugo #${idx + 1}`}
+                                {j.word || `Item #${idx + 1}`}
                               </span>
                               {j.reading && (
                                 <span className="text-[11px] text-slate-500">({j.reading})</span>
                               )}
                             </div>
-                            {j.meaning && (
-                              <span className="text-[10px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-md">
-                                {j.meaning}
-                              </span>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeJukugoRow(idx)}
+                              disabled={jukugos.length === 1}
+                              className="text-error bg-transparent hover:bg-error-container/20 p-1.5 rounded-lg cursor-pointer border-none disabled:opacity-30"
+                              title="Hapus Item"
+                            >
+                              <Icon name="delete" className="text-base block" />
+                            </button>
                           </div>
 
+                          {/* Row 1: Jukugo, Hiragana, & Arti */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">Kata Jukugo</label>
+                              <input
+                                type="text"
+                                value={j.word}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].word = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
+                                placeholder="Contoh: 試験"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">Kata Hiragana</label>
+                              <input
+                                type="text"
+                                value={j.reading}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].reading = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: しけん"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">Arti / Terjemahan</label>
+                              <input
+                                type="text"
+                                value={j.meaning}
+                                onChange={(e) => {
+                                  const newJ = [...jukugos];
+                                  newJ[idx].meaning = e.target.value;
+                                  setJukugos(newJ);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: Ujian"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Row 2: Breakdown Kanji */}
                           <div className="flex flex-col gap-1">
                             <label className="text-[9px] uppercase font-bold text-slate-500">
                               Breakdown Kanji (e. Hubungan Makna)
@@ -915,10 +977,11 @@ export const KanjiFormPage: React.FC = () => {
                                 setJukugos(newJ);
                               }}
                               className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                              placeholder="Contoh: 試 : Menguji, 験 : Memverifikasi"
+                              placeholder="Contoh: 試 : Menguji | 験 : Memverifikasi hasil"
                             />
                           </div>
 
+                          {/* Row 3: Penjelasan Hubungan Makna Jukugo */}
                           <div className="flex flex-col gap-1">
                             <label className="text-[9px] uppercase font-bold text-slate-500">
                               Penjelasan Hubungan Makna Jukugo
@@ -932,7 +995,7 @@ export const KanjiFormPage: React.FC = () => {
                               }}
                               rows={2}
                               className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none leading-relaxed"
-                              placeholder="Contoh: Hubungan makna antara kanji 試 dan 験 adalah..."
+                              placeholder="Contoh: Hubungan makna antara kanji 試 dan 験 menjadi..."
                             />
                           </div>
                         </div>
