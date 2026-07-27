@@ -1010,7 +1010,7 @@ export const KanjiFormPage: React.FC = () => {
                               />
                             </div>
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">Pembacaan (Reading)</label>
+                              <label className="text-[10px] uppercase font-bold text-slate-500">Kata Hiragana</label>
                               <input
                                 type="text"
                                 value={j.reading}
@@ -1035,38 +1035,6 @@ export const KanjiFormPage: React.FC = () => {
                                 }}
                                 className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
                                 placeholder="Ujian"
-                              />
-                            </div>
-                          </div>
-
-                          {/* e. Hubungan Makna antar kanji */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/50">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-[#8f0020]">Breakdown Kanji (e. Hubungan Makna)</label>
-                              <input
-                                type="text"
-                                value={j.kanjiBreakdown || ""}
-                                onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].kanjiBreakdown = e.target.value;
-                                  setJukugos(newJ);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: 試 : Menguji | 験 : Memverifikasi hasil"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-[#8f0020]">Penjelasan Hubungan Makna Jukugo</label>
-                              <textarea
-                                value={j.explanation || ""}
-                                onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].explanation = e.target.value;
-                                  setJukugos(newJ);
-                                }}
-                                rows={2}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none leading-relaxed"
-                                placeholder="Contoh: Hubungan makna antara kanji 試 dan 験 menjadi 試験 menunjukan..."
                               />
                             </div>
                           </div>

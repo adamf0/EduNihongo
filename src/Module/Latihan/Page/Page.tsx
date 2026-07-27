@@ -1634,53 +1634,34 @@ export const LatihanPage: React.FC = () => {
                   </span>
                   {renderXpBadge(!!kanjiData?.xpClaimed?.lesson, 5)}
                 </h4>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {jukugos.map((j: any, idx: number) => (
                     <div
                       key={idx}
-                      className="animate-jukugo-card border border-slate-100 hover:border-[#8f0020]/20 bg-slate-50/20 hover:bg-white rounded-2xl p-4 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col gap-3 group cursor-default"
+                      className="animate-jukugo-card border border-slate-100 hover:border-[#8f0020]/20 bg-slate-50/20 hover:bg-white rounded-2xl p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-between group cursor-default"
                       style={{ animationDelay: `${idx * 60}ms` }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col gap-1 text-left">
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-serif text-xl font-bold text-slate-800 tracking-wide select-all">
-                              {j.word}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-bold">
-                              ({j.reading})
-                            </span>
-                          </div>
-                          <span className="text-xs font-bold text-[#8f0020] leading-snug">
-                            {j.meaning}
+                      <div className="flex flex-col gap-1 text-left">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="font-serif text-xl font-bold text-slate-800 tracking-wide select-all">
+                            {j.word}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-bold">
+                            ({j.reading})
                           </span>
                         </div>
-
-                        <button
-                          onClick={() => playAudio(j.word)}
-                          className="w-9 h-9 rounded-full bg-white border border-slate-100 hover:bg-[#8f0020] hover:text-white text-slate-500 flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 shrink-0"
-                          title="Putar Suara"
-                        >
-                          <Volume2 className="w-4.5 h-4.5" />
-                        </button>
+                        <span className="text-xs font-bold text-[#8f0020] leading-snug">
+                          {j.meaning}
+                        </span>
                       </div>
 
-                      {/* e. Hubungan Makna antar kanji */}
-                      {(j.kanjiBreakdown || j.explanation) && (
-                        <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-3 text-xs space-y-1.5">
-                          {j.kanjiBreakdown && (
-                            <div className="font-bold text-amber-950 flex items-center gap-1.5 text-[11px]">
-                              <span className="px-1.5 py-0.5 rounded bg-amber-200/80 text-amber-950 text-[10px] uppercase font-bold shrink-0">e. Breakdown</span>
-                              <span>{j.kanjiBreakdown}</span>
-                            </div>
-                          )}
-                          {j.explanation && (
-                            <p className="text-slate-700 text-[11px] leading-relaxed italic border-t border-amber-200/40 pt-1.5 mt-1">
-                              "{j.explanation}"
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      <button
+                        onClick={() => playAudio(j.word)}
+                        className="w-9 h-9 rounded-full bg-white border border-slate-100 hover:bg-[#8f0020] hover:text-white text-slate-500 flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 shrink-0"
+                        title="Putar Suara"
+                      >
+                        <Volume2 className="w-4.5 h-4.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
