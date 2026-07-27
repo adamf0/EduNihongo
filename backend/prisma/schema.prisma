@@ -65,19 +65,17 @@ model UserModuleProgress {
 }
 
 model Kanji {
-  id           Int                 @id @default(autoincrement())
-  character    String              @unique
-  romaji       String
-  meaning      String              @db.Text
-  jlpt         String?
-  bushuu       String?
-  strokeCount  Int?
-  onyomi       String?
-  kunyomi      String?
-  baseMeaning  String?             @db.Text
-  isJukugo     Boolean             @default(false)
-  border       String?
-  moduleId     Int?
+  id             Int                 @id @default(autoincrement())
+  character      String              @unique
+  romaji         String
+  meaning        String              @db.Text
+  bushuu         String?
+  onyomi         String?
+  kunyomi        String?
+  baseMeaning    String?             @db.Text
+  isJukugo       Boolean             @default(false)
+  border         String?
+  moduleId       Int?
   quizData       String?             @db.Text
   reflectionData String?             @db.Text
   etymologies    Etymology[]

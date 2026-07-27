@@ -193,9 +193,7 @@ export const KanjiFormPage: React.FC = () => {
   const [kanjiChar, setKanjiChar] = useState("");
   const [kanjiRomaji, setKanjiRomaji] = useState("");
   const [kanjiMeaning, setKanjiMeaning] = useState("");
-  const [kanjiJlpt, setKanjiJlpt] = useState("");
   const [kanjiBushuu, setKanjiBushuu] = useState("");
-  const [kanjiStrokeCount, setKanjiStrokeCount] = useState("");
   const [kanjiOnyomi, setKanjiOnyomi] = useState("");
   const [kanjiKunyomi, setKanjiKunyomi] = useState("");
   const [kanjiBaseMeaning, setKanjiBaseMeaning] = useState("");
@@ -309,9 +307,7 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiChar(target.character);
           setKanjiRomaji(target.romaji);
           setKanjiMeaning(target.meaning);
-          setKanjiJlpt(target.jlpt || "");
           setKanjiBushuu(target.bushuu || "");
-          setKanjiStrokeCount(target.strokeCount ? String(target.strokeCount) : "");
           setKanjiOnyomi(target.onyomi || "");
           setKanjiKunyomi(target.kunyomi || "");
           setKanjiBaseMeaning(target.baseMeaning || "");
@@ -378,9 +374,7 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiChar("");
           setKanjiRomaji("");
           setKanjiMeaning("");
-          setKanjiJlpt("");
           setKanjiBushuu("");
-          setKanjiStrokeCount("");
           setKanjiOnyomi("");
           setKanjiKunyomi("");
           setKanjiBaseMeaning("");
@@ -645,9 +639,7 @@ export const KanjiFormPage: React.FC = () => {
       character: kanjiChar,
       romaji: kanjiRomaji,
       meaning: kanjiMeaning,
-      jlpt: kanjiJlpt,
       bushuu: kanjiBushuu,
-      strokeCount: kanjiStrokeCount,
       onyomi: kanjiOnyomi,
       kunyomi: kanjiKunyomi,
       baseMeaning: kanjiBaseMeaning,
@@ -850,16 +842,6 @@ export const KanjiFormPage: React.FC = () => {
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Tingkat JLPT</label>
-                      <input
-                        type="text"
-                        value={kanjiJlpt}
-                        onChange={(e) => setKanjiJlpt(e.target.value)}
-                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
-                        placeholder="Contoh: JLPT N4"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
                       <label className="font-label-sm text-label-sm font-semibold text-on-surface">Bushuu / Radical</label>
                       <input
                         type="text"
@@ -867,16 +849,6 @@ export const KanjiFormPage: React.FC = () => {
                         onChange={(e) => setKanjiBushuu(e.target.value)}
                         className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
                         placeholder="Contoh: 言"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Jumlah Coretan</label>
-                      <input
-                        type="number"
-                        value={kanjiStrokeCount}
-                        onChange={(e) => setKanjiStrokeCount(e.target.value)}
-                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
-                        placeholder="Contoh: 13"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">

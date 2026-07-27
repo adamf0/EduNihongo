@@ -1605,16 +1605,8 @@ export const LatihanPage: React.FC = () => {
                         <td className="p-3.5 font-semibold text-slate-900">{kanjiData?.meaning}</td>
                       </tr>
                       <tr>
-                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">JLPT</td>
-                        <td className="p-3.5 font-semibold">{kanjiData?.jlpt || "JLPT N4"}</td>
-                      </tr>
-                      <tr>
                         <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Bushuu / Radical</td>
                         <td className="p-3.5 font-bold text-slate-900">{kanjiData?.bushuu || "-"}</td>
-                      </tr>
-                      <tr>
-                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Jumlah Coretan</td>
-                        <td className="p-3.5 font-semibold">{kanjiData?.strokeCount ? `${kanjiData.strokeCount}` : "-"}</td>
                       </tr>
                       <tr>
                         <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Onyomi</td>
