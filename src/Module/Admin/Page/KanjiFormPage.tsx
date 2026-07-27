@@ -47,13 +47,15 @@ export const KanjiFormPage: React.FC = () => {
 
   // Virtual Keyboard state
   const [showKeyboard, setShowKeyboard] = useState(false);
-  const [keyboardTab, setKeyboardTab] = useState<"N5" | "N4" | "N3" | "Radical">("N5");
+  const [keyboardTab, setKeyboardTab] = useState<"N5" | "N4" | "N3" | "N2" | "N1" | "Radical">("N5");
   const keyboardRef = useRef<HTMLDivElement>(null);
 
   const kanjiLists = {
-    N5: ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "百", "千", "万", "円", "口", "目", "耳", "手", "足", "力", "人", "子", "女", "男", "先", "生", "学", "校", "年", "日", "月", "火", "水", "木", "金", "土", "本", "東", "西", "南", "北", "前", "後", "上", "下", "左", "右", "中", "大", "小", "長", "高", "安", "新", "古", "多", "少", "行", "来", "友", "会", "社", "父", "母", "毎", "書", "読", "聞", "話", "見", "食", "食", "飲", "買"],
-    N4: ["会", "同", "事", "自", "社", "発", "者", "地", "業", "方", "新", "場", "員", "立", "開", "手", "代", "力", "问", "明", "京", "国", "画", "聞", "読", "書", "通", "走", "歩", "旅", "屋", "店", "物", "空", "雨", "風", "林", "森", "花", "海", "鳥", "牛", "馬", "魚", "米", "茶"],
+    N5: ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "百", "千", "万", "円", "口", "目", "耳", "手", "足", "力", "人", "子", "女", "男", "先", "生", "学", "校", "年", "日", "月", "火", "水", "木", "金", "土", "本", "東", "西", "南", "北", "前", "後", "上", "下", "左", "右", "中", "大", "小", "長", "高", "安", "新", "古", "多", "少", "行", "来", "友", "会", "社", "父", "母", "毎", "書", "読", "聞", "話", "見", "食", "飲", "買"],
+    N4: ["会", "同", "事", "自", "社", "発", "者", "地", "業", "方", "新", "場", "員", "立", "開", "手", "代", "力", "問", "明", "京", "国", "画", "聞", "読", "書", "通", "走", "歩", "旅", "屋", "店", "物", "空", "雨", "風", "林", "森", "花", "海", "鳥", "牛", "馬", "魚", "米", "茶"],
     N3: ["情", "報", "感", "覚", "最", "初", "的", "政", "治", "経", "済", "歴", "史", "辞", "宿", "題", "寒", "暑", "薬", "医", "術", "運", "動", "転", "働", "痛", "悲", "怒", "考", "信", "想", "調", "査", "果", "戦", "争", "面", "接", "練", "習"],
+    N2: ["党", "協", "総", "区", "領", "県", "設", "改", "府", "重", "委", "文", "実", "制", "基", "各", "長", "機", "演", "選", "関", "点", "権", "警", "産", "判", "項", "公", "不", "認", "市", "決", "使", "表", "主", "理", "退", "企", "姿", "管", "省", "相"],
+    N1: ["氏", "統", "保", "第", "義", "宗", "球", "断", "済", "個", "害", "特", "割", "難", "補", "職", "護", "課", "論", "過", "政", "積", "適", "規", "型", "務", "構", "資", "告", "際", "模", "施", "導"],
     Radical: ["心", "門", "木", "氵", "扌", "火", "土", "女", "子", "糸", "言", "金", "貝", "車", "雨", "疒", "辶", "人", "口", "日", "月", "力", "手", "目", "耳", "足"]
   };
 
@@ -604,7 +606,7 @@ export const KanjiFormPage: React.FC = () => {
 
                           {/* Tabs */}
                           <div className="flex gap-1 border-b border-slate-100 pb-1">
-                            {(["N5", "N4", "N3", "Radical"] as const).map((tab) => (
+                            {(["N5", "N4", "N3", "N2", "N1", "Radical"] as const).map((tab) => (
                               <button
                                 key={tab}
                                 type="button"
@@ -963,25 +965,7 @@ export const KanjiFormPage: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Row 2: Breakdown Kanji */}
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[9px] uppercase font-bold text-slate-500">
-                              Breakdown Kanji (e. Hubungan Makna)
-                            </label>
-                            <input
-                              type="text"
-                              value={j.kanjiBreakdown || ""}
-                              onChange={(e) => {
-                                const newJ = [...jukugos];
-                                newJ[idx].kanjiBreakdown = e.target.value;
-                                setJukugos(newJ);
-                              }}
-                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                              placeholder="Contoh: 試 : Menguji | 験 : Memverifikasi hasil"
-                            />
-                          </div>
-
-                          {/* Row 3: Penjelasan Hubungan Makna Jukugo */}
+                          {/* Row 2: Penjelasan Hubungan Makna Jukugo */}
                           <div className="flex flex-col gap-1">
                             <label className="text-[9px] uppercase font-bold text-slate-500">
                               Penjelasan Hubungan Makna Jukugo
