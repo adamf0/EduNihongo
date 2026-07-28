@@ -61,7 +61,7 @@ const kanjiInfo: Record<string, {
         type: "unscramble",
         question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nあったので・を・が・昨日・休みました・試合・大学",
         words: ["あったので", "を", "が", "昨日", "休みました", "試合", "大学"],
-        correctOrder: ["きのう", "試合", "が", "あったので", "大学", "を", "休みました"],
+        correctOrder: ["昨日", "試合", "が", "あったので", "大学", "を", "休みました"],
         correctAnswer: 0,
         explanation: "Jawaban tepat: きのう試合があったので、大学を休みました。"
       },

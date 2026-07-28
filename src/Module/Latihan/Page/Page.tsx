@@ -828,7 +828,11 @@ export const LatihanPage: React.FC = () => {
 
     const nextIdx = unscrambleSelected.length;
     const correctOrder = currentQ.correctOrder || [];
-    const cleanWord = (w: string) => (w || "").replace(/[。,.、\s]/g, "").trim();
+    const cleanWord = (w: string) => {
+      let str = (w || "").replace(/[。,.、\s]/g, "").trim();
+      if (str === "きのう" || str === "昨日") return "昨日";
+      return str;
+    };
     const targetWord = correctOrder[nextIdx] || "";
 
     if (cleanWord(word) === cleanWord(targetWord)) {
