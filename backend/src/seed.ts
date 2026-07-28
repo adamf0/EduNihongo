@@ -962,19 +962,21 @@ async function main() {
         }))
       });
 
+      const cleanArti = (val: string) => {
+        if (!val) return "";
+        let cleaned = val.trim();
+        while (/^[^\s:：；;]+?\s*[:：；;]\s*/i.test(cleaned)) {
+          cleaned = cleaned.replace(/^[^\s:：；;]+?\s*[:：；;]\s*/i, "").trim();
+        }
+        return cleaned;
+      };
+
       // Create semanticRelation records
       const semanticRelData = info.jukugos.map(j => {
         const j1 = j.word ? j.word.charAt(0) : "";
-        let j1a = j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[0]?.trim() || "" : "";
-        if (j1a.includes(":") || j1a.includes("：")) {
-          j1a = j1a.split(/[:：]/)[1]?.trim() || j1a;
-        }
-
+        const j1a = j.kanjiBreakdown ? cleanArti(j.kanjiBreakdown.split("|")[0]?.trim() || "") : "";
         const j2 = j.word && j.word.length > 1 ? j.word.charAt(1) : "";
-        let j2a = j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[1]?.trim() || "" : "";
-        if (j2a.includes(":") || j2a.includes("：")) {
-          j2a = j2a.split(/[:：]/)[1]?.trim() || j2a;
-        }
+        const j2a = j.kanjiBreakdown ? cleanArti(j.kanjiBreakdown.split("|")[1]?.trim() || "") : "";
 
         return {
           kanjiId: kanji.id,
