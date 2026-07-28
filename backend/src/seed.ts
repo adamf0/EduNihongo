@@ -30,7 +30,7 @@ const kanjiInfo: Record<string, {
         question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nありました・試合・きのう・が",
         words: ["ありました", "試合", "きのう", "が"],
         correctOrder: ["きのう", "試合", "が", "ありました。"],
-        correctAnswer: "きのう試合がありました。",
+        correctAnswer: 0,
         explanation: "Jawaban tepat: きのう試合がありました。"
       },
       {
@@ -38,7 +38,7 @@ const kanjiInfo: Record<string, {
         question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nスーパーで・試食・しました・新しいパンを",
         words: ["スーパーで", "試食", "しました", "新しいパンを"],
         correctOrder: ["スーパーで", "新しいパンを", "試食", "しました。"],
-        correctAnswer: "スーパーで新しいパンを試食しました。",
+        correctAnswer: 0,
         explanation: "Jawaban tepat: スーパーで新しいパンを試食しました。"
       },
       {
@@ -46,7 +46,7 @@ const kanjiInfo: Record<string, {
         question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\n試飲・けさ・ジャム・しました・田中さん・を・は",
         words: ["試飲", "けさ", "ジャム", "しました", "田中さん", "を", "は"],
         correctOrder: ["田中さん", "は", "けさ", "ジャム", "を", "試飲", "しました。"],
-        correctAnswer: "田中さんはけさジャムを試飲しました。",
+        correctAnswer: 0,
         explanation: "Jawaban tepat: 田中さんはけさジャムを試飲しました。"
       },
       {
@@ -54,7 +54,7 @@ const kanjiInfo: Record<string, {
         question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nします・前に・を・試乗・買う・新しい車・まず",
         words: ["します", "前に", "を", "試乗", "買う", "新しい車", "まず"],
         correctOrder: ["新しい車", "を", "買う", "前に、", "まず", "試乗", "します。"],
-        correctAnswer: "新しい車を買う前に、まず試乗します。",
+        correctAnswer: 0,
         explanation: "Jawaban tepat: 新しい車を買う前に、まず試乗します。"
       },
       {
@@ -62,7 +62,7 @@ const kanjiInfo: Record<string, {
         question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nあったので・を・が・昨日・休みました・試合・大学",
         words: ["あったので", "を", "が", "昨日", "休みました", "試合", "大学"],
         correctOrder: ["きのう", "試合", "が", "あったので、", "大学", "を", "休みました。"],
-        correctAnswer: "きのう試合があったので、大学を休みました。",
+        correctAnswer: 0,
         explanation: "Jawaban tepat: きのう試合があったので、大学を休みました。"
       },
       {

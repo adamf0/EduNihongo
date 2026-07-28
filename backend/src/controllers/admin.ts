@@ -162,12 +162,17 @@ const prepareQuizForDb = (kanjiId: number, rawQuizzes: any[]) => {
       opts = [q.optionA || "", q.optionB || "", q.optionC || "", q.optionD || ""].filter(Boolean);
     }
 
+    let corrAns = q.correctAnswer;
+    if (q.type === "unscramble" && (corrAns === undefined || corrAns === null || (typeof corrAns === "string" && isNaN(Number(corrAns))))) {
+      corrAns = "0";
+    }
+
     return {
       kanjiId,
       type: q.type || "multiple",
       question: q.question || "",
       options: stringifyIfNeeded(opts),
-      correctAnswer: stringifyIfNeeded(q.correctAnswer),
+      correctAnswer: stringifyIfNeeded(corrAns),
       words: stringifyIfNeeded(q.words),
       correctOrder: stringifyIfNeeded(q.correctOrder),
       targetWord: q.targetWord || null,
