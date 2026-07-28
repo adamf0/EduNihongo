@@ -998,7 +998,7 @@ export const KanjiFormPage: React.FC = () => {
               {/* Kolom Kiri: Info Dasar & Etimologi */}
               <div className="flex flex-col gap-6 w-full">
                 {/* Section 1: Basic Info */}
-                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up h-[450px] justify-between">
                   <h4 className="font-label-lg text-label-lg font-bold border-b border-outline-variant/20 pb-1 text-primary">
                     1. Informasi Kanji
                   </h4>
@@ -1182,7 +1182,7 @@ export const KanjiFormPage: React.FC = () => {
               {/* Kolom Kanan: 3. Daftar Jukugo (Kata Majemuk) */}
               <div className="flex flex-col gap-6 w-full">
                 {/* Section 3: Daftar Jukugo (Kata Majemuk) */}
-                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up h-[450px]">
                   <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
                       3. Daftar Jukugo (Kata Majemuk)
@@ -1197,7 +1197,7 @@ export const KanjiFormPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="flex flex-col gap-3 max-h-[450px] overflow-y-auto pr-1.5 sidebar-scroll">
+                  <div className="flex flex-col gap-3 flex-grow overflow-y-auto pr-1.5 sidebar-scroll">
                     {jukugos.map((j, idx) => (
                       <div
                         key={idx}
