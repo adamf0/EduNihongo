@@ -1650,14 +1650,31 @@ async function main() {
         `Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ${char}?`
       ];
 
+      const bushuuFallbackMap: Record<string, string> = {
+        '試': '言 (Kata / Bicara)', '験': '馬 (Kuda / Uji)', '問': '口 (Mulut / Tanya)', '題': '頁 (Kepala / Halaman)',
+        '答': '竹 (Bambu / Jawaban)', '点': '黒 (Hitam / Titik)', '議': '言 (Kata / Musyawarah)', '論': '言 (Kata / Pendapat)',
+        '談': '言 (Kata / Pembicaraan)', '討': '言 (Kata / Membahas)', '見': '見 (Melihat)', '意': '心 (Hati / Pikiran)',
+        '経': '糸 (Benang / Melalui)', '昔': '日 (Matahari / Lampau)', '歴': '止 (Berhenti / Sejarah)', '史': '口 (Mulut / Sejarah)',
+        '期': '月 (Bulan / Periode)', '間': '門 (Pintu / Antara)', '変': '夂 (Melangkah / Berubah)', '化': '匕 (Sendok / Berubah)',
+        '発': '癶 (Jejak Kaki / Memancar)', '展': '尸 (Tubuh / Berkembang)', '進': '辶 (Jalan / Maju)', '成': '戈 (Tombak / Menjadi)',
+        '認': '言 (Kata / Mengakui)', '識': '言 (Kata / Pengetahuan)', '判': '刀 (Pedang / Menilai)', '断': '斤 (Kapak / Memutuskan)',
+        '考': '老 (Tua / Berpikir)', '想': '心 (Hati / Bayangan)', '感': '心 (Hati / Perasaan)', '覚': '見 (Melihat / Sadar)',
+        '心': '心 (Hati)', '志': '心 (Hati / Keinginan)', '態': '心 (Hati / Sikap)', '愛': '心 (Hati / Cinta)',
+        '係': '人 (Manusia / Hubungan)', '制': '刀 (Pedang / Aturan)', '関': '門 (Pintu / Hubungan)', '団': '囗 (Kandang / Kelompok)',
+        '組': '糸 (Benang / Menyusun)', '協': '十 (Sepuluh / Kerja Sama)', '理': '玉 (Permata / Logika)', '解': '角 (Tanduk / Memahami)',
+        '証': '言 (Kata / Bukti)', '明': '日 (Matahari / Terang)', '説': '言 (Kata / Menjelaskan)', '拠': '手 (Tangan / Dasar)',
+        '財': '貝 (Kerang / Harta)', '済': '氵 (Air / Selesai)', '費': '貝 (Kerang / Biaya)', '消': '氵 (Air / Padam)',
+        '供': '人 (Manusia / Menyediakan)', '給': '糸 (Benang / Gaji)'
+      };
+
       const kanji = await prisma.kanji.create({
         data: {
           character: char,
           romaji: info.romaji,
           meaning: info.meaning,
-          bushuu: info.bushuu || null,
-          onyomi: info.onyomi || null,
-          kunyomi: info.kunyomi || null,
+          bushuu: info.bushuu || bushuuFallbackMap[char] || "-",
+          onyomi: info.onyomi || "-",
+          kunyomi: info.kunyomi || "-",
           baseMeaning: info.baseMeaning || info.meaning,
           reflectionData: JSON.stringify(info.reflectionData || defaultReflections),
           isJukugo: false,
