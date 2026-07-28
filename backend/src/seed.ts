@@ -230,18 +230,21 @@ const kanjiInfo: Record<string, {
     kunyomi: "こた（える）",
     baseMeaning: "Memberikan jawaban, memberikan respons, atau menyampaikan balasan terhadap suatu pertanyaan maupun permintaan.",
     jukugos: [
-      { word: "回答", reading: "かいとう", meaning: "Jawaban" },
-      { word: "解答", reading: "かいとう", meaning: "Jawaban soal" },
-      { word: "応答", reading: "おうとう", meaning: "Respon/tanggapan" },
-      { word: "問答", reading: "もんどう", meaning: "Tanya jawab" },
-      { word: "一問一答", reading: "いちもんいっとう", meaning: "Satu pertanyaan satu jawaban" },
-      { word: "答案", reading: "とうあん", meaning: "Lembar jawaban" },
-      { word: "正答", reading: "せいとう", meaning: "Jawaban benar" },
-      { word: "返答", reading: "へんとう", meaning: "Balasan/jawaban" },
-      { word: "答弁", reading: "とうべん", meaning: "Jawaban resmi/pernyataan resmi" },
-      { word: "自動応答", reading: "じどうおうとう", meaning: "Jawaban otomatis" },
-      { word: "応答時間", reading: "おうとうじかん", meaning: "Waktu respon" },
-      { word: "応答率", reading: "おうとうりつ", meaning: "Tingkat respon" }
+      { word: "回答", reading: "かいとう", meaning: "jawaban", kanjiBreakdown: "回 : mengembalikan | 答 : jawaban", explanation: "Hubungan makna antar kanji 回 dan 答, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"jawaban yang diberikan terhadap suatu pertanyaan atau perminataan informasi\" (kanji pedia, 2026)." },
+      { word: "解答", reading: "かいとう", meaning: "soal jawaban", kanjiBreakdown: "解 : menyelesaikan | 答 : jawaban", explanation: "Hubungan makna antar kanji 解 dan 答,  menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"jawaban yang digunakan untuk menyelesaikan soal atau permasalahan\"." },
+      { word: "応答", reading: "おうとう", meaning: "respons", kanjiBreakdown: "応 : menanggapi | 答 : jawaban", explanation: "Hubungan makna antar kanji 応dan 答, menunjukan bahwa gabungan kedua kanji itu  mengandung makna\"respons yang diberikan terhadap pertanyaan, panggilan, atau komunikasi\"." },
+      { word: "答案", reading: "とうあん", meaning: "lembar jawaban", kanjiBreakdown: "答 : jawaban | 案 : naskah", explanation: "Hubungan makna antar kanji 答 dan 案, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"lembar jawaban untuk menuliskan jawaban dalam ujian atau latihan\"" },
+      { word: "正答", reading: "せいとう", meaning: "jawaban benar", kanjiBreakdown: "正 : benar | 答 : jawaban", explanation: "Hubungan makna antar kanji 正 dan 答 menjadi 正答, menunjukan bahwa gabungan kedua kanji itu mengandung makna \"jawaban yang benar terhadap suatu pertanyaan atau soal\"." },
+      { word: "解答用紙", reading: "かいとうようし", meaning: "kertas jawaban", kanjiBreakdown: "解答 : jawaban | 用紙 : lembar kertas", explanation: "Hubungan makna antar kanji 解答 dan用紙 menjadi 解答用紙, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"sebuah lembaran resmi yang digunakan untuk menuliskan jawaban peserta ujian\"." },
+      { word: "返答", reading: "へんとう", meaning: "balasan", kanjiBreakdown: "返 : mengembalikan | 答 : jawaban", explanation: "Hubungan makna antar kanji  返 dan 答 menjadi　返答, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"jawaban atau balasan terhadap pertanyaan, suray, maupun pesan\"" },
+      { word: "口答", reading: "こうとう", meaning: "jawaban lisan", kanjiBreakdown: "口 : mulut | 答 : jawaban", explanation: "Hubungan makna antar kanji 口 dan 答 menjadi口答, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"jawaban yang disampaikan secara lisan\"" },
+      { word: "答弁", reading: "とうべん", meaning: "penjelasan resmi", kanjiBreakdown: "答 : menjawab | 弁 : penjelasan", explanation: "Hubungan makna antar kanji 答 dan 弁 menjadi　答弁, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \" jawaban resmi yang diberikan dalam rapat,siding atau pun forum\"." },
+      { word: "問答", reading: "もんどう", meaning: "tanya jawab", kanjiBreakdown: "問 : bertanya | 答 : menjawab", explanation: "Hubungan makna antar kanji 問 dan 答　menjadi問答, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"suatu kegiatan tanya jawab sebagai proses pembelajaran\"." },
+      { word: "一問一答", reading: "いちもんいっとう", meaning: "satu pertanyaan satu jawaban", kanjiBreakdown: "一問 : satu pertanyaan | 一答 : satu jawaban", explanation: "Hubungan makna antar kanji 一、問、一、dan答 menjadi 一問一答, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \" metode belajar yang menyajikan satu pertanyaan untuk satu jawaban\"." },
+      { word: "答申", reading: "とうしん", meaning: "rekomnedasi resmi", kanjiBreakdown: "答 : menjawab | 申 : menyampaikan", explanation: "Hubungan makna antar kanji 答 dan 申 menjadi 答申, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"jawaban resmi yang disampaikan kepada pihak yang meminta pertimbangan\"." },
+      { word: "自動応答", reading: "じどうおうとう", meaning: "jawaban otomatis", kanjiBreakdown: "自動 : otomatis | 応答 : respons", explanation: "Hubungan makna antar kanji 自動 dan 応答　menjadi 自動応答, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"jawaban yang diberikan secara otomatis oleh sistem komputer atau perangkat\"" },
+      { word: "応答時間", reading: "おうとうじかん", meaning: "waktu respons", kanjiBreakdown: "応答 : respons | 時間 : waktu", explanation: "Hubungan makna antar kanji  応答 dan 時間　menjadi応答時間, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \" lamanya waktu yang diperlukan seseorang atau sistem untuk memberikan jawaban\"." },
+      { word: "応答率", reading: "おうとうりつ", meaning: "tingkat respons", kanjiBreakdown: "応答 : respons | 率 : tingkat", explanation: "Hubungan makna antar kanji  応答 dan 率　menjadi応答率, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"presentase jumalah respons yang diterima dibanding jumlah pertanyaan\"." }
     ],
     examples: [
       {
