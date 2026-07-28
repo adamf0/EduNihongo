@@ -509,7 +509,9 @@ export const KanjiFormPage: React.FC = () => {
               : [{ character: "", romaji: "", detail: "" }],
           );
 
-          if (target.quizData) {
+          if (Array.isArray(target.quizzes) && target.quizzes.length > 0) {
+            setQuizQuestions(target.quizzes);
+          } else if (target.quizData) {
             try {
               setQuizQuestions(JSON.parse(target.quizData));
             } catch (e) {
@@ -924,10 +926,11 @@ export const KanjiFormPage: React.FC = () => {
       etymologies: etymologies.filter((et) => et.character.trim() !== ""),
       graphNodes: formattedNodes,
       graphEdges: formattedEdges,
+      quizzes: quizQuestions.filter((q) => q.question && q.question.trim() !== ""),
       quizData:
         quizQuestions.length > 0
           ? JSON.stringify(
-              quizQuestions.filter((q) => q.question.trim() !== ""),
+              quizQuestions.filter((q) => q.question && q.question.trim() !== ""),
             )
           : null,
       reflectionData:

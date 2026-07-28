@@ -259,12 +259,17 @@ model JobQueue {
 model Quiz {
   id            Int     @id @default(autoincrement())
   kanjiId       Int
+  type          String  @default("multiple")
   question      String  @db.Text
-  optionA       String
-  optionB       String
-  optionC       String
-  optionD       String
-  correctAnswer Int     @default(0)
+  options       String? @db.Text
+  correctAnswer String? @db.Text
+  words         String? @db.Text
+  correctOrder  String? @db.Text
+  targetWord    String? @db.Text
+  leftItems     String? @db.Text
+  rightItems    String? @db.Text
+  pairs         String? @db.Text
+  groups        String? @db.Text
   explanation   String? @db.Text
   kanjiRef      Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
 

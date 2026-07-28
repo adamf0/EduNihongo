@@ -103,6 +103,74 @@ export const deleteModule = async (req: Request, res: Response) => {
 
 // ================= KANJI CRUD =================
 
+const formatQuizFromDb = (q: any) => {
+  const parseJsonOrRaw = (val: any) => {
+    if (!val) return val;
+    if (typeof val === "string" && (val.startsWith("[") || val.startsWith("{"))) {
+      try {
+        return JSON.parse(val);
+      } catch (e) {
+        return val;
+      }
+    }
+    return val;
+  };
+
+  const parsedOptions = parseJsonOrRaw(q.options);
+  const parsedCorrectAnswer = parseJsonOrRaw(q.correctAnswer);
+
+  return {
+    id: q.id,
+    type: q.type || "multiple",
+    question: q.question || "",
+    options: Array.isArray(parsedOptions) ? parsedOptions : (parsedOptions ? [parsedOptions] : []),
+    optionA: Array.isArray(parsedOptions) ? (parsedOptions[0] || "") : "",
+    optionB: Array.isArray(parsedOptions) ? (parsedOptions[1] || "") : "",
+    optionC: Array.isArray(parsedOptions) ? (parsedOptions[2] || "") : "",
+    optionD: Array.isArray(parsedOptions) ? (parsedOptions[3] || "") : "",
+    correctAnswer: parsedCorrectAnswer,
+    words: parseJsonOrRaw(q.words),
+    correctOrder: parseJsonOrRaw(q.correctOrder),
+    targetWord: q.targetWord || "",
+    leftItems: parseJsonOrRaw(q.leftItems),
+    rightItems: parseJsonOrRaw(q.rightItems),
+    pairs: parseJsonOrRaw(q.pairs),
+    groups: parseJsonOrRaw(q.groups),
+    explanation: q.explanation || "",
+  };
+};
+
+const prepareQuizForDb = (kanjiId: number, rawQuizzes: any[]) => {
+  const stringifyIfNeeded = (val: any) => {
+    if (val === undefined || val === null) return null;
+    if (typeof val === "object") return JSON.stringify(val);
+    return String(val);
+  };
+
+  return rawQuizzes.map((q: any) => {
+    let opts = q.options;
+    if (!opts && (q.optionA || q.optionB || q.optionC || q.optionD)) {
+      opts = [q.optionA || "", q.optionB || "", q.optionC || "", q.optionD || ""].filter(Boolean);
+    }
+
+    return {
+      kanjiId,
+      type: q.type || "multiple",
+      question: q.question || "",
+      options: stringifyIfNeeded(opts),
+      correctAnswer: stringifyIfNeeded(q.correctAnswer),
+      words: stringifyIfNeeded(q.words),
+      correctOrder: stringifyIfNeeded(q.correctOrder),
+      targetWord: q.targetWord || null,
+      leftItems: stringifyIfNeeded(q.leftItems),
+      rightItems: stringifyIfNeeded(q.rightItems),
+      pairs: stringifyIfNeeded(q.pairs),
+      groups: stringifyIfNeeded(q.groups),
+      explanation: q.explanation || null,
+    };
+  });
+};
+
 export const getKanjis = async (req: Request, res: Response) => {
   try {
     const kanjis = await prisma.kanji.findMany({
@@ -120,17 +188,7 @@ export const getKanjis = async (req: Request, res: Response) => {
     });
 
     const formatted = kanjis.map((k) => {
-      const quizQuestions = k.quizzes.map((q) => ({
-        id: q.id,
-        question: q.question,
-        options: [q.optionA, q.optionB, q.optionC, q.optionD],
-        optionA: q.optionA,
-        optionB: q.optionB,
-        optionC: q.optionC,
-        optionD: q.optionD,
-        correctAnswer: q.correctAnswer,
-        explanation: q.explanation || "",
-      }));
+      const quizQuestions = k.quizzes.map(formatQuizFromDb);
 
       return {
         ...k,
@@ -263,16 +321,7 @@ export const createKanji = async (req: Request, res: Response) => {
 
     if (Array.isArray(rawQuizzes) && rawQuizzes.length > 0) {
       await prisma.quiz.createMany({
-        data: rawQuizzes.map((q: any) => ({
-          kanjiId: kanji.id,
-          question: q.question || "",
-          optionA: q.optionA || (Array.isArray(q.options) ? q.options[0] : "") || "",
-          optionB: q.optionB || (Array.isArray(q.options) ? q.options[1] : "") || "",
-          optionC: q.optionC || (Array.isArray(q.options) ? q.options[2] : "") || "",
-          optionD: q.optionD || (Array.isArray(q.options) ? q.options[3] : "") || "",
-          correctAnswer: typeof q.correctAnswer === "number" ? q.correctAnswer : (parseInt(q.correctAnswer, 10) || 0),
-          explanation: q.explanation || null,
-        })),
+        data: prepareQuizForDb(kanji.id, rawQuizzes),
       });
     }
 
@@ -318,7 +367,27 @@ export const createKanji = async (req: Request, res: Response) => {
       });
     }
 
-    res.status(201).json(kanji);
+    const fullKanji = await prisma.kanji.findUnique({
+      where: { id: kanji.id },
+      include: {
+        examples: true,
+        graphNodes: true,
+        graphEdges: true,
+        module: true,
+        jukugos: true,
+        semanticRelations: true,
+        etymologies: true,
+        quizzes: true,
+      },
+    });
+
+    const formattedQuizList = fullKanji?.quizzes.map(formatQuizFromDb) || [];
+
+    res.status(201).json({
+      ...fullKanji,
+      quizData: JSON.stringify(formattedQuizList),
+      quizzes: formattedQuizList,
+    });
   } catch (error: any) {
     console.error("Admin createKanji error:", error);
     res.status(500).json({ error: "Gagal membuat kanji baru." });
@@ -511,16 +580,7 @@ export const updateKanji = async (req: Request, res: Response) => {
 
     if (Array.isArray(rawQuizzes) && rawQuizzes.length > 0) {
       await prisma.quiz.createMany({
-        data: rawQuizzes.map((q: any) => ({
-          kanjiId,
-          question: q.question || "",
-          optionA: q.optionA || (Array.isArray(q.options) ? q.options[0] : "") || "",
-          optionB: q.optionB || (Array.isArray(q.options) ? q.options[1] : "") || "",
-          optionC: q.optionC || (Array.isArray(q.options) ? q.options[2] : "") || "",
-          optionD: q.optionD || (Array.isArray(q.options) ? q.options[3] : "") || "",
-          correctAnswer: typeof q.correctAnswer === "number" ? q.correctAnswer : (parseInt(q.correctAnswer, 10) || 0),
-          explanation: q.explanation || null,
-        })),
+        data: prepareQuizForDb(kanjiId, rawQuizzes),
       });
     }
 
@@ -574,7 +634,27 @@ export const updateKanji = async (req: Request, res: Response) => {
       });
     }
 
-    res.json(kanji);
+    const fullKanji = await prisma.kanji.findUnique({
+      where: { id: kanjiId },
+      include: {
+        examples: true,
+        graphNodes: true,
+        graphEdges: true,
+        module: true,
+        jukugos: true,
+        semanticRelations: true,
+        etymologies: true,
+        quizzes: true,
+      },
+    });
+
+    const formattedQuizList = fullKanji?.quizzes.map(formatQuizFromDb) || [];
+
+    res.json({
+      ...fullKanji,
+      quizData: JSON.stringify(formattedQuizList),
+      quizzes: formattedQuizList,
+    });
   } catch (error: any) {
     console.error("Admin updateKanji error:", error);
     res.status(500).json({ error: error.message || "Gagal memperbarui kanji." });

@@ -128,13 +128,38 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       quiz: claimedActivities.some(act => act.description.includes(`kuis latihan Kanji ${character}`))
     };
 
-    const formattedQuizzes = kanji.quizzes.map((q) => ({
-      id: q.id,
-      question: q.question,
-      options: [q.optionA, q.optionB, q.optionC, q.optionD],
-      correctAnswer: q.correctAnswer,
-      explanation: q.explanation || "",
-    }));
+    const parseJsonOrRaw = (val: any) => {
+      if (!val) return val;
+      if (typeof val === "string" && (val.startsWith("[") || val.startsWith("{"))) {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          return val;
+        }
+      }
+      return val;
+    };
+
+    const formattedQuizzes = kanji.quizzes.map((q) => {
+      const parsedOptions = parseJsonOrRaw(q.options);
+      const parsedCorrectAnswer = parseJsonOrRaw(q.correctAnswer);
+
+      return {
+        id: q.id,
+        type: q.type || "multiple",
+        question: q.question || "",
+        options: Array.isArray(parsedOptions) ? parsedOptions : (parsedOptions ? [parsedOptions] : []),
+        correctAnswer: parsedCorrectAnswer,
+        words: parseJsonOrRaw(q.words),
+        correctOrder: parseJsonOrRaw(q.correctOrder),
+        targetWord: q.targetWord || "",
+        leftItems: parseJsonOrRaw(q.leftItems),
+        rightItems: parseJsonOrRaw(q.rightItems),
+        pairs: parseJsonOrRaw(q.pairs),
+        groups: parseJsonOrRaw(q.groups),
+        explanation: q.explanation || "",
+      };
+    });
 
     res.json({
       kanji: kanji.character,

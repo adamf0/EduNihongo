@@ -1462,16 +1462,23 @@ async function main() {
       }
 
       await prisma.quiz.createMany({
-        data: quizList.map((q: any) => ({
-          kanjiId: kanji.id,
-          question: q.question || "",
-          optionA: q.optionA || (Array.isArray(q.options) ? q.options[0] : "") || "",
-          optionB: q.optionB || (Array.isArray(q.options) ? q.options[1] : "") || "",
-          optionC: q.optionC || (Array.isArray(q.options) ? q.options[2] : "") || "",
-          optionD: q.optionD || (Array.isArray(q.options) ? q.options[3] : "") || "",
-          correctAnswer: typeof q.correctAnswer === "number" ? q.correctAnswer : (parseInt(q.correctAnswer, 10) || 0),
-          explanation: q.explanation || null,
-        })),
+        data: quizList.map((q: any) => {
+          let opts = q.options;
+          if (!opts && (q.optionA || q.optionB || q.optionC || q.optionD)) {
+            opts = [q.optionA || "", q.optionB || "", q.optionC || "", q.optionD || ""].filter(Boolean);
+          }
+          return {
+            kanjiId: kanji.id,
+            type: q.type || "multiple",
+            question: q.question || "",
+            options: opts ? JSON.stringify(opts) : null,
+            correctAnswer: q.correctAnswer !== undefined && q.correctAnswer !== null ? (typeof q.correctAnswer === "object" ? JSON.stringify(q.correctAnswer) : String(q.correctAnswer)) : null,
+            words: q.words ? JSON.stringify(q.words) : null,
+            correctOrder: q.correctOrder ? JSON.stringify(q.correctOrder) : null,
+            targetWord: q.targetWord || null,
+            explanation: q.explanation || null,
+          };
+        }),
       });
     }
   }
