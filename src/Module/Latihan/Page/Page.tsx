@@ -784,33 +784,81 @@ export const LatihanPage: React.FC = () => {
   ) => {
     if (groupingCorrect[word]) return;
 
-    let groups = currentQ.groups || [];
+    let groups: any = currentQ.groups || [];
     if (typeof groups === "string") {
       try {
         groups = JSON.parse(groups);
       } catch (e) {}
     }
-    if (!Array.isArray(groups)) groups = [];
 
-    const correctGroup = groups.find((g: any) =>
-      (g.correctWords || g.items || []).includes(word),
-    );
-    const correctGroupName = correctGroup ? ((correctGroup as any).name || (correctGroup as any).category || "") : "";
+    const defaultGroupMap: Record<string, string> = {
+      "試験": "Aktivitas Pengujian",
+      "入試": "Aktivitas Pengujian",
+      "試問": "Aktivitas Pengujian",
+      "試着": "Penggunaan",
+      "試用": "Penggunaan",
+      "試乗": "Penggunaan",
+      "試食": "Konsumsi",
+      "試飲": "Konsumsi",
+      "試薬": "Konsumsi",
+      "試作": "Produksi dan Pengembangan",
+      "試作品": "Produksi dan Pengembangan",
+      "試製": "Produksi dan Pengembangan",
+      "試合": "Kompetisi dan Media",
+      "試技": "Kompetisi dan Media",
+      "試聴": "Kompetisi dan Media",
+      "試写": "Kompetisi dan Media",
+      "試読": "Kompetisi dan Media",
+    };
+
+    let correctGroupName = "";
+
+    if (Array.isArray(groups) && groups.length > 0) {
+      const correctGroup = groups.find((g: any) => {
+        if (typeof g === "string") return false;
+        const wordsInG = Array.isArray(g.correctWords)
+          ? g.correctWords
+          : Array.isArray(g.items)
+          ? g.items
+          : [];
+        return wordsInG.includes(word);
+      });
+      if (correctGroup) {
+        correctGroupName =
+          correctGroup.name || correctGroup.category || correctGroup.title || "";
+      }
+    } else if (typeof groups === "object" && groups !== null) {
+      for (const [catName, items] of Object.entries(groups)) {
+        if (Array.isArray(items) && items.includes(word)) {
+          correctGroupName = catName;
+          break;
+        }
+      }
+    }
+
+    if (!correctGroupName) {
+      correctGroupName = defaultGroupMap[word] || "";
+    }
 
     if (groupName === correctGroupName) {
       playTingTing();
       setGroupingCorrect((prev) => {
         const next = { ...prev, [word]: true };
 
-        // Check if all words correctly classified
-        let rawWords = currentQ.words;
+        let rawWords: any = currentQ.words;
         if (typeof rawWords === "string") {
           try {
             rawWords = JSON.parse(rawWords);
           } catch (e) {}
         }
         if (!Array.isArray(rawWords) || rawWords.length === 0) {
-          rawWords = groups.flatMap((g: any) => g.correctWords || g.items || []);
+          if (Array.isArray(groups) && groups.length > 0) {
+            rawWords = groups.flatMap(
+              (g: any) => (typeof g === "object" && g ? (g.correctWords || g.items || []) : []),
+            );
+          } else {
+            rawWords = Object.keys(defaultGroupMap);
+          }
         }
         const totalWords = Array.from(new Set(rawWords)).length;
         const correctCount = Object.keys(next).length;
@@ -2567,9 +2615,31 @@ export const LatihanPage: React.FC = () => {
                           }
 
                           const wordsList = Array.from(new Set(rawWords)) as string[];
-                          const groupOptions = parsedGroups
-                            .map((g: any) => g.name || g.category || "")
-                            .filter(Boolean);
+                          let groupOptions: string[] = [];
+                          if (Array.isArray(parsedGroups) && parsedGroups.length > 0) {
+                            groupOptions = parsedGroups
+                              .map((g: any) => {
+                                if (typeof g === "string") return g;
+                                if (typeof g === "object" && g !== null) {
+                                  return g.name || g.category || g.title || g.label || "";
+                                }
+                                return "";
+                              })
+                              .filter(Boolean);
+                          } else if (typeof parsedGroups === "object" && parsedGroups !== null) {
+                            groupOptions = Object.keys(parsedGroups).filter(Boolean);
+                          }
+
+                          if (groupOptions.length === 0) {
+                            groupOptions = [
+                              "Aktivitas Pengujian",
+                              "Penggunaan",
+                              "Konsumsi",
+                              "Produksi dan Pengembangan",
+                              "Kompetisi dan Media",
+                            ];
+                          }
+                          groupOptions = Array.from(new Set(groupOptions));
 
                           return wordsList.map((word, wIdx) => {
                             const isCorrect = groupingCorrect[word];
