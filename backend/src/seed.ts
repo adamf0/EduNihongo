@@ -586,6 +586,126 @@ const kanjiInfo: Record<string, {
         romaji: "Konshuu wa kadai ga takusan arimasu kara, totemo isogashii desu.",
         translation: "Karena minggu ini ada banyak tugas, saya sangat sibuk."
       }
+    ],
+    quizzes: [
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n1. 質問 ・ 分からない こと・ 先生 ・が・ に ・ します ・ ありますから・",
+        words: ["分からない", "こと", "が", "ありますから、", "先生", "に", "質問", "します。"],
+        correctOrder: ["分からない", "こと", "が", "ありますから、", "先生", "に", "質問", "します。"],
+        explanation: "Jawaban tepat: わからないことがありますから、先生に質問します。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n2. この ・ あります ・ 問題点 ・ が ・ 本 ・ には",
+        words: ["この", "本", "には", "問題点", "が", "あります。"],
+        correctOrder: ["この", "本", "には", "問題点", "が", "あります。"],
+        explanation: "Jawaban tepat: この本には問題点があります。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n3. 買いたい ・ 問題集 ・ です・を ・ 新しい",
+        words: ["新しい", "問題集", "を", "買いたい", "です。"],
+        correctOrder: ["新しい", "問題集", "を", "買いたい", "です。"],
+        explanation: "Jawaban tepat: 新しい問題集を買いたいです。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n4. 10個 ・ 明日 ・ 試験 ・ あります ・ の ・ は ・ 問題 ・ が",
+        words: ["明日", "の", "試験", "は", "問題", "が", "10個", "あります。"],
+        correctOrder: ["明日", "の", "試験", "は", "問題", "が", "10個", "あります。"],
+        explanation: "Jawaban tepat: 明日の試験は問題が10個あります。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n5. 設問 ・ 読んで ・ を ・ ください",
+        words: ["設問", "を", "読んで", "ください。"],
+        correctOrder: ["設問", "を", "読んで", "ください。"],
+        explanation: "Jawaban tepat: 設問を読んでください。"
+      },
+      {
+        type: "grouping",
+        question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+        words: ["問題", "課題", "宿題", "題名", "表題", "主題", "研究課題", "論題", "出題", "話題", "時事問題", "問題意識", "題材", "題字", "演題"],
+        groups: [
+          { "Pendidikan dan Evaluasi": ["問題", "課題", "宿題"] },
+          { "Judul dan Tema": ["題名", "表題", "主題"] },
+          { "Akademik dan Penelitian": ["研究課題", "論題", "出題"] },
+          { "Diskusi dan Pemikiran": ["話題", "時事問題", "問題意識"] },
+          { "Media dan Publikasi": ["題材", "題字", "演題"] }
+        ],
+        explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 題."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"judul sebuah buku, artikel, atau karya tulis\"?",
+        options: ["主題", "題名", "話題", "課題"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 題名 (daimei / judul karya)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"tugas yang diberikan oleh guru atau dosen\"?",
+        options: ["題字", "論題", "課題", "題材"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 課題 (kadai / tugas)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"topik penelitian atau penelitian yang akan dikaji\"?",
+        options: ["主題", "研究課題", "話題", "題字"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 研究課題 (kenkyuu kadai / topik penelitian)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"topik pembicaraan dalam percakapan atau diskusi\"?",
+        options: ["題名", "主題", "話題", "題材"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 話題 (wadai / topik pembicaraan)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"bahan cerita atau materi yang digunakan untuk membuat karya\"?",
+        options: ["題材", "課題", "表題", "論題"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 題材 (daizai / bahan cerita)."
+      },
+      {
+        type: "fill",
+        question: "夏休みの（　　　　）はまだ終わっていません。",
+        options: ["宿題", "題材", "話題"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 宿題 (shukudai / PR / tugas liburan)."
+      },
+      {
+        type: "fill",
+        question: "卒業論文の（　　　　）が決まりました。",
+        options: ["題名", "出題", "問題意識"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 題名 (daimei / judul)."
+      },
+      {
+        type: "fill",
+        question: "先生は授業で新しい（　　　　）を出しました。",
+        options: ["話題", "課題", "題字"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 課題 (kadai / tugas)."
+      },
+      {
+        type: "fill",
+        question: "最近、そのニュースがみんなの（　　　　）になっています。",
+        options: ["主題", "話題", "題材"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 話題 (wadai / topik pembicaraan)."
+      },
+      {
+        type: "fill",
+        question: "試験では難しい（　　　　）が出ました。",
+        options: ["出題", "題字", "主題"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 出題 (shutsudai / soal ujian)."
+      }
     ]
   },
   "答": {
