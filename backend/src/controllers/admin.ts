@@ -340,22 +340,22 @@ export const getKanjis = async (req: Request, res: Response) => {
     });
 
     const formatted = kanjis.map((k) => {
-      const quizQuestions = k.quizzes.map(formatQuizFromDb);
-      const refQuestions = k.masterRefleksi.map(mr => mr.question);
+      const quizQuestions = (k.quizzes || []).map(formatQuizFromDb);
+      const refQuestions = (k.masterRefleksi || []).map((mr) => mr.question);
 
       return {
         ...k,
         quizData: JSON.stringify(quizQuestions),
         quizzes: quizQuestions,
         reflectionData: JSON.stringify(refQuestions),
-        masterRefleksi: k.masterRefleksi,
+        masterRefleksi: k.masterRefleksi || [],
       };
     });
 
     res.json(formatted);
   } catch (error: any) {
     console.error("Admin getKanjis error:", error);
-    res.status(500).json({ error: "Gagal mengambil data kanji." });
+    res.status(500).json({ error: error?.message || "Gagal mengambil data kanji." });
   }
 };
 
