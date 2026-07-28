@@ -2200,7 +2200,7 @@ export const LatihanPage: React.FC = () => {
               <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-extrabold text-lg text-slate-800">
-                    Peta Semantik & Hubungan Kata
+                    Semantik Graph
                   </h4>
                   <button
                     type="button"

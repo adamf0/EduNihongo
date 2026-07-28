@@ -95,7 +95,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <p className="font-headline-md font-bold text-on-surface">KANJIGRAPH</p>
             <p className="text-body-md text-on-surface-variant">© 2024 Kanjigraph. Dibuat untuk penguasaan.</p>
           </div>
-          <div className="flex gap-md">
+          <div className="flex flex-wrap gap-md">
             <span onClick={() => navigate("/")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Tentang Kami</span>
             <span onClick={() => navigate("/module")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Dokumentasi</span>
             <span onClick={() => navigate("/")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Kebijakan Privasi</span>

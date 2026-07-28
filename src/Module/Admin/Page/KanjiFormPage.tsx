@@ -1269,7 +1269,7 @@ export const KanjiFormPage: React.FC = () => {
               <div className="flex flex-col gap-6 w-full">
                 {/* Section 3: Daftar Jukugo (Kata Majemuk) */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up h-[450px]">
-                  <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+                  <div className="flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/20 pb-2">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
                       2. Daftar Jukugo
                     </h4>
@@ -1358,11 +1358,11 @@ export const KanjiFormPage: React.FC = () => {
 
             {/* Section 6: Peta Semantik Graph */}
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 w-full animate-fade-in">
-              <div className="flex justify-between items-center border-b border-outline-variant/20 pb-1">
+              <div className="flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
                   3. Semantik Graph
                 </h4>
-                <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
+                <div className="flex flex-wrap gap-2 bg-slate-100 rounded-lg p-1">
                   <button
                     type="button"
                     onClick={() => setGraphEditMode("visual")}
@@ -1502,7 +1502,7 @@ export const KanjiFormPage: React.FC = () => {
                   {/* VISUAL DRAG AND DROP MODE */}
                   {graphEditMode === "visual" && (
                     <div className="flex flex-col gap-3">
-                      <div className="flex justify-between items-center text-xs text-on-surface-variant bg-slate-50 p-3 rounded-xl border border-slate-100 select-none">
+                      <div className="flex max-sm:flex-wrap justify-between items-center text-xs text-on-surface-variant bg-slate-50 p-3 rounded-xl border border-slate-100 select-none">
                         <span className="flex items-center gap-1 font-semibold">
                           <Icon
                             name="tips_and_updates"
@@ -1757,7 +1757,7 @@ export const KanjiFormPage: React.FC = () => {
 
                 {/* Section 4: e. Hubungan Makna Antar Kanji */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
-                  <div className="border-b border-outline-variant/20 pb-2 flex justify-between items-center">
+                  <div className="border-b border-outline-variant/20 pb-2 flex flex-wrap gap-2 justify-between items-center">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-2">
                       <Icon
                         name="account_tree"
@@ -1953,7 +1953,7 @@ export const KanjiFormPage: React.FC = () => {
 
             {/* Flex 4: "2. Contoh Kalimat & Tata Bahasa" */}
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
-              <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
+              <div className="flex flex-wrap gap-2 justify-between items-end border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary">
                   5. Latihan membaca
                 </h4>
@@ -2039,7 +2039,7 @@ export const KanjiFormPage: React.FC = () => {
 
             {/* Flex 5: "5. Daftar Kuis Evaluasi Kanji" (Full Width) */}
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-6 animate-scale-up">
-              <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+              <div className="flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/20 pb-2">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
                   6. Quiz
                 </h4>
@@ -2131,7 +2131,7 @@ export const KanjiFormPage: React.FC = () => {
                   return (
                     <div key={sectionType} className="flex flex-col gap-3">
                       {/* Sub-section Header */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap gap-2 items-center justify-between">
                         <div
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${badgeClass}`}
                         >
@@ -2162,7 +2162,7 @@ export const KanjiFormPage: React.FC = () => {
                           Belum ada soal untuk tipe ini.
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-wrap gap-2 flex-col gap-3">
                           {quizQuestions.map((q, idx) => {
                             if (q.type !== sectionType) return null;
                             return (
@@ -2395,7 +2395,7 @@ export const KanjiFormPage: React.FC = () => {
 
             {/* Section 7: Pertanyaan Refleksi Siswa */}
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
-              <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+              <div className="flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/20 pb-2">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-2">
                   <Icon name="help" className="text-primary text-base" />
                   7. Pertanyaan Refleksi
@@ -2416,7 +2416,7 @@ export const KanjiFormPage: React.FC = () => {
                 {reflectionQuestions.map((q, qIdx) => (
                   <div
                     key={qIdx}
-                    className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/60"
+                    className="w-full overflow-x-auto flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/60"
                   >
                     <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
                       {qIdx + 1}
@@ -2451,7 +2451,7 @@ export const KanjiFormPage: React.FC = () => {
 
             {/* Floating Toast Notification */}
             {(actionSuccess || actionError) && (
-              <div className="fixed top-6 right-6 z-50 max-w-md animate-zoom-in">
+              <div className="fixed top-6 right-6 z-50">
                 {actionSuccess && (
                   <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-body-md flex items-center gap-2 shadow-xl">
                     <span className="material-symbols-outlined select-none text-xl shrink-0">check_circle</span>
@@ -2483,7 +2483,7 @@ export const KanjiFormPage: React.FC = () => {
             )}
 
             {/* Save Buttons */}
-            <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+            <div className="flex flex-wrap gap-2 justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => navigate(`/admin/module-detail?id=${moduleId}`)}
