@@ -1752,7 +1752,7 @@ export const LatihanPage: React.FC = () => {
                       </tr>
                       <tr>
                         <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Makna Dasar</td>
-                        <td className="p-3.5 leading-relaxed text-slate-700">{kanjiData?.baseMeaning || kanjiData?.meaning}</td>
+                        <td className="p-3.5 leading-relaxed text-slate-700">{kanjiData?.baseMeaning || "-"}</td>
                       </tr>
                     </tbody>
                   </table>
