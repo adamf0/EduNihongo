@@ -2158,19 +2158,24 @@ export const KanjiFormPage: React.FC = () => {
                                         kata3)
                                       </label>
                                       <textarea
-                                        value={
-                                          Array.isArray(q.groups)
-                                            ? q.groups
-                                                .map(
-                                                  (g: any) =>
-                                                    `${g.name || g.category || ""}: ${(g.correctWords || g.items || []).join(", ")}`,
-                                                )
-                                                .filter((str: string) => !str.startsWith(": "))
-                                                .join(" | ")
-                                            : typeof q.groups === "string"
-                                            ? q.groups
-                                            : ""
-                                        }
+                                        value={(() => {
+                                          let parsed = q.groups;
+                                          if (typeof parsed === "string") {
+                                            try {
+                                              parsed = JSON.parse(parsed);
+                                            } catch (e) {}
+                                          }
+                                          if (Array.isArray(parsed)) {
+                                            return parsed
+                                              .map(
+                                                (g: any) =>
+                                                  `${g.name || g.category || ""}: ${(g.correctWords || g.items || []).join(", ")}`,
+                                              )
+                                              .filter((str: string) => !str.startsWith(": "))
+                                              .join(" | ");
+                                          }
+                                          return typeof q.groups === "string" ? q.groups : "";
+                                        })()}
                                         onChange={(e) => {
                                           const newQ = [...quizQuestions];
                                           const parts =

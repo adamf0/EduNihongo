@@ -1601,6 +1601,10 @@ async function main() {
             words: q.words ? JSON.stringify(q.words) : null,
             correctOrder: q.correctOrder ? JSON.stringify(q.correctOrder) : null,
             targetWord: q.targetWord || null,
+            leftItems: q.leftItems ? JSON.stringify(q.leftItems) : null,
+            rightItems: q.rightItems ? JSON.stringify(q.rightItems) : null,
+            pairs: q.pairs ? JSON.stringify(q.pairs) : null,
+            groups: q.groups ? JSON.stringify(q.groups) : null,
             explanation: q.explanation || null,
           };
         }),
