@@ -1179,94 +1179,8 @@ export const KanjiFormPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Kolom Kanan: Kalimat Contoh & Jukugo */}
+              {/* Kolom Kanan: 3. Daftar Jukugo (Kata Majemuk) */}
               <div className="flex flex-col gap-6 w-full">
-                {/* Section 2: Contoh Kalimat & Tata Bahasa */}
-                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
-                  <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
-                    <h4 className="font-label-lg text-label-lg font-bold text-primary">
-                      2. Contoh Kalimat & Tata Bahasa
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={addExampleRow}
-                      className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none animate-pulse-slow"
-                    >
-                      + Kalimat
-                    </button>
-                  </div>
-
-                  <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1.5 sidebar-scroll">
-                    {examples.map((ex, idx) => (
-                      <div
-                        key={idx}
-                        className="flex gap-3 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl animate-scale-up"
-                      >
-                        <div className="flex-grow grid grid-cols-1 gap-2">
-                          <div className="flex flex-col gap-0.5">
-                            <label className="text-[9px] uppercase font-bold text-slate-500">
-                              Bahasa Jepang
-                            </label>
-                            <input
-                              type="text"
-                              value={ex.japanese}
-                              onChange={(e) => {
-                                const newEx = [...examples];
-                                newEx[idx].japanese = e.target.value;
-                                setExamples(newEx);
-                              }}
-                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
-                              placeholder="日本語を学びます。"
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex flex-col gap-0.5">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Romaji
-                              </label>
-                              <input
-                                type="text"
-                                value={ex.romaji}
-                                onChange={(e) => {
-                                  const newEx = [...examples];
-                                  newEx[idx].romaji = e.target.value;
-                                  setExamples(newEx);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Nihongo wo manabimasu."
-                              />
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Terjemahan
-                              </label>
-                              <input
-                                type="text"
-                                value={ex.translation}
-                                onChange={(e) => {
-                                  const newEx = [...examples];
-                                  newEx[idx].translation = e.target.value;
-                                  setExamples(newEx);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Belajar bahasa Jepang."
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeExampleRow(idx)}
-                          disabled={examples.length === 1}
-                          className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none mt-3 disabled:opacity-30"
-                        >
-                          <Icon name="delete" className="text-base block" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Section 3: Daftar Jukugo (Kata Majemuk) */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
                   <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
@@ -1931,7 +1845,93 @@ export const KanjiFormPage: React.FC = () => {
                   </div>
                 </div>
 
-            {/* Section 5: Daftar Kuis Evaluasi Kanji (Full Width) */}
+            {/* Flex 4: "2. Contoh Kalimat & Tata Bahasa" */}
+            <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+              <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
+                <h4 className="font-label-lg text-label-lg font-bold text-primary">
+                  2. Contoh Kalimat & Tata Bahasa
+                </h4>
+                <button
+                  type="button"
+                  onClick={addExampleRow}
+                  className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none animate-pulse-slow"
+                >
+                  + Kalimat
+                </button>
+              </div>
+
+              <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1.5 sidebar-scroll">
+                {examples.map((ex, idx) => (
+                  <div
+                    key={idx}
+                    className="flex gap-3 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl animate-scale-up"
+                  >
+                    <div className="flex-grow grid grid-cols-1 gap-2">
+                      <div className="flex flex-col gap-0.5">
+                        <label className="text-[9px] uppercase font-bold text-slate-500">
+                          Bahasa Jepang
+                        </label>
+                        <input
+                          type="text"
+                          value={ex.japanese}
+                          onChange={(e) => {
+                            const newEx = [...examples];
+                            newEx[idx].japanese = e.target.value;
+                            setExamples(newEx);
+                          }}
+                          className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
+                          placeholder="日本語を学びます。"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-0.5">
+                          <label className="text-[9px] uppercase font-bold text-slate-500">
+                            Romaji
+                          </label>
+                          <input
+                            type="text"
+                            value={ex.romaji}
+                            onChange={(e) => {
+                              const newEx = [...examples];
+                              newEx[idx].romaji = e.target.value;
+                              setExamples(newEx);
+                            }}
+                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                            placeholder="Nihongo wo manabimasu."
+                          />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <label className="text-[9px] uppercase font-bold text-slate-500">
+                            Terjemahan
+                          </label>
+                          <input
+                            type="text"
+                            value={ex.translation}
+                            onChange={(e) => {
+                              const newEx = [...examples];
+                              newEx[idx].translation = e.target.value;
+                              setExamples(newEx);
+                            }}
+                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                            placeholder="Belajar bahasa Jepang."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeExampleRow(idx)}
+                      disabled={examples.length === 1}
+                      className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none mt-3 disabled:opacity-30"
+                    >
+                      <Icon name="delete" className="text-base block" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Flex 5: "5. Daftar Kuis Evaluasi Kanji" (Full Width) */}
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-6 animate-scale-up">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
