@@ -810,26 +810,6 @@ export const LatihanPage: React.FC = () => {
       } catch (e) {}
     }
 
-    const defaultGroupMap: Record<string, string> = {
-      "試験": "Aktivitas Pengujian",
-      "入試": "Aktivitas Pengujian",
-      "試問": "Aktivitas Pengujian",
-      "試着": "Penggunaan",
-      "試用": "Penggunaan",
-      "試乗": "Penggunaan",
-      "試食": "Konsumsi",
-      "試飲": "Konsumsi",
-      "試薬": "Konsumsi",
-      "試作": "Produksi dan Pengembangan",
-      "試作品": "Produksi dan Pengembangan",
-      "試製": "Produksi dan Pengembangan",
-      "試合": "Kompetisi dan Media",
-      "試技": "Kompetisi dan Media",
-      "試聴": "Kompetisi dan Media",
-      "試写": "Kompetisi dan Media",
-      "試読": "Kompetisi dan Media",
-    };
-
     let correctGroupName = "";
 
     if (Array.isArray(groups) && groups.length > 0) {
@@ -855,10 +835,6 @@ export const LatihanPage: React.FC = () => {
       }
     }
 
-    if (!correctGroupName) {
-      correctGroupName = defaultGroupMap[word] || "";
-    }
-
     if (groupName === correctGroupName) {
       playTingTing();
       setGroupingCorrect((prev) => {
@@ -875,11 +851,9 @@ export const LatihanPage: React.FC = () => {
             rawWords = groups.flatMap(
               (g: any) => (typeof g === "object" && g ? (g.correctWords || g.items || []) : []),
             );
-          } else {
-            rawWords = Object.keys(defaultGroupMap);
           }
         }
-        const totalWords = Array.from(new Set(rawWords)).length;
+        const totalWords = Array.from(new Set(rawWords || [])).length;
         const correctCount = Object.keys(next).length;
         if (correctCount === totalWords) {
           setTimeout(() => {
@@ -2648,15 +2622,6 @@ export const LatihanPage: React.FC = () => {
                             groupOptions = Object.keys(parsedGroups).filter(Boolean);
                           }
 
-                          if (groupOptions.length === 0) {
-                            groupOptions = [
-                              "Aktivitas Pengujian",
-                              "Penggunaan",
-                              "Konsumsi",
-                              "Produksi dan Pengembangan",
-                              "Kompetisi dan Media",
-                            ];
-                          }
                           groupOptions = Array.from(new Set(groupOptions));
 
                           return wordsList.map((word, wIdx) => {
