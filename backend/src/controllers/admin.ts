@@ -9,13 +9,42 @@ const prisma = new PrismaClient();
 export const getModules = async (req: Request, res: Response) => {
   try {
     const modules = await prisma.module.findMany({
-      include: { kanjis: true },
+      include: {
+        kanjis: {
+          include: {
+            examples: true,
+            jukugos: true,
+            semanticRelations: true,
+            etymologies: true,
+            masterRefleksi: true,
+            quizzes: { orderBy: { type: "asc" } },
+          },
+          orderBy: { id: "asc" },
+        },
+      },
       orderBy: { id: "asc" },
     });
-    res.json(modules);
+
+    const formattedModules = modules.map((mod) => ({
+      ...mod,
+      kanjis: (mod.kanjis || []).map((k) => {
+        const quizQuestions = (k.quizzes || []).map(formatQuizFromDb);
+        const refQuestions = (k.masterRefleksi || []).map((mr) => mr.question);
+
+        return {
+          ...k,
+          quizData: JSON.stringify(quizQuestions),
+          quizzes: quizQuestions,
+          reflectionData: JSON.stringify(refQuestions),
+          masterRefleksi: k.masterRefleksi || [],
+        };
+      }),
+    }));
+
+    res.json(formattedModules);
   } catch (error: any) {
     console.error("Admin getModules error:", error);
-    res.status(500).json({ error: "Gagal mengambil data modul." });
+    res.status(500).json({ error: error?.message || "Gagal mengambil data modul." });
   }
 };
 
