@@ -1795,8 +1795,8 @@ export const LatihanPage: React.FC = () => {
                         <td className="p-3.5 font-semibold text-slate-900">{kanjiData?.meaning}</td>
                       </tr>
                       <tr>
-                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Bushuu / Radical</td>
-                        <td className="p-3.5 font-bold text-slate-900">{kanjiData?.bushuu || "-"}</td>
+                        <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Bushuu</td>
+                        <td className="p-3.5 font-black text-xl text-[#8f0020] font-mono">{kanjiData?.bushuu || "-"}</td>
                       </tr>
                       <tr>
                         <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Onyomi</td>
