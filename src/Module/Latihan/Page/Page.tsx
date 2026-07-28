@@ -1904,16 +1904,14 @@ export const LatihanPage: React.FC = () => {
                   Contoh Kalimat Penggunaan
                 </h4>
                 <div className="space-y-4">
-                  {examples
-                    .filter((ex: any) => !ex.isReading)
-                    .map((item: any, idx: number) => (
-                      <ExampleSentence
-                        key={idx}
-                        japanese={item.japanese}
-                        romaji={item.romaji}
-                        translation={item.translation}
-                      />
-                    ))}
+                  {examples.map((item: any, idx: number) => (
+                    <ExampleSentence
+                      key={idx}
+                      japanese={item.japanese}
+                      romaji={item.romaji}
+                      translation={item.translation}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -2321,9 +2319,10 @@ export const LatihanPage: React.FC = () => {
 
             {/* Reading list sentences */}
             <div className="space-y-6">
-              {examples
-                .filter((ex: any) => ex.isReading !== false)
-                .map((item: any, idx: number) => {
+              {(examples.filter((ex: any) => ex.isReading !== false).length > 0
+                ? examples.filter((ex: any) => ex.isReading !== false)
+                : examples
+              ).map((item: any, idx: number) => {
                   const isChecked = !!readSentences[idx];
                   const isRevealed = !!revealedTranslation[idx];
                   return (
@@ -2486,7 +2485,7 @@ export const LatihanPage: React.FC = () => {
                   );
                 })}
 
-              {examples.filter((ex: any) => ex.isReading !== false).length === 0 && (
+              {examples.length === 0 && (
                 <p className="text-sm text-slate-400 italic">
                   Belum ada kalimat latihan membaca yang dimuat untuk kanji ini.
                 </p>
@@ -2497,9 +2496,7 @@ export const LatihanPage: React.FC = () => {
             <div className="border-t border-slate-100 pt-6 flex justify-between items-center">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 PROGRES: {Object.values(readSentences).filter(Boolean).length} /{" "}
-                {examples.filter((ex: any) => ex.isReading).length > 0
-                  ? examples.filter((ex: any) => ex.isReading).length
-                  : examples.length}{" "}
+                {examples.length}{" "}
                 SELESAI
               </div>
 
