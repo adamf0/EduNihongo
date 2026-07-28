@@ -15,6 +15,7 @@ const kanjiInfo: Record<string, {
   quizData?: string;
   jukugos: { word: string; reading: string; meaning: string; kanjiBreakdown?: string; explanation?: string }[];
   examples?: { japanese: string; romaji: string; translation: string }[];
+  quizzes?: any[];
 }> = {
   // Module 1: Akademik dan Evaluasi
   "試": {
@@ -243,6 +244,125 @@ const kanjiInfo: Record<string, {
         japanese: "化学の授業で, 水の性質を調べる実験を行いました。",
         romaji: "Kagaku no jugyou de, mizu no seishitsu wo shiraberu jikken wo okonaimashita.",
         translation: "Dalam kelas kimia, kami melakukan eksperimen untuk memeriksa sifat-sifat air."
+      }
+    ],
+    quizzes: [
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n明日 ・ 試験 ・ が ・ から ・ 勉強します ・ ある ・ の点数",
+        words: ["明日は", "試験", "が", "ある", "から", "勉強します"],
+        correctOrder: ["明日は", "試験", "が", "ある", "から", "勉強します"],
+        explanation: "Jawaban tepat: 明日は試験があるから勉強します。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n日本 ・ 経験 ・ 働いた ・ が ・ あります・で",
+        words: ["日本で", "働いた", "経験", "が", "あります"],
+        correctOrder: ["日本で", "働いた", "経験", "が", "あります"],
+        explanation: "Jawaban tepat: 日本で働いた経験があります。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n文化 ・ で ・ を ・ 体験しました ・ 京都",
+        words: ["京都で", "文化", "体験", "を", "しました"],
+        correctOrder: ["京都で", "文化", "体験", "を", "しました"],
+        explanation: "Jawaban tepat: 京都で文化体験をしました。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n実験・ を ・料理室・ しました ・ で",
+        words: ["理科室で", "実験", "を", "しました"],
+        correctOrder: ["理科室で", "実験", "を", "しました"],
+        explanation: "Jawaban tepat: 理科室で実験をしました。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n面白かった ・ 実験体験 ・ は ・ とても",
+        words: ["実験体験は", "とても", "面白かったです"],
+        correctOrder: ["実験体験は", "とても", "面白かったです"],
+        explanation: "Jawaban tepat: 実験体験はとても面白かったです。"
+      },
+      {
+        type: "grouping",
+        question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+        words: ["試験", "受験", "資格試験", "経験", "体験", "経験者", "実験", "実験室", "被験者", "受験生", "検定試験", "受験番号"],
+        groups: [
+          { "Pengujian": ["試験", "受験", "受験生", "受験番号"] },
+          { "Penelitian": ["実験", "実験室", "被験者"] },
+          { "Pengalaman": ["経験", "体験", "経験者"] },
+          { "Sertifikasi": ["資格試験", "検定試験"] }
+        ],
+        explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 験."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang berhubungan dengan makna percobaan adalah?",
+        options: ["実験", "体験", "試験", "経験"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 実験 (Eksperimen / Percobaan)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang berhubungan dengan makna penelitian?",
+        options: ["被験者", "実験室", "実験", "Semua benar"],
+        correctAnswer: 3,
+        explanation: "Jawaban tepat: Semua benar."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang berhubungan dengan makna orang yang berpengalaman?",
+        options: ["経験者", "経験社", "試験社", "試験者"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 経験者 (Orang yang berpengalaman)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo yang berhubungan dengan makna \"Peserta penelitian\" adalah...",
+        options: ["受験番号", "被験者", "経験室", "検定試験"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 被験者 (Subjek / Peserta penelitian)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo yang berhubungan dengan makna \"Peserta ujian\" adalah...",
+        options: ["受験生", "試験生", "経験生", "検定生"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 受験生 (Peserta ujian)."
+      },
+      {
+        type: "fill",
+        question: "日本へいって、色々な（　　　　）をしました。",
+        options: ["実験", "経験", "被験者"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 経験 (Pengalaman)."
+      },
+      {
+        type: "fill",
+        question: "大学の化学の授業では、学生が（　　　　）を行いました。",
+        options: ["実験", "体験", "受験"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 実験 (Eksperimen)."
+      },
+      {
+        type: "fill",
+        question: "彼は海外で働いた（　　　　）が豊富です。",
+        options: ["経験", "実験室", "検定試験"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 経験 (Pengalaman)."
+      },
+      {
+        type: "fill",
+        question: "来月、日本語能力（　　　　）を受けます。",
+        options: ["経験者", "検定試験", "実験室"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 検定試験 (Ujian sertifikasi)."
+      },
+      {
+        type: "fill",
+        question: "心理学の研究では、多くの（　　　　）が協力しました。",
+        options: ["被験者", "受験番号", "経験者"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 被験者 (Peserta penelitian)."
       }
     ]
   },
@@ -1577,7 +1697,9 @@ async function main() {
       ];
 
       let quizList: any[] = [];
-      if (info.quizData) {
+      if (Array.isArray(info.quizzes) && info.quizzes.length > 0) {
+        quizList = info.quizzes;
+      } else if (info.quizData) {
         try {
           quizList = JSON.parse(info.quizData);
         } catch (e) {}
