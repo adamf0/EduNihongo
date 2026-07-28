@@ -716,14 +716,33 @@ export const LatihanPage: React.FC = () => {
     }
   };
 
+  const getCorrectAnswerText = (currentQ: QuizQuestion) => {
+    const options = currentQ.options || [];
+    const rawCorr = currentQ.correctAnswer;
+    if (rawCorr === undefined || rawCorr === null || rawCorr === "") return "";
+
+    const idx = Number(rawCorr);
+    if (!isNaN(idx) && options[idx] !== undefined) {
+      return options[idx];
+    }
+
+    if (typeof rawCorr === "string" && options.includes(rawCorr)) {
+      return rawCorr;
+    }
+
+    return String(rawCorr);
+  };
+
   const handleMultipleChoiceClick = (
     opt: string,
-    correctAnswer: string,
+    currentQ: QuizQuestion,
     questions: QuizQuestion[],
   ) => {
     if (correctAnswerClicked || wrongAnswers.includes(opt)) return;
 
-    if (opt === correctAnswer) {
+    const correctText = getCorrectAnswerText(currentQ);
+
+    if (opt === correctText) {
       playTingTing();
       setCorrectAnswerClicked(opt);
       setTimeout(() => {
@@ -1296,7 +1315,7 @@ export const LatihanPage: React.FC = () => {
 
     if (currentQ.type === "multiple" || currentQ.type === "fill") {
       studentAnswerString = finalAnswer || "(Tidak ada jawaban)";
-      correctAnswerString = currentQ.correctAnswer || "";
+      correctAnswerString = getCorrectAnswerText(currentQ);
     } else if (currentQ.type === "unscramble") {
       studentAnswerString = unscrambleSelected.join("");
       correctAnswerString = (currentQ.correctOrder || []).join("");
@@ -2404,8 +2423,7 @@ export const LatihanPage: React.FC = () => {
                               onClick={() =>
                                 handleMultipleChoiceClick(
                                   opt,
-                                  quizQuestions[currentQuestionIdx]
-                                    .correctAnswer || "",
+                                  quizQuestions[currentQuestionIdx],
                                   quizQuestions,
                                 )
                               }
