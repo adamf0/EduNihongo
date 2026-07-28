@@ -76,12 +76,12 @@ model Kanji {
   isJukugo       Boolean             @default(false)
   border         String?
   moduleId       Int?
-  quizData       String?             @db.Text
   reflectionData String?             @db.Text
   etymologies    Etymology[]
   examples       ExampleSentence[]
   jukugos           Jukugo[]
   semanticRelations SemanticRelation[]
+  quizzes           Quiz[]
   module            Module?             @relation(fields: [moduleId], references: [id])
   graphEdges     KanjiGraphEdge[]
   graphNodes     KanjiGraphNode[]
@@ -254,4 +254,19 @@ model JobQueue {
   errorMessage String?  @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Quiz {
+  id            Int     @id @default(autoincrement())
+  kanjiId       Int
+  question      String  @db.Text
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer Int     @default(0)
+  explanation   String? @db.Text
+  kanjiRef      Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@index([kanjiId], map: "Quiz_kanjiId_fkey")
 }

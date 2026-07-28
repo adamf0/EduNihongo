@@ -114,10 +114,32 @@ export const getKanjis = async (req: Request, res: Response) => {
         jukugos: true,
         semanticRelations: true,
         etymologies: true,
+        quizzes: true,
       },
       orderBy: { id: "asc" },
     });
-    res.json(kanjis);
+
+    const formatted = kanjis.map((k) => {
+      const quizQuestions = k.quizzes.map((q) => ({
+        id: q.id,
+        question: q.question,
+        options: [q.optionA, q.optionB, q.optionC, q.optionD],
+        optionA: q.optionA,
+        optionB: q.optionB,
+        optionC: q.optionC,
+        optionD: q.optionD,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation || "",
+      }));
+
+      return {
+        ...k,
+        quizData: JSON.stringify(quizQuestions),
+        quizzes: quizQuestions,
+      };
+    });
+
+    res.json(formatted);
   } catch (error: any) {
     console.error("Admin getKanjis error:", error);
     res.status(500).json({ error: "Gagal mengambil data kanji." });
@@ -144,6 +166,8 @@ export const createKanji = async (req: Request, res: Response) => {
       graphNodes,
       graphEdges,
       etymologies,
+      quizzes,
+      quizQuestions,
       quizData,
       reflectionData,
     } = body;
@@ -171,12 +195,11 @@ export const createKanji = async (req: Request, res: Response) => {
         isJukugo: !!isJukugo,
         border: border || null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
-        quizData: quizData || null,
         reflectionData: reflectionData || null,
       },
     });
 
-    // Create examples
+    // Create Examples
     if (Array.isArray(examples) && examples.length > 0) {
       await prisma.exampleSentence.createMany({
         data: examples.map((ex: any) => ({
@@ -219,6 +242,36 @@ export const createKanji = async (req: Request, res: Response) => {
           character: et.character || "",
           romaji: et.romaji || "",
           detail: et.detail || "",
+        })),
+      });
+    }
+
+    // Create Quizzes in Quiz table
+    const rawQuizzes = Array.isArray(quizzes)
+      ? quizzes
+      : Array.isArray(quizQuestions)
+      ? quizQuestions
+      : typeof quizData === "string"
+      ? (() => {
+          try {
+            return JSON.parse(quizData);
+          } catch (e) {
+            return [];
+          }
+        })()
+      : [];
+
+    if (Array.isArray(rawQuizzes) && rawQuizzes.length > 0) {
+      await prisma.quiz.createMany({
+        data: rawQuizzes.map((q: any) => ({
+          kanjiId: kanji.id,
+          question: q.question || "",
+          optionA: q.optionA || (Array.isArray(q.options) ? q.options[0] : "") || "",
+          optionB: q.optionB || (Array.isArray(q.options) ? q.options[1] : "") || "",
+          optionC: q.optionC || (Array.isArray(q.options) ? q.options[2] : "") || "",
+          optionD: q.optionD || (Array.isArray(q.options) ? q.options[3] : "") || "",
+          correctAnswer: typeof q.correctAnswer === "number" ? q.correctAnswer : (parseInt(q.correctAnswer, 10) || 0),
+          explanation: q.explanation || null,
         })),
       });
     }
@@ -349,6 +402,8 @@ export const updateKanji = async (req: Request, res: Response) => {
       graphNodes,
       graphEdges,
       etymologies,
+      quizzes,
+      quizQuestions,
       quizData,
       reflectionData,
     } = body;
@@ -383,7 +438,6 @@ export const updateKanji = async (req: Request, res: Response) => {
         isJukugo: !!isJukugo,
         border: border || null,
         moduleId: targetModuleId,
-        quizData: quizData || null,
         reflectionData: reflectionData || null,
       },
     });
@@ -435,6 +489,37 @@ export const updateKanji = async (req: Request, res: Response) => {
           character: et.character || "",
           romaji: et.romaji || "",
           detail: et.detail || "",
+        })),
+      });
+    }
+
+    // Update Quizzes: Delete and Re-create in Quiz table
+    await prisma.quiz.deleteMany({ where: { kanjiId } });
+    const rawQuizzes = Array.isArray(quizzes)
+      ? quizzes
+      : Array.isArray(quizQuestions)
+      ? quizQuestions
+      : typeof quizData === "string"
+      ? (() => {
+          try {
+            return JSON.parse(quizData);
+          } catch (e) {
+            return [];
+          }
+        })()
+      : [];
+
+    if (Array.isArray(rawQuizzes) && rawQuizzes.length > 0) {
+      await prisma.quiz.createMany({
+        data: rawQuizzes.map((q: any) => ({
+          kanjiId,
+          question: q.question || "",
+          optionA: q.optionA || (Array.isArray(q.options) ? q.options[0] : "") || "",
+          optionB: q.optionB || (Array.isArray(q.options) ? q.options[1] : "") || "",
+          optionC: q.optionC || (Array.isArray(q.options) ? q.options[2] : "") || "",
+          optionD: q.optionD || (Array.isArray(q.options) ? q.options[3] : "") || "",
+          correctAnswer: typeof q.correctAnswer === "number" ? q.correctAnswer : (parseInt(q.correctAnswer, 10) || 0),
+          explanation: q.explanation || null,
         })),
       });
     }

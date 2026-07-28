@@ -12,6 +12,7 @@ const kanjiInfo: Record<string, {
   kunyomi: string;
   baseMeaning?: string;
   reflectionData?: string[];
+  quizData?: string;
   jukugos: { word: string; reading: string; meaning: string; kanjiBreakdown?: string; explanation?: string }[];
   examples?: { japanese: string; romaji: string; translation: string }[];
 }> = {
@@ -1427,6 +1428,50 @@ async function main() {
           source: ge.source,
           target: ge.target
         }))
+      });
+
+      const defaultQuiz = [
+        {
+          question: `Apa arti dari Kanji ${char}?`,
+          optionA: info.meaning,
+          optionB: "Lainnya",
+          optionC: "TIDAK",
+          optionD: "Bukan",
+          correctAnswer: 0,
+          explanation: `Kanji ${char} (${info.romaji}) memiliki arti: ${info.meaning}.`
+        },
+        {
+          question: `Bagaimana cara membaca Onyomi dari Kanji ${char}?`,
+          optionA: info.onyomi || info.romaji,
+          optionB: "KA",
+          optionC: "TOU",
+          optionD: "SEI",
+          correctAnswer: 0,
+          explanation: `Onyomi dari kanji ${char} adalah ${info.onyomi || info.romaji}.`
+        }
+      ];
+
+      let quizList: any[] = [];
+      if (info.quizData) {
+        try {
+          quizList = JSON.parse(info.quizData);
+        } catch (e) {}
+      }
+      if (!Array.isArray(quizList) || quizList.length === 0) {
+        quizList = defaultQuiz;
+      }
+
+      await prisma.quiz.createMany({
+        data: quizList.map((q: any) => ({
+          kanjiId: kanji.id,
+          question: q.question || "",
+          optionA: q.optionA || (Array.isArray(q.options) ? q.options[0] : "") || "",
+          optionB: q.optionB || (Array.isArray(q.options) ? q.options[1] : "") || "",
+          optionC: q.optionC || (Array.isArray(q.options) ? q.options[2] : "") || "",
+          optionD: q.optionD || (Array.isArray(q.options) ? q.options[3] : "") || "",
+          correctAnswer: typeof q.correctAnswer === "number" ? q.correctAnswer : (parseInt(q.correctAnswer, 10) || 0),
+          explanation: q.explanation || null,
+        })),
       });
     }
   }

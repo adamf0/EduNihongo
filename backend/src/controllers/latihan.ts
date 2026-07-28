@@ -29,6 +29,7 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         etymologies: true,
         jukugos: true,
         semanticRelations: true,
+        quizzes: true,
       },
     });
 
@@ -127,6 +128,14 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       quiz: claimedActivities.some(act => act.description.includes(`kuis latihan Kanji ${character}`))
     };
 
+    const formattedQuizzes = kanji.quizzes.map((q) => ({
+      id: q.id,
+      question: q.question,
+      options: [q.optionA, q.optionB, q.optionC, q.optionD],
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation || "",
+    }));
+
     res.json({
       kanji: kanji.character,
       romaji: kanji.romaji,
@@ -137,7 +146,8 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       readingPercent,
       quizPercent,
       masteryLevelTitle: levelTitle,
-      quizData: kanji.quizData,
+      quizData: JSON.stringify(formattedQuizzes),
+      quizzes: formattedQuizzes,
       xpEarned: xpEarnedAccess,
       xpClaimed,
       examples: kanji.examples.map((ex) => ({
