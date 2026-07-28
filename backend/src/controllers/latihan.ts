@@ -272,7 +272,7 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         japanese: ex.japanese,
         romaji: ex.romaji,
         translation: ex.translation,
-        isReading: ex.isReading,
+        isReading: ex.isReading !== undefined ? ex.isReading : true,
       })),
       jukugos: kanji.jukugos.map((j) => ({
         word: j.word,

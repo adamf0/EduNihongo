@@ -1760,7 +1760,8 @@ async function main() {
           kanjiId: kanji.id,
           japanese: ex.japanese,
           romaji: ex.romaji,
-          translation: ex.translation
+          translation: ex.translation,
+          isReading: (ex as any).isReading !== undefined ? (ex as any).isReading : true
         }))
       });
 

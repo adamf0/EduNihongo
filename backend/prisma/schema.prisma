@@ -114,7 +114,7 @@ model ExampleSentence {
   japanese    String
   romaji      String
   translation String  @db.Text
-  isReading   Boolean @default(false)
+  isReading   Boolean @default(true)
   kanji       Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
 
   @@index([kanjiId], map: "ExampleSentence_kanjiId_fkey")

@@ -2234,7 +2234,7 @@ export const LatihanPage: React.FC = () => {
             {/* Reading list sentences */}
             <div className="space-y-6">
               {examples
-                .filter((ex: any) => ex.isReading)
+                .filter((ex: any) => ex.isReading !== false)
                 .map((item: any, idx: number) => {
                   const isChecked = !!readSentences[idx];
                   const isRevealed = !!revealedTranslation[idx];
@@ -2398,7 +2398,7 @@ export const LatihanPage: React.FC = () => {
                   );
                 })}
 
-              {examples.filter((ex: any) => ex.isReading).length === 0 && (
+              {examples.filter((ex: any) => ex.isReading !== false).length === 0 && (
                 <p className="text-sm text-slate-400 italic">
                   Belum ada kalimat latihan membaca yang dimuat untuk kanji ini.
                 </p>
