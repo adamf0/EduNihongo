@@ -124,9 +124,64 @@ export const getKanjis = async (req: Request, res: Response) => {
   }
 };
 
+function autoFixSemanticRelation(sr: any) {
+  let kanjiVal = (sr.kanji || sr.jokugo || "").trim();
+  let j1Val = (sr.jukugo_1 || "").trim();
+  let j1ArtiVal = (sr.jukugo_1_arti || "").trim();
+  let j2Val = (sr.jukugo_2 || "").trim();
+  let j2ArtiVal = (sr.jukugo_2_arti || "").trim();
+  let artiVal = (sr.arti || sr.hiragana_arti || "").trim();
+  let penjelasanVal = (sr.penjelasan || "").trim();
+
+  // Clean parenthesis in kanjiVal (e.g. "試験（しけん）" -> "試験")
+  if (kanjiVal.includes("（") || kanjiVal.includes("(")) {
+    const cleanK = kanjiVal.replace(/[\(（].*?[\)）]/g, "").trim();
+    if (cleanK) kanjiVal = cleanK;
+  }
+
+  // If kanjiVal is empty, attempt extraction from penjelasan
+  if (!kanjiVal && penjelasanVal) {
+    const matchMenjadi = penjelasanVal.match(/menjadi\s*([一-龯]+)/i);
+    if (matchMenjadi && matchMenjadi[1]) {
+      kanjiVal = matchMenjadi[1].trim();
+    }
+  }
+
+  // If j1 or j2 is empty, extract from penjelasan
+  if ((!j1Val || !j2Val) && penjelasanVal) {
+    const matchKanjiPair = penjelasanVal.match(/kanji\s*([一-龯]+)\s*(?:dan|&)\s*([一-龯]+)/i);
+    if (matchKanjiPair) {
+      if (!j1Val) j1Val = matchKanjiPair[1].trim();
+      if (!j2Val) j2Val = matchKanjiPair[2].trim();
+    }
+  }
+
+  if (!j1Val && kanjiVal && kanjiVal.length >= 1) {
+    j1Val = kanjiVal.charAt(0);
+  }
+  if (!j2Val && kanjiVal && kanjiVal.length >= 2) {
+    j2Val = kanjiVal.charAt(1);
+  }
+
+  const jokugoArtiVal = sr.jokugo_arti || (j1Val ? `${j1Val}${j1ArtiVal ? ' : ' + j1ArtiVal : ''}${j2Val ? ' | ' + j2Val + (j2ArtiVal ? ' : ' + j2ArtiVal : '') : ''}` : "");
+
+  return {
+    jokugo: kanjiVal,
+    jokugo_arti: jokugoArtiVal,
+    hiragana: sr.hiragana || j1Val || "",
+    hiragana_arti: artiVal,
+    kanji: kanjiVal,
+    arti: artiVal,
+    jukugo_1: j1Val,
+    jukugo_1_arti: j1ArtiVal,
+    jukugo_2: j2Val,
+    jukugo_2_arti: j2ArtiVal,
+    penjelasan: penjelasanVal,
+  };
+}
+
 export const createKanji = async (req: Request, res: Response) => {
   try {
-    const body = sanitizeObject(req.body);
     const {
       character,
       romaji,
@@ -141,12 +196,12 @@ export const createKanji = async (req: Request, res: Response) => {
       examples,
       jukugos,
       semanticRelations,
+      etymologies,
       graphNodes,
       graphEdges,
-      etymologies,
       quizData,
       reflectionData,
-    } = body;
+    } = req.body;
 
     if (!character || !romaji || !meaning) {
       return res.status(400).json({ error: "Karakter, romaji, dan arti wajib diisi." });
@@ -204,29 +259,10 @@ export const createKanji = async (req: Request, res: Response) => {
     // Create SemanticRelations
     if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
       await prisma.semanticRelation.createMany({
-        data: semanticRelations.map((sr: any) => {
-          const kanjiVal = sr.kanji || sr.jokugo || "";
-          const j1Val = sr.jukugo_1 || "";
-          const j1ArtiVal = sr.jukugo_1_arti || "";
-          const j2Val = sr.jukugo_2 || "";
-          const j2ArtiVal = sr.jukugo_2_arti || "";
-          const defaultJokugoArti = sr.jokugo_arti || (j1Val ? `${j1Val} : ${j1ArtiVal} | ${j2Val} : ${j2ArtiVal}` : "");
-
-          return {
-            kanjiId: kanji.id,
-            jokugo: kanjiVal,
-            jokugo_arti: defaultJokugoArti,
-            hiragana: sr.hiragana || j1Val || "",
-            hiragana_arti: sr.hiragana_arti || sr.arti || "",
-            kanji: kanjiVal,
-            arti: sr.arti || "",
-            jukugo_1: j1Val,
-            jukugo_1_arti: j1ArtiVal,
-            jukugo_2: j2Val,
-            jukugo_2_arti: j2ArtiVal,
-            penjelasan: sr.penjelasan || "",
-          };
-        }),
+        data: semanticRelations.map((sr: any) => ({
+          kanjiId: kanji.id,
+          ...autoFixSemanticRelation(sr),
+        })),
       });
     }
 
@@ -295,7 +331,6 @@ export const updateKanji = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const kanjiId = parseInt(id, 10);
-    const body = sanitizeObject(req.body);
     const {
       character,
       romaji,
@@ -315,7 +350,7 @@ export const updateKanji = async (req: Request, res: Response) => {
       etymologies,
       quizData,
       reflectionData,
-    } = body;
+    } = req.body;
 
     if (!character || !romaji || !meaning) {
       return res.status(400).json({ error: "Karakter, romaji, dan arti wajib diisi." });
@@ -371,29 +406,10 @@ export const updateKanji = async (req: Request, res: Response) => {
     await prisma.semanticRelation.deleteMany({ where: { kanjiId } });
     if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
       await prisma.semanticRelation.createMany({
-        data: semanticRelations.map((sr: any) => {
-          const kanjiVal = sr.kanji || sr.jokugo || "";
-          const j1Val = sr.jukugo_1 || "";
-          const j1ArtiVal = sr.jukugo_1_arti || "";
-          const j2Val = sr.jukugo_2 || "";
-          const j2ArtiVal = sr.jukugo_2_arti || "";
-          const defaultJokugoArti = sr.jokugo_arti || (j1Val ? `${j1Val} : ${j1ArtiVal} | ${j2Val} : ${j2ArtiVal}` : "");
-
-          return {
-            kanjiId,
-            jokugo: kanjiVal,
-            jokugo_arti: defaultJokugoArti,
-            hiragana: sr.hiragana || j1Val || "",
-            hiragana_arti: sr.hiragana_arti || sr.arti || "",
-            kanji: kanjiVal,
-            arti: sr.arti || "",
-            jukugo_1: j1Val,
-            jukugo_1_arti: j1ArtiVal,
-            jukugo_2: j2Val,
-            jukugo_2_arti: j2ArtiVal,
-            penjelasan: sr.penjelasan || "",
-          };
-        }),
+        data: semanticRelations.map((sr: any) => ({
+          kanjiId,
+          ...autoFixSemanticRelation(sr),
+        })),
       });
     }
 
@@ -410,8 +426,10 @@ export const updateKanji = async (req: Request, res: Response) => {
       });
     }
 
-    // Update Graph Nodes: Delete and Re-create
+    // Update Graph EDGES FIRST, THEN NODES to prevent Foreign Key constraint failure!
+    await prisma.kanjiGraphEdge.deleteMany({ where: { kanjiId } });
     await prisma.kanjiGraphNode.deleteMany({ where: { kanjiId } });
+
     if (Array.isArray(graphNodes) && graphNodes.length > 0) {
       await prisma.kanjiGraphNode.createMany({
         data: graphNodes.map((n: any) => ({
@@ -427,8 +445,6 @@ export const updateKanji = async (req: Request, res: Response) => {
       });
     }
 
-    // Update Graph Edges: Delete and Re-create
-    await prisma.kanjiGraphEdge.deleteMany({ where: { kanjiId } });
     if (Array.isArray(graphEdges) && graphEdges.length > 0) {
       await prisma.kanjiGraphEdge.createMany({
         data: graphEdges.map((e: any) => ({
