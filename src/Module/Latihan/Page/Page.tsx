@@ -1718,8 +1718,10 @@ export const LatihanPage: React.FC = () => {
                 <h4 className="font-extrabold text-lg text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                   <span className="flex items-center gap-2">
                     <Info className="text-[#8f0020] w-5 h-5" />
-                    a. Informasi Kanji
+                    Informasi Kanji
                   </span>
+
+                  {renderXpBadge(!!kanjiData?.xpClaimed?.lesson, 5)}
                 </h4>
                 <div className="overflow-hidden rounded-2xl border border-slate-200/70">
                   <table className="w-full text-left text-xs border-collapse">
@@ -1766,7 +1768,6 @@ export const LatihanPage: React.FC = () => {
                     <Volume2 className="text-[#8f0020] w-5 h-5" />
                     Daftar Jukugo (Kata Majemuk)
                   </span>
-                  {renderXpBadge(!!kanjiData?.xpClaimed?.lesson, 5)}
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {jukugos.map((j: any, idx: number) => (
