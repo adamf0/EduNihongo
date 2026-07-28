@@ -63,6 +63,74 @@ const parseJsonDeep = (val: any): any => {
   return result;
 };
 
+const normalizeGroups = (rawGroups: any): any[] => {
+  let data = parseJsonDeep(rawGroups);
+  if (!data) return [];
+
+  if (typeof data === "object" && !Array.isArray(data)) {
+    return Object.entries(data).map(([catName, words]) => {
+      const items = Array.isArray(words)
+        ? words
+        : typeof words === "string"
+          ? [words]
+          : [];
+      return {
+        name: catName,
+        category: catName,
+        correctWords: items,
+        items: items,
+      };
+    });
+  }
+
+  if (Array.isArray(data)) {
+    const result: any[] = [];
+    for (const g of data) {
+      if (typeof g === "string") {
+        result.push({ name: g, category: g, correctWords: [], items: [] });
+      } else if (typeof g === "object" && g !== null) {
+        if (g.name === undefined && g.category === undefined) {
+          const entries = Object.entries(g);
+          if (entries.length > 0) {
+            for (const [catName, words] of entries) {
+              const items = Array.isArray(words)
+                ? words
+                : typeof words === "string"
+                  ? [words]
+                  : [];
+              result.push({
+                name: catName,
+                category: catName,
+                correctWords: items,
+                items: items,
+              });
+            }
+            continue;
+          }
+        }
+
+        const catName = g.name || g.category || g.title || g.label || "";
+        const words = Array.isArray(g.correctWords)
+          ? g.correctWords
+          : Array.isArray(g.items)
+            ? g.items
+            : Array.isArray(g.words)
+              ? g.words
+              : [];
+        result.push({
+          name: catName,
+          category: catName,
+          correctWords: words,
+          items: words,
+        });
+      }
+    }
+    return result;
+  }
+
+  return [];
+};
+
 interface QuizQuestion {
   type: "unscramble" | "fill" | "multiple" | "matching" | "essay" | "grouping";
   question: string;
@@ -823,19 +891,7 @@ export const LatihanPage: React.FC = () => {
   ) => {
     if (groupingCorrect[word]) return;
 
-    let groups: any = parseJsonDeep(currentQ.groups) || [];
-    if (!Array.isArray(groups)) {
-      if (typeof groups === "object" && groups !== null) {
-        groups = Object.entries(groups).map(([catName, items]) => ({
-          name: catName,
-          category: catName,
-          correctWords: Array.isArray(items) ? items : [],
-          items: Array.isArray(items) ? items : [],
-        }));
-      } else {
-        groups = [];
-      }
-    }
+    const groups = normalizeGroups(currentQ.groups);
 
     let correctGroupName = "";
 
@@ -2601,19 +2657,7 @@ export const LatihanPage: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1 sidebar-scroll">
                         {(() => {
                           const currQ = quizQuestions[currentQuestionIdx];
-                          let parsedGroups = parseJsonDeep(currQ.groups);
-                          if (!Array.isArray(parsedGroups)) {
-                            if (typeof parsedGroups === "object" && parsedGroups !== null) {
-                              parsedGroups = Object.entries(parsedGroups).map(([catName, items]) => ({
-                                name: catName,
-                                category: catName,
-                                correctWords: Array.isArray(items) ? items : [],
-                                items: Array.isArray(items) ? items : [],
-                              }));
-                            } else {
-                              parsedGroups = [];
-                            }
-                          }
+                          const parsedGroups = normalizeGroups(currQ.groups);
 
                           let rawWords = parseJsonDeep(currQ.words);
                           if (!Array.isArray(rawWords) || rawWords.length === 0) {
@@ -2623,19 +2667,11 @@ export const LatihanPage: React.FC = () => {
                           }
 
                           const wordsList = Array.from(new Set(rawWords)) as string[];
-                          let groupOptions: string[] = [];
-                          if (Array.isArray(parsedGroups) && parsedGroups.length > 0) {
-                            groupOptions = parsedGroups
-                              .map((g: any) => {
-                                if (typeof g === "string") return g;
-                                if (typeof g === "object" && g !== null) {
-                                  return g.name || g.category || g.title || g.label || "";
-                                }
-                                return "";
-                              })
-                              .filter(Boolean);
-                          }
-                          groupOptions = Array.from(new Set(groupOptions));
+                          const groupOptions = Array.from(
+                            new Set(
+                              parsedGroups.map((g: any) => g.name).filter(Boolean),
+                            ),
+                          );
 
                           return wordsList.map((word, wIdx) => {
                             const isCorrect = groupingCorrect[word];

@@ -148,30 +148,78 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       return result;
     };
 
+    const normalizeGroups = (rawGroups: any): any[] => {
+      let data = parseJsonDeep(rawGroups);
+      if (!data) return [];
+
+      if (typeof data === "object" && !Array.isArray(data)) {
+        return Object.entries(data).map(([catName, words]) => {
+          const items = Array.isArray(words)
+            ? words
+            : typeof words === "string"
+              ? [words]
+              : [];
+          return {
+            name: catName,
+            category: catName,
+            correctWords: items,
+            items: items,
+          };
+        });
+      }
+
+      if (Array.isArray(data)) {
+        const result: any[] = [];
+        for (const g of data) {
+          if (typeof g === "string") {
+            result.push({ name: g, category: g, correctWords: [], items: [] });
+          } else if (typeof g === "object" && g !== null) {
+            if (g.name === undefined && g.category === undefined) {
+              const entries = Object.entries(g);
+              if (entries.length > 0) {
+                for (const [catName, words] of entries) {
+                  const items = Array.isArray(words)
+                    ? words
+                    : typeof words === "string"
+                      ? [words]
+                      : [];
+                  result.push({
+                    name: catName,
+                    category: catName,
+                    correctWords: items,
+                    items: items,
+                  });
+                }
+                continue;
+              }
+            }
+
+            const catName = g.name || g.category || g.title || g.label || "";
+            const words = Array.isArray(g.correctWords)
+              ? g.correctWords
+              : Array.isArray(g.items)
+                ? g.items
+                : Array.isArray(g.words)
+                  ? g.words
+                  : [];
+            result.push({
+              name: catName,
+              category: catName,
+              correctWords: words,
+              items: words,
+            });
+          }
+        }
+        return result;
+      }
+
+      return [];
+    };
+
     const formattedQuizzes = kanji.quizzes.map((q) => {
       const parsedOptions = parseJsonDeep(q.options);
       const parsedCorrectAnswer = parseJsonDeep(q.correctAnswer);
-      const rawGroups = parseJsonDeep(q.groups);
-      const parsedGroups = Array.isArray(rawGroups)
-        ? rawGroups.map((g: any) => {
-            if (typeof g === "string")
-              return { name: g, category: g, correctWords: [], items: [] };
-            return {
-              name: g.name || g.category || "",
-              category: g.category || g.name || "",
-              correctWords: Array.isArray(g.correctWords)
-                ? g.correctWords
-                : Array.isArray(g.items)
-                  ? g.items
-                  : [],
-              items: Array.isArray(g.items)
-                ? g.items
-                : Array.isArray(g.correctWords)
-                  ? g.correctWords
-                  : [],
-            };
-          })
-        : rawGroups;
+      const parsedGroups = normalizeGroups(q.groups);
 
       return {
         id: q.id,
