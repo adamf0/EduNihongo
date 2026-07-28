@@ -216,6 +216,26 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       return [];
     };
 
+    const getTypePriority = (typeStr: string): number => {
+      const lower = (typeStr || "").toLowerCase().trim();
+      switch (lower) {
+        case "multiple":
+          return 1;
+        case "fill":
+          return 2;
+        case "unscramble":
+          return 3;
+        case "matching":
+          return 4;
+        case "essay":
+          return 5;
+        case "grouping":
+          return 6;
+        default:
+          return 99;
+      }
+    };
+
     const formattedQuizzes = kanji.quizzes.map((q) => {
       const parsedOptions = parseJsonDeep(q.options);
       const parsedCorrectAnswer = parseJsonDeep(q.correctAnswer);
@@ -240,6 +260,13 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         groups: parsedGroups,
         explanation: q.explanation || "",
       };
+    });
+
+    formattedQuizzes.sort((a, b) => {
+      const pA = getTypePriority(a.type);
+      const pB = getTypePriority(b.type);
+      if (pA !== pB) return pA - pB;
+      return a.id - b.id;
     });
 
     res.json({
