@@ -1355,7 +1355,7 @@ export const KanjiFormPage: React.FC = () => {
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 w-full animate-fade-in">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  6. Peta Semantik Graph
+                  3. Semantik Graph
                 </h4>
                 <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
                   <button
@@ -1950,7 +1950,7 @@ export const KanjiFormPage: React.FC = () => {
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
               <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary">
-                  5. Latihan membaca kalimat
+                  5. Latihan membaca
                 </h4>
                 <button
                   type="button"
@@ -2036,7 +2036,7 @@ export const KanjiFormPage: React.FC = () => {
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-6 animate-scale-up">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  6. Latihan Kanji
+                  6. Quiz
                 </h4>
                 <span className="text-xs text-slate-400 font-medium">
                   {quizQuestions.length} soal total
