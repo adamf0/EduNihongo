@@ -961,16 +961,27 @@ async function main() {
       });
 
       // Create semanticRelation records
-      const semanticRelData = info.jukugos.map(j => ({
-        kanjiId: kanji.id,
-        kanji: j.word || "",
-        arti: j.meaning || "",
-        jukugo_1: j.word ? j.word.charAt(0) : "",
-        jukugo_1_arti: j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[0]?.trim() || "" : "",
-        jukugo_2: j.word && j.word.length > 1 ? j.word.charAt(1) : "",
-        jukugo_2_arti: j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[1]?.trim() || "" : "",
-        penjelasan: j.explanation || `Hubungan makna kanji penyusun membentuk kata ${j.word} (${j.meaning}).`,
-      }));
+      const semanticRelData = info.jukugos.map(j => {
+        const j1 = j.word ? j.word.charAt(0) : "";
+        const j1a = j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[0]?.trim() || "" : "";
+        const j2 = j.word && j.word.length > 1 ? j.word.charAt(1) : "";
+        const j2a = j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[1]?.trim() || "" : "";
+
+        return {
+          kanjiId: kanji.id,
+          jokugo: j.word || "",
+          jokugo_arti: j.kanjiBreakdown || (j1 ? `${j1} : ${j1a} | ${j2} : ${j2a}` : ""),
+          hiragana: j.reading || j1 || "",
+          hiragana_arti: j.meaning || "",
+          kanji: j.word || "",
+          arti: j.meaning || "",
+          jukugo_1: j1,
+          jukugo_1_arti: j1a,
+          jukugo_2: j2,
+          jukugo_2_arti: j2a,
+          penjelasan: j.explanation || `Hubungan makna kanji penyusun membentuk kata ${j.word} (${j.meaning}).`,
+        };
+      });
 
       if (semanticRelData.length > 0) {
         await prisma.semanticRelation.createMany({

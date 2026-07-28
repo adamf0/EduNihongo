@@ -204,16 +204,29 @@ export const createKanji = async (req: Request, res: Response) => {
     // Create SemanticRelations
     if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
       await prisma.semanticRelation.createMany({
-        data: semanticRelations.map((sr: any) => ({
-          kanjiId: kanji.id,
-          kanji: sr.kanji || "",
-          arti: sr.arti || "",
-          jukugo_1: sr.jukugo_1 || "",
-          jukugo_1_arti: sr.jukugo_1_arti || "",
-          jukugo_2: sr.jukugo_2 || "",
-          jukugo_2_arti: sr.jukugo_2_arti || "",
-          penjelasan: sr.penjelasan || "",
-        })),
+        data: semanticRelations.map((sr: any) => {
+          const kanjiVal = sr.kanji || sr.jokugo || "";
+          const j1Val = sr.jukugo_1 || "";
+          const j1ArtiVal = sr.jukugo_1_arti || "";
+          const j2Val = sr.jukugo_2 || "";
+          const j2ArtiVal = sr.jukugo_2_arti || "";
+          const defaultJokugoArti = sr.jokugo_arti || (j1Val ? `${j1Val} : ${j1ArtiVal} | ${j2Val} : ${j2ArtiVal}` : "");
+
+          return {
+            kanjiId: kanji.id,
+            jokugo: kanjiVal,
+            jokugo_arti: defaultJokugoArti,
+            hiragana: sr.hiragana || j1Val || "",
+            hiragana_arti: sr.hiragana_arti || sr.arti || "",
+            kanji: kanjiVal,
+            arti: sr.arti || "",
+            jukugo_1: j1Val,
+            jukugo_1_arti: j1ArtiVal,
+            jukugo_2: j2Val,
+            jukugo_2_arti: j2ArtiVal,
+            penjelasan: sr.penjelasan || "",
+          };
+        }),
       });
     }
 
@@ -358,16 +371,29 @@ export const updateKanji = async (req: Request, res: Response) => {
     await prisma.semanticRelation.deleteMany({ where: { kanjiId } });
     if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
       await prisma.semanticRelation.createMany({
-        data: semanticRelations.map((sr: any) => ({
-          kanjiId,
-          kanji: sr.kanji || "",
-          arti: sr.arti || "",
-          jukugo_1: sr.jukugo_1 || "",
-          jukugo_1_arti: sr.jukugo_1_arti || "",
-          jukugo_2: sr.jukugo_2 || "",
-          jukugo_2_arti: sr.jukugo_2_arti || "",
-          penjelasan: sr.penjelasan || "",
-        })),
+        data: semanticRelations.map((sr: any) => {
+          const kanjiVal = sr.kanji || sr.jokugo || "";
+          const j1Val = sr.jukugo_1 || "";
+          const j1ArtiVal = sr.jukugo_1_arti || "";
+          const j2Val = sr.jukugo_2 || "";
+          const j2ArtiVal = sr.jukugo_2_arti || "";
+          const defaultJokugoArti = sr.jokugo_arti || (j1Val ? `${j1Val} : ${j1ArtiVal} | ${j2Val} : ${j2ArtiVal}` : "");
+
+          return {
+            kanjiId,
+            jokugo: kanjiVal,
+            jokugo_arti: defaultJokugoArti,
+            hiragana: sr.hiragana || j1Val || "",
+            hiragana_arti: sr.hiragana_arti || sr.arti || "",
+            kanji: kanjiVal,
+            arti: sr.arti || "",
+            jukugo_1: j1Val,
+            jukugo_1_arti: j1ArtiVal,
+            jukugo_2: j2Val,
+            jukugo_2_arti: j2ArtiVal,
+            penjelasan: sr.penjelasan || "",
+          };
+        }),
       });
     }
 
