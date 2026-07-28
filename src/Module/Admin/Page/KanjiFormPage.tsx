@@ -1011,6 +1011,9 @@ export const KanjiFormPage: React.FC = () => {
       if (kanjiId) {
         await api.admin.kanjis.update(kanjiId, payload);
         setActionSuccess(`Berhasil memperbarui data Kanji "${kanjiChar}"!`);
+        setTimeout(() => {
+          setActionSuccess("");
+        }, 4000);
       } else {
         await api.admin.kanjis.create(payload);
         setActionSuccess(`Berhasil membuat Kanji "${kanjiChar}" baru!`);
@@ -1020,6 +1023,9 @@ export const KanjiFormPage: React.FC = () => {
       }
     } catch (err: any) {
       setActionError(err.message || "Gagal menyimpan kanji.");
+      setTimeout(() => {
+        setActionError("");
+      }, 5000);
     } finally {
       setSubmitting(false);
     }
@@ -2443,17 +2449,36 @@ export const KanjiFormPage: React.FC = () => {
               </div>
             </div>
 
-            {actionError && (
-              <div className="p-4 rounded-xl bg-error-container/30 border border-error/30 text-error font-bold text-body-md flex items-center gap-2">
-                <Icon name="error" className="text-xl shrink-0" />
-                <span>{actionError}</span>
-              </div>
-            )}
+            {/* Floating Toast Notification */}
+            {(actionSuccess || actionError) && (
+              <div className="fixed top-6 right-6 z-50 max-w-md animate-zoom-in">
+                {actionSuccess && (
+                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-body-md flex items-center gap-2 shadow-xl">
+                    <span className="material-symbols-outlined select-none text-xl shrink-0">check_circle</span>
+                    <span>{actionSuccess}</span>
+                    <button
+                      type="button"
+                      onClick={() => setActionSuccess("")}
+                      className="ml-auto text-emerald-600 hover:text-emerald-900 bg-transparent border-none cursor-pointer p-1"
+                    >
+                      <Icon name="close" className="text-base block" />
+                    </button>
+                  </div>
+                )}
 
-            {actionSuccess && (
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-body-md flex items-center gap-2">
-                <Icon name="check_circle" className="text-xl shrink-0" />
-                <span>{actionSuccess}</span>
+                {actionError && (
+                  <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-bold text-body-md flex items-center gap-2 shadow-xl">
+                    <span className="material-symbols-outlined select-none text-xl shrink-0">error</span>
+                    <span>{actionError}</span>
+                    <button
+                      type="button"
+                      onClick={() => setActionError("")}
+                      className="ml-auto text-rose-600 hover:text-rose-900 bg-transparent border-none cursor-pointer p-1"
+                    >
+                      <Icon name="close" className="text-base block" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
