@@ -784,7 +784,14 @@ export const LatihanPage: React.FC = () => {
   ) => {
     if (groupingCorrect[word]) return;
 
-    const groups = currentQ.groups || [];
+    let groups = currentQ.groups || [];
+    if (typeof groups === "string") {
+      try {
+        groups = JSON.parse(groups);
+      } catch (e) {}
+    }
+    if (!Array.isArray(groups)) groups = [];
+
     const correctGroup = groups.find((g: any) =>
       (g.correctWords || g.items || []).includes(word),
     );
@@ -796,9 +803,15 @@ export const LatihanPage: React.FC = () => {
         const next = { ...prev, [word]: true };
 
         // Check if all words correctly classified
-        const rawWords = currentQ.words && currentQ.words.length > 0
-          ? currentQ.words
-          : groups.flatMap((g: any) => g.correctWords || g.items || []);
+        let rawWords = currentQ.words;
+        if (typeof rawWords === "string") {
+          try {
+            rawWords = JSON.parse(rawWords);
+          } catch (e) {}
+        }
+        if (!Array.isArray(rawWords) || rawWords.length === 0) {
+          rawWords = groups.flatMap((g: any) => g.correctWords || g.items || []);
+        }
         const totalWords = Array.from(new Set(rawWords)).length;
         const correctCount = Object.keys(next).length;
         if (correctCount === totalWords) {
@@ -2533,16 +2546,30 @@ export const LatihanPage: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1 sidebar-scroll">
                         {(() => {
                           const currQ = quizQuestions[currentQuestionIdx];
-                          const rawWords =
-                            currQ.words && currQ.words.length > 0
-                              ? currQ.words
-                              : (currQ.groups || []).flatMap(
-                                  (g: any) => g.correctWords || g.items || [],
-                                );
+                          let parsedGroups = currQ.groups;
+                          if (typeof parsedGroups === "string") {
+                            try {
+                              parsedGroups = JSON.parse(parsedGroups);
+                            } catch (e) {}
+                          }
+                          if (!Array.isArray(parsedGroups)) parsedGroups = [];
+
+                          let rawWords = currQ.words;
+                          if (typeof rawWords === "string") {
+                            try {
+                              rawWords = JSON.parse(rawWords);
+                            } catch (e) {}
+                          }
+                          if (!Array.isArray(rawWords) || rawWords.length === 0) {
+                            rawWords = parsedGroups.flatMap(
+                              (g: any) => g.correctWords || g.items || [],
+                            );
+                          }
+
                           const wordsList = Array.from(new Set(rawWords)) as string[];
-                          const groupOptions = (currQ.groups || []).map(
-                            (g: any) => g.name || g.category || "",
-                          );
+                          const groupOptions = parsedGroups
+                            .map((g: any) => g.name || g.category || "")
+                            .filter(Boolean);
 
                           return wordsList.map((word, wIdx) => {
                             const isCorrect = groupingCorrect[word];

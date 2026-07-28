@@ -143,6 +143,15 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
     const formattedQuizzes = kanji.quizzes.map((q) => {
       const parsedOptions = parseJsonOrRaw(q.options);
       const parsedCorrectAnswer = parseJsonOrRaw(q.correctAnswer);
+      const rawGroups = parseJsonOrRaw(q.groups);
+      const parsedGroups = Array.isArray(rawGroups)
+        ? rawGroups.map((g: any) => ({
+            name: g.name || g.category || "",
+            category: g.category || g.name || "",
+            correctWords: Array.isArray(g.correctWords) ? g.correctWords : (Array.isArray(g.items) ? g.items : []),
+            items: Array.isArray(g.items) ? g.items : (Array.isArray(g.correctWords) ? g.correctWords : []),
+          }))
+        : rawGroups;
 
       return {
         id: q.id,
@@ -156,7 +165,7 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         leftItems: parseJsonOrRaw(q.leftItems),
         rightItems: parseJsonOrRaw(q.rightItems),
         pairs: parseJsonOrRaw(q.pairs),
-        groups: parseJsonOrRaw(q.groups),
+        groups: parsedGroups,
         explanation: q.explanation || "",
       };
     });

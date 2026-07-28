@@ -2124,18 +2124,24 @@ export const KanjiFormPage: React.FC = () => {
                                       <input
                                         type="text"
                                         value={
-                                          Array.isArray(q.pairs)
+                                          q.rawPairsText !== undefined
+                                            ? q.rawPairsText
+                                            : Array.isArray(q.pairs)
                                             ? q.pairs
                                                 .map(
                                                   (p: any) =>
                                                     `${p.left}:${p.right}`,
                                                 )
                                                 .join(", ")
+                                            : typeof q.pairs === "string"
+                                            ? q.pairs
                                             : ""
                                         }
                                         onChange={(e) => {
+                                          const val = e.target.value;
                                           const newQ = [...quizQuestions];
-                                          newQ[idx].pairs = e.target.value
+                                          newQ[idx].rawPairsText = val;
+                                          newQ[idx].pairs = val
                                             .split(",")
                                             .map((pairStr) => {
                                               const parts = pairStr.split(":");
@@ -2158,28 +2164,33 @@ export const KanjiFormPage: React.FC = () => {
                                         kata3)
                                       </label>
                                       <textarea
-                                        value={(() => {
-                                          let parsed = q.groups;
-                                          if (typeof parsed === "string") {
-                                            try {
-                                              parsed = JSON.parse(parsed);
-                                            } catch (e) {}
-                                          }
-                                          if (Array.isArray(parsed)) {
-                                            return parsed
-                                              .map(
-                                                (g: any) =>
-                                                  `${g.name || g.category || ""}: ${(g.correctWords || g.items || []).join(", ")}`,
-                                              )
-                                              .filter((str: string) => !str.startsWith(": "))
-                                              .join(" | ");
-                                          }
-                                          return typeof q.groups === "string" ? q.groups : "";
-                                        })()}
+                                        value={
+                                          q.rawGroupsText !== undefined
+                                            ? q.rawGroupsText
+                                            : (() => {
+                                                let parsed = q.groups;
+                                                if (typeof parsed === "string") {
+                                                  try {
+                                                    parsed = JSON.parse(parsed);
+                                                  } catch (e) {}
+                                                }
+                                                if (Array.isArray(parsed)) {
+                                                  return parsed
+                                                    .map(
+                                                      (g: any) =>
+                                                        `${g.name || g.category || ""}: ${(g.correctWords || g.items || []).join(", ")}`,
+                                                    )
+                                                    .filter((str: string) => !str.startsWith(": "))
+                                                    .join(" | ");
+                                                }
+                                                return typeof q.groups === "string" ? q.groups : "";
+                                              })()
+                                        }
                                         onChange={(e) => {
+                                          const val = e.target.value;
                                           const newQ = [...quizQuestions];
-                                          const parts =
-                                            e.target.value.split("|");
+                                          newQ[idx].rawGroupsText = val;
+                                          const parts = val.split("|");
                                           const groups: any[] = [];
                                           const allWords: string[] = [];
                                           for (const part of parts) {
