@@ -322,6 +322,12 @@ export const updateKanji = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const kanjiId = parseInt(id, 10);
+
+    const existingKanji = await prisma.kanji.findUnique({ where: { id: kanjiId } });
+    if (!existingKanji) {
+      return res.status(404).json({ error: `Karakter Kanji dengan ID ${kanjiId} tidak ditemukan. Silakan refresh halaman admin.` });
+    }
+
     const body = sanitizeObject(req.body);
     const {
       character,
