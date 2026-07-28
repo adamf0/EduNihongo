@@ -68,12 +68,13 @@ const kanjiInfo: Record<string, {
       {
         type: "grouping",
         question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+        words: ["試験", "入試", "試問", "試着", "試用", "試乗", "試食", "試飲", "試薬", "試作", "試作品", "試製", "試合", "試技", "試聴", "試写", "試読"],
         groups: [
-          { category: "Aktivitas Pengujian", items: ["試験", "入試", "試問"] },
-          { category: "Penggunaan", items: ["試着", "試用", "試乗"] },
-          { category: "Konsumsi", items: ["試食", "試飲", "試薬"] },
-          { category: "Produksi dan Pengembangan", items: ["試作", "試作品", "試製"] },
-          { category: "Kompetisi dan Media", items: ["試合", "試技", "試聴", "試写", "試読"] }
+          { name: "Aktivitas Pengujian", category: "Aktivitas Pengujian", correctWords: ["試験", "入試", "試問"], items: ["試験", "入試", "試問"] },
+          { name: "Penggunaan", category: "Penggunaan", correctWords: ["試着", "試用", "試乗"], items: ["試着", "試用", "試乗"] },
+          { name: "Konsumsi", category: "Konsumsi", correctWords: ["試食", "試飲", "試薬"], items: ["試食", "試飲", "試薬"] },
+          { name: "Produksi dan Pengembangan", category: "Produksi dan Pengembangan", correctWords: ["試作", "試作品", "試製"], items: ["試作", "試作品", "試製"] },
+          { name: "Kompetisi dan Media", category: "Kompetisi dan Media", correctWords: ["試合", "試技", "試聴", "試写", "試読"], items: ["試合", "試技", "試聴", "試写", "試読"] }
         ],
         explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 試."
       },

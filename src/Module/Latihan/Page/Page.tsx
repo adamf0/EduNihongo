@@ -785,10 +785,10 @@ export const LatihanPage: React.FC = () => {
     if (groupingCorrect[word]) return;
 
     const groups = currentQ.groups || [];
-    const correctGroup = groups.find((g) =>
-      (g.correctWords || []).includes(word),
+    const correctGroup = groups.find((g: any) =>
+      (g.correctWords || g.items || []).includes(word),
     );
-    const correctGroupName = correctGroup ? correctGroup.name : "";
+    const correctGroupName = correctGroup ? ((correctGroup as any).name || (correctGroup as any).category || "") : "";
 
     if (groupName === correctGroupName) {
       playTingTing();
@@ -796,7 +796,10 @@ export const LatihanPage: React.FC = () => {
         const next = { ...prev, [word]: true };
 
         // Check if all words correctly classified
-        const totalWords = (currentQ.words || []).length;
+        const rawWords = currentQ.words && currentQ.words.length > 0
+          ? currentQ.words
+          : groups.flatMap((g: any) => g.correctWords || g.items || []);
+        const totalWords = Array.from(new Set(rawWords)).length;
         const correctCount = Object.keys(next).length;
         if (correctCount === totalWords) {
           setTimeout(() => {
@@ -2528,11 +2531,20 @@ export const LatihanPage: React.FC = () => {
                         masing-masing kosakata di bawah ini:
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1 sidebar-scroll">
-                        {(quizQuestions[currentQuestionIdx].words || []).map(
-                          (word, wIdx) => {
-                            const groupOptions = (
-                              quizQuestions[currentQuestionIdx].groups || []
-                            ).map((g) => g.name);
+                        {(() => {
+                          const currQ = quizQuestions[currentQuestionIdx];
+                          const rawWords =
+                            currQ.words && currQ.words.length > 0
+                              ? currQ.words
+                              : (currQ.groups || []).flatMap(
+                                  (g: any) => g.correctWords || g.items || [],
+                                );
+                          const wordsList = Array.from(new Set(rawWords)) as string[];
+                          const groupOptions = (currQ.groups || []).map(
+                            (g: any) => g.name || g.category || "",
+                          );
+
+                          return wordsList.map((word, wIdx) => {
                             const isCorrect = groupingCorrect[word];
                             const isWrong = groupingWrong[word];
                             return (
@@ -2577,8 +2589,8 @@ export const LatihanPage: React.FC = () => {
                                 </select>
                               </div>
                             );
-                          },
-                        )}
+                          });
+                        })()}
                       </div>
                     </div>
                   )}
