@@ -128,43 +128,67 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       quiz: claimedActivities.some(act => act.description.includes(`kuis latihan Kanji ${character}`))
     };
 
-    const parseJsonOrRaw = (val: any) => {
-      if (!val) return val;
-      if (typeof val === "string" && (val.startsWith("[") || val.startsWith("{"))) {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          return val;
+    const parseJsonDeep = (val: any): any => {
+      let result = val;
+      while (typeof result === "string") {
+        const trimmed = result.trim();
+        if (
+          (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+          (trimmed.startsWith("{") && trimmed.endsWith("}"))
+        ) {
+          try {
+            result = JSON.parse(result);
+          } catch (e) {
+            break;
+          }
+        } else {
+          break;
         }
       }
-      return val;
+      return result;
     };
 
     const formattedQuizzes = kanji.quizzes.map((q) => {
-      const parsedOptions = parseJsonOrRaw(q.options);
-      const parsedCorrectAnswer = parseJsonOrRaw(q.correctAnswer);
-      const rawGroups = parseJsonOrRaw(q.groups);
+      const parsedOptions = parseJsonDeep(q.options);
+      const parsedCorrectAnswer = parseJsonDeep(q.correctAnswer);
+      const rawGroups = parseJsonDeep(q.groups);
       const parsedGroups = Array.isArray(rawGroups)
-        ? rawGroups.map((g: any) => ({
-            name: g.name || g.category || "",
-            category: g.category || g.name || "",
-            correctWords: Array.isArray(g.correctWords) ? g.correctWords : (Array.isArray(g.items) ? g.items : []),
-            items: Array.isArray(g.items) ? g.items : (Array.isArray(g.correctWords) ? g.correctWords : []),
-          }))
+        ? rawGroups.map((g: any) => {
+            if (typeof g === "string")
+              return { name: g, category: g, correctWords: [], items: [] };
+            return {
+              name: g.name || g.category || "",
+              category: g.category || g.name || "",
+              correctWords: Array.isArray(g.correctWords)
+                ? g.correctWords
+                : Array.isArray(g.items)
+                  ? g.items
+                  : [],
+              items: Array.isArray(g.items)
+                ? g.items
+                : Array.isArray(g.correctWords)
+                  ? g.correctWords
+                  : [],
+            };
+          })
         : rawGroups;
 
       return {
         id: q.id,
         type: q.type || "multiple",
         question: q.question || "",
-        options: Array.isArray(parsedOptions) ? parsedOptions : (parsedOptions ? [parsedOptions] : []),
+        options: Array.isArray(parsedOptions)
+          ? parsedOptions
+          : parsedOptions
+            ? [parsedOptions]
+            : [],
         correctAnswer: parsedCorrectAnswer,
-        words: parseJsonOrRaw(q.words),
-        correctOrder: parseJsonOrRaw(q.correctOrder),
+        words: parseJsonDeep(q.words),
+        correctOrder: parseJsonDeep(q.correctOrder),
         targetWord: q.targetWord || "",
-        leftItems: parseJsonOrRaw(q.leftItems),
-        rightItems: parseJsonOrRaw(q.rightItems),
-        pairs: parseJsonOrRaw(q.pairs),
+        leftItems: parseJsonDeep(q.leftItems),
+        rightItems: parseJsonDeep(q.rightItems),
+        pairs: parseJsonDeep(q.pairs),
         groups: parsedGroups,
         explanation: q.explanation || "",
       };
