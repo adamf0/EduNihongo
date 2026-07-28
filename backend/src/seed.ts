@@ -78,18 +78,19 @@ const kanjiInfo: Record<string, {
     kunyomi: "-",
     baseMeaning: "Mengalami, membuktikan, memverifikasi sesuatu melalui pengalaman atau pun pengujian (kanji pedia)",
     jukugos: [
-      { word: "試験", reading: "しけん", meaning: "Ujian" },
-      { word: "受験", reading: "じゅけん", meaning: "Mengikuti ujian" },
-      { word: "資格試験", reading: "しかくしけん", meaning: "Ujian sertifikasi" },
-      { word: "経験", reading: "けいけん", meaning: "Pengalaman" },
-      { word: "体験", reading: "たいけん", meaning: "Pengalaman langsung" },
-      { word: "経験者", reading: "けいけんしゃ", meaning: "Orang yang berpengalaman" },
-      { word: "実験", reading: "じっけん", meaning: "Eksperimen" },
-      { word: "実験室", reading: "じっけんしつ", meaning: "Ruang penelitian" },
-      { word: "被験者", reading: "ひけんしゃ", meaning: "Subjek penelitian" },
-      { word: "受験生", reading: "じゅけんせい", meaning: "Peserta ujian" },
-      { word: "検定試験", reading: "けんていしけん", meaning: "Ujian kompetensi" },
-      { word: "受験番号", reading: "じゅけんばんごう", meaning: "Nomor peserta ujian" }
+      { word: "試験", reading: "しけん", meaning: "Ujian", kanjiBreakdown: "試 : Menguji | 験 : Membuktikan hasil", explanation: "Hubungan makna antar kanji  試 dan 験,  menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"menguji kemampuan untuk membuktikan penguasan seseorang\"." },
+      { word: "受験", reading: "じゅけん", meaning: "Mengikuti ujian", kanjiBreakdown: "受 : Menerima | 験 : Ujian/verifikasi", explanation: "Hubungan makna antar kanji 受 dan 験, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"seseorang mengikuti proses ujian\"." },
+      { word: "資格試験", reading: "しかくしけん", meaning: "ujian sertifikasi", kanjiBreakdown: "資格 : kualifikasi | 試験 : ujian", explanation: "Hubungan makna dari kanji 資格, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"ujian fungsinya untuk membuktikan kompetesnsi tertentu.\"" },
+      { word: "経験", reading: "けいけん", meaning: "pengalaman", kanjiBreakdown: "経 : Melewati | 験 : Mengalami", explanation: "Hubungan makna antar kanji 経 dan 験, menunjukan bahwa gabungan kedua kanji itu  mengandung makna\" sesuatu yang telah dialami secara langsung\"." },
+      { word: "体験", reading: "たいけん", meaning: "pengalaman langsung", kanjiBreakdown: "体 : badan | 験 : mengalami", explanation: "Hubungan makna antar 体 dan 験 , menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"pengalaman yang dirasakan sendiri secara nyata\"." },
+      { word: "経験者", reading: "けいけんしゃ", meaning: "orang yang berepangalam", kanjiBreakdown: "経験 : Pengalaman | 者 : Orang", explanation: "Hubungan makna antar kanji体 dan 験, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \" orang yang telah memiliki pengalaman.\"" },
+      { word: "実験", reading: "じっけん", meaning: "eksperimen", kanjiBreakdown: "実 : nyata | 験 : pembuktian", explanation: "Hubungan makna dari kanji 実　dan 験, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"pembuktian suatu teori melalui percobaan\"." },
+      { word: "実験室", reading: "じっけんしつ", meaning: "laboratorium", kanjiBreakdown: "実験 : percobaan | 室 : ruangan", explanation: "Hubungan makna antar kanji 実験 dan 室, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"tempat melakukan eksperimen\"" },
+      { word: "被験者", reading: "ひけんしゃ", meaning: "subjek penelitian", kanjiBreakdown: "被 : yang dikenai | 験 : menguji", explanation: "Hubungan makna antar kanji dari 被, 験 dan 者, menunjukan bahwa gabungan ketiga kanji itu  mengandung makna \"orang yang menjadi objek eksperimen atau penelitian\"." },
+      { word: "受験生", reading: "じゅけんせい", meaning: "peserta ujian", kanjiBreakdown: "受験 : mengikuti ujian | 生 : siswa/pelajar", explanation: "Hubungan makna antar kanji 受験 dan 生, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"seseorang sedang mengikuti ujian\"." },
+      { word: "検定試験", reading: "けんていしけん", meaning: "ujian sertifikasi", kanjiBreakdown: "検 : memeriksa | 定 : menetapkan standar", explanation: "Hubungan makna dari kanji検 dan 定, menunjukan bahwa gabungan kedua kanji itu  mengandung makna\" proses pemeriksaan untuk menetapkan kemampuan seseorang\"." },
+      { word: "試験", reading: "しけん", meaning: "ujian", kanjiBreakdown: "試 : menguji | 験 : ujian", explanation: "Hubungan makna dari kanji試 dan験, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"menguji kemampuan seseorang\"." },
+      { word: "受験番号", reading: "じゅけんばんごう", meaning: "nomor peserta ujian", kanjiBreakdown: "受験 : mengikuti ujian | 番号 : nomor identitas", explanation: "Hubungan makna antar kanji 受験 dan 番号 saat disatukan menjadi 受験番号, menunjukan bahwa gabungan kedua kosakata kanji tersebut,  mengandung makna \"nomor identitas khusus yang diberikan kepada peserta ujian untuk memastikan pengenalan dan verifikasi data diri selama seluruh rangkain ujian berlangsung\"." }
     ],
     examples: [
       {
