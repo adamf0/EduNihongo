@@ -103,30 +103,101 @@ export const deleteModule = async (req: Request, res: Response) => {
 
 // ================= KANJI CRUD =================
 
-const formatQuizFromDb = (q: any) => {
-  const parseJsonOrRaw = (val: any) => {
-    if (!val) return val;
-    if (typeof val === "string" && (val.startsWith("[") || val.startsWith("{"))) {
+const parseJsonDeep = (val: any): any => {
+  let result = val;
+  while (typeof result === "string") {
+    const trimmed = result.trim();
+    if (
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith("{") && trimmed.endsWith("}"))
+    ) {
       try {
-        return JSON.parse(val);
+        result = JSON.parse(result);
       } catch (e) {
-        return val;
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  return result;
+};
+
+const normalizeGroups = (rawGroups: any): any[] => {
+  let data = parseJsonDeep(rawGroups);
+  if (!data) return [];
+
+  if (typeof data === "object" && !Array.isArray(data)) {
+    return Object.entries(data).map(([catName, words]) => {
+      const items = Array.isArray(words)
+        ? words
+        : typeof words === "string"
+          ? [words]
+          : [];
+      return {
+        [catName]: items,
+        name: catName,
+        category: catName,
+        correctWords: items,
+        items: items,
+      };
+    });
+  }
+
+  if (Array.isArray(data)) {
+    const result: any[] = [];
+    for (const g of data) {
+      if (typeof g === "string") {
+        result.push({ [g]: [], name: g, category: g, correctWords: [], items: [] });
+      } else if (typeof g === "object" && g !== null) {
+        if (g.name === undefined && g.category === undefined) {
+          const entries = Object.entries(g);
+          if (entries.length > 0) {
+            for (const [catName, words] of entries) {
+              const items = Array.isArray(words)
+                ? words
+                : typeof words === "string"
+                  ? [words]
+                  : [];
+              result.push({
+                [catName]: items,
+                name: catName,
+                category: catName,
+                correctWords: items,
+                items: items,
+              });
+            }
+            continue;
+          }
+        }
+
+        const catName = g.name || g.category || g.title || g.label || "";
+        const words = Array.isArray(g.correctWords)
+          ? g.correctWords
+          : Array.isArray(g.items)
+            ? g.items
+            : Array.isArray(g.words)
+              ? g.words
+              : [];
+        result.push({
+          [catName]: words,
+          name: catName,
+          category: catName,
+          correctWords: words,
+          items: words,
+        });
       }
     }
-    return val;
-  };
+    return result;
+  }
 
-  const parsedOptions = parseJsonOrRaw(q.options);
-  const parsedCorrectAnswer = parseJsonOrRaw(q.correctAnswer);
-  const rawGroups = parseJsonOrRaw(q.groups);
-  const parsedGroups = Array.isArray(rawGroups)
-    ? rawGroups.map((g: any) => ({
-        name: g.name || g.category || "",
-        category: g.category || g.name || "",
-        correctWords: Array.isArray(g.correctWords) ? g.correctWords : (Array.isArray(g.items) ? g.items : []),
-        items: Array.isArray(g.items) ? g.items : (Array.isArray(g.correctWords) ? g.correctWords : []),
-      }))
-    : rawGroups;
+  return [];
+};
+
+const formatQuizFromDb = (q: any) => {
+  const parsedOptions = parseJsonDeep(q.options);
+  const parsedCorrectAnswer = parseJsonDeep(q.correctAnswer);
+  const parsedGroups = normalizeGroups(q.groups);
 
   return {
     id: q.id,
@@ -138,12 +209,12 @@ const formatQuizFromDb = (q: any) => {
     optionC: Array.isArray(parsedOptions) ? (parsedOptions[2] || "") : "",
     optionD: Array.isArray(parsedOptions) ? (parsedOptions[3] || "") : "",
     correctAnswer: parsedCorrectAnswer,
-    words: parseJsonOrRaw(q.words),
-    correctOrder: parseJsonOrRaw(q.correctOrder),
+    words: parseJsonDeep(q.words),
+    correctOrder: parseJsonDeep(q.correctOrder),
     targetWord: q.targetWord || "",
-    leftItems: parseJsonOrRaw(q.leftItems),
-    rightItems: parseJsonOrRaw(q.rightItems),
-    pairs: parseJsonOrRaw(q.pairs),
+    leftItems: parseJsonDeep(q.leftItems),
+    rightItems: parseJsonDeep(q.rightItems),
+    pairs: parseJsonDeep(q.pairs),
     groups: parsedGroups,
     explanation: q.explanation || "",
   };
