@@ -267,7 +267,7 @@ export const getKanjis = async (req: Request, res: Response) => {
         jukugos: true,
         semanticRelations: true,
         etymologies: true,
-        quizzes: true,
+        quizzes: { orderBy: { type: "asc" } },
       },
       orderBy: { id: "asc" },
     });
@@ -462,7 +462,7 @@ export const createKanji = async (req: Request, res: Response) => {
         jukugos: true,
         semanticRelations: true,
         etymologies: true,
-        quizzes: true,
+        quizzes: { orderBy: { type: "asc" } },
       },
     });
 
@@ -729,7 +729,7 @@ export const updateKanji = async (req: Request, res: Response) => {
         jukugos: true,
         semanticRelations: true,
         etymologies: true,
-        quizzes: true,
+        quizzes: { orderBy: { type: "asc" } },
       },
     });
 
