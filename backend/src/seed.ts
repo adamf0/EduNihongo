@@ -957,10 +957,27 @@ async function main() {
           word: j.word,
           reading: j.reading,
           meaning: j.meaning,
-          kanjiBreakdown: j.kanjiBreakdown || null,
-          explanation: j.explanation || null,
         }))
       });
+
+      // Create semanticRelation records
+      const semanticRelData = info.jukugos
+        .filter(j => j.kanjiBreakdown || j.explanation || j.word)
+        .map(j => ({
+          kanjiId: kanji.id,
+          jokugo: j.word || "",
+          jokugo_arti: j.kanjiBreakdown || "",
+          hiragana: j.reading || "",
+          hiragana_arti: j.meaning || "",
+          arti: j.meaning || "",
+          penjelasan: j.explanation || "",
+        }));
+
+      if (semanticRelData.length > 0) {
+        await prisma.semanticRelation.createMany({
+          data: semanticRelData,
+        });
+      }
 
       // Generate sentences based on explicit examples if defined, otherwise generate based on first 2 jukugos
       const ex1 = info.jukugos[0];

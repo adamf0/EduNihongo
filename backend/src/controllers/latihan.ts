@@ -28,6 +28,7 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         module: true,
         etymologies: true,
         jukugos: true,
+        semanticRelations: true,
       },
     });
 

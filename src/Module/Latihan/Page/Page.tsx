@@ -1668,24 +1668,32 @@ export const LatihanPage: React.FC = () => {
               </div>
 
               {/* e. Hubungan Makna antar kanji */}
-              {jukugos.some((j: any) => j.explanation) && (
+              {kanjiData?.semanticRelations && kanjiData.semanticRelations.length > 0 && (
                 <div className="space-y-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-xs select-none">
                   <h4 className="font-extrabold text-lg text-slate-800 border-b border-slate-50 pb-3 flex items-center gap-2">
                     <Sparkles className="text-[#8f0020] w-5 h-5" />
                     e. Hubungan Makna Antar Kanji
                   </h4>
                   <div className="space-y-3">
-                    {jukugos.filter((j: any) => j.explanation).map((j: any, idx: number) => (
+                    {kanjiData.semanticRelations.map((sr: any, idx: number) => (
                       <div key={idx} className="bg-slate-50/60 p-4 rounded-2xl border border-slate-100 flex flex-col gap-2 text-left">
                         <div className="flex items-center gap-2 border-b border-slate-200/50 pb-2">
-                          <span className="font-serif text-lg font-bold text-slate-800">{j.word}</span>
-                          <span className="text-xs text-slate-500">({j.reading})</span>
-                          <span className="text-xs font-bold text-[#8f0020] ml-auto">{j.meaning}</span>
+                          <span className="font-serif text-lg font-bold text-slate-800">{sr.jokugo}</span>
+                          {sr.hiragana && <span className="text-xs text-slate-500">({sr.hiragana})</span>}
+                          {(sr.arti || sr.hiragana_arti) && (
+                            <span className="text-xs font-bold text-[#8f0020] ml-auto">{sr.arti || sr.hiragana_arti}</span>
+                          )}
                         </div>
-                        {j.explanation && (
+                        {sr.jokugo_arti && (
+                          <div className="text-xs text-slate-700 font-medium">
+                            <strong className="text-slate-900 font-bold">Arti Jukugo / Kanji: </strong>
+                            {sr.jokugo_arti}
+                          </div>
+                        )}
+                        {sr.penjelasan && (
                           <div className="text-xs text-slate-700 leading-relaxed font-medium">
                             <strong className="text-slate-900 font-bold">Penjelasan Hubungan Makna: </strong>
-                            {j.explanation}
+                            {sr.penjelasan}
                           </div>
                         )}
                       </div>

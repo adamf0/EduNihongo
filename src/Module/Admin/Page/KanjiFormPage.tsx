@@ -27,10 +27,13 @@ export const KanjiFormPage: React.FC = () => {
   const [kanjiKunyomi, setKanjiKunyomi] = useState("");
   const [kanjiBaseMeaning, setKanjiBaseMeaning] = useState("");
 
-  
   // Random border initialization helper
   const getRandomBorder = () => {
-    const bordersList = ["border-l-4 border-primary", "border-l-4 border-secondary", "border-l-4 border-tertiary"];
+    const bordersList = [
+      "border-l-4 border-primary",
+      "border-l-4 border-secondary",
+      "border-l-4 border-tertiary",
+    ];
     return bordersList[Math.floor(Math.random() * bordersList.length)];
   };
   const [kanjiBorder, setKanjiBorder] = useState(getRandomBorder());
@@ -39,6 +42,25 @@ export const KanjiFormPage: React.FC = () => {
   const [examples, setExamples] = useState<any[]>([]);
   const [readingExamples, setReadingExamples] = useState<any[]>([]);
   const [jukugos, setJukugos] = useState<any[]>([]);
+  const [semanticRelations, setSemanticRelations] = useState<
+    Array<{
+      jokugo: string;
+      jokugo_arti: string;
+      hiragana: string;
+      hiragana_arti: string;
+      arti: string;
+      penjelasan: string;
+    }>
+  >([
+    {
+      jokugo: "",
+      jokugo_arti: "",
+      hiragana: "",
+      hiragana_arti: "",
+      arti: "",
+      penjelasan: "",
+    },
+  ]);
   const [etymologies, setEtymologies] = useState<any[]>([]);
   const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [reflectionQuestions, setReflectionQuestions] = useState<string[]>([]);
@@ -47,23 +69,293 @@ export const KanjiFormPage: React.FC = () => {
 
   // Virtual Keyboard state
   const [showKeyboard, setShowKeyboard] = useState(false);
-  const [keyboardTab, setKeyboardTab] = useState<"N5" | "N4" | "N3" | "N2" | "N1" | "Radical">("N5");
+  const [keyboardTab, setKeyboardTab] = useState<
+    "N5" | "N4" | "N3" | "N2" | "N1" | "Radical"
+  >("N5");
   const keyboardRef = useRef<HTMLDivElement>(null);
 
   const kanjiLists = {
-    N5: ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "百", "千", "万", "円", "口", "目", "耳", "手", "足", "力", "人", "子", "女", "男", "先", "生", "学", "校", "年", "日", "月", "火", "水", "木", "金", "土", "本", "東", "西", "南", "北", "前", "後", "上", "下", "左", "右", "中", "大", "小", "長", "高", "安", "新", "古", "多", "少", "行", "来", "友", "会", "社", "父", "母", "毎", "書", "読", "聞", "話", "見", "食", "飲", "買"],
-    N4: ["会", "同", "事", "自", "社", "発", "者", "地", "業", "方", "新", "場", "員", "立", "開", "手", "代", "力", "問", "明", "京", "国", "画", "聞", "読", "書", "通", "走", "歩", "旅", "屋", "店", "物", "空", "雨", "風", "林", "森", "花", "海", "鳥", "牛", "馬", "魚", "米", "茶"],
-    N3: ["情", "報", "感", "覚", "最", "初", "的", "政", "治", "経", "済", "歴", "史", "辞", "宿", "題", "寒", "暑", "薬", "医", "術", "運", "動", "転", "働", "痛", "悲", "怒", "考", "信", "想", "調", "査", "果", "戦", "争", "面", "接", "練", "習"],
-    N2: ["党", "協", "総", "区", "領", "県", "設", "改", "府", "重", "委", "文", "実", "制", "基", "各", "長", "機", "演", "選", "関", "点", "権", "警", "産", "判", "項", "公", "不", "認", "市", "決", "使", "表", "主", "理", "退", "企", "姿", "管", "省", "相"],
-    N1: ["氏", "統", "保", "第", "義", "宗", "球", "断", "済", "個", "害", "特", "割", "難", "補", "職", "護", "課", "論", "過", "政", "積", "適", "規", "型", "務", "構", "資", "告", "際", "模", "施", "導"],
-    Radical: ["心", "門", "木", "氵", "扌", "火", "土", "女", "子", "糸", "言", "金", "貝", "車", "雨", "疒", "辶", "人", "口", "日", "月", "力", "手", "目", "耳", "足"]
+    N5: [
+      "一",
+      "二",
+      "三",
+      "四",
+      "五",
+      "六",
+      "七",
+      "八",
+      "九",
+      "十",
+      "百",
+      "千",
+      "万",
+      "円",
+      "口",
+      "目",
+      "耳",
+      "手",
+      "足",
+      "力",
+      "人",
+      "子",
+      "女",
+      "男",
+      "先",
+      "生",
+      "学",
+      "校",
+      "年",
+      "日",
+      "月",
+      "火",
+      "水",
+      "木",
+      "金",
+      "土",
+      "本",
+      "東",
+      "西",
+      "南",
+      "北",
+      "前",
+      "後",
+      "上",
+      "下",
+      "左",
+      "右",
+      "中",
+      "大",
+      "小",
+      "長",
+      "高",
+      "安",
+      "新",
+      "古",
+      "多",
+      "少",
+      "行",
+      "来",
+      "友",
+      "会",
+      "社",
+      "父",
+      "母",
+      "毎",
+      "書",
+      "読",
+      "聞",
+      "話",
+      "見",
+      "食",
+      "飲",
+      "買",
+    ],
+    N4: [
+      "会",
+      "同",
+      "事",
+      "自",
+      "社",
+      "発",
+      "者",
+      "地",
+      "業",
+      "方",
+      "新",
+      "場",
+      "員",
+      "立",
+      "開",
+      "手",
+      "代",
+      "力",
+      "問",
+      "明",
+      "京",
+      "国",
+      "画",
+      "聞",
+      "読",
+      "書",
+      "通",
+      "走",
+      "歩",
+      "旅",
+      "屋",
+      "店",
+      "物",
+      "空",
+      "雨",
+      "風",
+      "林",
+      "森",
+      "花",
+      "海",
+      "鳥",
+      "牛",
+      "馬",
+      "魚",
+      "米",
+      "茶",
+    ],
+    N3: [
+      "情",
+      "報",
+      "感",
+      "覚",
+      "最",
+      "初",
+      "的",
+      "政",
+      "治",
+      "経",
+      "済",
+      "歴",
+      "史",
+      "辞",
+      "宿",
+      "題",
+      "寒",
+      "暑",
+      "薬",
+      "医",
+      "術",
+      "運",
+      "動",
+      "転",
+      "働",
+      "痛",
+      "悲",
+      "怒",
+      "考",
+      "信",
+      "想",
+      "調",
+      "査",
+      "果",
+      "戦",
+      "争",
+      "面",
+      "接",
+      "練",
+      "習",
+    ],
+    N2: [
+      "党",
+      "協",
+      "総",
+      "区",
+      "領",
+      "県",
+      "設",
+      "改",
+      "府",
+      "重",
+      "委",
+      "文",
+      "実",
+      "制",
+      "基",
+      "各",
+      "長",
+      "機",
+      "演",
+      "選",
+      "関",
+      "点",
+      "権",
+      "警",
+      "産",
+      "判",
+      "項",
+      "公",
+      "不",
+      "認",
+      "市",
+      "決",
+      "使",
+      "表",
+      "主",
+      "理",
+      "退",
+      "企",
+      "姿",
+      "管",
+      "省",
+      "相",
+    ],
+    N1: [
+      "氏",
+      "統",
+      "保",
+      "第",
+      "義",
+      "宗",
+      "球",
+      "断",
+      "済",
+      "個",
+      "害",
+      "特",
+      "割",
+      "難",
+      "補",
+      "職",
+      "護",
+      "課",
+      "論",
+      "過",
+      "政",
+      "積",
+      "適",
+      "規",
+      "型",
+      "務",
+      "構",
+      "資",
+      "告",
+      "際",
+      "模",
+      "施",
+      "導",
+    ],
+    Radical: [
+      "心",
+      "門",
+      "木",
+      "氵",
+      "扌",
+      "火",
+      "土",
+      "女",
+      "子",
+      "糸",
+      "言",
+      "金",
+      "貝",
+      "車",
+      "雨",
+      "疒",
+      "辶",
+      "人",
+      "口",
+      "日",
+      "月",
+      "力",
+      "手",
+      "目",
+      "耳",
+      "足",
+    ],
   };
 
   const handleKeyboardInput = (char: string) => {
     setKanjiChar((prev) => {
       const nextVal = prev.length < 10 ? prev + char : prev;
       setNodes((prevNodes) =>
-        prevNodes.map((n) => (n.type === "root" ? { ...n, character: nextVal } : n))
+        prevNodes.map((n) =>
+          n.type === "root" ? { ...n, character: nextVal } : n,
+        ),
       );
       return nextVal;
     });
@@ -73,7 +365,9 @@ export const KanjiFormPage: React.FC = () => {
     setKanjiChar((prev) => {
       const nextVal = prev.slice(0, -1);
       setNodes((prevNodes) =>
-        prevNodes.map((n) => (n.type === "root" ? { ...n, character: nextVal } : n))
+        prevNodes.map((n) =>
+          n.type === "root" ? { ...n, character: nextVal } : n,
+        ),
       );
       return nextVal;
     });
@@ -81,7 +375,10 @@ export const KanjiFormPage: React.FC = () => {
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (keyboardRef.current && !keyboardRef.current.contains(e.target as Node)) {
+      if (
+        keyboardRef.current &&
+        !keyboardRef.current.contains(e.target as Node)
+      ) {
         setShowKeyboard(false);
       }
     };
@@ -94,10 +391,14 @@ export const KanjiFormPage: React.FC = () => {
   }, [showKeyboard]);
 
   // Graph nodes edit mode: "table" | "visual"
-  const [graphEditMode, setGraphEditMode] = useState<"table" | "visual">("visual");
+  const [graphEditMode, setGraphEditMode] = useState<"table" | "visual">(
+    "visual",
+  );
 
   // Drag and Drop Coordinates state
-  const [nodeCoords, setNodeCoords] = useState<Record<string, { x: number; y: number }>>({});
+  const [nodeCoords, setNodeCoords] = useState<
+    Record<string, { x: number; y: number }>
+  >({});
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [linkingSourceId, setLinkingSourceId] = useState<string | null>(null);
 
@@ -129,12 +430,14 @@ export const KanjiFormPage: React.FC = () => {
         if (kanjiId) {
           // Edit mode: fetch all kanjis and find the matches
           const allKanjis = await api.admin.kanjis.list();
-          const target = allKanjis.find((k: any) => Number(k.id) === Number(kanjiId));
+          const target = allKanjis.find(
+            (k: any) => Number(k.id) === Number(kanjiId),
+          );
           if (!target) {
             setError("Karakter Kanji tidak ditemukan.");
             return;
           }
-          
+
           setKanjiChar(target.character);
           setKanjiRomaji(target.romaji);
           setKanjiMeaning(target.meaning);
@@ -144,28 +447,79 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiBaseMeaning(target.baseMeaning || "");
 
           setKanjiBorder(target.border || "border-l-4 border-primary");
-          
+
           setNodeCoords({}); // Reset coordinates dynamically to avoid old positions
           const dbExamples = target.examples || [];
           const writeEx = dbExamples.filter((ex: any) => !ex.isReading);
           const readEx = dbExamples.filter((ex: any) => ex.isReading);
-          
-          setExamples(writeEx.length > 0 ? writeEx : [{ japanese: "", romaji: "", translation: "", isReading: false }]);
-          setReadingExamples(readEx.length > 0 ? readEx : [{ japanese: "", romaji: "", translation: "", isReading: true }]);
-          
+
+          setExamples(
+            writeEx.length > 0
+              ? writeEx
+              : [
+                  {
+                    japanese: "",
+                    romaji: "",
+                    translation: "",
+                    isReading: false,
+                  },
+                ],
+          );
+          setReadingExamples(
+            readEx.length > 0
+              ? readEx
+              : [
+                  {
+                    japanese: "",
+                    romaji: "",
+                    translation: "",
+                    isReading: true,
+                  },
+                ],
+          );
+
           setJukugos(
             target.jukugos && target.jukugos.length > 0
               ? target.jukugos.map((j: any) => ({
                   word: j.word,
                   reading: j.reading,
                   meaning: j.meaning,
-                  kanjiBreakdown: j.kanjiBreakdown || "",
-                  explanation: j.explanation || ""
                 }))
-              : [{ word: "", reading: "", meaning: "", kanjiBreakdown: "", explanation: "" }]
+              : [
+                  {
+                    word: "",
+                    reading: "",
+                    meaning: "",
+                  },
+                ],
           );
-          setEtymologies(target.etymologies && target.etymologies.length > 0 ? target.etymologies : [{ character: "", romaji: "", detail: "" }]);
-          
+          setSemanticRelations(
+            target.semanticRelations && target.semanticRelations.length > 0
+              ? target.semanticRelations.map((sr: any) => ({
+                  jokugo: sr.jokugo || "",
+                  jokugo_arti: sr.jokugo_arti || "",
+                  hiragana: sr.hiragana || "",
+                  hiragana_arti: sr.hiragana_arti || "",
+                  arti: sr.arti || "",
+                  penjelasan: sr.penjelasan || "",
+                }))
+              : [
+                  {
+                    jokugo: "",
+                    jokugo_arti: "",
+                    hiragana: "",
+                    hiragana_arti: "",
+                    arti: "",
+                    penjelasan: "",
+                  },
+                ],
+          );
+          setEtymologies(
+            target.etymologies && target.etymologies.length > 0
+              ? target.etymologies
+              : [{ character: "", romaji: "", detail: "" }],
+          );
+
           if (target.quizData) {
             try {
               setQuizQuestions(JSON.parse(target.quizData));
@@ -186,7 +540,21 @@ export const KanjiFormPage: React.FC = () => {
             setReflectionQuestions([]);
           }
 
-          setNodes(target.graphNodes.length > 0 ? target.graphNodes : [{ id: "root", character: target.character, meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
+          setNodes(
+            target.graphNodes.length > 0
+              ? target.graphNodes
+              : [
+                  {
+                    id: "root",
+                    character: target.character,
+                    meaning: "INTI",
+                    type: "root",
+                    borderColor: "border-blue-500",
+                    isPill: false,
+                    parentPill: null,
+                  },
+                ],
+          );
           setEdges(target.graphEdges);
         } else {
           // Add mode: default initialization
@@ -198,9 +566,29 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiKunyomi("");
           setKanjiBaseMeaning("");
           setNodeCoords({}); // Reset coordinates
-          setExamples([{ japanese: "", romaji: "", translation: "", isReading: false }]);
-          setReadingExamples([{ japanese: "", romaji: "", translation: "", isReading: true }]);
-          setJukugos([{ word: "", reading: "", meaning: "", kanjiBreakdown: "", explanation: "" }]);
+          setExamples([
+            { japanese: "", romaji: "", translation: "", isReading: false },
+          ]);
+          setReadingExamples([
+            { japanese: "", romaji: "", translation: "", isReading: true },
+          ]);
+          setJukugos([
+            {
+              word: "",
+              reading: "",
+              meaning: "",
+            },
+          ]);
+          setSemanticRelations([
+            {
+              jokugo: "",
+              jokugo_arti: "",
+              hiragana: "",
+              hiragana_arti: "",
+              arti: "",
+              penjelasan: "",
+            },
+          ]);
           setEtymologies([{ character: "", romaji: "", detail: "" }]);
           setQuizQuestions([]);
           setReflectionQuestions([
@@ -208,9 +596,19 @@ export const KanjiFormPage: React.FC = () => {
             "Jukugo mana yang paling mudah untuk Anda ingat? Mengapa?",
             "Apa perbedaan penggunaan antar-jukugo yang mengandung kanji ini?",
             "Cabang semantic graph mana yang menurut Anda paling mudah dipahami?",
-            "Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ini?"
+            "Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ini?",
           ]);
-          setNodes([{ id: "root", character: "", meaning: "INTI", type: "root", borderColor: "border-blue-500", isPill: false, parentPill: null }]);
+          setNodes([
+            {
+              id: "root",
+              character: "",
+              meaning: "INTI",
+              type: "root",
+              borderColor: "border-blue-500",
+              isPill: false,
+              parentPill: null,
+            },
+          ]);
           setEdges([]);
           setKanjiBorder(getRandomBorder());
         }
@@ -229,7 +627,7 @@ export const KanjiFormPage: React.FC = () => {
   useEffect(() => {
     setNodeCoords((prev) => {
       const updated = { ...prev };
-      
+
       // Separate nodes by type
       const rootNode = nodes.find((n) => n.type === "root");
       const topNodes = nodes.filter((n) => n.type === "top");
@@ -252,7 +650,10 @@ export const KanjiFormPage: React.FC = () => {
       // 2. Top nodes coords (Radicals centered above root)
       topNodes.forEach((n, idx) => {
         if (!updated[n.id]) {
-          const x = topNodes.length === 1 ? rootX : rootX - ((topNodes.length - 1) / 2) * 200 + idx * 200;
+          const x =
+            topNodes.length === 1
+              ? rootX
+              : rootX - ((topNodes.length - 1) / 2) * 200 + idx * 200;
           updated[n.id] = { x, y: 30 };
         }
       });
@@ -267,7 +668,9 @@ export const KanjiFormPage: React.FC = () => {
 
       // 4. Sub-bottom nodes coords (Symmetrically staggered under parent bottom nodes)
       bottomNodes.forEach((parent) => {
-        const children = subBottomNodes.filter((child) => child.parentPill === parent.id);
+        const children = subBottomNodes.filter(
+          (child) => child.parentPill === parent.id,
+        );
         const parentCoord = updated[parent.id] || { x: 440, y: 220 };
 
         children.forEach((child, childIdx) => {
@@ -297,19 +700,25 @@ export const KanjiFormPage: React.FC = () => {
   const handleCharInput = (val: string) => {
     setKanjiChar(val);
     setNodes((prev) =>
-      prev.map((n) => (n.type === "root" ? { ...n, character: val } : n))
+      prev.map((n) => (n.type === "root" ? { ...n, character: val } : n)),
     );
   };
 
   const addExampleRow = () => {
-    setExamples((prev) => [...prev, { japanese: "", romaji: "", translation: "", isReading: false }]);
+    setExamples((prev) => [
+      ...prev,
+      { japanese: "", romaji: "", translation: "", isReading: false },
+    ]);
   };
   const removeExampleRow = (idx: number) => {
     setExamples((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const addReadingExampleRow = () => {
-    setReadingExamples((prev) => [...prev, { japanese: "", romaji: "", translation: "", isReading: true }]);
+    setReadingExamples((prev) => [
+      ...prev,
+      { japanese: "", romaji: "", translation: "", isReading: true },
+    ]);
   };
   const removeReadingExampleRow = (idx: number) => {
     setReadingExamples((prev) => prev.filter((_, i) => i !== idx));
@@ -322,6 +731,22 @@ export const KanjiFormPage: React.FC = () => {
     setJukugos((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const addSemanticRelationRow = () => {
+    setSemanticRelations((prev) => [
+      ...prev,
+      {
+        jokugo: "",
+        jokugo_arti: "",
+        hiragana: "",
+        hiragana_arti: "",
+        arti: "",
+        penjelasan: "",
+      },
+    ]);
+  };
+  const removeSemanticRelationRow = (idx: number) => {
+    setSemanticRelations((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const handleLinkStartOrEnd = (nodeId: string) => {
     if (linkingSourceId === null) {
@@ -335,13 +760,25 @@ export const KanjiFormPage: React.FC = () => {
     const id = `node-${Date.now()}`;
     setNodes((prev) => [
       ...prev,
-      { id, character: "", meaning: "", type: "bottom", borderColor: "border-green-500", isPill: true, parentPill: null },
+      {
+        id,
+        character: "",
+        meaning: "",
+        type: "bottom",
+        borderColor: "border-green-500",
+        isPill: true,
+        parentPill: null,
+      },
     ]);
   };
   const removeNodeRow = (idx: number) => {
     const nodeToRemove = nodes[idx];
     setNodes((prev) => prev.filter((_, i) => i !== idx));
-    setEdges((prev) => prev.filter((e) => e.source !== nodeToRemove.id && e.target !== nodeToRemove.id));
+    setEdges((prev) =>
+      prev.filter(
+        (e) => e.source !== nodeToRemove.id && e.target !== nodeToRemove.id,
+      ),
+    );
   };
 
   const handleNodeMouseDown = (e: React.MouseEvent, nodeId: string) => {
@@ -355,7 +792,10 @@ export const KanjiFormPage: React.FC = () => {
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     // Only pan if clicking on empty space in canvas background
-    if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains("grid-crosshair")) {
+    if (
+      e.target === e.currentTarget ||
+      (e.target as HTMLElement).classList.contains("grid-crosshair")
+    ) {
       e.preventDefault();
       setIsPanning(true);
       setPanStartPos({ x: e.clientX, y: e.clientY });
@@ -414,10 +854,15 @@ export const KanjiFormPage: React.FC = () => {
     }
 
     const edgeId = `e-${linkingSourceId}-${targetId}`;
-    const exists = edges.some((e) => e.source === linkingSourceId && e.target === targetId);
+    const exists = edges.some(
+      (e) => e.source === linkingSourceId && e.target === targetId,
+    );
 
     if (!exists) {
-      setEdges((prev) => [...prev, { id: edgeId, source: linkingSourceId, target: targetId }]);
+      setEdges((prev) => [
+        ...prev,
+        { id: edgeId, source: linkingSourceId, target: targetId },
+      ]);
     }
     setLinkingSourceId(null);
   };
@@ -434,24 +879,37 @@ export const KanjiFormPage: React.FC = () => {
     }
 
     const formattedNodes = nodes.map((n) => {
-      const formattedId = n.id.startsWith(kanjiChar) ? n.id : `${kanjiChar}-${n.id}`;
+      const formattedId = n.id.startsWith(kanjiChar)
+        ? n.id
+        : `${kanjiChar}-${n.id}`;
       return {
         ...n,
         id: formattedId,
-        parentPill: n.parentPill && !n.parentPill.startsWith(kanjiChar) ? `${kanjiChar}-${n.parentPill}` : n.parentPill
+        parentPill:
+          n.parentPill && !n.parentPill.startsWith(kanjiChar)
+            ? `${kanjiChar}-${n.parentPill}`
+            : n.parentPill,
       };
     });
 
     const formattedEdges = edges.map((eg) => ({
       ...eg,
       id: eg.id.startsWith(kanjiChar) ? eg.id : `${kanjiChar}-${eg.id}`,
-      source: eg.source.startsWith(kanjiChar) ? eg.source : `${kanjiChar}-${eg.source}`,
-      target: eg.target.startsWith(kanjiChar) ? eg.target : `${kanjiChar}-${eg.target}`
+      source: eg.source.startsWith(kanjiChar)
+        ? eg.source
+        : `${kanjiChar}-${eg.source}`,
+      target: eg.target.startsWith(kanjiChar)
+        ? eg.target
+        : `${kanjiChar}-${eg.target}`,
     }));
 
     const mergedExamples = [
-      ...examples.filter((ex) => ex.japanese.trim() !== "").map((ex) => ({ ...ex, isReading: false })),
-      ...readingExamples.filter((ex) => ex.japanese.trim() !== "").map((ex) => ({ ...ex, isReading: true }))
+      ...examples
+        .filter((ex) => ex.japanese.trim() !== "")
+        .map((ex) => ({ ...ex, isReading: false })),
+      ...readingExamples
+        .filter((ex) => ex.japanese.trim() !== "")
+        .map((ex) => ({ ...ex, isReading: true })),
     ];
 
     const payload = {
@@ -467,18 +925,36 @@ export const KanjiFormPage: React.FC = () => {
       border: kanjiBorder || null,
       moduleId,
       examples: mergedExamples,
-      jukugos: jukugos.filter((j) => j.word.trim() !== "").map((j) => ({
-        word: j.word,
-        reading: j.reading,
-        meaning: j.meaning,
-        kanjiBreakdown: j.kanjiBreakdown || null,
-        explanation: j.explanation || null,
-      })),
+      jukugos: jukugos
+        .filter((j) => j.word.trim() !== "")
+        .map((j) => ({
+          word: j.word,
+          reading: j.reading,
+          meaning: j.meaning,
+        })),
+      semanticRelations: semanticRelations
+        .filter((sr) => sr.jokugo.trim() !== "" || sr.penjelasan.trim() !== "")
+        .map((sr) => ({
+          jokugo: sr.jokugo,
+          jokugo_arti: sr.jokugo_arti || null,
+          hiragana: sr.hiragana || null,
+          hiragana_arti: sr.hiragana_arti || null,
+          arti: sr.arti || null,
+          penjelasan: sr.penjelasan || null,
+        })),
       etymologies: etymologies.filter((et) => et.character.trim() !== ""),
       graphNodes: formattedNodes,
       graphEdges: formattedEdges,
-      quizData: quizQuestions.length > 0 ? JSON.stringify(quizQuestions.filter(q => q.question.trim() !== "")) : null,
-      reflectionData: reflectionQuestions.length > 0 ? JSON.stringify(reflectionQuestions.filter(r => r.trim() !== "")) : null,
+      quizData:
+        quizQuestions.length > 0
+          ? JSON.stringify(
+              quizQuestions.filter((q) => q.question.trim() !== ""),
+            )
+          : null,
+      reflectionData:
+        reflectionQuestions.length > 0
+          ? JSON.stringify(reflectionQuestions.filter((r) => r.trim() !== ""))
+          : null,
     };
 
     try {
@@ -501,7 +977,9 @@ export const KanjiFormPage: React.FC = () => {
     return (
       <Layout>
         <div className="flex-grow flex items-center justify-center min-h-[400px]">
-          <div className="text-primary font-bold animate-pulse text-lg">Memuat Formulir Kanji...</div>
+          <div className="text-primary font-bold animate-pulse text-lg">
+            Memuat Formulir Kanji...
+          </div>
         </div>
       </Layout>
     );
@@ -519,7 +997,8 @@ export const KanjiFormPage: React.FC = () => {
                 {kanjiId ? `Edit Kanji: ${kanjiChar}` : "Tambah Kanji Baru"}
               </h2>
               <p className="text-body-md text-on-surface-variant">
-                Lengkapi kurikulum details, kalimat contoh, dan visualisasi graf hubungan simpul untuk Kanji ini.
+                Lengkapi kurikulum details, kalimat contoh, dan visualisasi graf
+                hubungan simpul untuk Kanji ini.
               </p>
             </div>
             <button
@@ -539,12 +1018,13 @@ export const KanjiFormPage: React.FC = () => {
           )}
 
           {/* Form Element */}
-          <form onSubmit={handleSaveKanji} className="flex flex-col gap-6 w-full animate-fade-in">
+          <form
+            onSubmit={handleSaveKanji}
+            className="flex flex-col gap-6 w-full animate-fade-in"
+          >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start w-full">
-              
               {/* Kolom Kiri: Info Dasar & Etimologi */}
               <div className="flex flex-col gap-6 w-full">
-                
                 {/* Section 1: Basic Info */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
                   <h4 className="font-label-lg text-label-lg font-bold border-b border-outline-variant/20 pb-1 text-primary">
@@ -552,7 +1032,9 @@ export const KanjiFormPage: React.FC = () => {
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="flex flex-col gap-1.5 relative">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Karakter Kanji</label>
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">
+                        Karakter Kanji
+                      </label>
                       <div className="relative flex items-center w-full">
                         <input
                           type="text"
@@ -591,7 +1073,10 @@ export const KanjiFormPage: React.FC = () => {
                                 className="px-2 py-1 text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-md border-none cursor-pointer flex items-center gap-0.5"
                                 title="Hapus Karakter Terakhir"
                               >
-                                <Icon name="backspace" className="text-[10px]" />
+                                <Icon
+                                  name="backspace"
+                                  className="text-[10px]"
+                                />
                                 DEL
                               </button>
                               <button
@@ -599,14 +1084,19 @@ export const KanjiFormPage: React.FC = () => {
                                 onClick={() => setShowKeyboard(false)}
                                 className="p-0.5 hover:bg-slate-100 rounded-full border-none bg-transparent cursor-pointer"
                               >
-                                <Icon name="close" className="text-sm text-slate-400" />
+                                <Icon
+                                  name="close"
+                                  className="text-sm text-slate-400"
+                                />
                               </button>
                             </div>
                           </div>
 
                           {/* Tabs */}
                           <div className="flex gap-1 border-b border-slate-100 pb-1">
-                            {(["N5", "N4", "N3", "N2", "N1", "Radical"] as const).map((tab) => (
+                            {(
+                              ["N5", "N4", "N3", "N2", "N1", "Radical"] as const
+                            ).map((tab) => (
                               <button
                                 key={tab}
                                 type="button"
@@ -639,7 +1129,9 @@ export const KanjiFormPage: React.FC = () => {
                       )}
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Romaji</label>
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">
+                        Romaji
+                      </label>
                       <input
                         type="text"
                         value={kanjiRomaji}
@@ -650,7 +1142,9 @@ export const KanjiFormPage: React.FC = () => {
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Arti Singkat</label>
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">
+                        Arti Singkat
+                      </label>
                       <input
                         type="text"
                         value={kanjiMeaning}
@@ -661,7 +1155,9 @@ export const KanjiFormPage: React.FC = () => {
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Bushuu / Radical</label>
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">
+                        Bushuu / Radical
+                      </label>
                       <input
                         type="text"
                         value={kanjiBushuu}
@@ -671,7 +1167,9 @@ export const KanjiFormPage: React.FC = () => {
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Onyomi</label>
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">
+                        Onyomi
+                      </label>
                       <input
                         type="text"
                         value={kanjiOnyomi}
@@ -681,7 +1179,9 @@ export const KanjiFormPage: React.FC = () => {
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">Kunyomi</label>
+                      <label className="font-label-sm text-label-sm font-semibold text-on-surface">
+                        Kunyomi
+                      </label>
                       <input
                         type="text"
                         value={kanjiKunyomi}
@@ -693,7 +1193,9 @@ export const KanjiFormPage: React.FC = () => {
                   </div>
 
                   <div className="flex flex-col gap-1.5 mt-2">
-                    <label className="font-label-sm text-label-sm font-semibold text-on-surface">Makna Dasar (Lengkap)</label>
+                    <label className="font-label-sm text-label-sm font-semibold text-on-surface">
+                      Makna Dasar (Lengkap)
+                    </label>
                     <textarea
                       value={kanjiBaseMeaning}
                       onChange={(e) => setKanjiBaseMeaning(e.target.value)}
@@ -703,94 +1205,15 @@ export const KanjiFormPage: React.FC = () => {
                     />
                   </div>
                 </div>
-
               </div>
 
               {/* Kolom Kanan: Kalimat Contoh, Jukugo, Latihan Membaca */}
               <div className="flex flex-col gap-6 w-full">
-                
                 {/* Section 2: Contoh Kalimat */}
-                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
-                  <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
-                    <h4 className="font-label-lg text-label-lg font-bold text-primary">
-                      2. Contoh Kalimat & Tata Bahasa
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={addExampleRow}
-                      className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none animate-pulse-slow"
-                    >
-                      + Kalimat
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {examples.map((ex, idx) => (
-                      <div key={idx} className="flex gap-3 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl animate-scale-up">
-                        <div className="flex-grow grid grid-cols-1 gap-2">
-                          <div className="flex flex-col gap-0.5">
-                            <label className="text-[9px] uppercase font-bold text-slate-500">Bahasa Jepang</label>
-                            <input
-                              type="text"
-                              value={ex.japanese}
-                              onChange={(e) => {
-                                const newEx = [...examples];
-                                newEx[idx].japanese = e.target.value;
-                                setExamples(newEx);
-                              }}
-                              className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
-                              placeholder="日本語を学びます。"
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex flex-col gap-0.5">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">Romaji</label>
-                              <input
-                                type="text"
-                                value={ex.romaji}
-                                onChange={(e) => {
-                                  const newEx = [...examples];
-                                  newEx[idx].romaji = e.target.value;
-                                  setExamples(newEx);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Nihongo wo manabimasu."
-                              />
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">Terjemahan</label>
-                              <input
-                                type="text"
-                                value={ex.translation}
-                                onChange={(e) => {
-                                  const newEx = [...examples];
-                                  newEx[idx].translation = e.target.value;
-                                  setExamples(newEx);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Belajar bahasa Jepang."
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeExampleRow(idx)}
-                          disabled={examples.length === 1}
-                          className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none mt-3 disabled:opacity-30"
-                        >
-                          <Icon name="delete" className="text-base block" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Section 3: Daftar Jukugo */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
                   <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                      3. Daftar Jukugo (Kata Majemuk)
+                      2. Daftar Jukugo (Kata Majemuk)
                     </h4>
                     <button
                       type="button"
@@ -804,11 +1227,16 @@ export const KanjiFormPage: React.FC = () => {
 
                   <div className="flex flex-col gap-3 max-h-[450px] overflow-y-auto pr-1.5 sidebar-scroll">
                     {jukugos.map((j, idx) => (
-                      <div key={idx} className="flex gap-3 items-start bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20">
+                      <div
+                        key={idx}
+                        className="flex gap-3 items-start bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20"
+                      >
                         <div className="grid grid-cols-1 gap-3 flex-grow">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">Kata Jukugo</label>
+                              <label className="text-[10px] uppercase font-bold text-slate-500">
+                                Kata Jukugo
+                              </label>
                               <input
                                 type="text"
                                 value={j.word}
@@ -822,7 +1250,9 @@ export const KanjiFormPage: React.FC = () => {
                               />
                             </div>
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">Kata Hiragana</label>
+                              <label className="text-[10px] uppercase font-bold text-slate-500">
+                                Kata Hiragana
+                              </label>
                               <input
                                 type="text"
                                 value={j.reading}
@@ -836,7 +1266,9 @@ export const KanjiFormPage: React.FC = () => {
                               />
                             </div>
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">Arti (Meaning)</label>
+                              <label className="text-[10px] uppercase font-bold text-slate-500">
+                                Arti (Meaning)
+                              </label>
                               <input
                                 type="text"
                                 value={j.meaning}
@@ -864,16 +1296,418 @@ export const KanjiFormPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Section 3: Daftar Jukugo */}
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 w-full animate-fade-in">
+                  <div className="flex justify-between items-center border-b border-outline-variant/20 pb-1">
+                    <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
+                      3. Peta Semantik & Hubungan Kata
+                    </h4>
+                    <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
+                      <button
+                        type="button"
+                        onClick={() => setGraphEditMode("visual")}
+                        className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
+                          graphEditMode === "visual"
+                            ? "bg-primary text-on-primary"
+                            : "bg-transparent text-on-surface-variant"
+                        }`}
+                      >
+                        <Icon name="gesture" className="text-sm mr-1" />
+                        Visual Drag-Drop
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setGraphEditMode("table")}
+                        className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
+                          graphEditMode === "table"
+                            ? "bg-primary text-on-primary"
+                            : "bg-transparent text-on-surface-variant"
+                        }`}
+                      >
+                        <Icon name="table_chart" className="text-sm mr-1" />
+                        Tabel Mode
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* TABLE MODE */}
+                  {graphEditMode === "table" && (
+                    <div className="space-y-3">
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={addNodeRow}
+                          className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none"
+                        >
+                          + Tambah Node
+                        </button>
+                      </div>
+                      {nodes.map((n, idx) => (
+                        <div
+                          key={idx}
+                          className="flex gap-4 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl"
+                        >
+                          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">
+                                ID Node
+                              </label>
+                              <input
+                                type="text"
+                                value={n.id.replace(`${kanjiChar}-`, "")}
+                                disabled={n.type === "root"}
+                                onChange={(e) => {
+                                  const newN = [...nodes];
+                                  newN[idx].id = e.target.value;
+                                  setNodes(newN);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-mono disabled:opacity-60"
+                                placeholder="top-1"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">
+                                Karakter
+                              </label>
+                              <input
+                                type="text"
+                                value={n.character}
+                                onChange={(e) => {
+                                  const newN = [...nodes];
+                                  newN[idx].character = e.target.value;
+                                  setNodes(newN);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
+                                placeholder="學"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">
+                                Arti
+                              </label>
+                              <input
+                                type="text"
+                                value={n.meaning}
+                                onChange={(e) => {
+                                  const newN = [...nodes];
+                                  newN[idx].meaning = e.target.value;
+                                  setNodes(newN);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Belajar"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase font-bold text-slate-500">
+                                Tipe Node
+                              </label>
+                              <select
+                                value={n.type}
+                                disabled={n.type === "root"}
+                                onChange={(e) => {
+                                  const newN = [...nodes];
+                                  newN[idx].type = e.target.value;
+                                  setNodes(newN);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none h-[34px] disabled:opacity-60"
+                              >
+                                <option value="root">
+                                  ROOT (Karakter Ini)
+                                </option>
+                                <option value="top">
+                                  TOP (Radikal/Elemen pembentuk)
+                                </option>
+                                <option value="bottom">
+                                  BOTTOM (Kategori/Relasi)
+                                </option>
+                                <option value="sub-bottom">
+                                  SUB-BOTTOM (Kata gabungan kategori)
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeNodeRow(idx)}
+                            disabled={n.type === "root"}
+                            className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none disabled:opacity-30"
+                          >
+                            <Icon name="delete" className="text-base block" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* VISUAL DRAG AND DROP MODE */}
+                  {graphEditMode === "visual" && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex justify-between items-center text-xs text-on-surface-variant bg-slate-50 p-3 rounded-xl border border-slate-100 select-none">
+                        <span className="flex items-center gap-1 font-semibold">
+                          <Icon
+                            name="tips_and_updates"
+                            className="text-amber-500 text-sm"
+                          />
+                          Drag-Drop node untuk menyusun posisi. Klik ikon Rantai
+                          (Link) pada node asal, lalu klik node tujuan untuk
+                          menghubungkan (Edge).
+                        </span>
+                        <button
+                          type="button"
+                          onClick={addNodeRow}
+                          className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-bold border-none cursor-pointer flex items-center gap-0.5 transition-all"
+                        >
+                          <Icon name="add" className="text-xs" />
+                          Tambah Node
+                        </button>
+                      </div>
+
+                      <div className="relative border border-outline-variant/30 rounded-2xl bg-slate-900/5 h-[450px] overflow-hidden select-none">
+                        {/* Toolbar zoom */}
+                        <div className="absolute top-4 right-4 z-40 bg-white/95 backdrop-blur-md border border-slate-100 shadow-md p-1.5 rounded-xl flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setZoomScale((z) => Math.min(2, z + 0.1))
+                            }
+                            className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center border-none bg-transparent cursor-pointer"
+                          >
+                            <Icon
+                              name="add"
+                              className="text-base text-on-surface"
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setZoomScale((z) => Math.max(0.4, z - 0.1))
+                            }
+                            className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center border-none bg-transparent cursor-pointer"
+                          >
+                            <Icon
+                              name="remove"
+                              className="text-base text-on-surface"
+                            />
+                          </button>
+                          <span className="text-[10px] font-bold px-2 text-slate-500 w-10 text-center">
+                            {Math.round(zoomScale * 100)}%
+                          </span>
+                        </div>
+
+                        <div
+                          ref={containerRef}
+                          className="w-full h-full cursor-grab active:cursor-grabbing overflow-hidden"
+                          onMouseDown={handleCanvasMouseDown}
+                          onMouseMove={handleContainerMouseMove}
+                          onMouseUp={handleContainerMouseUp}
+                          onMouseLeave={handleContainerMouseUp}
+                          onWheel={handleCanvasWheel}
+                        >
+                          <div
+                            className="w-full h-full relative origin-top-left"
+                            style={{
+                              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
+                            }}
+                          >
+                            <svg className="absolute inset-0 w-[4000px] h-[4000px] pointer-events-none z-0">
+                              {edges.map((edge, index) => {
+                                const sourceCoord = nodeCoords[edge.source];
+                                const targetCoord = nodeCoords[edge.target];
+                                if (!sourceCoord || !targetCoord) return null;
+                                const x1 = sourceCoord.x + 90;
+                                const y1 = sourceCoord.y + 40;
+                                const x2 = targetCoord.x + 90;
+                                const y2 = targetCoord.y + 40;
+                                return (
+                                  <line
+                                    key={index}
+                                    x1={x1}
+                                    y1={y1}
+                                    x2={x2}
+                                    y2={y2}
+                                    stroke="#1e73be"
+                                    strokeWidth="2.5"
+                                    strokeDasharray={5}
+                                  />
+                                );
+                              })}
+                            </svg>
+
+                            {nodes.map((node) => {
+                              const coord = nodeCoords[node.id] || {
+                                x: 100,
+                                y: 100,
+                              };
+                              let nodeColorClass =
+                                "bg-white border-primary text-primary shadow-md";
+                              if (node.type === "top") {
+                                nodeColorClass =
+                                  "bg-amber-50/80 border-amber-500 text-amber-900";
+                              } else if (node.type === "bottom") {
+                                nodeColorClass =
+                                  "bg-sky-50/80 border-sky-500 text-sky-900";
+                              } else if (node.type === "sub-bottom") {
+                                nodeColorClass =
+                                  "bg-emerald-50/80 border-emerald-500 text-emerald-900";
+                              }
+                              const isLinking = linkingSourceId === node.id;
+                              return (
+                                <div
+                                  key={node.id}
+                                  style={{
+                                    left: coord.x,
+                                    top: coord.y,
+                                    position: "absolute",
+                                  }}
+                                  className={`w-[180px] p-3 border rounded-xl flex flex-col items-center justify-between gap-1 select-none z-10 transition-shadow ${nodeColorClass} ${
+                                    isLinking
+                                      ? "ring-4 ring-primary animate-pulse"
+                                      : "hover:shadow-lg"
+                                  }`}
+                                >
+                                  <div
+                                    className="w-full text-center cursor-move font-semibold text-xs py-1 select-none flex items-center justify-between"
+                                    onMouseDown={(e) =>
+                                      handleNodeMouseDown(e, node.id)
+                                    }
+                                  >
+                                    <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">
+                                      {node.type}
+                                    </span>
+                                    <div className="flex gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleLinkStartOrEnd(node.id)
+                                        }
+                                        className="p-1 hover:bg-slate-200 rounded text-slate-500 border-none bg-transparent cursor-pointer flex items-center justify-center"
+                                        title="Hubungkan (Edge)"
+                                      >
+                                        <Icon name="link" className="text-xs" />
+                                      </button>
+                                      {node.type !== "root" && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            removeNodeRow(
+                                              nodes.findIndex(
+                                                (n) => n.id === node.id,
+                                              ),
+                                            )
+                                          }
+                                          className="p-1 hover:bg-red-100 rounded text-red-500 border-none bg-transparent cursor-pointer flex items-center justify-center"
+                                          title="Hapus Node"
+                                        >
+                                          <Icon
+                                            name="close"
+                                            className="text-xs"
+                                          />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <input
+                                    type="text"
+                                    value={node.character}
+                                    onChange={(e) => {
+                                      const idx = nodes.findIndex(
+                                        (n) => n.id === node.id,
+                                      );
+                                      const newNodes = [...nodes];
+                                      newNodes[idx].character = e.target.value;
+                                      setNodes(newNodes);
+                                    }}
+                                    placeholder="Karakter"
+                                    className="w-full border-none bg-transparent outline-none text-center font-bold text-base text-on-surface"
+                                  />
+
+                                  <input
+                                    type="text"
+                                    value={node.meaning}
+                                    onChange={(e) => {
+                                      const idx = nodes.findIndex(
+                                        (n) => n.id === node.id,
+                                      );
+                                      const newNodes = [...nodes];
+                                      newNodes[idx].meaning = e.target.value;
+                                      setNodes(newNodes);
+                                    }}
+                                    placeholder="Arti"
+                                    className="w-full border-none bg-transparent outline-none text-center text-[10px] text-on-surface-variant font-medium mt-0.5"
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Edge Connections Log */}
+                  {edges.length > 0 && (
+                    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-3">
+                      <h5 className="text-xs font-bold text-secondary border-b border-outline-variant/10 pb-1 flex items-center gap-1">
+                        <Icon name="link" className="text-primary text-sm" />
+                        Koneksi Garis Hubungan Antar Simpul ({edges.length})
+                      </h5>
+                      <div className="flex gap-2 flex-wrap max-h-[140px] overflow-y-auto pr-1 sidebar-scroll">
+                        {edges.map((edge, index) => {
+                          const sourceNode = nodes.find(
+                            (n) => n.id === edge.source,
+                          );
+                          const targetNode = nodes.find(
+                            (n) => n.id === edge.target,
+                          );
+                          const labelSource = sourceNode
+                            ? sourceNode.character ||
+                              `[ID: ${sourceNode.id.replace(`${kanjiChar}-`, "")}]`
+                            : edge.source.replace(`${kanjiChar}-`, "");
+                          const labelTarget = targetNode
+                            ? targetNode.character ||
+                              `[ID: ${targetNode.id.replace(`${kanjiChar}-`, "")}]`
+                            : edge.target.replace(`${kanjiChar}-`, "");
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 bg-white border border-outline-variant/30 px-3 py-1 rounded-full text-xs font-semibold text-on-surface shadow-sm select-none"
+                            >
+                              <span>{labelSource}</span>
+                              <Icon
+                                name="arrow_forward"
+                                className="text-xs text-primary"
+                              />
+                              <span>{labelTarget}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeEdge(index)}
+                                className="ml-1 text-error hover:bg-error-container/20 p-0.5 rounded-full cursor-pointer bg-transparent border-none flex items-center justify-center"
+                                title="Hapus Koneksi"
+                              >
+                                <Icon name="close" className="text-xs block" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Section 4: e. Hubungan Makna Antar Kanji */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
                   <div className="border-b border-outline-variant/20 pb-2 flex justify-between items-center">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-2">
-                      <Icon name="account_tree" className="text-primary text-base" />
-                      4. e. Hubungan Makna Antar Kanji
+                      <Icon
+                        name="account_tree"
+                        className="text-primary text-base"
+                      />
+                      4. Hubungan Makna Antar Kanji
                     </h4>
                     <button
                       type="button"
-                      onClick={addJukugoRow}
+                      onClick={addSemanticRelationRow}
                       className="px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-0.5"
                     >
                       <Icon name="add" className="text-xs" />
@@ -882,17 +1716,21 @@ export const KanjiFormPage: React.FC = () => {
                   </div>
 
                   <p className="text-xs text-slate-500 font-medium">
-                    Isi rincian kata majemuk, hiragana, breakdown kanji penyusun, dan penjelasan hubungan makna.
+                    Isi rincian kata majemuk, hiragana, arti, dan penjelasan hubungan makna (Tabel SemanticRelation).
                   </p>
 
-                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1.5 sidebar-scroll">
-                    {jukugos.length === 0 ? (
+                  <div className="space-y-4 max-h-[550px] overflow-y-auto pr-1.5 sidebar-scroll">
+                    {semanticRelations.length === 0 ? (
                       <p className="text-slate-400 text-xs italic font-medium py-3 text-center">
-                        Belum ada data Hubungan Makna. Klik "+ Hubungan Makna" di atas untuk menambah.
+                        Belum ada data Hubungan Makna. Klik "+ Hubungan Makna"
+                        di atas untuk menambah.
                       </p>
                     ) : (
-                      jukugos.map((j, idx) => (
-                        <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex flex-col gap-3 relative animate-scale-up">
+                      semanticRelations.map((sr, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex flex-col gap-3 relative animate-scale-up"
+                        >
                           {/* Card Sub-header */}
                           <div className="flex items-center justify-between border-b border-slate-200/50 pb-2">
                             <div className="flex items-center gap-2">
@@ -900,16 +1738,18 @@ export const KanjiFormPage: React.FC = () => {
                                 {idx + 1}
                               </span>
                               <span className="font-bold text-xs text-slate-800">
-                                {j.word || `Item #${idx + 1}`}
+                                {sr.jokugo || `Item #${idx + 1}`}
                               </span>
-                              {j.reading && (
-                                <span className="text-[11px] text-slate-500">({j.reading})</span>
+                              {sr.hiragana && (
+                                <span className="text-[11px] text-slate-500">
+                                  ({sr.hiragana})
+                                </span>
                               )}
                             </div>
                             <button
                               type="button"
-                              onClick={() => removeJukugoRow(idx)}
-                              disabled={jukugos.length === 1}
+                              onClick={() => removeSemanticRelationRow(idx)}
+                              disabled={semanticRelations.length === 1}
                               className="text-error bg-transparent hover:bg-error-container/20 p-1.5 rounded-lg cursor-pointer border-none disabled:opacity-30"
                               title="Hapus Item"
                             >
@@ -917,17 +1757,19 @@ export const KanjiFormPage: React.FC = () => {
                             </button>
                           </div>
 
-                          {/* Row 1: Jukugo, Hiragana, & Arti */}
+                          {/* Row 1: Jokugo, Jokugo Arti, & Hiragana */}
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">Kata Jukugo</label>
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Kata Jukugo (jokugo)
+                              </label>
                               <input
                                 type="text"
-                                value={j.word}
+                                value={sr.jokugo}
                                 onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].word = e.target.value;
-                                  setJukugos(newJ);
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].jokugo = e.target.value;
+                                  setSemanticRelations(newSR);
                                 }}
                                 className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
                                 placeholder="Contoh: 試験"
@@ -935,29 +1777,70 @@ export const KanjiFormPage: React.FC = () => {
                             </div>
 
                             <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">Kata Hiragana</label>
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Arti Kanji Jukugo (jokugo_arti)
+                              </label>
                               <input
                                 type="text"
-                                value={j.reading}
+                                value={sr.jokugo_arti}
                                 onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].reading = e.target.value;
-                                  setJukugos(newJ);
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].jokugo_arti = e.target.value;
+                                  setSemanticRelations(newSR);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: 試 : Menguji | 験 : Memverifikasi"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Kata Hiragana (hiragana)
+                              </label>
+                              <input
+                                type="text"
+                                value={sr.hiragana}
+                                onChange={(e) => {
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].hiragana = e.target.value;
+                                  setSemanticRelations(newSR);
                                 }}
                                 className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
                                 placeholder="Contoh: しけん"
                               />
                             </div>
+                          </div>
 
+                          {/* Row 2: Hiragana Arti & Arti */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">Arti / Terjemahan</label>
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Arti Hiragana (hiragana_arti)
+                              </label>
                               <input
                                 type="text"
-                                value={j.meaning}
+                                value={sr.hiragana_arti}
                                 onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].meaning = e.target.value;
-                                  setJukugos(newJ);
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].hiragana_arti = e.target.value;
+                                  setSemanticRelations(newSR);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: Ujian"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Arti / Terjemahan (arti)
+                              </label>
+                              <input
+                                type="text"
+                                value={sr.arti}
+                                onChange={(e) => {
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].arti = e.target.value;
+                                  setSemanticRelations(newSR);
                                 }}
                                 className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
                                 placeholder="Contoh: Ujian"
@@ -965,17 +1848,17 @@ export const KanjiFormPage: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Row 2: Penjelasan Hubungan Makna Jukugo */}
+                          {/* Row 3: Penjelasan Hubungan Makna */}
                           <div className="flex flex-col gap-1">
                             <label className="text-[9px] uppercase font-bold text-slate-500">
-                              Penjelasan Hubungan Makna Jukugo
+                              Penjelasan Hubungan Makna (penjelasan)
                             </label>
                             <textarea
-                              value={j.explanation || ""}
+                              value={sr.penjelasan}
                               onChange={(e) => {
-                                const newJ = [...jukugos];
-                                newJ[idx].explanation = e.target.value;
-                                setJukugos(newJ);
+                                const newSR = [...semanticRelations];
+                                newSR[idx].penjelasan = e.target.value;
+                                setSemanticRelations(newSR);
                               }}
                               rows={2}
                               className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none leading-relaxed"
@@ -1005,10 +1888,15 @@ export const KanjiFormPage: React.FC = () => {
 
                   <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1.5 sidebar-scroll">
                     {readingExamples.map((ex, idx) => (
-                      <div key={idx} className="flex gap-3 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl animate-scale-up">
+                      <div
+                        key={idx}
+                        className="flex gap-3 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl animate-scale-up"
+                      >
                         <div className="flex-grow grid grid-cols-1 gap-2">
                           <div className="flex flex-col gap-0.5">
-                            <label className="text-[9px] uppercase font-bold text-slate-500">Bahasa Jepang</label>
+                            <label className="text-[9px] uppercase font-bold text-slate-500">
+                              Bahasa Jepang
+                            </label>
                             <input
                               type="text"
                               value={ex.japanese}
@@ -1023,7 +1911,9 @@ export const KanjiFormPage: React.FC = () => {
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div className="flex flex-col gap-0.5">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">Romaji</label>
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Romaji
+                              </label>
                               <input
                                 type="text"
                                 value={ex.romaji}
@@ -1037,7 +1927,9 @@ export const KanjiFormPage: React.FC = () => {
                               />
                             </div>
                             <div className="flex flex-col gap-0.5">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">Terjemahan</label>
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Terjemahan
+                              </label>
                               <input
                                 type="text"
                                 value={ex.translation}
@@ -1064,9 +1956,7 @@ export const KanjiFormPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
-
               </div>
-
             </div>
 
             {/* Section 6: Daftar Kuis Evaluasi Kanji (Full Width) */}
@@ -1075,529 +1965,433 @@ export const KanjiFormPage: React.FC = () => {
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
                   6. Daftar Kuis Evaluasi Kanji
                 </h4>
-                <span className="text-xs text-slate-400 font-medium">{quizQuestions.length} soal total</span>
+                <span className="text-xs text-slate-400 font-medium">
+                  {quizQuestions.length} soal total
+                </span>
               </div>
 
               {/* Render per-type sections */}
               {[
-                { type: "multiple",   label: "Pilihan Ganda (Multiple Choice)",        icon: "radio_button_checked",  color: "blue",   defaultItem: { type: "multiple",   question: "", options: ["", "", "", ""], correctAnswer: "" } },
-                { type: "fill",       label: "Melengkapi Kalimat (Fill-in-the-blank)", icon: "text_fields",           color: "teal",   defaultItem: { type: "fill",       question: "", options: ["", "", "", ""], correctAnswer: "" } },
-                { type: "unscramble", label: "Susun Kalimat (Unscramble)",             icon: "shuffle",               color: "orange", defaultItem: { type: "unscramble", question: "", words: [],   correctOrder: [] } },
-                { type: "matching",   label: "Menjodohkan (Matching)",                 icon: "compare_arrows",        color: "purple", defaultItem: { type: "matching",   question: "", pairs: [] } },
-                { type: "essay",      label: "Membuat Kalimat (Essay/Writing)",         icon: "edit_note",             color: "green",  defaultItem: { type: "essay",      question: "", targetWord: "" } },
-                { type: "grouping",   label: "Pengelompokan Kata (Grouping)",           icon: "category",              color: "rose",   defaultItem: { type: "grouping",   question: "", words: [],   groups: [] } },
-              ].map(({ type: sectionType, label, icon, color, defaultItem }) => {
-                const colorMap: Record<string, string> = {
-                  blue:   "bg-blue-50   border-blue-200   text-blue-700",
-                  teal:   "bg-teal-50   border-teal-200   text-teal-700",
-                  orange: "bg-orange-50 border-orange-200 text-orange-700",
-                  purple: "bg-purple-50 border-purple-200 text-purple-700",
-                  green:  "bg-green-50  border-green-200  text-green-700",
-                  rose:   "bg-rose-50   border-rose-200   text-rose-700",
-                };
-                const badgeClass = colorMap[color] ?? "bg-slate-50 border-slate-200 text-slate-700";
-                const questionsOfType = quizQuestions.filter(q => q.type === sectionType);
-                return (
-                  <div key={sectionType} className="flex flex-col gap-3">
-                    {/* Sub-section Header */}
-                    <div className="flex items-center justify-between">
-                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${badgeClass}`}>
-                        <Icon name={icon} className="text-sm" />
-                        {label}
-                        <span className="ml-1 opacity-60">({questionsOfType.length})</span>
+                {
+                  type: "multiple",
+                  label: "Pilihan Ganda (Multiple Choice)",
+                  icon: "radio_button_checked",
+                  color: "blue",
+                  defaultItem: {
+                    type: "multiple",
+                    question: "",
+                    options: ["", "", "", ""],
+                    correctAnswer: "",
+                  },
+                },
+                {
+                  type: "fill",
+                  label: "Melengkapi Kalimat (Fill-in-the-blank)",
+                  icon: "text_fields",
+                  color: "teal",
+                  defaultItem: {
+                    type: "fill",
+                    question: "",
+                    options: ["", "", "", ""],
+                    correctAnswer: "",
+                  },
+                },
+                {
+                  type: "unscramble",
+                  label: "Susun Kalimat (Unscramble)",
+                  icon: "shuffle",
+                  color: "orange",
+                  defaultItem: {
+                    type: "unscramble",
+                    question: "",
+                    words: [],
+                    correctOrder: [],
+                  },
+                },
+                {
+                  type: "matching",
+                  label: "Menjodohkan (Matching)",
+                  icon: "compare_arrows",
+                  color: "purple",
+                  defaultItem: { type: "matching", question: "", pairs: [] },
+                },
+                {
+                  type: "essay",
+                  label: "Membuat Kalimat (Essay/Writing)",
+                  icon: "edit_note",
+                  color: "green",
+                  defaultItem: { type: "essay", question: "", targetWord: "" },
+                },
+                {
+                  type: "grouping",
+                  label: "Pengelompokan Kata (Grouping)",
+                  icon: "category",
+                  color: "rose",
+                  defaultItem: {
+                    type: "grouping",
+                    question: "",
+                    words: [],
+                    groups: [],
+                  },
+                },
+              ].map(
+                ({ type: sectionType, label, icon, color, defaultItem }) => {
+                  const colorMap: Record<string, string> = {
+                    blue: "bg-blue-50   border-blue-200   text-blue-700",
+                    teal: "bg-teal-50   border-teal-200   text-teal-700",
+                    orange: "bg-orange-50 border-orange-200 text-orange-700",
+                    purple: "bg-purple-50 border-purple-200 text-purple-700",
+                    green: "bg-green-50  border-green-200  text-green-700",
+                    rose: "bg-rose-50   border-rose-200   text-rose-700",
+                  };
+                  const badgeClass =
+                    colorMap[color] ??
+                    "bg-slate-50 border-slate-200 text-slate-700";
+                  const questionsOfType = quizQuestions.filter(
+                    (q) => q.type === sectionType,
+                  );
+                  return (
+                    <div key={sectionType} className="flex flex-col gap-3">
+                      {/* Sub-section Header */}
+                      <div className="flex items-center justify-between">
+                        <div
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${badgeClass}`}
+                        >
+                          <Icon name={icon} className="text-sm" />
+                          {label}
+                          <span className="ml-1 opacity-60">
+                            ({questionsOfType.length})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setQuizQuestions((prev) => [
+                              ...prev,
+                              { ...defaultItem },
+                            ])
+                          }
+                          className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1"
+                        >
+                          <Icon name="add" className="text-xs" />
+                          Tambah
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setQuizQuestions(prev => [...prev, { ...defaultItem }])}
-                        className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1"
-                      >
-                        <Icon name="add" className="text-xs" />
-                        Tambah
-                      </button>
-                    </div>
 
-                    {/* Questions of this type */}
-                    {questionsOfType.length === 0 ? (
-                      <div className="py-4 text-center border border-dashed border-outline-variant/30 rounded-xl text-slate-400 text-xs">
-                        Belum ada soal untuk tipe ini.
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-3">
-                        {quizQuestions.map((q, idx) => {
-                          if (q.type !== sectionType) return null;
-                          return (
-                            <div key={idx} className="flex gap-4 items-start bg-surface-container-low/40 p-5 rounded-xl border border-outline-variant/20">
-                              <div className="flex-grow flex flex-col gap-3">
-                                <div className="grid grid-cols-1 gap-4">
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] uppercase font-bold text-slate-500">Pertanyaan</label>
-                                    <input
-                                      type="text"
-                                      value={q.question}
-                                      onChange={(e) => {
-                                        const newQ = [...quizQuestions];
-                                        newQ[idx].question = e.target.value;
-                                        setQuizQuestions(newQ);
-                                      }}
-                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                                      placeholder="Isi pertanyaan soal..."
-                                    />
-                                  </div>
-                                </div>
-
-                                {/* Type-specific inputs */}
-                                {q.type === "matching" ? (
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] uppercase font-bold text-slate-500">Pasangan Pencocokan (Format: Kiri:Kanan, Pisahkan dengan koma)</label>
-                                    <input
-                                      type="text"
-                                      value={Array.isArray(q.pairs) ? q.pairs.map((p: any) => `${p.left}:${p.right}`).join(", ") : ""}
-                                      onChange={(e) => {
-                                        const newQ = [...quizQuestions];
-                                        newQ[idx].pairs = e.target.value.split(",").map(pairStr => {
-                                          const parts = pairStr.split(":");
-                                          return { left: parts[0]?.trim() || "", right: parts[1]?.trim() || "" };
-                                        });
-                                        setQuizQuestions(newQ);
-                                      }}
-                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                                      placeholder="試験:ujian, 受験:Mengikuti ujian"
-                                    />
-                                  </div>
-                                ) : q.type === "grouping" ? (
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] uppercase font-bold text-slate-500">Kelompok &amp; Kosakata (Format: Kelompok1: kata1, kata2 | Kelompok2: kata3)</label>
-                                    <textarea
-                                      value={Array.isArray(q.groups) ? q.groups.map((g: any) => `${g.name}: ${(g.correctWords || []).join(", ")}`).join(" | ") : ""}
-                                      onChange={(e) => {
-                                        const newQ = [...quizQuestions];
-                                        const parts = e.target.value.split("|");
-                                        const groups: any[] = [];
-                                        const allWords: string[] = [];
-                                        for (const part of parts) {
-                                          const subParts = part.split(":");
-                                          if (subParts.length >= 2) {
-                                            const name = subParts[0].trim();
-                                            const correctWords = subParts[1].split(",").map((w: string) => w.trim()).filter(Boolean);
-                                            groups.push({ name, correctWords });
-                                            allWords.push(...correctWords);
-                                          }
-                                        }
-                                        newQ[idx].groups = groups;
-                                        newQ[idx].words = allWords;
-                                        setQuizQuestions(newQ);
-                                      }}
-                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none min-h-[80px]"
-                                      placeholder="Pengujian: 試験, 受験 | Pengalaman: 経験, 体験"
-                                    />
-                                  </div>
-                                ) : q.type === "essay" ? (
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] uppercase font-bold text-slate-500">Kosakata Wajib (Target Word)</label>
-                                    <input
-                                      type="text"
-                                      value={q.targetWord || ""}
-                                      onChange={(e) => {
-                                        const newQ = [...quizQuestions];
-                                        newQ[idx].targetWord = e.target.value;
-                                        setQuizQuestions(newQ);
-                                      }}
-                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                                      placeholder="Contoh: 試着"
-                                    />
-                                  </div>
-                                ) : q.type === "unscramble" ? (
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] uppercase font-bold text-slate-500">Urutan Kalimat Benar (Pisahkan dengan spasi)</label>
-                                    <input
-                                      type="text"
-                                      value={Array.isArray(q.correctOrder) ? q.correctOrder.join(" ") : ""}
-                                      onChange={(e) => {
-                                        const newQ = [...quizQuestions];
-                                        const words = e.target.value.split(/[\s,]+/g).filter(Boolean);
-                                        newQ[idx].words = words;
-                                        newQ[idx].correctOrder = words;
-                                        setQuizQuestions(newQ);
-                                      }}
-                                      className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                                      placeholder="きのう 試合 が ありました"
-                                    />
-                                  </div>
-                                ) : (
-                                  /* multiple & fill */
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="flex flex-col gap-1">
-                                      <label className="text-[10px] uppercase font-bold text-slate-500">Pilihan Jawaban (Pisahkan dengan koma)</label>
-                                      <input
-                                        type="text"
-                                        value={Array.isArray(q.options) ? q.options.join(", ") : ""}
-                                        onChange={(e) => {
-                                          const newQ = [...quizQuestions];
-                                          newQ[idx].options = e.target.value.split(",").map(s => s.trim());
-                                          setQuizQuestions(newQ);
-                                        }}
-                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                                        placeholder="Pilihan 1, Pilihan 2, Pilihan 3"
-                                      />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                      <label className="text-[10px] uppercase font-bold text-slate-500">Jawaban Benar</label>
-                                      <input
-                                        type="text"
-                                        value={q.correctAnswer}
-                                        onChange={(e) => {
-                                          const newQ = [...quizQuestions];
-                                          newQ[idx].correctAnswer = e.target.value;
-                                          setQuizQuestions(newQ);
-                                        }}
-                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                                        placeholder="Harus persis sama dengan salah satu pilihan"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setQuizQuestions(prev => prev.filter((_, i) => i !== idx))}
-                                className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none disabled:opacity-30 self-center"
+                      {/* Questions of this type */}
+                      {questionsOfType.length === 0 ? (
+                        <div className="py-4 text-center border border-dashed border-outline-variant/30 rounded-xl text-slate-400 text-xs">
+                          Belum ada soal untuk tipe ini.
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-3">
+                          {quizQuestions.map((q, idx) => {
+                            if (q.type !== sectionType) return null;
+                            return (
+                              <div
+                                key={idx}
+                                className="flex gap-4 items-start bg-surface-container-low/40 p-5 rounded-xl border border-outline-variant/20"
                               >
-                                <Icon name="delete" className="text-lg block" />
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                                <div className="flex-grow flex flex-col gap-3">
+                                  <div className="grid grid-cols-1 gap-4">
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-[10px] uppercase font-bold text-slate-500">
+                                        Pertanyaan
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={q.question}
+                                        onChange={(e) => {
+                                          const newQ = [...quizQuestions];
+                                          newQ[idx].question = e.target.value;
+                                          setQuizQuestions(newQ);
+                                        }}
+                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                        placeholder="Isi pertanyaan soal..."
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Type-specific inputs */}
+                                  {q.type === "matching" ? (
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-[10px] uppercase font-bold text-slate-500">
+                                        Pasangan Pencocokan (Format: Kiri:Kanan,
+                                        Pisahkan dengan koma)
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={
+                                          Array.isArray(q.pairs)
+                                            ? q.pairs
+                                                .map(
+                                                  (p: any) =>
+                                                    `${p.left}:${p.right}`,
+                                                )
+                                                .join(", ")
+                                            : ""
+                                        }
+                                        onChange={(e) => {
+                                          const newQ = [...quizQuestions];
+                                          newQ[idx].pairs = e.target.value
+                                            .split(",")
+                                            .map((pairStr) => {
+                                              const parts = pairStr.split(":");
+                                              return {
+                                                left: parts[0]?.trim() || "",
+                                                right: parts[1]?.trim() || "",
+                                              };
+                                            });
+                                          setQuizQuestions(newQ);
+                                        }}
+                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                        placeholder="試験:ujian, 受験:Mengikuti ujian"
+                                      />
+                                    </div>
+                                  ) : q.type === "grouping" ? (
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-[10px] uppercase font-bold text-slate-500">
+                                        Kelompok &amp; Kosakata (Format:
+                                        Kelompok1: kata1, kata2 | Kelompok2:
+                                        kata3)
+                                      </label>
+                                      <textarea
+                                        value={
+                                          Array.isArray(q.groups)
+                                            ? q.groups
+                                                .map(
+                                                  (g: any) =>
+                                                    `${g.name}: ${(g.correctWords || []).join(", ")}`,
+                                                )
+                                                .join(" | ")
+                                            : ""
+                                        }
+                                        onChange={(e) => {
+                                          const newQ = [...quizQuestions];
+                                          const parts =
+                                            e.target.value.split("|");
+                                          const groups: any[] = [];
+                                          const allWords: string[] = [];
+                                          for (const part of parts) {
+                                            const subParts = part.split(":");
+                                            if (subParts.length >= 2) {
+                                              const name = subParts[0].trim();
+                                              const correctWords = subParts[1]
+                                                .split(",")
+                                                .map((w: string) => w.trim())
+                                                .filter(Boolean);
+                                              groups.push({
+                                                name,
+                                                correctWords,
+                                              });
+                                              allWords.push(...correctWords);
+                                            }
+                                          }
+                                          newQ[idx].groups = groups;
+                                          newQ[idx].words = allWords;
+                                          setQuizQuestions(newQ);
+                                        }}
+                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none min-h-[80px]"
+                                        placeholder="Pengujian: 試験, 受験 | Pengalaman: 経験, 体験"
+                                      />
+                                    </div>
+                                  ) : q.type === "essay" ? (
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-[10px] uppercase font-bold text-slate-500">
+                                        Kosakata Wajib (Target Word)
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={q.targetWord || ""}
+                                        onChange={(e) => {
+                                          const newQ = [...quizQuestions];
+                                          newQ[idx].targetWord = e.target.value;
+                                          setQuizQuestions(newQ);
+                                        }}
+                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                        placeholder="Contoh: 試着"
+                                      />
+                                    </div>
+                                  ) : q.type === "unscramble" ? (
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-[10px] uppercase font-bold text-slate-500">
+                                        Urutan Kalimat Benar (Pisahkan dengan
+                                        spasi)
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={
+                                          Array.isArray(q.correctOrder)
+                                            ? q.correctOrder.join(" ")
+                                            : ""
+                                        }
+                                        onChange={(e) => {
+                                          const newQ = [...quizQuestions];
+                                          const words = e.target.value
+                                            .split(/[\s,]+/g)
+                                            .filter(Boolean);
+                                          newQ[idx].words = words;
+                                          newQ[idx].correctOrder = words;
+                                          setQuizQuestions(newQ);
+                                        }}
+                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                        placeholder="きのう 試合 が ありました"
+                                      />
+                                    </div>
+                                  ) : (
+                                    /* multiple & fill */
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="flex flex-col gap-1">
+                                        <label className="text-[10px] uppercase font-bold text-slate-500">
+                                          Pilihan Jawaban (Pisahkan dengan koma)
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={
+                                            Array.isArray(q.options)
+                                              ? q.options.join(", ")
+                                              : ""
+                                          }
+                                          onChange={(e) => {
+                                            const newQ = [...quizQuestions];
+                                            newQ[idx].options = e.target.value
+                                              .split(",")
+                                              .map((s) => s.trim());
+                                            setQuizQuestions(newQ);
+                                          }}
+                                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                          placeholder="Pilihan 1, Pilihan 2, Pilihan 3"
+                                        />
+                                      </div>
+                                      <div className="flex flex-col gap-1">
+                                        <label className="text-[10px] uppercase font-bold text-slate-500">
+                                          Jawaban Benar
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={q.correctAnswer}
+                                          onChange={(e) => {
+                                            const newQ = [...quizQuestions];
+                                            newQ[idx].correctAnswer =
+                                              e.target.value;
+                                            setQuizQuestions(newQ);
+                                          }}
+                                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                          placeholder="Harus persis sama dengan salah satu pilihan"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setQuizQuestions((prev) =>
+                                      prev.filter((_, i) => i !== idx),
+                                    )
+                                  }
+                                  className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none disabled:opacity-30 self-center"
+                                >
+                                  <Icon
+                                    name="delete"
+                                    className="text-lg block"
+                                  />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                },
+              )}
             </div>
 
             {/* Section 7: Peta Semantik & Hubungan Kata (Full Width) */}
-            <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 w-full animate-fade-in">
-              <div className="flex justify-between items-center border-b border-outline-variant/20 pb-1">
-                <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  7. Peta Semantik & Hubungan Kata
+            <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+              <div className="flex justify-between items-end border-b border-outline-variant/20 pb-1">
+                <h4 className="font-label-lg text-label-lg font-bold text-primary">
+                  2. Contoh Kalimat & Tata Bahasa
                 </h4>
-                <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
-                  <button
-                    type="button"
-                    onClick={() => setGraphEditMode("visual")}
-                    className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
-                      graphEditMode === "visual" ? "bg-primary text-on-primary" : "bg-transparent text-on-surface-variant"
-                    }`}
-                  >
-                    <Icon name="gesture" className="text-sm mr-1" />
-                    Visual Drag-Drop
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGraphEditMode("table")}
-                    className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
-                      graphEditMode === "table" ? "bg-primary text-on-primary" : "bg-transparent text-on-surface-variant"
-                    }`}
-                  >
-                    <Icon name="table_chart" className="text-sm mr-1" />
-                    Tabel Mode
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={addExampleRow}
+                  className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none animate-pulse-slow"
+                >
+                  + Kalimat
+                </button>
               </div>
 
-              {/* TABLE MODE */}
-              {graphEditMode === "table" && (
-                <div className="space-y-3">
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={addNodeRow}
-                      className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none"
-                    >
-                      + Tambah Node
-                    </button>
-                  </div>
-                  {nodes.map((n, idx) => (
-                    <div key={idx} className="flex gap-4 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                      <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[10px] uppercase font-bold text-slate-500">ID Node</label>
+              <div className="space-y-3">
+                {examples.map((ex, idx) => (
+                  <div
+                    key={idx}
+                    className="flex gap-3 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl animate-scale-up"
+                  >
+                    <div className="flex-grow grid grid-cols-1 gap-2">
+                      <div className="flex flex-col gap-0.5">
+                        <label className="text-[9px] uppercase font-bold text-slate-500">
+                          Bahasa Jepang
+                        </label>
+                        <input
+                          type="text"
+                          value={ex.japanese}
+                          onChange={(e) => {
+                            const newEx = [...examples];
+                            newEx[idx].japanese = e.target.value;
+                            setExamples(newEx);
+                          }}
+                          className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
+                          placeholder="日本語を学びます。"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-0.5">
+                          <label className="text-[9px] uppercase font-bold text-slate-500">
+                            Romaji
+                          </label>
                           <input
                             type="text"
-                            value={n.id.replace(`${kanjiChar}-`, "")}
-                            disabled={n.type === "root"}
+                            value={ex.romaji}
                             onChange={(e) => {
-                              const newN = [...nodes];
-                              newN[idx].id = e.target.value;
-                              setNodes(newN);
-                            }}
-                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-mono disabled:opacity-60"
-                            placeholder="top-1"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[10px] uppercase font-bold text-slate-500">Karakter</label>
-                          <input
-                            type="text"
-                            value={n.character}
-                            onChange={(e) => {
-                              const newN = [...nodes];
-                              newN[idx].character = e.target.value;
-                              setNodes(newN);
-                            }}
-                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
-                            placeholder="學"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[10px] uppercase font-bold text-slate-500">Arti</label>
-                          <input
-                            type="text"
-                            value={n.meaning}
-                            onChange={(e) => {
-                              const newN = [...nodes];
-                              newN[idx].meaning = e.target.value;
-                              setNodes(newN);
+                              const newEx = [...examples];
+                              newEx[idx].romaji = e.target.value;
+                              setExamples(newEx);
                             }}
                             className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                            placeholder="Belajar"
+                            placeholder="Nihongo wo manabimasu."
                           />
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[10px] uppercase font-bold text-slate-500">Tipe Node</label>
-                          <select
-                            value={n.type}
-                            disabled={n.type === "root"}
+                        <div className="flex flex-col gap-0.5">
+                          <label className="text-[9px] uppercase font-bold text-slate-500">
+                            Terjemahan
+                          </label>
+                          <input
+                            type="text"
+                            value={ex.translation}
                             onChange={(e) => {
-                              const newN = [...nodes];
-                              newN[idx].type = e.target.value;
-                              setNodes(newN);
+                              const newEx = [...examples];
+                              newEx[idx].translation = e.target.value;
+                              setExamples(newEx);
                             }}
-                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none h-[34px] disabled:opacity-60"
-                          >
-                            <option value="root">ROOT (Karakter Ini)</option>
-                            <option value="top">TOP (Radikal/Elemen pembentuk)</option>
-                            <option value="bottom">BOTTOM (Kategori/Relasi)</option>
-                            <option value="sub-bottom">SUB-BOTTOM (Kata gabungan kategori)</option>
-                          </select>
+                            className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                            placeholder="Belajar bahasa Jepang."
+                          />
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeNodeRow(idx)}
-                        disabled={n.type === "root"}
-                        className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none disabled:opacity-30"
-                      >
-                        <Icon name="delete" className="text-base block" />
-                      </button>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* VISUAL DRAG AND DROP MODE */}
-              {graphEditMode === "visual" && (
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-center text-xs text-on-surface-variant bg-slate-50 p-3 rounded-xl border border-slate-100 select-none">
-                    <span className="flex items-center gap-1 font-semibold">
-                      <Icon name="tips_and_updates" className="text-amber-500 text-sm" />
-                      Drag-Drop node untuk menyusun posisi. Klik ikon Rantai (Link) pada node asal, lalu klik node tujuan untuk menghubungkan (Edge).
-                    </span>
                     <button
                       type="button"
-                      onClick={addNodeRow}
-                      className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-bold border-none cursor-pointer flex items-center gap-0.5 transition-all"
+                      onClick={() => removeExampleRow(idx)}
+                      disabled={examples.length === 1}
+                      className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none mt-3 disabled:opacity-30"
                     >
-                      <Icon name="add" className="text-xs" />
-                      Tambah Node
+                      <Icon name="delete" className="text-base block" />
                     </button>
                   </div>
-
-                  <div className="relative border border-outline-variant/30 rounded-2xl bg-slate-900/5 h-[450px] overflow-hidden select-none">
-                    {/* Toolbar zoom */}
-                    <div className="absolute top-4 right-4 z-40 bg-white/95 backdrop-blur-md border border-slate-100 shadow-md p-1.5 rounded-xl flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setZoomScale((z) => Math.min(2, z + 0.1))}
-                        className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center border-none bg-transparent cursor-pointer"
-                      >
-                        <Icon name="add" className="text-base text-on-surface" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setZoomScale((z) => Math.max(0.4, z - 0.1))}
-                        className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center border-none bg-transparent cursor-pointer"
-                      >
-                        <Icon name="remove" className="text-base text-on-surface" />
-                      </button>
-                      <span className="text-[10px] font-bold px-2 text-slate-500 w-10 text-center">
-                        {Math.round(zoomScale * 100)}%
-                      </span>
-                    </div>
-
-                    <div
-                      ref={containerRef}
-                      className="w-full h-full cursor-grab active:cursor-grabbing overflow-hidden"
-                      onMouseDown={handleCanvasMouseDown}
-                      onMouseMove={handleContainerMouseMove}
-                      onMouseUp={handleContainerMouseUp}
-                      onMouseLeave={handleContainerMouseUp}
-                      onWheel={handleCanvasWheel}
-                    >
-                      <div
-                        className="w-full h-full relative origin-top-left"
-                        style={{
-                          transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
-                        }}
-                      >
-                        <svg className="absolute inset-0 w-[4000px] h-[4000px] pointer-events-none z-0">
-                          {edges.map((edge, index) => {
-                            const sourceCoord = nodeCoords[edge.source];
-                            const targetCoord = nodeCoords[edge.target];
-                            if (!sourceCoord || !targetCoord) return null;
-                            const x1 = sourceCoord.x + 90;
-                            const y1 = sourceCoord.y + 40;
-                            const x2 = targetCoord.x + 90;
-                            const y2 = targetCoord.y + 40;
-                            return (
-                              <line
-                                key={index}
-                                x1={x1}
-                                y1={y1}
-                                x2={x2}
-                                y2={y2}
-                                stroke="#1e73be"
-                                strokeWidth="2.5"
-                                strokeDasharray={5}
-                              />
-                            );
-                          })}
-                        </svg>
-
-                        {nodes.map((node) => {
-                          const coord = nodeCoords[node.id] || { x: 100, y: 100 };
-                          let nodeColorClass = "bg-white border-primary text-primary shadow-md";
-                          if (node.type === "top") {
-                            nodeColorClass = "bg-amber-50/80 border-amber-500 text-amber-900";
-                          } else if (node.type === "bottom") {
-                            nodeColorClass = "bg-sky-50/80 border-sky-500 text-sky-900";
-                          } else if (node.type === "sub-bottom") {
-                            nodeColorClass = "bg-emerald-50/80 border-emerald-500 text-emerald-900";
-                          }
-                          const isLinking = linkingSourceId === node.id;
-                          return (
-                            <div
-                              key={node.id}
-                              style={{
-                                left: coord.x,
-                                top: coord.y,
-                                position: "absolute",
-                              }}
-                              className={`w-[180px] p-3 border rounded-xl flex flex-col items-center justify-between gap-1 select-none z-10 transition-shadow ${nodeColorClass} ${
-                                isLinking ? "ring-4 ring-primary animate-pulse" : "hover:shadow-lg"
-                              }`}
-                            >
-                              <div
-                                className="w-full text-center cursor-move font-semibold text-xs py-1 select-none flex items-center justify-between"
-                                onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
-                              >
-                                <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">
-                                  {node.type}
-                                </span>
-                                <div className="flex gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleLinkStartOrEnd(node.id)}
-                                    className="p-1 hover:bg-slate-200 rounded text-slate-500 border-none bg-transparent cursor-pointer flex items-center justify-center"
-                                    title="Hubungkan (Edge)"
-                                  >
-                                    <Icon name="link" className="text-xs" />
-                                  </button>
-                                  {node.type !== "root" && (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeNodeRow(nodes.findIndex((n) => n.id === node.id))}
-                                      className="p-1 hover:bg-red-100 rounded text-red-500 border-none bg-transparent cursor-pointer flex items-center justify-center"
-                                      title="Hapus Node"
-                                    >
-                                      <Icon name="close" className="text-xs" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-
-                              <input
-                                type="text"
-                                value={node.character}
-                                onChange={(e) => {
-                                  const idx = nodes.findIndex((n) => n.id === node.id);
-                                  const newNodes = [...nodes];
-                                  newNodes[idx].character = e.target.value;
-                                  setNodes(newNodes);
-                                }}
-                                placeholder="Karakter"
-                                className="w-full border-none bg-transparent outline-none text-center font-bold text-base text-on-surface"
-                              />
-
-                              <input
-                                type="text"
-                                value={node.meaning}
-                                onChange={(e) => {
-                                  const idx = nodes.findIndex((n) => n.id === node.id);
-                                  const newNodes = [...nodes];
-                                  newNodes[idx].meaning = e.target.value;
-                                  setNodes(newNodes);
-                                }}
-                                placeholder="Arti"
-                                className="w-full border-none bg-transparent outline-none text-center text-[10px] text-on-surface-variant font-medium mt-0.5"
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Edge Connections Log */}
-              {edges.length > 0 && (
-                <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-3">
-                  <h5 className="text-xs font-bold text-secondary border-b border-outline-variant/10 pb-1 flex items-center gap-1">
-                    <Icon name="link" className="text-primary text-sm" />
-                    Koneksi Garis Hubungan Antar Simpul ({edges.length})
-                  </h5>
-                  <div className="flex gap-2 flex-wrap max-h-[140px] overflow-y-auto pr-1 sidebar-scroll">
-                    {edges.map((edge, index) => {
-                      const sourceNode = nodes.find((n) => n.id === edge.source);
-                      const targetNode = nodes.find((n) => n.id === edge.target);
-                      const labelSource = sourceNode
-                        ? sourceNode.character || `[ID: ${sourceNode.id.replace(`${kanjiChar}-`, "")}]`
-                        : edge.source.replace(`${kanjiChar}-`, "");
-                      const labelTarget = targetNode
-                        ? targetNode.character || `[ID: ${targetNode.id.replace(`${kanjiChar}-`, "")}]`
-                        : edge.target.replace(`${kanjiChar}-`, "");
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 bg-white border border-outline-variant/30 px-3 py-1 rounded-full text-xs font-semibold text-on-surface shadow-sm select-none"
-                        >
-                          <span>{labelSource}</span>
-                          <Icon name="arrow_forward" className="text-xs text-primary" />
-                          <span>{labelTarget}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeEdge(index)}
-                            className="ml-1 text-error hover:bg-error-container/20 p-0.5 rounded-full cursor-pointer bg-transparent border-none flex items-center justify-center"
-                            title="Hapus Koneksi"
-                          >
-                            <Icon name="close" className="text-xs block" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
 
             {/* Section 6: h. Pertanyaan Refleksi Siswa */}
@@ -1609,7 +2403,9 @@ export const KanjiFormPage: React.FC = () => {
                 </h4>
                 <button
                   type="button"
-                  onClick={() => setReflectionQuestions([...reflectionQuestions, ""])}
+                  onClick={() =>
+                    setReflectionQuestions([...reflectionQuestions, ""])
+                  }
                   className="px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-0.5"
                 >
                   <Icon name="add" className="text-xs" />
@@ -1619,7 +2415,10 @@ export const KanjiFormPage: React.FC = () => {
 
               <div className="flex flex-col gap-3">
                 {reflectionQuestions.map((q, qIdx) => (
-                  <div key={qIdx} className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                  <div
+                    key={qIdx}
+                    className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/60"
+                  >
                     <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
                       {qIdx + 1}
                     </span>
@@ -1636,7 +2435,11 @@ export const KanjiFormPage: React.FC = () => {
                     />
                     <button
                       type="button"
-                      onClick={() => setReflectionQuestions(reflectionQuestions.filter((_, idx) => idx !== qIdx))}
+                      onClick={() =>
+                        setReflectionQuestions(
+                          reflectionQuestions.filter((_, idx) => idx !== qIdx),
+                        )
+                      }
                       className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none"
                       title="Hapus Pertanyaan"
                     >
@@ -1669,7 +2472,8 @@ export const KanjiFormPage: React.FC = () => {
               >
                 {submitting ? "Menyimpan..." : "Simpan Karakter"}
               </button>
-            </div></form>
+            </div>
+          </form>
         </div>
       </main>
     </Layout>

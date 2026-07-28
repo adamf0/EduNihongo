@@ -80,8 +80,9 @@ model Kanji {
   reflectionData String?             @db.Text
   etymologies    Etymology[]
   examples       ExampleSentence[]
-  jukugos        Jukugo[]
-  module         Module?             @relation(fields: [moduleId], references: [id])
+  jukugos           Jukugo[]
+  semanticRelations SemanticRelation[]
+  module            Module?             @relation(fields: [moduleId], references: [id])
   graphEdges     KanjiGraphEdge[]
   graphNodes     KanjiGraphNode[]
   Task           Task[]
@@ -155,16 +156,28 @@ model Etymology {
 }
 
 model Jukugo {
-  id             Int     @id @default(autoincrement())
-  kanjiId        Int
-  word           String
-  reading        String
-  meaning        String  @db.Text
-  kanjiBreakdown String? @db.Text
-  explanation    String? @db.Text
-  kanji          Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  id      Int    @id @default(autoincrement())
+  kanjiId Int
+  word    String
+  reading String
+  meaning String @db.Text
+  kanji   Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
 
   @@index([kanjiId], map: "Jukugo_kanjiId_fkey")
+}
+
+model SemanticRelation {
+  id            Int     @id @default(autoincrement())
+  kanjiId       Int
+  jokugo        String?
+  jokugo_arti   String? @db.Text
+  hiragana      String?
+  hiragana_arti String? @db.Text
+  arti          String? @db.Text
+  penjelasan    String? @db.Text
+  kanji         Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@index([kanjiId], map: "SemanticRelation_kanjiId_fkey")
 }
 
 model SubmissionComment {

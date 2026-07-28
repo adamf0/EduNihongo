@@ -112,6 +112,7 @@ export const getKanjis = async (req: Request, res: Response) => {
         graphEdges: true,
         module: true,
         jukugos: true,
+        semanticRelations: true,
         etymologies: true,
       },
       orderBy: { id: "asc" },
@@ -139,6 +140,7 @@ export const createKanji = async (req: Request, res: Response) => {
       moduleId,
       examples,
       jukugos,
+      semanticRelations,
       graphNodes,
       graphEdges,
       etymologies,
@@ -195,8 +197,21 @@ export const createKanji = async (req: Request, res: Response) => {
           word: j.word || "",
           reading: j.reading || "",
           meaning: j.meaning || "",
-          kanjiBreakdown: j.kanjiBreakdown || null,
-          explanation: j.explanation || null,
+        })),
+      });
+    }
+
+    // Create SemanticRelations
+    if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
+      await prisma.semanticRelation.createMany({
+        data: semanticRelations.map((sr: any) => ({
+          kanjiId: kanji.id,
+          jokugo: sr.jokugo || "",
+          jokugo_arti: sr.jokugo_arti || "",
+          hiragana: sr.hiragana || "",
+          hiragana_arti: sr.hiragana_arti || "",
+          arti: sr.arti || "",
+          penjelasan: sr.penjelasan || "",
         })),
       });
     }
@@ -280,6 +295,7 @@ export const updateKanji = async (req: Request, res: Response) => {
       moduleId,
       examples,
       jukugos,
+      semanticRelations,
       graphNodes,
       graphEdges,
       etymologies,
@@ -333,8 +349,22 @@ export const updateKanji = async (req: Request, res: Response) => {
           word: j.word || "",
           reading: j.reading || "",
           meaning: j.meaning || "",
-          kanjiBreakdown: j.kanjiBreakdown || null,
-          explanation: j.explanation || null,
+        })),
+      });
+    }
+
+    // Update SemanticRelations: Delete and Re-create
+    await prisma.semanticRelation.deleteMany({ where: { kanjiId } });
+    if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
+      await prisma.semanticRelation.createMany({
+        data: semanticRelations.map((sr: any) => ({
+          kanjiId,
+          jokugo: sr.jokugo || "",
+          jokugo_arti: sr.jokugo_arti || "",
+          hiragana: sr.hiragana || "",
+          hiragana_arti: sr.hiragana_arti || "",
+          arti: sr.arti || "",
+          penjelasan: sr.penjelasan || "",
         })),
       });
     }
