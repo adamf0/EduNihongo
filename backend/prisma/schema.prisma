@@ -105,7 +105,6 @@ model Kanji {
   isJukugo       Boolean             @default(false)
   border         String?
   moduleId       Int?
-  reflectionData String?             @db.Text
   etymologies    Etymology[]
   examples       ExampleSentence[]
   jukugos           Jukugo[]

@@ -1676,7 +1676,6 @@ async function main() {
           onyomi: info.onyomi || "-",
           kunyomi: info.kunyomi || "-",
           baseMeaning: info.baseMeaning || info.meaning,
-          reflectionData: JSON.stringify(info.reflectionData || defaultReflections),
           isJukugo: false,
           border: borders[borderCounter % 3],
           moduleId: parentModule.id,

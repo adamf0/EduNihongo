@@ -594,12 +594,6 @@ export const KanjiFormPage: React.FC = () => {
 
           if (target.masterRefleksi && Array.isArray(target.masterRefleksi) && target.masterRefleksi.length > 0) {
             setReflectionQuestions(target.masterRefleksi.map((mr: any) => mr.question));
-          } else if (target.reflectionData) {
-            try {
-              setReflectionQuestions(JSON.parse(target.reflectionData));
-            } catch (e) {
-              setReflectionQuestions([]);
-            }
           } else {
             setReflectionQuestions([]);
           }
@@ -1007,10 +1001,6 @@ export const KanjiFormPage: React.FC = () => {
             )
           : null,
       masterRefleksi: reflectionQuestions.filter((r) => r.trim() !== ""),
-      reflectionData:
-        reflectionQuestions.length > 0
-          ? JSON.stringify(reflectionQuestions.filter((r) => r.trim() !== ""))
-          : null,
     };
 
     try {

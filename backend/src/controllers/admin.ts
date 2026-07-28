@@ -379,7 +379,6 @@ export const createKanji = async (req: Request, res: Response) => {
         isJukugo: !!isJukugo,
         border: border || null,
         moduleId: moduleId ? parseInt(moduleId, 10) : null,
-        reflectionData: reflectionData || null,
       },
     });
 
@@ -640,7 +639,6 @@ export const updateKanji = async (req: Request, res: Response) => {
         isJukugo: !!isJukugo,
         border: border || null,
         moduleId: targetModuleId,
-        reflectionData: reflectionData || null,
       },
     });
 

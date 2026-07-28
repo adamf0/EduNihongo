@@ -1924,22 +1924,7 @@ export const LatihanPage: React.FC = () => {
 
               {/* h. Refleksi Card with Interactive Inputs */}
               {(() => {
-                let masterList: any[] = kanjiData?.masterRefleksi || [];
-                if (masterList.length === 0 && kanjiData?.reflectionData) {
-                  try {
-                    const parsed = JSON.parse(kanjiData.reflectionData);
-                    if (Array.isArray(parsed)) {
-                      masterList = parsed.map((q: any) =>
-                        typeof q === "string"
-                          ? { id: null, question: q }
-                          : { id: q.id || null, question: q.question || String(q) }
-                      );
-                    }
-                  } catch (e) {
-                    masterList = [];
-                  }
-                }
-
+                const masterList: any[] = kanjiData?.masterRefleksi || [];
                 if (!masterList || masterList.length === 0) return null;
 
                 return (
