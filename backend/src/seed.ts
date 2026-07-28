@@ -414,6 +414,126 @@ const kanjiInfo: Record<string, {
         romaji: "Denwa de toiawase wo shimashita.",
         translation: "Saya mengajukan pertanyaan via telepon."
       }
+    ],
+    quizzes: [
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n① あったら、・先生・が・問題・に・もし・聞いて下さい、",
+        words: ["もし", "問題", "が", "あったら、", "先生", "に", "聞いて下さい。"],
+        correctOrder: ["もし", "問題", "が", "あったら、", "先生", "に", "聞いて下さい。"],
+        explanation: "Jawaban tepat: もし問題があったら、先生に聞いて下さい。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n② 質問 ・ 先生 ・ が ・ あるん ・ に ・ です",
+        words: ["先生", "に", "質問", "が", "あるん", "です。"],
+        correctOrder: ["先生", "に", "質問", "が", "あるん", "です。"],
+        explanation: "Jawaban tepat: 先生に質問があるんです。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n③ 設問 ・ 黒板 ・ 書いて ・ が ・ に ・ あります",
+        words: ["黒板", "に", "設問", "が", "書いて", "あります。"],
+        correctOrder: ["黒板", "に", "設問", "が", "書いて", "あります。"],
+        explanation: "Jawaban tepat: 黒板に設問が書いてあります。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n④ 問い合わせ ・ メール ・ しておきます ・ で ・ を",
+        words: ["メール", "で", "問い合わせ", "を", "しておきます。"],
+        correctOrder: ["メール", "で", "問い合わせ", "を", "しておきます。"],
+        explanation: "Jawaban tepat: メールで問い合わせをしておきます。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n⑤ 問題集 ・ 音楽 ・ を ・ やります ・ を ・ 聞きながら",
+        words: ["音楽", "を", "聞きながら", "問題集", "を", "やります。"],
+        correctOrder: ["音楽", "を", "聞きながら", "問題集", "を", "やります。"],
+        explanation: "Jawaban tepat: 音楽を聞きながら問題集をやります。"
+      },
+      {
+        type: "grouping",
+        question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+        words: ["問題", "質問", "問答", "問診", "訪問調査", "尋問", "問題点", "環境問題", "社会問題", "設問", "問題集", "問一", "問い合わせ", "問う", "問屋"],
+        groups: [
+          { "Pertanyaan dan Ujian": ["問題", "質問", "問答"] },
+          { "Investigasi dan Penyelidikan": ["問診", "訪問調査", "尋問"] },
+          { "Permasalahan Sosial": ["問題点", "環境問題", "社会問題"] },
+          { "Pendidikan dan Evaluasi": ["設問", "問題集", "問一"] },
+          { "Komunikasi dan Konsultasi": ["問い合わせ", "問う", "問屋"] }
+        ],
+        explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 問."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang berhubungan dengan kegiatan wawancara medis?",
+        options: ["設問", "問診", "質問", "問題"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 問診 (monshin / wawancara medis)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang berhubungan dengan persoalan yang terjadi di Masyarakat?",
+        options: ["問題集", "環境問題", "社会問題", "問一"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 社会問題 (shakai mondai / masalah sosial)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut buku Kumpulan latihan soal?",
+        options: ["問答", "問題集", "問い合わせ", "設問"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 問題集 (mondaishuu / buku kumpulan latihan soal)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang berhubungan dengan kegiatan menghubungi suatu instansi untuk memperoleh informasi?",
+        options: ["質問", "問答", "問い合わせ", "問題点"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 問い合わせ (toiawase / penanyaan / informasi)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang berhubungan dengan permasalahan yang terjadi di Masyarakat?",
+        options: ["社会問題", "環境問題", "問題点", "訪問問題"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 社会問題 (masalah sosial)."
+      },
+      {
+        type: "fill",
+        question: "授業が終わったあと、先生に（　　　　）しました。",
+        options: ["問う", "質問", "問題点"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 質問 (shitsumon / bertanya)."
+      },
+      {
+        type: "fill",
+        question: "環境についての（　　　　）が世界中で議論されています。",
+        options: ["問い合わせ", "社会問題", "問屋"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 社会問題 (shakai mondai / masalah sosial)."
+      },
+      {
+        type: "fill",
+        question: "病院では最初に（　　　　）を受けます。",
+        options: ["問診", "問答", "設問"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 問診 (monshin / wawancara medis)."
+      },
+      {
+        type: "fill",
+        question: "試験には全部で20の（　　　　）がありました。",
+        options: ["設問", "問屋", "問診"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 設問 (setsumon / soal)."
+      },
+      {
+        type: "fill",
+        question: "商品について知りたいので、お店に（　　　　）ました。",
+        options: ["問答", "問い合わせ", "尋問"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 問い合わせ (toiawase / bertanya)."
+      }
     ]
   },
   "題": {
