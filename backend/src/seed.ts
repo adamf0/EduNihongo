@@ -758,6 +758,126 @@ const kanjiInfo: Record<string, {
         romaji: "Ichimon ittou wa dou iu imi desu ka.",
         translation: "Apa arti dari 'satu pertanyaan satu jawaban'?"
       }
+    ],
+    quizzes: [
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n1. 回答 ・ を ・ アンケート ・ の ・ 出してください ・ に",
+        words: ["アンケート", "の", "回答", "に", "出して", "ください。"],
+        correctOrder: ["アンケート", "の", "回答", "に", "出して", "ください。"],
+        explanation: "Jawaban tepat: アンケートの回答を出してください。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n2. システム ・ サービス ・ この ・ は ・ 自動応答 ・ です ・ の",
+        words: ["この", "システム", "は", "自動応答", "の", "サービス", "です。"],
+        correctOrder: ["この", "システム", "は", "自動応答", "の", "サービス", "です。"],
+        explanation: "Jawaban tepat: このシステムは自動応答のサービスです。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n3. 返答 ・ まだ ・ メール ・ が ・ 来ていません ・ の",
+        words: ["メール", "の", "返答", "が", "まだ", "来ていません。"],
+        correctOrder: ["メール", "の", "返答", "が", "まだ", "来ていません。"],
+        explanation: "Jawaban tepat: メールの返答がまだ来ていません。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n4. 名前 ・ 答案用紙 ・下さい を ・ に ・ 書いて",
+        words: ["答案用紙", "に", "名前", "を", "書いて", "ください。"],
+        correctOrder: ["答案用紙", "に", "名前", "を", "書いて", "ください。"],
+        explanation: "Jawaban tepat: 答案用紙に名前を書いて下さい。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n5. 問答 ・ が ・ ありました ・ 先生 ・ と",
+        words: ["先生", "と", "問答", "が", "ありました。"],
+        correctOrder: ["先生", "と", "問答", "が", "ありました。"],
+        explanation: "Jawaban tepat: 先生と問答がありました。"
+      },
+      {
+        type: "grouping",
+        question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+        words: ["回答", "解答", "応答", "答案", "正答", "解答用紙", "返答", "口答", "答弁", "問答", "一問一答", "答申", "自動応答", "応答時間", "応答率"],
+        groups: [
+          { "Pertanyaan dan Jawaban": ["解答", "回答", "応答"] },
+          { "Pendidikan dan Evaluasi": ["答案", "正答", "解答用紙"] },
+          { "Komunikasi dan Diskusi": ["返答", "口答", "答弁"] },
+          { "Akademik dan Penelitian": ["問答", "一問一答", "答申"] },
+          { "Teknologi dan Layanan": ["自動応答", "応答時間", "応答率"] }
+        ],
+        explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 答."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"jawaban terhadap suatu pertanyaan atau permintaan informasi\"?",
+        options: ["解答", "回答", "答案", "正答"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 回答 (kaitou / jawaban atau tanggapan informasi)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"lembar jawaban yang digunakan saat ujian\"?",
+        options: ["正答", "問答", "答案", "応答"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 答案 (touan / lembar jawaban ujian)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"balasan terhadap surat, pesan, atau komunikasi\"?",
+        options: ["返答", "回答", "正答", "解答"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 返答 (hentou / balasan pesan)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"kegiatan tanya jawab dalam pembelajaran atau diskusi\"?",
+        options: ["応答", "一問一答", "問答", "解答"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 問答 (mondou / tanya jawab)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo apa yang digunakan untuk menyebut \"jawaban yang diberikan secara otomatis oleh sistem atau perangkat\"?",
+        options: ["応答時間", "自動応答", "応答率", "答弁"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 自動応答 (jidou outou / respons otomatis)."
+      },
+      {
+        type: "fill",
+        question: "質問に正しく（　　　　）してください。",
+        options: ["回答", "答案", "応答時間"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 回答 (kaitou / menjawab)."
+      },
+      {
+        type: "fill",
+        question: "試験が終わったら、（　　　　）を提出してください。",
+        options: ["答弁", "答案", "応答率"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 答案 (touan / lembar jawaban)."
+      },
+      {
+        type: "fill",
+        question: "メールの（　　　　）が遅くなってしまいました。",
+        options: ["問答", "返答", "正答"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 返答 (hentou / balasan pesan)."
+      },
+      {
+        type: "fill",
+        question: "この問題の（　　　　）は③です。",
+        options: ["自動応答", "応答", "解答"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 解答 (kaitou / kunci jawaban)."
+      },
+      {
+        type: "fill",
+        question: "この会社では休日は（　　　　）が設定されています。",
+        options: ["正答", "問答", "自動応答"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 自動応答 (jidou outou / balasan otomatis)."
+      }
     ]
   },
   "点": {
