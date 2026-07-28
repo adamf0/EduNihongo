@@ -88,6 +88,7 @@ export const KanjiFormPage: React.FC = () => {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
 
   // Form Fields
   const [kanjiChar, setKanjiChar] = useState("");
@@ -1006,12 +1007,17 @@ export const KanjiFormPage: React.FC = () => {
     try {
       setSubmitting(true);
       setActionError("");
+      setActionSuccess("");
       if (kanjiId) {
         await api.admin.kanjis.update(kanjiId, payload);
+        setActionSuccess(`Berhasil memperbarui data Kanji "${kanjiChar}"!`);
       } else {
         await api.admin.kanjis.create(payload);
+        setActionSuccess(`Berhasil membuat Kanji "${kanjiChar}" baru!`);
+        setTimeout(() => {
+          navigate(`/admin/module-detail?id=${moduleId}`);
+        }, 1200);
       }
-      navigate(`/admin/module-detail?id=${moduleId}`);
     } catch (err: any) {
       setActionError(err.message || "Gagal menyimpan kanji.");
     } finally {
@@ -2438,9 +2444,17 @@ export const KanjiFormPage: React.FC = () => {
             </div>
 
             {actionError && (
-              <p className="text-error font-body-md text-body-md font-semibold">
-                {actionError}
-              </p>
+              <div className="p-4 rounded-xl bg-error-container/30 border border-error/30 text-error font-bold text-body-md flex items-center gap-2">
+                <Icon name="error" className="text-xl shrink-0" />
+                <span>{actionError}</span>
+              </div>
+            )}
+
+            {actionSuccess && (
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-body-md flex items-center gap-2">
+                <Icon name="check_circle" className="text-xl shrink-0" />
+                <span>{actionSuccess}</span>
+              </div>
             )}
 
             {/* Save Buttons */}
