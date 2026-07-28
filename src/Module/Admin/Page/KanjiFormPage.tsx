@@ -1128,7 +1128,7 @@ export const KanjiFormPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="font-label-sm text-label-sm font-semibold text-on-surface">
-                        Bushuu / Radical
+                        Bushuu
                       </label>
                       <input
                         type="text"
@@ -1204,7 +1204,7 @@ export const KanjiFormPage: React.FC = () => {
                         className="flex gap-3 items-start bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20"
                       >
                         <div className="grid grid-cols-1 gap-3 flex-grow">
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1">
                               <label className="text-[10px] uppercase font-bold text-slate-500">
                                 Kata Jukugo
@@ -1619,7 +1619,7 @@ export const KanjiFormPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Edge Connections Log */}
+                  {/* Edge Connections Log 
                   {edges.length > 0 && (
                     <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-3">
                       <h5 className="text-xs font-bold text-secondary border-b border-outline-variant/10 pb-1 flex items-center gap-1">
@@ -1666,7 +1666,7 @@ export const KanjiFormPage: React.FC = () => {
                         })}
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
 
                 {/* Section 4: e. Hubungan Makna Antar Kanji */}
@@ -1732,7 +1732,7 @@ export const KanjiFormPage: React.FC = () => {
                           </div>
 
                           {/* Row 1: Jokugo, Jokugo Arti, & Hiragana */}
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1">
                               <label className="text-[9px] uppercase font-bold text-slate-500">
                                 Kata Jukugo (jokugo)
@@ -1752,7 +1752,7 @@ export const KanjiFormPage: React.FC = () => {
 
                             <div className="flex flex-col gap-1">
                               <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti Kanji Jukugo (jokugo_arti)
+                                Arti Kanji Jukugo
                               </label>
                               <input
                                 type="text"
@@ -1766,7 +1766,10 @@ export const KanjiFormPage: React.FC = () => {
                                 placeholder="Contoh: 試 : Menguji | 験 : Memverifikasi"
                               />
                             </div>
+                          </div>
 
+                          {/* Row 2: Hiragana Arti & Arti */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1">
                               <label className="text-[9px] uppercase font-bold text-slate-500">
                                 Kata Hiragana (hiragana)
@@ -1783,13 +1786,10 @@ export const KanjiFormPage: React.FC = () => {
                                 placeholder="Contoh: しけん"
                               />
                             </div>
-                          </div>
 
-                          {/* Row 2: Hiragana Arti & Arti */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1">
                               <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti Hiragana (hiragana_arti)
+                                Arti Hiragana
                               </label>
                               <input
                                 type="text"
@@ -1803,10 +1803,12 @@ export const KanjiFormPage: React.FC = () => {
                                 placeholder="Contoh: Ujian"
                               />
                             </div>
+                          </div>
 
+                          <div className="flex flex-col gap-1">
                             <div className="flex flex-col gap-1">
                               <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti / Terjemahan (arti)
+                                Arti / Terjemahan
                               </label>
                               <input
                                 type="text"
@@ -1821,11 +1823,11 @@ export const KanjiFormPage: React.FC = () => {
                               />
                             </div>
                           </div>
-
+                          
                           {/* Row 3: Penjelasan Hubungan Makna */}
                           <div className="flex flex-col gap-1">
                             <label className="text-[9px] uppercase font-bold text-slate-500">
-                              Penjelasan Hubungan Makna (penjelasan)
+                              Penjelasan Hubungan Makna
                             </label>
                             <textarea
                               value={sr.penjelasan}
