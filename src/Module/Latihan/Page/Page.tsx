@@ -828,8 +828,10 @@ export const LatihanPage: React.FC = () => {
 
     const nextIdx = unscrambleSelected.length;
     const correctOrder = currentQ.correctOrder || [];
+    const cleanWord = (w: string) => (w || "").replace(/[。,.、\s]/g, "").trim();
+    const targetWord = correctOrder[nextIdx] || "";
 
-    if (word === correctOrder[nextIdx]) {
+    if (cleanWord(word) === cleanWord(targetWord)) {
       playTingTing();
       const nextSelected = [...unscrambleSelected, word];
       setUnscrambleSelected(nextSelected);
