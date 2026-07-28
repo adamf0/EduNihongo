@@ -206,11 +206,12 @@ export const createKanji = async (req: Request, res: Response) => {
       await prisma.semanticRelation.createMany({
         data: semanticRelations.map((sr: any) => ({
           kanjiId: kanji.id,
-          jokugo: sr.jokugo || "",
-          jokugo_arti: sr.jokugo_arti || "",
-          hiragana: sr.hiragana || "",
-          hiragana_arti: sr.hiragana_arti || "",
+          kanji: sr.kanji || "",
           arti: sr.arti || "",
+          jukugo_1: sr.jukugo_1 || "",
+          jukugo_1_arti: sr.jukugo_1_arti || "",
+          jukugo_2: sr.jukugo_2 || "",
+          jukugo_2_arti: sr.jukugo_2_arti || "",
           penjelasan: sr.penjelasan || "",
         })),
       });
@@ -359,11 +360,12 @@ export const updateKanji = async (req: Request, res: Response) => {
       await prisma.semanticRelation.createMany({
         data: semanticRelations.map((sr: any) => ({
           kanjiId,
-          jokugo: sr.jokugo || "",
-          jokugo_arti: sr.jokugo_arti || "",
-          hiragana: sr.hiragana || "",
-          hiragana_arti: sr.hiragana_arti || "",
+          kanji: sr.kanji || "",
           arti: sr.arti || "",
+          jukugo_1: sr.jukugo_1 || "",
+          jukugo_1_arti: sr.jukugo_1_arti || "",
+          jukugo_2: sr.jukugo_2 || "",
+          jukugo_2_arti: sr.jukugo_2_arti || "",
           penjelasan: sr.penjelasan || "",
         })),
       });

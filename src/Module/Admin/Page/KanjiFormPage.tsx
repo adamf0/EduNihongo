@@ -43,20 +43,22 @@ export const KanjiFormPage: React.FC = () => {
   const [jukugos, setJukugos] = useState<any[]>([]);
   const [semanticRelations, setSemanticRelations] = useState<
     Array<{
-      jokugo: string;
-      jokugo_arti: string;
-      hiragana: string;
-      hiragana_arti: string;
+      kanji: string;
       arti: string;
+      jukugo_1: string;
+      jukugo_1_arti: string;
+      jukugo_2: string;
+      jukugo_2_arti: string;
       penjelasan: string;
     }>
   >([
     {
-      jokugo: "",
-      jokugo_arti: "",
-      hiragana: "",
-      hiragana_arti: "",
+      kanji: "",
       arti: "",
+      jukugo_1: "",
+      jukugo_1_arti: "",
+      jukugo_2: "",
+      jukugo_2_arti: "",
       penjelasan: "",
     },
   ]);
@@ -481,20 +483,22 @@ export const KanjiFormPage: React.FC = () => {
           setSemanticRelations(
             target.semanticRelations && target.semanticRelations.length > 0
               ? target.semanticRelations.map((sr: any) => ({
-                  jokugo: sr.jokugo || "",
-                  jokugo_arti: sr.jokugo_arti || "",
-                  hiragana: sr.hiragana || "",
-                  hiragana_arti: sr.hiragana_arti || "",
+                  kanji: sr.kanji || sr.jokugo || "",
                   arti: sr.arti || "",
+                  jukugo_1: sr.jukugo_1 || "",
+                  jukugo_1_arti: sr.jukugo_1_arti || sr.jokugo_arti || "",
+                  jukugo_2: sr.jukugo_2 || "",
+                  jukugo_2_arti: sr.jukugo_2_arti || "",
                   penjelasan: sr.penjelasan || "",
                 }))
               : [
                   {
-                    jokugo: "",
-                    jokugo_arti: "",
-                    hiragana: "",
-                    hiragana_arti: "",
+                    kanji: "",
                     arti: "",
+                    jukugo_1: "",
+                    jukugo_1_arti: "",
+                    jukugo_2: "",
+                    jukugo_2_arti: "",
                     penjelasan: "",
                   },
                 ],
@@ -563,11 +567,12 @@ export const KanjiFormPage: React.FC = () => {
           ]);
           setSemanticRelations([
             {
-              jokugo: "",
-              jokugo_arti: "",
-              hiragana: "",
-              hiragana_arti: "",
+              kanji: "",
               arti: "",
+              jukugo_1: "",
+              jukugo_1_arti: "",
+              jukugo_2: "",
+              jukugo_2_arti: "",
               penjelasan: "",
             },
           ]);
@@ -707,11 +712,12 @@ export const KanjiFormPage: React.FC = () => {
     setSemanticRelations((prev) => [
       ...prev,
       {
-        jokugo: "",
-        jokugo_arti: "",
-        hiragana: "",
-        hiragana_arti: "",
+        kanji: "",
         arti: "",
+        jukugo_1: "",
+        jukugo_1_arti: "",
+        jukugo_2: "",
+        jukugo_2_arti: "",
         penjelasan: "",
       },
     ]);
@@ -905,13 +911,14 @@ export const KanjiFormPage: React.FC = () => {
           meaning: j.meaning,
         })),
       semanticRelations: semanticRelations
-        .filter((sr) => sr.jokugo.trim() !== "" || sr.penjelasan.trim() !== "")
+        .filter((sr) => sr.kanji.trim() !== "" || sr.penjelasan.trim() !== "")
         .map((sr) => ({
-          jokugo: sr.jokugo,
-          jokugo_arti: sr.jokugo_arti || null,
-          hiragana: sr.hiragana || null,
-          hiragana_arti: sr.hiragana_arti || null,
+          kanji: sr.kanji,
           arti: sr.arti || null,
+          jukugo_1: sr.jukugo_1 || null,
+          jukugo_1_arti: sr.jukugo_1_arti || null,
+          jukugo_2: sr.jukugo_2 || null,
+          jukugo_2_arti: sr.jukugo_2_arti || null,
           penjelasan: sr.penjelasan || null,
         })),
       etymologies: etymologies.filter((et) => et.character.trim() !== ""),
@@ -1274,35 +1281,35 @@ export const KanjiFormPage: React.FC = () => {
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 w-full animate-fade-in">
               <div className="flex justify-between items-center border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  3. Peta Semantik Graph
+                  6. Peta Semantik Graph
                 </h4>
-                    <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
-                      <button
-                        type="button"
-                        onClick={() => setGraphEditMode("visual")}
-                        className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
-                          graphEditMode === "visual"
-                            ? "bg-primary text-on-primary"
-                            : "bg-transparent text-on-surface-variant"
-                        }`}
-                      >
-                        <Icon name="gesture" className="text-sm mr-1" />
-                        Visual Drag-Drop
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setGraphEditMode("table")}
-                        className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
-                          graphEditMode === "table"
-                            ? "bg-primary text-on-primary"
-                            : "bg-transparent text-on-surface-variant"
-                        }`}
-                      >
-                        <Icon name="table_chart" className="text-sm mr-1" />
-                        Tabel Mode
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setGraphEditMode("visual")}
+                    className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
+                      graphEditMode === "visual"
+                        ? "bg-primary text-on-primary"
+                        : "bg-transparent text-on-surface-variant"
+                    }`}
+                  >
+                    <Icon name="gesture" className="text-sm mr-1" />
+                    Visual Drag-Drop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGraphEditMode("table")}
+                    className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
+                      graphEditMode === "table"
+                        ? "bg-primary text-on-primary"
+                        : "bg-transparent text-on-surface-variant"
+                    }`}
+                  >
+                    <Icon name="table_chart" className="text-sm mr-1" />
+                    Tabel Mode
+                  </button>
+                </div>
+              </div>
 
                   {/* TABLE MODE */}
                   {graphEditMode === "table" && (
@@ -1619,7 +1626,7 @@ export const KanjiFormPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Edge Connections Log 
+                  {/* Edge Connections Log */}
                   {edges.length > 0 && (
                     <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-3">
                       <h5 className="text-xs font-bold text-secondary border-b border-outline-variant/10 pb-1 flex items-center gap-1">
@@ -1666,7 +1673,7 @@ export const KanjiFormPage: React.FC = () => {
                         })}
                       </div>
                     </div>
-                  )} */}
+                  )}
                 </div>
 
                 {/* Section 4: e. Hubungan Makna Antar Kanji */}
@@ -1712,11 +1719,11 @@ export const KanjiFormPage: React.FC = () => {
                                 {idx + 1}
                               </span>
                               <span className="font-bold text-xs text-slate-800">
-                                {sr.jokugo || `Item #${idx + 1}`}
+                                {sr.kanji || `Item #${idx + 1}`}
                               </span>
-                              {sr.hiragana && (
+                              {sr.arti && (
                                 <span className="text-[11px] text-slate-500">
-                                  ({sr.hiragana})
+                                  ({sr.arti})
                                 </span>
                               )}
                             </div>
@@ -1731,18 +1738,18 @@ export const KanjiFormPage: React.FC = () => {
                             </button>
                           </div>
 
-                          {/* Row 1: Jokugo, Jokugo Arti, & Hiragana */}
+                          {/* Row 1: Kanji & Arti / Terjemahan */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1">
                               <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Kata Jukugo (jokugo)
+                                Karakter Kanji (kanji)
                               </label>
                               <input
                                 type="text"
-                                value={sr.jokugo}
+                                value={sr.kanji}
                                 onChange={(e) => {
                                   const newSR = [...semanticRelations];
-                                  newSR[idx].jokugo = e.target.value;
+                                  newSR[idx].kanji = e.target.value;
                                   setSemanticRelations(newSR);
                                 }}
                                 className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
@@ -1752,63 +1759,7 @@ export const KanjiFormPage: React.FC = () => {
 
                             <div className="flex flex-col gap-1">
                               <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti Kanji Jukugo
-                              </label>
-                              <input
-                                type="text"
-                                value={sr.jokugo_arti}
-                                onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].jokugo_arti = e.target.value;
-                                  setSemanticRelations(newSR);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: 試 : Menguji | 験 : Memverifikasi"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Row 2: Hiragana Arti & Arti */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Kata Hiragana (hiragana)
-                              </label>
-                              <input
-                                type="text"
-                                value={sr.hiragana}
-                                onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].hiragana = e.target.value;
-                                  setSemanticRelations(newSR);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: しけん"
-                              />
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti Hiragana
-                              </label>
-                              <input
-                                type="text"
-                                value={sr.hiragana_arti}
-                                onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].hiragana_arti = e.target.value;
-                                  setSemanticRelations(newSR);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: Ujian"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col gap-1">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti / Terjemahan
+                                Arti / Terjemahan (arti)
                               </label>
                               <input
                                 type="text"
@@ -1823,11 +1774,85 @@ export const KanjiFormPage: React.FC = () => {
                               />
                             </div>
                           </div>
-                          
-                          {/* Row 3: Penjelasan Hubungan Makna */}
+
+                          {/* Row 2: Kata Jukugo 1 & Arti Kata Jukugo 1 */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Kata Jukugo 1 (jukugo_1)
+                              </label>
+                              <input
+                                type="text"
+                                value={sr.jukugo_1}
+                                onChange={(e) => {
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].jukugo_1 = e.target.value;
+                                  setSemanticRelations(newSR);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
+                                placeholder="Contoh: 試"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Arti Kata Jukugo 1 (jukugo_1_arti)
+                              </label>
+                              <input
+                                type="text"
+                                value={sr.jukugo_1_arti}
+                                onChange={(e) => {
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].jukugo_1_arti = e.target.value;
+                                  setSemanticRelations(newSR);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: Menguji"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Row 3: Kata Jukugo 2 & Arti Kata Jukugo 2 */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Kata Jukugo 2 (jukugo_2)
+                              </label>
+                              <input
+                                type="text"
+                                value={sr.jukugo_2}
+                                onChange={(e) => {
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].jukugo_2 = e.target.value;
+                                  setSemanticRelations(newSR);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
+                                placeholder="Contoh: 験"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] uppercase font-bold text-slate-500">
+                                Arti Kata Jukugo 2 (jukugo_2_arti)
+                              </label>
+                              <input
+                                type="text"
+                                value={sr.jukugo_2_arti}
+                                onChange={(e) => {
+                                  const newSR = [...semanticRelations];
+                                  newSR[idx].jukugo_2_arti = e.target.value;
+                                  setSemanticRelations(newSR);
+                                }}
+                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                placeholder="Contoh: Hasil / Verifikasi"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Row 4: Penjelasan Hubungan Makna */}
                           <div className="flex flex-col gap-1">
                             <label className="text-[9px] uppercase font-bold text-slate-500">
-                              Penjelasan Hubungan Makna
+                              Penjelasan Hubungan Makna (penjelasan)
                             </label>
                             <textarea
                               value={sr.penjelasan}
@@ -1838,7 +1863,7 @@ export const KanjiFormPage: React.FC = () => {
                               }}
                               rows={2}
                               className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none leading-relaxed"
-                              placeholder="Contoh: Hubungan makna antara kanji 試 dan 験 menjadi..."
+                              placeholder="Contoh: Hubungan makna antara kanji 試 (menguji) dan 験 (verifikasi) membentuk kata 試験 yang berarti Ujian."
                             />
                           </div>
                         </div>

@@ -961,17 +961,16 @@ async function main() {
       });
 
       // Create semanticRelation records
-      const semanticRelData = info.jukugos
-        .filter(j => j.kanjiBreakdown || j.explanation || j.word)
-        .map(j => ({
-          kanjiId: kanji.id,
-          jokugo: j.word || "",
-          jokugo_arti: j.kanjiBreakdown || "",
-          hiragana: j.reading || "",
-          hiragana_arti: j.meaning || "",
-          arti: j.meaning || "",
-          penjelasan: j.explanation || "",
-        }));
+      const semanticRelData = info.jukugos.map(j => ({
+        kanjiId: kanji.id,
+        kanji: j.word || "",
+        arti: j.meaning || "",
+        jukugo_1: j.word ? j.word.charAt(0) : "",
+        jukugo_1_arti: j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[0]?.trim() || "" : "",
+        jukugo_2: j.word && j.word.length > 1 ? j.word.charAt(1) : "",
+        jukugo_2_arti: j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[1]?.trim() || "" : "",
+        penjelasan: j.explanation || `Hubungan makna kanji penyusun membentuk kata ${j.word} (${j.meaning}).`,
+      }));
 
       if (semanticRelData.length > 0) {
         await prisma.semanticRelation.createMany({

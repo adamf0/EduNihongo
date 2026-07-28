@@ -169,13 +169,14 @@ model Jukugo {
 model SemanticRelation {
   id            Int     @id @default(autoincrement())
   kanjiId       Int
-  jokugo        String?
-  jokugo_arti   String? @db.Text
-  hiragana      String?
-  hiragana_arti String? @db.Text
+  kanji         String?
   arti          String? @db.Text
+  jukugo_1      String?
+  jukugo_1_arti String? @db.Text
+  jukugo_2      String?
+  jukugo_2_arti String? @db.Text
   penjelasan    String? @db.Text
-  kanji         Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  kanjiRef      Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
 
   @@index([kanjiId], map: "SemanticRelation_kanjiId_fkey")
 }
