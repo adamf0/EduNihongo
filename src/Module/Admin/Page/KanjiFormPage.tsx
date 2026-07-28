@@ -2163,9 +2163,12 @@ export const KanjiFormPage: React.FC = () => {
                                             ? q.groups
                                                 .map(
                                                   (g: any) =>
-                                                    `${g.name}: ${(g.correctWords || []).join(", ")}`,
+                                                    `${g.name || g.category || ""}: ${(g.correctWords || g.items || []).join(", ")}`,
                                                 )
+                                                .filter((str: string) => !str.startsWith(": "))
                                                 .join(" | ")
+                                            : typeof q.groups === "string"
+                                            ? q.groups
                                             : ""
                                         }
                                         onChange={(e) => {
@@ -2184,7 +2187,9 @@ export const KanjiFormPage: React.FC = () => {
                                                 .filter(Boolean);
                                               groups.push({
                                                 name,
+                                                category: name,
                                                 correctWords,
+                                                items: correctWords,
                                               });
                                               allWords.push(...correctWords);
                                             }
