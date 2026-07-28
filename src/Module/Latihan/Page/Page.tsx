@@ -1732,7 +1732,7 @@ export const LatihanPage: React.FC = () => {
                     <tbody className="divide-y divide-slate-100 text-slate-800">
                       <tr>
                         <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Kanji</td>
-                        <td className="p-3.5 font-black text-xl text-[#8f0020] font-mono">{kanjiData?.character}</td>
+                        <td className="p-3.5 font-black text-xl text-[#8f0020] font-mono">{kanjiData?.character || kanjiData?.kanji}</td>
                       </tr>
                       <tr>
                         <td className="p-3.5 font-bold bg-slate-50/50 border-r border-slate-200/50">Arti</td>

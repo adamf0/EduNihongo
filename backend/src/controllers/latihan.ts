@@ -247,9 +247,17 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
     });
 
     res.json({
+      id: kanji.id,
       kanji: kanji.character,
+      character: kanji.character,
       romaji: kanji.romaji,
       meaning: kanji.meaning,
+      bushuu: kanji.bushuu || "-",
+      onyomi: kanji.onyomi || "-",
+      kunyomi: kanji.kunyomi || "-",
+      baseMeaning: kanji.baseMeaning || kanji.meaning,
+      border: kanji.border || null,
+      moduleId: kanji.moduleId || null,
       moduleTitle: kanji.module ? kanji.module.title : null,
       masteryPercent,
       writingPercent,
