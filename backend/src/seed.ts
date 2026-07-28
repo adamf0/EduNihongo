@@ -24,6 +24,130 @@ const kanjiInfo: Record<string, {
     onyomi: "シ",
     kunyomi: "ためす",
     baseMeaning: "Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil (Kanjipedia)",
+    quizData: JSON.stringify([
+      {
+        type: "unscramble",
+        question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nありました・試合・きのう・が",
+        words: ["ありました", "試合", "きのう", "が"],
+        correctOrder: ["きのう", "試合", "が", "ありました。"],
+        correctAnswer: "きのう試合がありました。",
+        explanation: "Jawaban tepat: きのう試合がありました。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nスーパーで・試食・しました・新しいパンを",
+        words: ["スーパーで", "試食", "しました", "新しいパンを"],
+        correctOrder: ["スーパーで", "新しいパンを", "試食", "しました。"],
+        correctAnswer: "スーパーで新しいパンを試食しました。",
+        explanation: "Jawaban tepat: スーパーで新しいパンを試食しました。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\n試飲・けさ・ジャム・しました・田中さん・を・は",
+        words: ["試飲", "けさ", "ジャム", "しました", "田中さん", "を", "は"],
+        correctOrder: ["田中さん", "は", "けさ", "ジャム", "を", "試飲", "しました。"],
+        correctAnswer: "田中さんはけさジャムを試飲しました。",
+        explanation: "Jawaban tepat: 田中さんはけさジャムを試飲しました。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nします・前に・を・試乗・買う・新しい車・まず",
+        words: ["します", "前に", "を", "試乗", "買う", "新しい車", "まず"],
+        correctOrder: ["新しい車", "を", "買う", "前に、", "まず", "試乗", "します。"],
+        correctAnswer: "新しい車を買う前に、まず試乗します。",
+        explanation: "Jawaban tepat: 新しい車を買う前に、まず試乗します。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kosakata berikut menjadi sebuah kalimat yang tepat:\nあったので・を・が・昨日・休みました・試合・大学",
+        words: ["あったので", "を", "が", "昨日", "休みました", "試合", "大学"],
+        correctOrder: ["きのう", "試合", "が", "あったので、", "大学", "を", "休みました。"],
+        correctAnswer: "きのう試合があったので、大学を休みました。",
+        explanation: "Jawaban tepat: きのう試合があったので、大学を休みました。"
+      },
+      {
+        type: "grouping",
+        question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+        groups: [
+          { category: "Aktivitas Pengujian", items: ["試験", "入試", "試問"] },
+          { category: "Penggunaan", items: ["試着", "試用", "試乗"] },
+          { category: "Konsumsi", items: ["試食", "試飲", "試薬"] },
+          { category: "Produksi dan Pengembangan", items: ["試作", "試作品", "試製"] },
+          { category: "Kompetisi dan Media", items: ["試合", "試技", "試聴", "試写", "試読"] }
+        ],
+        explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 試."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo mana yang berhubungan dengan “kegiatan menguji kemampuan seseorang”?",
+        options: ["試験", "試食", "試着", "試作"],
+        correctAnswer: 0,
+        explanation: "試験 (shiken) berarti ujian, yaitu kegiatan menguji kemampuan seseorang."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo mana yang berhubungan dengan “mencoba pakaian sebelum membeli”?",
+        options: ["試用", "試着", "試写", "試薬"],
+        correctAnswer: 1,
+        explanation: "試着 (shichaku) berarti mencoba pakaian sebelum membeli."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo mana yang berhubungan dengan “mencicipi makanan”?",
+        options: ["試食", "試飲", "試薬", "試写"],
+        correctAnswer: 0,
+        explanation: "試食 (shishoku) berarti mencicipi makanan."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo mana yang berhubungan dengan “pembuatan produk percobaan /prototype”?",
+        options: ["試作品", "試作", "試製", "試合"],
+        correctAnswer: 1,
+        explanation: "試作 (shisaku) berarti pembuatan produk percobaan / prototipe."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo mana yang berhubungan dengan “kompetisi/pertandingan”?",
+        options: ["試読", "試写", "試技", "試合"],
+        correctAnswer: 3,
+        explanation: "試合 (shiai) berarti pertandingan atau kompetisi."
+      },
+      {
+        type: "fill",
+        question: "来週は（　　　　）がありますから、今から勉強しなければなりません。",
+        options: ["試合", "試験", "試薬"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 試験 (shiken / ujian)."
+      },
+      {
+        type: "fill",
+        question: "パーティーへ行く前に、服はちゃんと（　　　）して下さい。",
+        options: ["試作", "試着", "試飲"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 試着 (shichaku / coba pakaian)."
+      },
+      {
+        type: "fill",
+        question: "今月に工場で（　　　）がありますから、社長が工場に来ます。",
+        options: ["試着", "試薬", "試製"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 試製 (shisei / uji produksi)."
+      },
+      {
+        type: "fill",
+        question: "今日の午後、映画館へ（　　　　）に行く予定があります。",
+        options: ["試験", "試写", "試作"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 試写 (shisha / pratinjau film)."
+      },
+      {
+        type: "fill",
+        question: "実験の前に（　　　　）を準備してください。",
+        options: ["試合", "試験", "試薬"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 試薬 (shiyaku / reagen)."
+      }
+    ]),
     jukugos: [
       { word: "試験", reading: "しけん", meaning: "UJian", kanjiBreakdown: "試 : Menguji | 験 : Memverifikasi  hasil dan", explanation: "Hubungan makna antara kanji試dan 験menjadi試験 menunjukan gabungan kedua kanji tersebut membentuk sebuah makna \"suatu kegiatan untuk mengukur pengetahuan atau kemampuan seseorang, maka ketika digabungkan mengandung makna ujian\"." },
       { word: "入試", reading: "にゅうし", meaning: "ujian masuk", kanjiBreakdown: "入 : masuk | 試 : ujian", explanation: "Hubungan makna  antara kanji 入 dan 試 menjadi 入試 , menunjukan gabungan kedua kanji tersebut membentuk sebuah makna “untuk masuk sekolah atau pun  perguruan “tinggi harus melalui ujian’." },
