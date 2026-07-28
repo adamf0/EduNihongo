@@ -969,10 +969,6 @@ async function main() {
 
         return {
           kanjiId: kanji.id,
-          jokugo: j.word || "",
-          jokugo_arti: j.kanjiBreakdown || (j1 ? `${j1} : ${j1a} | ${j2} : ${j2a}` : ""),
-          hiragana: j.reading || j1 || "",
-          hiragana_arti: j.meaning || "",
           kanji: j.word || "",
           arti: j.meaning || "",
           jukugo_1: j1,

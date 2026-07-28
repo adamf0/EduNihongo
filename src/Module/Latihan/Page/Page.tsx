@@ -1678,16 +1678,16 @@ export const LatihanPage: React.FC = () => {
                     {kanjiData.semanticRelations.map((sr: any, idx: number) => (
                       <div key={idx} className="bg-slate-50/60 p-4 rounded-2xl border border-slate-100 flex flex-col gap-2 text-left">
                         <div className="flex items-center gap-2 border-b border-slate-200/50 pb-2">
-                          <span className="font-serif text-lg font-bold text-slate-800">{sr.kanji || sr.jokugo}</span>
+                          <span className="font-serif text-lg font-bold text-slate-800">{sr.kanji}</span>
                           {sr.arti && (
                             <span className="text-xs font-bold text-[#8f0020] ml-auto">{sr.arti}</span>
                           )}
                         </div>
-                        {(sr.jukugo_1 || sr.jokugo_arti) && (
+                        {sr.jukugo_1 && (
                           <div className="text-xs text-slate-700 font-medium grid grid-cols-1 sm:grid-cols-2 gap-1 bg-white/70 p-2 rounded-xl border border-slate-100">
                             <div>
                               <strong className="text-slate-900 font-bold">Kata Kanji 1: </strong>
-                              {sr.jukugo_1 || sr.jokugo_arti?.split("|")[0]} {sr.jukugo_1_arti ? `(${sr.jukugo_1_arti})` : ""}
+                              {sr.jukugo_1} {sr.jukugo_1_arti ? `(${sr.jukugo_1_arti})` : ""}
                             </div>
                             {sr.jukugo_2 && (
                               <div>

@@ -273,12 +273,12 @@ export const createKanji = async (req: Request, res: Response) => {
 };
 
 const parseSemanticRelationFields = (sr: any) => {
-  let kanjiVal = (sr.kanji || sr.jokugo || "").trim();
+  let kanjiVal = (sr.kanji || "").trim();
   let j1Val = (sr.jukugo_1 || "").trim();
   let j1ArtiVal = (sr.jukugo_1_arti || "").trim();
   let j2Val = (sr.jukugo_2 || "").trim();
   let j2ArtiVal = (sr.jukugo_2_arti || "").trim();
-  const artiVal = (sr.arti || sr.hiragana_arti || "").trim();
+  const artiVal = (sr.arti || "").trim();
   const penjelasanVal = (sr.penjelasan || "").trim();
 
   // If kanjiVal is empty, attempt regex extraction from penjelasan
@@ -301,13 +301,7 @@ const parseSemanticRelationFields = (sr: any) => {
   if (!j1Val && kanjiVal.length > 0) j1Val = kanjiVal.charAt(0);
   if (!j2Val && kanjiVal.length > 1) j2Val = kanjiVal.charAt(1);
 
-  const defaultJokugoArti = sr.jokugo_arti || (j1Val ? `${j1Val}${j1ArtiVal ? ` : ${j1ArtiVal}` : ""}${j2Val ? ` | ${j2Val}${j2ArtiVal ? ` : ${j2ArtiVal}` : ""}` : ""}` : "");
-
   return {
-    jokugo: kanjiVal,
-    jokugo_arti: defaultJokugoArti,
-    hiragana: sr.hiragana || j1Val || "",
-    hiragana_arti: sr.hiragana_arti || artiVal,
     kanji: kanjiVal,
     arti: artiVal,
     jukugo_1: j1Val,

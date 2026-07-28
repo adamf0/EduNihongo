@@ -169,10 +169,6 @@ model Jukugo {
 model SemanticRelation {
   id            Int     @id @default(autoincrement())
   kanjiId       Int
-  jokugo        String?
-  jokugo_arti   String? @db.Text
-  hiragana      String?
-  hiragana_arti String? @db.Text
   kanji         String?
   arti          String? @db.Text
   jukugo_1      String?
