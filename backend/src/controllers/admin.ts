@@ -272,12 +272,17 @@ export const createKanji = async (req: Request, res: Response) => {
   }
 };
 
+const cleanArtiField = (val: string) => {
+  if (!val) return "";
+  return val.replace(/^[^:：]+[:：]\s*/, "").trim();
+};
+
 const parseSemanticRelationFields = (sr: any) => {
   let kanjiVal = (sr.kanji || "").trim();
   let j1Val = (sr.jukugo_1 || "").trim();
-  let j1ArtiVal = (sr.jukugo_1_arti || "").trim();
+  let j1ArtiVal = cleanArtiField(sr.jukugo_1_arti || "");
   let j2Val = (sr.jukugo_2 || "").trim();
-  let j2ArtiVal = (sr.jukugo_2_arti || "").trim();
+  let j2ArtiVal = cleanArtiField(sr.jukugo_2_arti || "");
   const artiVal = (sr.arti || "").trim();
   const penjelasanVal = (sr.penjelasan || "").trim();
 

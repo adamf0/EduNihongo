@@ -965,9 +965,16 @@ async function main() {
       // Create semanticRelation records
       const semanticRelData = info.jukugos.map(j => {
         const j1 = j.word ? j.word.charAt(0) : "";
-        const j1a = j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[0]?.trim() || "" : "";
+        let j1a = j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[0]?.trim() || "" : "";
+        if (j1a.includes(":") || j1a.includes("：")) {
+          j1a = j1a.split(/[:：]/)[1]?.trim() || j1a;
+        }
+
         const j2 = j.word && j.word.length > 1 ? j.word.charAt(1) : "";
-        const j2a = j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[1]?.trim() || "" : "";
+        let j2a = j.kanjiBreakdown ? j.kanjiBreakdown.split("|")[1]?.trim() || "" : "";
+        if (j2a.includes(":") || j2a.includes("：")) {
+          j2a = j2a.split(/[:：]/)[1]?.trim() || j2a;
+        }
 
         return {
           kanjiId: kanji.id,
