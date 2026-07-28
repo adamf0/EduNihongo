@@ -930,6 +930,126 @@ const kanjiInfo: Record<string, {
         romaji: "Shuppatsu chiten wa eki desu.",
         translation: "Titik keberangkatannya adalah stasiun."
       }
+    ],
+    quizzes: [
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n1. 先生・採点・しました・テストを・は",
+        words: ["先生", "は", "テスト", "を", "採点", "しました。"],
+        correctOrder: ["先生", "は", "テスト", "を", "採点", "しました。"],
+        explanation: "Jawaban tepat: 先生はテストを採点しました。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n2. 要点・ください・説明して・を",
+        words: ["要点", "を", "説明して", "ください。"],
+        correctOrder: ["要点", "を", "説明して", "ください。"],
+        explanation: "Jawaban tepat: 要点を説明してください。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n3. 点検・車・しました・を",
+        words: ["車", "を", "点検", "しました。"],
+        correctOrder: ["車", "を", "点検", "しました。"],
+        explanation: "Jawaban tepat: 車を点検しました。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n4. 百点・取りました・私は",
+        words: ["私", "は", "百点", "取りました。"],
+        correctOrder: ["私", "は", "百点", "取りました。"],
+        explanation: "Jawaban tepat: 私は百点取りました。"
+      },
+      {
+        type: "unscramble",
+        question: "Susunlah kata-kata berikut menjadi kalimat yang tepat:\n5. の・でした・きのう・満点・は・試験",
+        words: ["きのう", "の", "試験", "は", "満点", "でした。"],
+        correctOrder: ["きのう", "の", "試験", "は", "満点", "でした。"],
+        explanation: "Jawaban tepat: きのうの試験は満点でした。"
+      },
+      {
+        type: "grouping",
+        question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+        words: ["採点", "得点", "減点", "地点", "起点", "終点", "観点", "視点", "論点", "問題点", "重点", "要点", "点検", "点灯", "点数"],
+        groups: [
+          { "Penilaian dan Nilai": ["採点", "得点", "減点"] },
+          { "Titik dan Lokasi": ["地点", "起点", "終点"] },
+          { "Pandangan dan Aspek": ["観点", "視点", "論点"] },
+          { "Fokus dan Permasalahan": ["問題点", "重点", "要点"] },
+          { "Pemeriksaan dan Data": ["点検", "点灯", "点数"] }
+        ],
+        explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 点."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo yang mengandung arti \"skor\" terdapat pada kata...",
+        options: ["満点", "終点", "地点", "得点"],
+        correctAnswer: 3,
+        explanation: "Jawaban tepat: 得点 (tokuten / skor)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo yang mengandung arti \"titik akhir\" terdapat pada kanji...",
+        options: ["満点", "終点", "地点", "得点"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 終点 (shuuten / titik akhir)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo yang mengandung makna \"titik awal\" terdapat pada kanji...",
+        options: ["起点", "得点", "終点", "地点"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 起点 (kiten / titik awal)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo yang memiliki arti \"poin penting\" adalah...",
+        options: ["論点", "要点", "観点", "地点"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 要点 (youten / poin penting)."
+      },
+      {
+        type: "multiple",
+        question: "Jukugo yang memiliki arti \"fokus utama\" terdapat pada kanji...",
+        options: ["論点", "点数", "重点", "要点"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 重点 (juuten / fokus utama)."
+      },
+      {
+        type: "fill",
+        question: "先生はテストを（　　　　）しています。",
+        options: ["採点", "点灯", "地点"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 採点 (saiten / memberi nilai)."
+      },
+      {
+        type: "fill",
+        question: "彼は100点満点で95（　　　　）取りました。",
+        options: ["観点", "起点", "点数"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 点数 (tensuu / nilai poin)."
+      },
+      {
+        type: "fill",
+        question: "駅前が待ち合わせの（　　　　）です。",
+        options: ["地点", "視点", "要点"],
+        correctAnswer: 0,
+        explanation: "Jawaban tepat: 地点 (chiten / lokasi)."
+      },
+      {
+        type: "fill",
+        question: "先生はレポートの（　　　　）を説明しました。",
+        options: ["得点", "要点", "点灯"],
+        correctAnswer: 1,
+        explanation: "Jawaban tepat: 要点 (youten / poin penting)."
+      },
+      {
+        type: "fill",
+        question: "飛行機に乗る前に荷物を（　　　　）します。",
+        options: ["観点", "得点", "点検"],
+        correctAnswer: 2,
+        explanation: "Jawaban tepat: 点検 (tenken / pemeriksaan)."
+      }
     ]
   },
 
