@@ -4,6 +4,77 @@ import Icon from "../../Common/Component/Icon";
 import { api } from "../../Common/Utility/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+const formatGroupsToText = (groupsData: any): string => {
+  let parsed = groupsData;
+  while (typeof parsed === "string") {
+    const trimmed = parsed.trim();
+    if (
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith("{") && trimmed.endsWith("}"))
+    ) {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch (e) {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+
+  if (!parsed) return "";
+  if (typeof parsed === "string") return parsed;
+
+  const pairs: string[] = [];
+
+  if (typeof parsed === "object" && !Array.isArray(parsed)) {
+    for (const [catName, words] of Object.entries(parsed)) {
+      const items = Array.isArray(words)
+        ? words
+        : typeof words === "string"
+          ? [words]
+          : [];
+      if (catName && items.length > 0) {
+        pairs.push(`${catName}: ${items.join(", ")}`);
+      }
+    }
+  } else if (Array.isArray(parsed)) {
+    for (const g of parsed) {
+      if (typeof g === "string") {
+        if (g) pairs.push(g);
+      } else if (typeof g === "object" && g !== null) {
+        if (g.name === undefined && g.category === undefined) {
+          const entries = Object.entries(g);
+          for (const [catName, words] of entries) {
+            const items = Array.isArray(words)
+              ? words
+              : typeof words === "string"
+                ? [words]
+                : [];
+            if (catName && items.length > 0) {
+              pairs.push(`${catName}: ${items.join(", ")}`);
+            }
+          }
+        } else {
+          const catName = g.name || g.category || g.title || "";
+          const items = Array.isArray(g.correctWords)
+            ? g.correctWords
+            : Array.isArray(g.items)
+              ? g.items
+              : Array.isArray(g.words)
+                ? g.words
+                : [];
+          if (catName && items.length > 0) {
+            pairs.push(`${catName}: ${items.join(", ")}`);
+          }
+        }
+      }
+    }
+  }
+
+  return pairs.join(" | ");
+};
+
 export const KanjiFormPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -2167,24 +2238,7 @@ export const KanjiFormPage: React.FC = () => {
                                         value={
                                           q.rawGroupsText !== undefined
                                             ? q.rawGroupsText
-                                            : (() => {
-                                                let parsed = q.groups;
-                                                if (typeof parsed === "string") {
-                                                  try {
-                                                    parsed = JSON.parse(parsed);
-                                                  } catch (e) {}
-                                                }
-                                                if (Array.isArray(parsed)) {
-                                                  return parsed
-                                                    .map(
-                                                      (g: any) =>
-                                                        `${g.name || g.category || ""}: ${(g.correctWords || g.items || []).join(", ")}`,
-                                                    )
-                                                    .filter((str: string) => !str.startsWith(": "))
-                                                    .join(" | ");
-                                                }
-                                                return typeof q.groups === "string" ? q.groups : "";
-                                              })()
+                                            : formatGroupsToText(q.groups)
                                         }
                                         onChange={(e) => {
                                           const val = e.target.value;
@@ -2201,13 +2255,16 @@ export const KanjiFormPage: React.FC = () => {
                                                 .split(",")
                                                 .map((w: string) => w.trim())
                                                 .filter(Boolean);
-                                              groups.push({
-                                                name,
-                                                category: name,
-                                                correctWords,
-                                                items: correctWords,
-                                              });
-                                              allWords.push(...correctWords);
+                                              if (name && correctWords.length > 0) {
+                                                groups.push({
+                                                  [name]: correctWords,
+                                                  name,
+                                                  category: name,
+                                                  correctWords,
+                                                  items: correctWords,
+                                                });
+                                                allWords.push(...correctWords);
+                                              }
                                             }
                                           }
                                           newQ[idx].groups = groups;
