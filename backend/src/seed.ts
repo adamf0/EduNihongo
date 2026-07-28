@@ -1684,6 +1684,17 @@ async function main() {
       });
       borderCounter++;
 
+      // Create MasterRefleksi records
+      const reflectionQuestions: string[] = info.reflectionData || defaultReflections;
+      if (Array.isArray(reflectionQuestions) && reflectionQuestions.length > 0) {
+        await prisma.masterRefleksi.createMany({
+          data: reflectionQuestions.map((q: string) => ({
+            kanjiId: kanji.id,
+            question: typeof q === "string" ? q : (q as any).question || String(q)
+          }))
+        });
+      }
+
       // Create user progress for this kanji
       await prisma.userKanjiProgress.create({
         data: {

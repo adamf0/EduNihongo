@@ -592,7 +592,9 @@ export const KanjiFormPage: React.FC = () => {
             setQuizQuestions([]);
           }
 
-          if (target.reflectionData) {
+          if (target.masterRefleksi && Array.isArray(target.masterRefleksi) && target.masterRefleksi.length > 0) {
+            setReflectionQuestions(target.masterRefleksi.map((mr: any) => mr.question));
+          } else if (target.reflectionData) {
             try {
               setReflectionQuestions(JSON.parse(target.reflectionData));
             } catch (e) {
@@ -1004,6 +1006,7 @@ export const KanjiFormPage: React.FC = () => {
               quizQuestions.filter((q) => q.question && q.question.trim() !== ""),
             )
           : null,
+      masterRefleksi: reflectionQuestions.filter((r) => r.trim() !== ""),
       reflectionData:
         reflectionQuestions.length > 0
           ? JSON.stringify(reflectionQuestions.filter((r) => r.trim() !== ""))

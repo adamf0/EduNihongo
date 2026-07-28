@@ -317,6 +317,47 @@ export const LatihanPage: React.FC = () => {
   const [quizScore, setQuizScore] = useState(0);
   const [quizFeedback, setQuizFeedback] = useState<any[]>([]);
   const [savingQuiz, setSavingQuiz] = useState(false);
+
+  // Refleksi states
+  const [refleksiAnswers, setRefleksiAnswers] = useState<Record<string | number, string>>({});
+  const [refleksiSaved, setRefleksiSaved] = useState(false);
+  const [savingRefleksi, setSavingRefleksi] = useState(false);
+
+  const handleRefleksiChange = (key: string | number, value: string) => {
+    setRefleksiAnswers((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveRefleksi = async (masterList: any[]) => {
+    try {
+      setSavingRefleksi(true);
+      const answersPayload = masterList.map((item: any, idx: number) => {
+        const mrId = item.id || null;
+        const qText = item.question || item;
+        const userAns = refleksiAnswers[mrId || idx] ?? refleksiAnswers[qText] ?? "";
+        return {
+          masterRefleksiId: mrId,
+          question: qText,
+          answer: userAns,
+        };
+      });
+
+      const res = await api.latihan.submitRefleksi({
+        kanjiId: kanjiData?.id,
+        character: kanjiData?.kanji || kanjiData?.character,
+        answers: answersPayload,
+      });
+
+      if (res.success) {
+        setRefleksiSaved(true);
+        alert(res.message || "Jawaban refleksi berhasil disimpan!");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Gagal menyimpan refleksi.");
+    } finally {
+      setSavingRefleksi(false);
+    }
+  };
   const [xpNotification, setXpNotification] = useState<{
     amount: number;
     description: string;
@@ -1028,6 +1069,19 @@ export const LatihanPage: React.FC = () => {
         setLoading(true);
         const data = await api.latihan.get(charParam);
         setKanjiData(data);
+
+        if (data.refleksiData && Array.isArray(data.refleksiData)) {
+          const ansMap: Record<string | number, string> = {};
+          data.refleksiData.forEach((rd: any) => {
+            if (rd.masterRefleksiId) {
+              ansMap[rd.masterRefleksiId] = rd.answer || "";
+            } else if (rd.question) {
+              ansMap[rd.question] = rd.answer || "";
+            }
+          });
+          setRefleksiAnswers(ansMap);
+          if (data.refleksiData.length > 0) setRefleksiSaved(true);
+        }
 
         if (data.xpEarned > 0) {
           triggerXpReward(data.xpEarned, "Membuka modul pembelajaran baru");
@@ -1868,39 +1922,88 @@ export const LatihanPage: React.FC = () => {
                 <KanjiEtymology etymologies={etymologies} />
               )}
 
-              {/* h. Refleksi Card */}
+              {/* h. Refleksi Card with Interactive Inputs */}
               {(() => {
-                let reflections: string[] = [];
-                if (kanjiData?.reflectionData) {
+                let masterList: any[] = kanjiData?.masterRefleksi || [];
+                if (masterList.length === 0 && kanjiData?.reflectionData) {
                   try {
-                    reflections = JSON.parse(kanjiData.reflectionData);
+                    const parsed = JSON.parse(kanjiData.reflectionData);
+                    if (Array.isArray(parsed)) {
+                      masterList = parsed.map((q: any) =>
+                        typeof q === "string"
+                          ? { id: null, question: q }
+                          : { id: q.id || null, question: q.question || String(q) }
+                      );
+                    }
                   } catch (e) {
-                    reflections = [];
+                    masterList = [];
                   }
                 }
-                if (!reflections || reflections.length === 0) return null;
+
+                if (!masterList || masterList.length === 0) return null;
+
                 return (
-                  <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs select-none animate-zoom-in space-y-4">
+                  <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs select-text animate-zoom-in space-y-4">
                     <h4 className="font-extrabold text-lg text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3">
                       <span className="flex items-center gap-2">
                         <HelpCircle className="text-[#8f0020] w-5 h-5" />
-                        h. Refleksi
+                        h. Pertanyaan Refleksi
                       </span>
+                      {refleksiSaved && (
+                        <span className="text-xs font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5 select-none">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          Tersimpan
+                        </span>
+                      )}
                     </h4>
                     <p className="text-xs text-slate-500 font-medium">
-                      Setelah mempelajari kanji <strong className="text-[#8f0020]">{kanjiData?.character}</strong>, jawablah pertanyaan berikut sesuai dengan pengetahuan Anda:
+                      Tuliskan jawaban refleksi Anda untuk kanji <strong className="text-[#8f0020]">{kanjiData?.character}</strong> berikut:
                     </p>
-                    <div className="space-y-3">
-                      {reflections.map((q: string, idx: number) => (
-                        <div key={idx} className="flex gap-3 items-start bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
-                          <span className="w-6 h-6 rounded-full bg-[#8f0020]/10 text-[#8f0020] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                            {idx + 1}
-                          </span>
-                          <span className="text-xs font-semibold text-slate-700 leading-relaxed">
-                            {q}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="space-y-4">
+                      {masterList.map((item: any, idx: number) => {
+                        const mrId = item.id || null;
+                        const qText = item.question || item;
+                        const userAns = refleksiAnswers[mrId || idx] ?? refleksiAnswers[qText] ?? "";
+                        return (
+                          <div key={idx} className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 space-y-2">
+                            <div className="flex gap-3 items-start">
+                              <span className="w-6 h-6 rounded-full bg-[#8f0020]/10 text-[#8f0020] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 select-none">
+                                {idx + 1}
+                              </span>
+                              <span className="text-xs font-bold text-slate-800 leading-relaxed">
+                                {qText}
+                              </span>
+                            </div>
+                            <textarea
+                              value={userAns}
+                              onChange={(e) => handleRefleksiChange(mrId || idx, e.target.value)}
+                              placeholder="Tuliskan jawaban refleksi Anda di sini..."
+                              rows={2}
+                              className="w-full text-xs p-3 rounded-xl border border-slate-200 bg-white focus:outline-hidden focus:border-[#8f0020] focus:ring-1 focus:ring-[#8f0020] transition-all resize-y text-slate-800 font-normal"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-2 flex justify-end">
+                      <button
+                        onClick={() => handleSaveRefleksi(masterList)}
+                        disabled={savingRefleksi}
+                        className="px-5 py-2.5 rounded-full bg-[#8f0020] hover:bg-[#730019] text-white text-xs font-extrabold flex items-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {savingRefleksi ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            Menyimpan...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-4 h-4" />
+                            Simpan Refleksi
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 );

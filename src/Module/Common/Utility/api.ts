@@ -112,6 +112,14 @@ export const api = {
         body: JSON.stringify({ character, quizPercent }),
       });
       return handleResponse(res);
+    },
+    submitRefleksi: async (payload: { kanjiId?: number; character?: string; answers: any[] }) => {
+      const res = await fetch(`${BASE_URL}/latihan/refleksi`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return handleResponse(res);
     }
   },
   progress: {

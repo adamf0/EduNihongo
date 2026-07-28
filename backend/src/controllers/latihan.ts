@@ -29,6 +29,7 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         etymologies: true,
         jukugos: true,
         semanticRelations: true,
+        masterRefleksi: true,
         quizzes: {
           orderBy: {
             type: "asc",
@@ -288,6 +289,13 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         nodes,
         edges,
       },
+      masterRefleksi: kanji.masterRefleksi.map((mr) => ({
+        id: mr.id,
+        question: mr.question,
+      })),
+      refleksiData: await prisma.refleksiData.findMany({
+        where: { userId, kanjiId: kanji.id },
+      }),
     });
   } catch (error) {
     console.error("Latihan detail error:", error);
@@ -713,5 +721,71 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
   } catch (error) {
     console.error("Latihan verify-quiz error:", error);
     res.status(500).json({ error: "Terjadi kesalahan saat memverifikasi kuis." });
+  }
+};
+
+// Save User Reflection Answers to RefleksiData table
+export const submitRefleksi = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { kanjiId, character, answers } = req.body;
+    if (!kanjiId && !character) {
+      return res.status(400).json({ error: "Kanji ID atau karakter wajib ditentukan." });
+    }
+
+    let targetKanjiId = kanjiId ? parseInt(kanjiId, 10) : null;
+    if (!targetKanjiId && character) {
+      const k = await prisma.kanji.findUnique({ where: { character } });
+      if (k) targetKanjiId = k.id;
+    }
+
+    if (!targetKanjiId) {
+      return res.status(404).json({ error: "Kanji tidak ditemukan." });
+    }
+
+    if (!Array.isArray(answers) || answers.length === 0) {
+      return res.status(400).json({ error: "Jawaban refleksi wajib diisi." });
+    }
+
+    const savedAnswers = [];
+    for (const ans of answers) {
+      const masterRefleksiId = ans.masterRefleksiId ? parseInt(ans.masterRefleksiId, 10) : null;
+      const question = ans.question ? String(ans.question).trim() : "";
+      const answer = ans.answer ? String(ans.answer).trim() : "";
+
+      if (masterRefleksiId) {
+        await prisma.refleksiData.deleteMany({
+          where: { userId, kanjiId: targetKanjiId, masterRefleksiId },
+        });
+      } else if (question) {
+        await prisma.refleksiData.deleteMany({
+          where: { userId, kanjiId: targetKanjiId, question },
+        });
+      }
+
+      const record = await prisma.refleksiData.create({
+        data: {
+          userId,
+          kanjiId: targetKanjiId,
+          masterRefleksiId,
+          question,
+          answer,
+        },
+      });
+      savedAnswers.push(record);
+    }
+
+    res.json({
+      success: true,
+      message: "Jawaban pertanyaan refleksi berhasil disimpan!",
+      refleksiData: savedAnswers,
+    });
+  } catch (error) {
+    console.error("submitRefleksi error:", error);
+    res.status(500).json({ error: "Terjadi kesalahan saat menyimpan jawaban refleksi." });
   }
 };

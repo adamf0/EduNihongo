@@ -256,6 +256,43 @@ const prepareQuizForDb = (kanjiId: number, rawQuizzes: any[]) => {
   });
 };
 
+const saveMasterRefleksiForKanji = async (kanjiId: number, rawRefleksi: any) => {
+  await prisma.masterRefleksi.deleteMany({ where: { kanjiId } });
+  
+  let questions: string[] = [];
+  if (Array.isArray(rawRefleksi)) {
+    questions = rawRefleksi.map((item: any) => {
+      if (typeof item === "string") return item.trim();
+      if (item && typeof item === "object" && item.question) return String(item.question).trim();
+      return String(item).trim();
+    }).filter(Boolean);
+  } else if (typeof rawRefleksi === "string" && rawRefleksi.trim()) {
+    try {
+      const parsed = JSON.parse(rawRefleksi);
+      if (Array.isArray(parsed)) {
+        questions = parsed.map((item: any) => {
+          if (typeof item === "string") return item.trim();
+          if (item && typeof item === "object" && item.question) return String(item.question).trim();
+          return String(item).trim();
+        }).filter(Boolean);
+      } else {
+        questions = [rawRefleksi.trim()];
+      }
+    } catch (e) {
+      questions = rawRefleksi.split("\n").map(s => s.trim()).filter(Boolean);
+    }
+  }
+
+  if (questions.length > 0) {
+    await prisma.masterRefleksi.createMany({
+      data: questions.map((q) => ({
+        kanjiId,
+        question: q,
+      })),
+    });
+  }
+};
+
 export const getKanjis = async (req: Request, res: Response) => {
   try {
     const kanjis = await prisma.kanji.findMany({
@@ -267,6 +304,7 @@ export const getKanjis = async (req: Request, res: Response) => {
         jukugos: true,
         semanticRelations: true,
         etymologies: true,
+        masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },
       orderBy: { id: "asc" },
@@ -274,11 +312,14 @@ export const getKanjis = async (req: Request, res: Response) => {
 
     const formatted = kanjis.map((k) => {
       const quizQuestions = k.quizzes.map(formatQuizFromDb);
+      const refQuestions = k.masterRefleksi.map(mr => mr.question);
 
       return {
         ...k,
         quizData: JSON.stringify(quizQuestions),
         quizzes: quizQuestions,
+        reflectionData: JSON.stringify(refQuestions),
+        masterRefleksi: k.masterRefleksi,
       };
     });
 
@@ -452,6 +493,9 @@ export const createKanji = async (req: Request, res: Response) => {
       });
     }
 
+    // Save MasterRefleksi
+    await saveMasterRefleksiForKanji(kanji.id, reflectionData || body.masterRefleksi);
+
     const fullKanji = await prisma.kanji.findUnique({
       where: { id: kanji.id },
       include: {
@@ -462,16 +506,20 @@ export const createKanji = async (req: Request, res: Response) => {
         jukugos: true,
         semanticRelations: true,
         etymologies: true,
+        masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },
     });
 
     const formattedQuizList = fullKanji?.quizzes.map(formatQuizFromDb) || [];
+    const refQuestions = fullKanji?.masterRefleksi.map(mr => mr.question) || [];
 
     res.status(201).json({
       ...fullKanji,
       quizData: JSON.stringify(formattedQuizList),
       quizzes: formattedQuizList,
+      reflectionData: JSON.stringify(refQuestions),
+      masterRefleksi: fullKanji?.masterRefleksi || [],
     });
   } catch (error: any) {
     console.error("Admin createKanji error:", error);
@@ -719,6 +767,9 @@ export const updateKanji = async (req: Request, res: Response) => {
       });
     }
 
+    // Save MasterRefleksi
+    await saveMasterRefleksiForKanji(kanjiId, reflectionData || body.masterRefleksi);
+
     const fullKanji = await prisma.kanji.findUnique({
       where: { id: kanjiId },
       include: {
@@ -729,16 +780,20 @@ export const updateKanji = async (req: Request, res: Response) => {
         jukugos: true,
         semanticRelations: true,
         etymologies: true,
+        masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },
     });
 
     const formattedQuizList = fullKanji?.quizzes.map(formatQuizFromDb) || [];
+    const refQuestions = fullKanji?.masterRefleksi.map(mr => mr.question) || [];
 
     res.json({
       ...fullKanji,
       quizData: JSON.stringify(formattedQuizList),
       quizzes: formattedQuizList,
+      reflectionData: JSON.stringify(refQuestions),
+      masterRefleksi: fullKanji?.masterRefleksi || [],
     });
   } catch (error: any) {
     console.error("Admin updateKanji error:", error);
