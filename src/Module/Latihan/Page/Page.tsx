@@ -306,7 +306,6 @@ export const LatihanPage: React.FC = () => {
             "https://media.unseen-japan.com/wp-content/uploads/2025/03/pixta_78714900_M-768x512.jpg",
             "https://image.idntimes.com/post/20250809/hobby-932_38e8f419-34b3-4c3c-8b58-167fc16e67aa.jpg",
             "https://imgsrv2.voi.id/pJQYT-s2JH_1g9Aj8NQ0_iM_SxeFKkCMlBNTWCj20Kw/auto/1200/675/sm/1/bG9jYWw6Ly8vcHVibGlzaGVycy8zNzgwMS8yMDIxMDMwODE2NDMtbW9iaWxlLmNyb3BwZWRfMTYxNTIwMzIwNy5qcGc.jpg",
-            "https://cdns.klimg.com/resized/1200x600/p/headline/budaya-jepang-apa-saja-ini-daftar-lengk-700cb8.jpg",
             "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTa-j1Mn4gR8xVmf04XDG3FeXnqKcspIlsxKmD56dRjxUBoMH3WDjmtyAe&s=10",
             "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRj3Vr8oPAN_a2k9Nm3yAbHyDlgMTeFBzm-NE6PQG9Oy0V3epJtUNXijss&s=10",
             "https://img.magnific.com/free-photo/close-up-pupils-doing-japanese-calligraphy-called-shodo_23-2149105367.jpg",
