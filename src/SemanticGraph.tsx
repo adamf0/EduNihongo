@@ -211,78 +211,43 @@ const CustomSemanticNode = ({ data }: { data: any }) => {
 };
 
 // 5. Dataset Triples
-const INITIAL_NODES = [
-  { id: "root", label: "点", subLabel: "(Ten)", description: "Titik, poin, skor/nilai, fokus spesifik", type: "root" },
+const INITIAL_NODES:any = [];
 
-  { id: "cat-1", label: "Penilaian dan Nilai", color: "green", type: "category" },
-  { id: "cat-2", label: "Titik dan Lokasi", color: "orange", type: "category" },
-  { id: "cat-3", label: "Pemeriksaan dan Data", color: "yellow", type: "category" },
-  { id: "cat-4", label: "Fokus dan Permasalahan", color: "purple", type: "category" },
-  { id: "cat-5", label: "Pandangan dan Aspek", color: "blue", type: "category" },
+const INITIAL_EDGES:any = [];
 
-  { id: "sub-1-1", label: "採点", subLabel: "(さいてん)", description: "Penilaian", categoryId: "cat-1" },
-  { id: "sub-1-2", label: "減点", subLabel: "(げんてん)", description: "Pengurangan Nilai", categoryId: "cat-1" },
-  { id: "sub-1-3", label: "得点", subLabel: "(とくてん)", description: "Skor", categoryId: "cat-1" },
-
-  { id: "sub-2-1", label: "起点", subLabel: "(きてん)", description: "Titik Awal", categoryId: "cat-2" },
-  { id: "sub-2-2", label: "終点", subLabel: "(しゅうてん)", description: "Titik Akhir", categoryId: "cat-2" },
-  { id: "sub-2-3", label: "地点", subLabel: "(ちてん)", description: "Lokasi", categoryId: "cat-2" },
-
-  { id: "sub-3-1", label: "点検", subLabel: "(てんけん)", description: "Pemeriksaan", categoryId: "cat-3" },
-  { id: "sub-3-2", label: "点灯", subLabel: "(てんとう)", description: "Menyalakan Lampu", categoryId: "cat-3" },
-  { id: "sub-3-3", label: "点数", subLabel: "(てんすう)", description: "Nilai", categoryId: "cat-3" },
-
-  { id: "sub-4-1", label: "問題点", subLabel: "(もんだいてん)", description: "Titik Masalah", categoryId: "cat-4" },
-  { id: "sub-4-2", label: "重点", subLabel: "(じゅうてん)", description: "Fokus Utama", categoryId: "cat-4" },
-  { id: "sub-4-3", label: "要点", subLabel: "(ようてん)", description: "Poin Penting", categoryId: "cat-4" },
-
-  { id: "sub-5-1", label: "観点", subLabel: "(かんてん)", description: "Sudut Pandang", categoryId: "cat-5" },
-  { id: "sub-5-2", label: "視点", subLabel: "(してん)", description: "Perspektif", categoryId: "cat-5" },
-  { id: "sub-5-3", label: "論点", subLabel: "(ろんてん)", description: "Pokok Bahasan", categoryId: "cat-5" },
+const DYNAMIC_PALETTE = [
+  "#22c55e", // green
+  "#f97316", // orange
+  "#3b82f6", // blue
+  "#a855f7", // purple
+  "#eab308", // yellow
+  "#ec4899", // pink
+  "#14b8a6", // teal
+  "#6366f1", // indigo
 ];
 
-const INITIAL_EDGES = [
-  { id: "e-root-1", source: "root", target: "cat-1" },
-  { id: "e-root-2", source: "root", target: "cat-2" },
-  { id: "e-root-3", source: "root", target: "cat-3" },
-  { id: "e-root-4", source: "root", target: "cat-4" },
-  { id: "e-root-5", source: "root", target: "cat-5" },
-
-  { id: "e-c1-s1", source: "cat-1", target: "sub-1-1" },
-  { id: "e-c1-s2", source: "cat-1", target: "sub-1-2" },
-  { id: "e-c1-s3", source: "cat-1", target: "sub-1-3" },
-
-  { id: "e-c2-s1", source: "cat-2", target: "sub-2-1" },
-  { id: "e-c2-s2", source: "cat-2", target: "sub-2-2" },
-  { id: "e-c2-s3", source: "cat-2", target: "sub-2-3" },
-
-  { id: "e-c3-s1", source: "cat-3", target: "sub-3-1" },
-  { id: "e-c3-s2", source: "cat-3", target: "sub-3-2" },
-  { id: "e-c3-s3", source: "cat-3", target: "sub-3-3" },
-
-  { id: "e-c4-s1", source: "cat-4", target: "sub-4-1" },
-  { id: "e-c4-s2", source: "cat-4", target: "sub-4-2" },
-  { id: "e-c4-s3", source: "cat-4", target: "sub-4-3" },
-
-  { id: "e-c5-s1", source: "cat-5", target: "sub-5-1" },
-  { id: "e-c5-s2", source: "cat-5", target: "sub-5-2" },
-  { id: "e-c5-s3", source: "cat-5", target: "sub-5-3" },
-
-  // SEMANTIC CROSS-LINKS (Outward Arc Curved Edges)
-  { id: "cross-1", source: "sub-2-1", target: "sub-2-2", predicate: "berlawanan dengan", color: "#f97316", isCrossLink: true }, // 起点 -> 終点
-  { id: "cross-2", source: "sub-1-1", target: "sub-3-3", predicate: "menghasilkan", color: "#22c55e", isCrossLink: true },       // 採点 -> 点数
-  { id: "cross-3", source: "sub-5-1", target: "sub-5-2", predicate: "mirip makna", color: "#3b82f6", isCrossLink: true },         // 観点 -> 視点
-  { id: "cross-4", source: "sub-4-1", target: "sub-3-1", predicate: "memerlukan", color: "#a855f7", isCrossLink: true },          // 問題点 -> 点検
-  { id: "cross-5", source: "sub-4-2", target: "sub-4-3", predicate: "lebih spesifik", color: "#ca8a04", isCrossLink: true },     // 重点 -> 要点
-];
-
-const COLOR_MAP: Record<string, string> = {
-  green: "#22c55e",
-  orange: "#f97316",
-  yellow: "#eab308",
-  purple: "#a855f7",
-  blue: "#3b82f6",
+export const getDynamicColor = (key: string | number): string => {
+  if (typeof key === "string" && key.startsWith("#")) return key;
+  const namedColors: Record<string, string> = {
+    green: "#22c55e",
+    orange: "#f97316",
+    yellow: "#eab308",
+    purple: "#a855f7",
+    blue: "#3b82f6",
+    pink: "#ec4899",
+    teal: "#14b8a6",
+    indigo: "#6366f1",
+  };
+  if (typeof key === "string" && namedColors[key.toLowerCase()]) {
+    return namedColors[key.toLowerCase()];
+  }
+  const hash = typeof key === "number" ? key : String(key).split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return DYNAMIC_PALETTE[Math.abs(hash) % DYNAMIC_PALETTE.length];
 };
+
+export const COLOR_MAP: Record<string, string> = new Proxy({}, {
+  get: (_, prop: string) => getDynamicColor(prop)
+});
 
 // 6. Komponen Utama
 export default function SemanticGraph({
@@ -312,14 +277,14 @@ export default function SemanticGraph({
     const rootNode = rawNodes.find((n) => n.type === "root");
     const categoryNodes = rawNodes.filter((n) => n.type === "category");
 
-    const categoryOrderMap: Record<string, number> = {
-      green: 0,
-      orange: 1,
-      yellow: 2,
-      purple: 3,
-      blue: 4,
-    };
-    categoryNodes.sort((a, b) => (categoryOrderMap[a.color] ?? 99) - (categoryOrderMap[b.color] ?? 99));
+    // Dynamic category sorting based on order attribute, category id index, or category label
+    categoryNodes.sort((a, b) => {
+      if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+      const aIdNum = parseInt(String(a.id).replace(/\D/g, ""), 10);
+      const bIdNum = parseInt(String(b.id).replace(/\D/g, ""), 10);
+      if (!isNaN(aIdNum) && !isNaN(bIdNum)) return aIdNum - bIdNum;
+      return (a.label || a.kanji || "").localeCompare(b.label || b.kanji || "");
+    });
 
     const positionedNodes: any[] = [];
     const nodePosMap = new Map<string, { x: number; y: number }>();
@@ -397,12 +362,13 @@ export default function SemanticGraph({
       const srcPos = nodePosMap.get(edge.source);
       const tgtPos = nodePosMap.get(edge.target);
 
+      const isCross = Boolean(edge.isCrossLink || (edge.predicate && edge.predicate !== "kategori" && edge.predicate !== "mencakup"));
       const { sourceHandle, targetHandle } = getOptimalHandles(srcPos, tgtPos);
-      const labelText = edge.isCrossLink ? edge.predicate : undefined;
+      const labelText = isCross ? edge.predicate : undefined;
 
       return {
         ...edge,
-        type: edge.isCrossLink ? "crossLinkEdge" : "default",
+        type: isCross ? "crossLinkEdge" : "default",
         sourceHandle,
         targetHandle,
         label: labelText,
@@ -414,9 +380,9 @@ export default function SemanticGraph({
         },
         style: {
           stroke: strokeColor,
-          strokeWidth: edge.isCrossLink ? 2.5 : 2,
-          strokeDasharray: edge.isCrossLink ? "6,4" : undefined,
-          opacity: edge.isCrossLink ? 1 : 0.75,
+          strokeWidth: isCross ? 2.5 : 2,
+          strokeDasharray: isCross ? "6,4" : undefined,
+          opacity: isCross ? 1 : 0.75,
         },
       };
     });

@@ -18,9 +18,9 @@ interface KanjiData {
   isJukugo: boolean;
   border: string | null;
   moduleId: number | null;
-  examples: any[];
-  graphNodes: any[];
-  graphEdges: any[];
+  examples?: any[];
+  graphNodes?: any[];
+  graphEdges?: any[];
 }
 
 const getFileUrl = (pathUrl: string | null | undefined) => {
@@ -77,6 +77,51 @@ export const ModuleDetailPage: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [subGrade, setSubGrade] = useState("");
   const [subFeedback, setSubFeedback] = useState("");
+
+  // Add Kanji Modal states
+  const [isAddKanjiModalOpen, setIsAddKanjiModalOpen] = useState(false);
+  const [allAvailableKanjis, setAllAvailableKanjis] = useState<any[]>([]);
+  const [selectedKanjiIdsToAdd, setSelectedKanjiIdsToAdd] = useState<number[]>([]);
+  const [kanjiSearchTerm, setKanjiSearchTerm] = useState("");
+  const [submittingAddKanji, setSubmittingAddKanji] = useState(false);
+
+  const handleOpenAddKanjiModal = async () => {
+    try {
+      const list = await api.admin.kanjis.list();
+      setAllAvailableKanjis(list);
+      setSelectedKanjiIdsToAdd([]);
+      setKanjiSearchTerm("");
+      setIsAddKanjiModalOpen(true);
+    } catch (err: any) {
+      alert(err.message || "Gagal memuat daftar Kanji.");
+    }
+  };
+
+  const handleSaveAddKanjiToModule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedKanjiIdsToAdd.length === 0) {
+      alert("Silakan pilih minimal 1 Kanji untuk ditambahkan ke modul ini.");
+      return;
+    }
+
+    try {
+      setSubmittingAddKanji(true);
+      await Promise.all(
+        selectedKanjiIdsToAdd.map((id) =>
+          api.admin.kanjis.update(id, { moduleId: Number(moduleId) })
+        )
+      );
+      setIsAddKanjiModalOpen(false);
+      // Refresh kanjis in this module
+      const updatedModule = await api.admin.modules.getDetail(Number(moduleId));
+      setModule(updatedModule);
+      setKanjis(updatedModule.kanjis || []);
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan Kanji ke modul.");
+    } finally {
+      setSubmittingAddKanji(false);
+    }
+  };
 
   const loadAssignmentsAndComments = async (isSilent = false) => {
     if (!moduleId) return;
@@ -197,15 +242,15 @@ export const ModuleDetailPage: React.FC = () => {
   }, [moduleId]);
 
   const handleDeleteKanji = async (id: number) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus kanji ini beserta seluruh progres dan grafik terkait?")) {
+    if (!window.confirm("Apakah Anda yakin ingin mengeluarkan Kanji ini dari modul ini?")) {
       return;
     }
     try {
       setLoading(true);
-      await api.admin.kanjis.delete(id);
-      loadModuleAndKanjis();
+      await api.admin.kanjis.update(id, { moduleId: null });
+      await loadModuleAndKanjis();
     } catch (err: any) {
-      alert(err.message || "Gagal menghapus kanji.");
+      alert(err.message || "Gagal mengeluarkan Kanji dari modul.");
       setLoading(false);
     }
   };
@@ -552,7 +597,7 @@ export const ModuleDetailPage: React.FC = () => {
                                 Materi Kanji: {kj.character} ({kj.meaning})
                               </h4>
                               <p className="text-xs text-slate-500 font-bold mt-0.5">
-                                Romaji: <span className="font-mono text-[#8f0020] font-black">{kj.romaji}</span> • {kj.graphNodes.length} Graf Simpul
+                                Romaji: <span className="font-mono text-[#8f0020] font-black">{kj.romaji}</span> • {kj.graphNodes?.length || 0} Graf Simpul
                               </p>
                             </div>
                           </div>
@@ -622,11 +667,11 @@ export const ModuleDetailPage: React.FC = () => {
                   Daftar Kanji Terdaftar
                 </h3>
                 <button
-                  onClick={() => navigate(`/admin/kanji-form?moduleId=${moduleId}`)}
+                  onClick={handleOpenAddKanjiModal}
                   className="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-bold shadow-md cursor-pointer hover:brightness-110 active:scale-95 transition-all border-none flex items-center gap-sm text-sm"
                 >
                   <Icon name="add" className="text-lg" />
-                  Tambah Kanji Baru
+                  Kanji ke Module
                 </button>
               </div>
 
@@ -653,7 +698,7 @@ export const ModuleDetailPage: React.FC = () => {
                         <td className="p-4 text-on-surface-variant text-sm">{kj.meaning}</td>
 
                         <td className="p-4 text-xs text-slate-500 font-mono">
-                          {kj.graphNodes.length} Nodes • {kj.graphEdges.length} Edges
+                          {kj.graphNodes?.length || 0} Nodes • {kj.graphEdges?.length || 0} Edges
                         </td>
                         <td className="p-4 text-center flex items-center justify-center gap-sm">
                           <button
@@ -1111,6 +1156,161 @@ export const ModuleDetailPage: React.FC = () => {
         </div>
       )}
 
+      {/* Modal Add Kanji to Module */}
+      {isAddKanjiModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-white border border-outline-variant/30 rounded-3xl w-full sm:w-[560px] md:w-[640px] max-w-2xl shadow-2xl overflow-hidden animate-scale-up max-h-[90vh] flex flex-col shrink-0">
+            <div className="px-6 py-4 border-b border-outline-variant/20 flex justify-between items-center bg-slate-50 shrink-0">
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <Icon name="add" className="text-indigo-600 text-xl" />
+                Tambah Kanji ke Modul
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddKanjiModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 bg-transparent border-none cursor-pointer rounded-lg hover:bg-slate-200/50 transition-all"
+              >
+                <Icon name="close" className="text-xl" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAddKanjiToModule} className="p-6 space-y-4 overflow-y-auto flex-1 sidebar-scroll">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nama Modul
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={module?.title || `Module ${moduleId}`}
+                  className="w-full bg-slate-100 border border-outline-variant/30 rounded-xl px-3 py-2 text-sm text-slate-600 font-bold cursor-not-allowed outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Pilih Kanji (Multiple Select Search)
+                </label>
+                <div className="relative mb-2">
+                  <Icon name="search" className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Cari kanji, romaji, atau arti..."
+                    value={kanjiSearchTerm}
+                    onChange={(e) => setKanjiSearchTerm(e.target.value)}
+                    className="w-full bg-slate-50 border border-outline-variant/30 rounded-xl pl-9 pr-3 py-2 text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary font-medium"
+                  />
+                </div>
+
+                {/* Selected Kanji Pills */}
+                {selectedKanjiIdsToAdd.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 p-2 bg-indigo-50/50 border border-indigo-100 rounded-xl mb-2 max-h-24 overflow-y-auto sidebar-scroll">
+                    {selectedKanjiIdsToAdd.map((id) => {
+                      const k = allAvailableKanjis.find((item) => item.id === id);
+                      if (!k) return null;
+                      return (
+                        <span
+                          key={id}
+                          className="px-2.5 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <span>{k.character} ({k.romaji || 'Inkomplit'})</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedKanjiIdsToAdd((prev) => prev.filter((i) => i !== id))}
+                            className="hover:text-rose-200 border-none bg-transparent cursor-pointer p-0 text-xs font-extrabold"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Selectable Kanjis Grid / List */}
+                <div className="border border-outline-variant/30 rounded-xl max-h-60 overflow-y-auto p-2 space-y-1 bg-slate-50 sidebar-scroll">
+                  {allAvailableKanjis
+                    .filter((k) => {
+                      if (!kanjiSearchTerm.trim()) return true;
+                      const q = kanjiSearchTerm.toLowerCase();
+                      return (
+                        k.character.toLowerCase().includes(q) ||
+                        (k.romaji && k.romaji.toLowerCase().includes(q)) ||
+                        (k.meaning && k.meaning.toLowerCase().includes(q))
+                      );
+                    })
+                    .map((k) => {
+                      const isSelected = selectedKanjiIdsToAdd.includes(k.id);
+                      const isAlreadyInThisModule = Number(k.moduleId) === Number(moduleId);
+
+                      return (
+                        <div
+                          key={k.id}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedKanjiIdsToAdd((prev) => prev.filter((i) => i !== k.id));
+                            } else {
+                              setSelectedKanjiIdsToAdd((prev) => [...prev, k.id]);
+                            }
+                          }}
+                          className={`p-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
+                            isSelected
+                              ? "bg-indigo-50 border-indigo-300 text-indigo-900 font-bold"
+                              : "bg-white border-slate-200/60 hover:bg-slate-100/80 text-slate-700"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-8 h-8 rounded-lg bg-slate-100 font-extrabold text-lg flex items-center justify-center text-slate-900 border border-slate-200">
+                              {k.character}
+                            </span>
+                            <div>
+                              <div className="text-xs font-bold text-slate-900">
+                                {k.romaji || "Inkomplit"}{" "}
+                                <span className="text-slate-500 font-normal">
+                                  {k.meaning ? `- ${k.meaning}` : ""}
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-slate-400">
+                                {isAlreadyInThisModule
+                                  ? "Sudah di Modul Ini"
+                                  : k.moduleId
+                                  ? `Modul ID: ${k.moduleId}`
+                                  : "Tidak Terdaftar ke Modul"}
+                              </div>
+                            </div>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
+                          />
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => setIsAddKanjiModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-300 hover:bg-slate-100 transition-all text-slate-700 cursor-pointer bg-transparent"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingAddKanji}
+                  className="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transition-all border-none cursor-pointer flex items-center gap-2"
+                >
+                  {submittingAddKanji ? "Memproses..." : "Simpan ke Modul"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

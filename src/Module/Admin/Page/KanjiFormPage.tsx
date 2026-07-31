@@ -3,6 +3,9 @@ import Layout from "../../Common/Component/Organism/Layout";
 import Icon from "../../Common/Component/Icon";
 import { api } from "../../Common/Utility/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { CancelButton } from "../../Common/Component/Atoms/CancelButton";
+import { CancelAndReturnButton } from "../../Common/Component/Atoms/CancelAndReturnButton";
+import KanjiAtlasFlow from "../../Module/Component/Atom/KanjiAtlasFlow";
 
 const formatGroupsToText = (groupsData: any): string => {
   let parsed = groupsData;
@@ -89,6 +92,7 @@ export const KanjiFormPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
+  const [moduleData, setModuleData] = useState<any>(null);
 
   // Form Fields
   const [kanjiChar, setKanjiChar] = useState("");
@@ -463,42 +467,22 @@ export const KanjiFormPage: React.FC = () => {
     };
   }, [showKeyboard]);
 
-  // Graph nodes edit mode: "table" | "visual"
-  const [graphEditMode, setGraphEditMode] = useState<"table" | "visual">(
-    "visual",
-  );
 
-  // Drag and Drop Coordinates state
-  const [nodeCoords, setNodeCoords] = useState<
-    Record<string, { x: number; y: number }>
-  >({});
-  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
-  const [linkingSourceId, setLinkingSourceId] = useState<string | null>(null);
-
-  // Pan and Zoom States
-  const [zoomScale, setZoomScale] = useState(1);
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStartPos, setPanStartPos] = useState({ x: 0, y: 0 });
-  const [panOffsetStart, setPanOffsetStart] = useState({ x: 0, y: 0 });
-
-  // For node drag tracking
-  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
-  const [nodeStartPos, setNodeStartPos] = useState({ x: 0, y: 0 });
-
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadKanjiData = async () => {
-      if (!moduleId) {
-        setError("ID Modul tidak valid.");
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError("");
+
+        if (moduleId) {
+          try {
+            const mData = await api.admin.modules.getDetail(moduleId);
+            setModuleData(mData);
+          } catch (e) {
+            console.error("Gagal memuat detail modul:", e);
+          }
+        }
 
         if (kanjiId) {
           // Edit mode: fetch all kanjis and find the matches
@@ -519,9 +503,6 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiKunyomi(target.kunyomi || "");
           setKanjiBaseMeaning(target.baseMeaning || "");
 
-          setKanjiBorder(target.border || "border-l-4 border-primary");
-
-          setNodeCoords({}); // Reset coordinates dynamically to avoid old positions
           const dbExamples = target.examples || [];
 
           setExamples(
@@ -600,7 +581,7 @@ export const KanjiFormPage: React.FC = () => {
           }
 
           setNodes(
-            target.graphNodes.length > 0
+            target.graphNodes && target.graphNodes.length > 0
               ? target.graphNodes
               : [
                   {
@@ -614,7 +595,7 @@ export const KanjiFormPage: React.FC = () => {
                   },
                 ],
           );
-          setEdges(target.graphEdges);
+          setEdges(target.graphEdges || []);
         } else {
           // Add mode: default initialization
           setKanjiChar("");
@@ -623,8 +604,6 @@ export const KanjiFormPage: React.FC = () => {
           setKanjiBushuu("");
           setKanjiOnyomi("");
           setKanjiKunyomi("");
-          setKanjiBaseMeaning("");
-          setNodeCoords({}); // Reset coordinates
           setExamples([
             { japanese: "", romaji: "", translation: "", isReading: false },
           ]);
@@ -648,13 +627,7 @@ export const KanjiFormPage: React.FC = () => {
           ]);
           setEtymologies([{ character: "", romaji: "", detail: "" }]);
           setQuizQuestions([]);
-          setReflectionQuestions([
-            "Apa makna dasar kanji ini yang Anda pahami?",
-            "Jukugo mana yang paling mudah untuk Anda ingat? Mengapa?",
-            "Apa perbedaan penggunaan antar-jukugo yang mengandung kanji ini?",
-            "Cabang semantic graph mana yang menurut Anda paling mudah dipahami?",
-            "Bagaimana cara Anda mengingat hubungan makna antar-jukugo yang mengandung kanji ini?",
-          ]);
+          setReflectionQuestions([]);
           setNodes([
             {
               id: "root",
@@ -680,79 +653,7 @@ export const KanjiFormPage: React.FC = () => {
     loadKanjiData();
   }, [moduleId, kanjiId]);
 
-  // Sync node coords when nodes change or component initializes without resetting active drags (Neat hierarchical spacing)
-  useEffect(() => {
-    setNodeCoords((prev) => {
-      const updated = { ...prev };
 
-      // Separate nodes by type
-      const rootNode = nodes.find((n) => n.type === "root");
-      const topNodes = nodes.filter((n) => n.type === "top");
-      const bottomNodes = nodes.filter((n) => n.type === "bottom");
-      const subBottomNodes = nodes.filter((n) => n.type === "sub-bottom");
-
-      // Dynamic spacing parameters to prevent overlaps
-      const spacingX = 650;
-      const startX = 220;
-      const totalWidth = (bottomNodes.length - 1) * spacingX;
-      const midX = bottomNodes.length > 0 ? startX + totalWidth / 2 : 440;
-
-      // 1. Root node coord (Centered at midX)
-      if (rootNode && !updated[rootNode.id]) {
-        updated[rootNode.id] = { x: Math.max(startX, midX), y: 120 };
-      }
-
-      const rootX = rootNode ? (updated[rootNode.id]?.x ?? midX) : midX;
-
-      // 2. Top nodes coords (Radicals centered above root)
-      topNodes.forEach((n, idx) => {
-        if (!updated[n.id]) {
-          const x =
-            topNodes.length === 1
-              ? rootX
-              : rootX - ((topNodes.length - 1) / 2) * 200 + idx * 200;
-          updated[n.id] = { x, y: 30 };
-        }
-      });
-
-      // 3. Bottom nodes coords (Middle compound words widely spaced)
-      bottomNodes.forEach((n, idx) => {
-        if (!updated[n.id]) {
-          const x = bottomNodes.length === 1 ? rootX : startX + idx * spacingX;
-          updated[n.id] = { x, y: 220 };
-        }
-      });
-
-      // 4. Sub-bottom nodes coords (Symmetrically staggered under parent bottom nodes)
-      bottomNodes.forEach((parent) => {
-        const children = subBottomNodes.filter(
-          (child) => child.parentPill === parent.id,
-        );
-        const parentCoord = updated[parent.id] || { x: 440, y: 220 };
-
-        children.forEach((child, childIdx) => {
-          if (!updated[child.id]) {
-            const offset = (childIdx - (children.length - 1) / 2) * 190;
-            updated[child.id] = {
-              x: parentCoord.x + offset,
-              y: 330,
-            };
-          }
-        });
-      });
-
-      // 5. Fallback for any other node types (e.g. newly added nodes)
-      let fallbackIndex = 0;
-      nodes.forEach((n) => {
-        if (!updated[n.id]) {
-          updated[n.id] = { x: 100 + fallbackIndex * 180, y: 330 };
-          fallbackIndex++;
-        }
-      });
-
-      return updated;
-    });
-  }, [nodes]);
 
   const handleCharInput = (val: string) => {
     setKanjiChar(val);
@@ -769,13 +670,6 @@ export const KanjiFormPage: React.FC = () => {
   };
   const removeExampleRow = (idx: number) => {
     setExamples((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const addJukugoRow = () => {
-    setJukugos((prev) => [...prev, { word: "", reading: "", meaning: "" }]);
-  };
-  const removeJukugoRow = (idx: number) => {
-    setJukugos((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const addSemanticRelationRow = () => {
@@ -796,127 +690,12 @@ export const KanjiFormPage: React.FC = () => {
     setSemanticRelations((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleLinkStartOrEnd = (nodeId: string) => {
-    if (linkingSourceId === null) {
-      startConnection(nodeId);
+  const handleCancel = () => {
+    if (moduleId) {
+      navigate(`/admin/module-detail?id=${moduleId}`);
     } else {
-      completeConnection(nodeId);
+      navigate("/admin/kanji");
     }
-  };
-
-  const addNodeRow = () => {
-    const id = `node-${Date.now()}`;
-    setNodes((prev) => [
-      ...prev,
-      {
-        id,
-        character: "",
-        meaning: "",
-        type: "bottom",
-        borderColor: "border-green-500",
-        isPill: true,
-        parentPill: null,
-      },
-    ]);
-  };
-  const removeNodeRow = (idx: number) => {
-    const nodeToRemove = nodes[idx];
-    setNodes((prev) => prev.filter((_, i) => i !== idx));
-    setEdges((prev) =>
-      prev.filter(
-        (e) => e.source !== nodeToRemove.id && e.target !== nodeToRemove.id,
-      ),
-    );
-  };
-
-  const handleNodeMouseDown = (e: React.MouseEvent, nodeId: string) => {
-    if (linkingSourceId) return;
-    e.preventDefault();
-    e.stopPropagation(); // Stop propagation to prevent panning trigger!
-    setDraggedNodeId(nodeId);
-    setDragStartPos({ x: e.clientX, y: e.clientY });
-    setNodeStartPos({ ...nodeCoords[nodeId] });
-  };
-
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    // Only pan if clicking on empty space in canvas background
-    if (
-      e.target === e.currentTarget ||
-      (e.target as HTMLElement).classList.contains("grid-crosshair")
-    ) {
-      e.preventDefault();
-      setIsPanning(true);
-      setPanStartPos({ x: e.clientX, y: e.clientY });
-      setPanOffsetStart({ ...panOffset });
-    }
-  };
-
-  const handleContainerMouseMove = (e: React.MouseEvent) => {
-    if (draggedNodeId) {
-      e.preventDefault();
-      // Calculate delta divided by zoomScale to match cursor speed
-      const dx = (e.clientX - dragStartPos.x) / zoomScale;
-      const dy = (e.clientY - dragStartPos.y) / zoomScale;
-
-      const newX = Math.max(10, nodeStartPos.x + dx);
-      const newY = Math.max(10, nodeStartPos.y + dy);
-
-      setNodeCoords((prev) => ({
-        ...prev,
-        [draggedNodeId]: { x: newX, y: newY },
-      }));
-    } else if (isPanning) {
-      e.preventDefault();
-      const dx = e.clientX - panStartPos.x;
-      const dy = e.clientY - panStartPos.y;
-      setPanOffset({
-        x: panOffsetStart.x + dx,
-        y: panOffsetStart.y + dy,
-      });
-    }
-  };
-
-  const handleContainerMouseUp = () => {
-    setDraggedNodeId(null);
-    setIsPanning(false);
-  };
-
-  const handleCanvasWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const zoomIntensity = 0.05;
-    const delta = e.deltaY < 0 ? 1 : -1;
-    setZoomScale((prev) => {
-      const nextScale = prev + delta * zoomIntensity;
-      return Math.max(0.4, Math.min(2.0, nextScale)); // clamp between 0.4x and 2.0x
-    });
-  };
-
-  const startConnection = (nodeId: string) => {
-    setLinkingSourceId(nodeId);
-  };
-
-  const completeConnection = (targetId: string) => {
-    if (!linkingSourceId || linkingSourceId === targetId) {
-      setLinkingSourceId(null);
-      return;
-    }
-
-    const edgeId = `e-${linkingSourceId}-${targetId}`;
-    const exists = edges.some(
-      (e) => e.source === linkingSourceId && e.target === targetId,
-    );
-
-    if (!exists) {
-      setEdges((prev) => [
-        ...prev,
-        { id: edgeId, source: linkingSourceId, target: targetId },
-      ]);
-    }
-    setLinkingSourceId(null);
-  };
-
-  const removeEdge = (idx: number) => {
-    setEdges((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const handleSaveKanji = async (e: React.FormEvent) => {
@@ -1018,7 +797,7 @@ export const KanjiFormPage: React.FC = () => {
         await api.admin.kanjis.create(payload);
         setActionSuccess(`Berhasil membuat Kanji "${kanjiChar}" baru!`);
         setTimeout(() => {
-          navigate(`/admin/module-detail?id=${moduleId}`);
+          handleCancel();
         }, 1200);
       }
     } catch (err: any) {
@@ -1052,20 +831,24 @@ export const KanjiFormPage: React.FC = () => {
             <div>
               <h2 className="font-headline-lg text-headline-lg font-bold text-on-surface flex items-center gap-sm">
                 <Icon name="draw" className="text-primary text-3xl" />
-                {kanjiId ? `Edit Kanji: ${kanjiChar}` : "Tambah Kanji Baru"}
+                {moduleId ? (
+                  `Edit Module: ${
+                    moduleData?.title
+                      ? moduleData.title.replace(/^[^\d]*/i, "")
+                      : moduleId
+                  } Kanji: ${kanjiChar || "..."}`
+                ) : kanjiId ? (
+                  `Edit Kanji: ${kanjiChar}`
+                ) : (
+                  "Tambah Kanji Baru"
+                )}
               </h2>
               <p className="text-body-md text-on-surface-variant">
                 Lengkapi kurikulum details, kalimat contoh, dan visualisasi graf
                 hubungan simpul untuk Kanji ini.
               </p>
             </div>
-            <button
-              onClick={() => navigate(`/admin/module-detail?id=${moduleId}`)}
-              className="px-4 py-2 border border-outline hover:bg-surface-container transition-all cursor-pointer font-bold text-on-surface bg-transparent rounded-lg flex items-center gap-sm text-sm"
-            >
-              <Icon name="close" className="text-lg" />
-              Batal & Kembali
-            </button>
+            <CancelAndReturnButton onClick={handleCancel} />
           </div>
 
           {/* Form Error */}
@@ -1080,9 +863,8 @@ export const KanjiFormPage: React.FC = () => {
             onSubmit={handleSaveKanji}
             className="flex flex-col gap-6 w-full animate-fade-in"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start w-full">
-              {/* Kolom Kiri: Info Dasar & Etimologi */}
-              <div className="flex flex-col gap-6 w-full">
+            {/* Form Sections */}
+            <div className="flex flex-col gap-6 w-full">
                 {/* Section 1: Basic Info */}
                 <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up h-[450px] justify-between">
                   <h4 className="font-label-lg text-label-lg font-bold border-b border-outline-variant/20 pb-1 text-primary">
@@ -1099,22 +881,27 @@ export const KanjiFormPage: React.FC = () => {
                           value={kanjiChar}
                           onChange={(e) => handleCharInput(e.target.value)}
                           maxLength={10}
-                          className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 pr-10 w-full focus:ring-2 focus:ring-primary outline-none text-center font-bold text-xl"
+                          disabled={Boolean(moduleId)}
+                          className={`${
+                            moduleId ? "bg-slate-100/70 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-on-surface"
+                          } border border-outline-variant/30 rounded-lg p-2.5 pr-10 w-full focus:ring-2 focus:ring-primary outline-none text-center font-bold text-xl`}
                           placeholder="Contoh: 学"
                           required
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowKeyboard((prev) => !prev)}
-                          className="absolute right-3 p-1 text-slate-400 hover:text-primary rounded-lg border-none bg-transparent cursor-pointer flex items-center justify-center transition-all"
-                          title="Toggle Keyboard Virtual"
-                        >
-                          <Icon name="keyboard" className="text-xl" />
-                        </button>
+                        {!moduleId && (
+                          <button
+                            type="button"
+                            onClick={() => setShowKeyboard((prev) => !prev)}
+                            className="absolute right-3 p-1 text-slate-400 hover:text-primary rounded-lg border-none bg-transparent cursor-pointer flex items-center justify-center transition-all"
+                            title="Toggle Keyboard Virtual"
+                          >
+                            <Icon name="keyboard" className="text-xl" />
+                          </button>
+                        )}
                       </div>
 
                       {/* Virtual Keyboard Overlay */}
-                      {showKeyboard && (
+                      {!moduleId && showKeyboard && (
                         <div
                           ref={keyboardRef}
                           className="absolute top-[75px] left-0 z-50 bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl p-4 rounded-2xl w-[300px] sm:w-[400px] flex flex-col gap-3 select-none"
@@ -1194,7 +981,10 @@ export const KanjiFormPage: React.FC = () => {
                         type="text"
                         value={kanjiRomaji}
                         onChange={(e) => setKanjiRomaji(e.target.value)}
-                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none"
+                        disabled={Boolean(moduleId)}
+                        className={`${
+                          moduleId ? "bg-slate-100/70 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-on-surface"
+                        } border border-outline-variant/30 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none`}
                         placeholder="Contoh: Shi"
                         required
                       />
@@ -1207,7 +997,10 @@ export const KanjiFormPage: React.FC = () => {
                         type="text"
                         value={kanjiMeaning}
                         onChange={(e) => setKanjiMeaning(e.target.value)}
-                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none"
+                        disabled={Boolean(moduleId)}
+                        className={`${
+                          moduleId ? "bg-slate-100/70 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-on-surface"
+                        } border border-outline-variant/30 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none`}
                         placeholder="Contoh: Mencoba"
                         required
                       />
@@ -1220,7 +1013,10 @@ export const KanjiFormPage: React.FC = () => {
                         type="text"
                         value={kanjiBushuu}
                         onChange={(e) => setKanjiBushuu(e.target.value)}
-                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
+                        disabled={Boolean(moduleId)}
+                        className={`${
+                          moduleId ? "bg-slate-100/70 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-on-surface"
+                        } border border-outline-variant/30 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs`}
                         placeholder="Contoh: 言"
                       />
                     </div>
@@ -1232,7 +1028,10 @@ export const KanjiFormPage: React.FC = () => {
                         type="text"
                         value={kanjiOnyomi}
                         onChange={(e) => setKanjiOnyomi(e.target.value)}
-                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
+                        disabled={Boolean(moduleId)}
+                        className={`${
+                          moduleId ? "bg-slate-100/70 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-on-surface"
+                        } border border-outline-variant/30 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs`}
                         placeholder="Contoh: シ"
                       />
                     </div>
@@ -1244,7 +1043,10 @@ export const KanjiFormPage: React.FC = () => {
                         type="text"
                         value={kanjiKunyomi}
                         onChange={(e) => setKanjiKunyomi(e.target.value)}
-                        className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs"
+                        disabled={Boolean(moduleId)}
+                        className={`${
+                          moduleId ? "bg-slate-100/70 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-on-surface"
+                        } border border-outline-variant/30 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs`}
                         placeholder="Contoh: ためす"
                       />
                     </div>
@@ -1257,513 +1059,71 @@ export const KanjiFormPage: React.FC = () => {
                     <textarea
                       value={kanjiBaseMeaning}
                       onChange={(e) => setKanjiBaseMeaning(e.target.value)}
+                      disabled={Boolean(moduleId)}
                       rows={3}
-                      className="bg-slate-50 border border-outline-variant/30 text-on-surface rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs leading-relaxed"
+                      className={`${
+                        moduleId ? "bg-slate-100/70 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-on-surface"
+                      } border border-outline-variant/30 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-primary outline-none text-xs leading-relaxed`}
                       placeholder="Contoh: Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil (Kanjipedia)"
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* Kolom Kanan: 3. Daftar Jukugo (Kata Majemuk) */}
-              <div className="flex flex-col gap-6 w-full">
-                {/* Section 3: Daftar Jukugo (Kata Majemuk) */}
-                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up h-[450px]">
-                  <div className="flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/20 pb-2">
-                    <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                      2. Daftar Jukugo
-                    </h4>
+                {/* Section 2: Data Jukugo & Semantik Graph (Dinamis) */}
+                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                  <div className="border-b border-outline-variant/20 pb-3 flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                      <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-2">
+                        <Icon name="auto_graph" className="text-primary text-base" />
+                        2. Semantik Graph (Dinamis)
+                      </h4>
+                      <p className="text-xs text-slate-500 font-medium mt-1">
+                        Grafik Semantik Kanji dibangun secara otomatis dari relasi Kanji, Kategori, dan Kata Jukugo.
+                      </p>
+                    </div>
                     <button
                       type="button"
-                      onClick={addJukugoRow}
-                      className="px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-0.5"
+                      disabled={!kanjiId}
+                      onClick={() => navigate(`/admin/jukugo?kanjiId=${kanjiId}`)}
+                      className={`px-4 py-2 font-semibold text-xs rounded-xl shadow-md transition flex items-center gap-2 border-none ${
+                        !kanjiId
+                          ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                          : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                      }`}
+                      title={!kanjiId ? "Simpan kanji terlebih dahulu untuk mengelola Jukugo" : "Kelola Data Jukugo"}
                     >
-                      <Icon name="add" className="text-xs" />
-                      Jukugo
+                      <Icon name="open_in_new" />
+                      <span>Kelola Data Jukugo</span>
                     </button>
                   </div>
 
-                  <div className="flex flex-col gap-3 flex-grow overflow-y-auto pr-1.5 sidebar-scroll">
-                    {jukugos.map((j, idx) => (
-                      <div
-                        key={idx}
-                        className="flex gap-3 items-start bg-surface-container-low/40 p-4 rounded-xl border border-outline-variant/20"
-                      >
-                        <div className="grid grid-cols-1 gap-3 flex-grow">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">
-                                Kata Jukugo
-                              </label>
-                              <input
-                                type="text"
-                                value={j.word}
-                                onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].word = e.target.value;
-                                  setJukugos(newJ);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
-                                placeholder="試験"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">
-                                Kata Hiragana
-                              </label>
-                              <input
-                                type="text"
-                                value={j.reading}
-                                onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].reading = e.target.value;
-                                  setJukugos(newJ);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="しけん"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">
-                                Arti (Meaning)
-                              </label>
-                              <input
-                                type="text"
-                                value={j.meaning}
-                                onChange={(e) => {
-                                  const newJ = [...jukugos];
-                                  newJ[idx].meaning = e.target.value;
-                                  setJukugos(newJ);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Ujian"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeJukugoRow(idx)}
-                          disabled={jukugos.length === 1}
-                          className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none disabled:opacity-30 mt-1"
-                        >
-                          <Icon name="delete" className="text-base block" />
-                        </button>
+                  {/* Interactive Dynamic Semantic Graph Canvas */}
+                  <div className="relative h-[450px] w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-inner">
+                    {nodes && nodes.length > 0 ? (
+                      <KanjiAtlasFlow
+                        initialRawNodes={nodes}
+                        initialRawEdges={edges}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-slate-400 font-semibold text-xs">
+                        Memuat Grafik Semantik...
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Section 6: Peta Semantik Graph */}
-            <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 w-full animate-fade-in">
-              <div className="flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/20 pb-1">
-                <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  3. Semantik Graph
-                </h4>
-                <div className="flex flex-wrap gap-2 bg-slate-100 rounded-lg p-1">
-                  <button
-                    type="button"
-                    onClick={() => setGraphEditMode("visual")}
-                    className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
-                      graphEditMode === "visual"
-                        ? "bg-primary text-on-primary"
-                        : "bg-transparent text-on-surface-variant"
-                    }`}
-                  >
-                    <Icon name="gesture" className="text-sm mr-1" />
-                    Visual Drag-Drop
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGraphEditMode("table")}
-                    className={`px-3 py-1 text-xs font-bold rounded-md border-none cursor-pointer transition-all ${
-                      graphEditMode === "table"
-                        ? "bg-primary text-on-primary"
-                        : "bg-transparent text-on-surface-variant"
-                    }`}
-                  >
-                    <Icon name="table_chart" className="text-sm mr-1" />
-                    Tabel Mode
-                  </button>
-                </div>
-              </div>
-
-                  {/* TABLE MODE */}
-                  {graphEditMode === "table" && (
-                    <div className="space-y-3">
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={addNodeRow}
-                          className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold cursor-pointer hover:bg-primary/20 border-none"
-                        >
-                          + Tambah Node
-                        </button>
-                      </div>
-                      {nodes.map((n, idx) => (
-                        <div
-                          key={idx}
-                          className="flex gap-4 items-start p-3 bg-slate-50 border border-slate-100 rounded-xl"
-                        >
-                          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">
-                                ID Node
-                              </label>
-                              <input
-                                type="text"
-                                value={n.id.replace(`${kanjiChar}-`, "")}
-                                disabled={n.type === "root"}
-                                onChange={(e) => {
-                                  const newN = [...nodes];
-                                  newN[idx].id = e.target.value;
-                                  setNodes(newN);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-mono disabled:opacity-60"
-                                placeholder="top-1"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">
-                                Karakter
-                              </label>
-                              <input
-                                type="text"
-                                value={n.character}
-                                onChange={(e) => {
-                                  const newN = [...nodes];
-                                  newN[idx].character = e.target.value;
-                                  setNodes(newN);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
-                                placeholder="學"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">
-                                Arti
-                              </label>
-                              <input
-                                type="text"
-                                value={n.meaning}
-                                onChange={(e) => {
-                                  const newN = [...nodes];
-                                  newN[idx].meaning = e.target.value;
-                                  setNodes(newN);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Belajar"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase font-bold text-slate-500">
-                                Tipe Node
-                              </label>
-                              <select
-                                value={n.type}
-                                disabled={n.type === "root"}
-                                onChange={(e) => {
-                                  const newN = [...nodes];
-                                  newN[idx].type = e.target.value;
-                                  setNodes(newN);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none h-[34px] disabled:opacity-60"
-                              >
-                                <option value="root">
-                                  ROOT (Karakter Ini)
-                                </option>
-                                <option value="top">
-                                  TOP (Radikal/Elemen pembentuk)
-                                </option>
-                                <option value="bottom">
-                                  BOTTOM (Kategori/Relasi)
-                                </option>
-                                <option value="sub-bottom">
-                                  SUB-BOTTOM (Kata gabungan kategori)
-                                </option>
-                              </select>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeNodeRow(idx)}
-                            disabled={n.type === "root"}
-                            className="text-error bg-transparent hover:bg-error-container/20 p-2 rounded-lg cursor-pointer border-none disabled:opacity-30"
-                          >
-                            <Icon name="delete" className="text-base block" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* VISUAL DRAG AND DROP MODE */}
-                  {graphEditMode === "visual" && (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex max-sm:flex-wrap justify-between items-center text-xs text-on-surface-variant bg-slate-50 p-3 rounded-xl border border-slate-100 select-none">
-                        <span className="flex items-center gap-1 font-semibold">
-                          <Icon
-                            name="tips_and_updates"
-                            className="text-amber-500 text-sm"
-                          />
-                          Drag-Drop node untuk menyusun posisi. Klik ikon Rantai
-                          (Link) pada node asal, lalu klik node tujuan untuk
-                          menghubungkan (Edge).
-                        </span>
-                        <button
-                          type="button"
-                          onClick={addNodeRow}
-                          className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-bold border-none cursor-pointer flex items-center gap-0.5 transition-all"
-                        >
-                          <Icon name="add" className="text-xs" />
-                          Tambah Node
-                        </button>
-                      </div>
-
-                      <div className="relative border border-outline-variant/30 rounded-2xl bg-slate-900/5 h-[450px] overflow-hidden select-none">
-                        {/* Toolbar zoom */}
-                        <div className="absolute top-4 right-4 z-40 bg-white/95 backdrop-blur-md border border-slate-100 shadow-md p-1.5 rounded-xl flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setZoomScale((z) => Math.min(2, z + 0.1))
-                            }
-                            className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center border-none bg-transparent cursor-pointer"
-                          >
-                            <Icon
-                              name="add"
-                              className="text-base text-on-surface"
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setZoomScale((z) => Math.max(0.4, z - 0.1))
-                            }
-                            className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center border-none bg-transparent cursor-pointer"
-                          >
-                            <Icon
-                              name="remove"
-                              className="text-base text-on-surface"
-                            />
-                          </button>
-                          <span className="text-[10px] font-bold px-2 text-slate-500 w-10 text-center">
-                            {Math.round(zoomScale * 100)}%
-                          </span>
-                        </div>
-
-                        <div
-                          ref={containerRef}
-                          className="w-full h-full cursor-grab active:cursor-grabbing overflow-hidden"
-                          onMouseDown={handleCanvasMouseDown}
-                          onMouseMove={handleContainerMouseMove}
-                          onMouseUp={handleContainerMouseUp}
-                          onMouseLeave={handleContainerMouseUp}
-                          onWheel={handleCanvasWheel}
-                        >
-                          <div
-                            className="w-full h-full relative origin-top-left"
-                            style={{
-                              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
-                            }}
-                          >
-                            <svg className="absolute inset-0 w-[4000px] h-[4000px] pointer-events-none z-0">
-                              {edges.map((edge, index) => {
-                                const sourceCoord = nodeCoords[edge.source];
-                                const targetCoord = nodeCoords[edge.target];
-                                if (!sourceCoord || !targetCoord) return null;
-                                const x1 = sourceCoord.x + 90;
-                                const y1 = sourceCoord.y + 40;
-                                const x2 = targetCoord.x + 90;
-                                const y2 = targetCoord.y + 40;
-                                return (
-                                  <line
-                                    key={index}
-                                    x1={x1}
-                                    y1={y1}
-                                    x2={x2}
-                                    y2={y2}
-                                    stroke="#1e73be"
-                                    strokeWidth="2.5"
-                                    strokeDasharray={5}
-                                  />
-                                );
-                              })}
-                            </svg>
-
-                            {nodes.map((node) => {
-                              const coord = nodeCoords[node.id] || {
-                                x: 100,
-                                y: 100,
-                              };
-                              let nodeColorClass =
-                                "bg-white border-primary text-primary shadow-md";
-                              if (node.type === "top") {
-                                nodeColorClass =
-                                  "bg-amber-50/80 border-amber-500 text-amber-900";
-                              } else if (node.type === "bottom") {
-                                nodeColorClass =
-                                  "bg-sky-50/80 border-sky-500 text-sky-900";
-                              } else if (node.type === "sub-bottom") {
-                                nodeColorClass =
-                                  "bg-emerald-50/80 border-emerald-500 text-emerald-900";
-                              }
-                              const isLinking = linkingSourceId === node.id;
-                              return (
-                                <div
-                                  key={node.id}
-                                  style={{
-                                    left: coord.x,
-                                    top: coord.y,
-                                    position: "absolute",
-                                  }}
-                                  className={`w-[180px] p-3 border rounded-xl flex flex-col items-center justify-between gap-1 select-none z-10 transition-shadow ${nodeColorClass} ${
-                                    isLinking
-                                      ? "ring-4 ring-primary animate-pulse"
-                                      : "hover:shadow-lg"
-                                  }`}
-                                >
-                                  <div
-                                    className="w-full text-center cursor-move font-semibold text-xs py-1 select-none flex items-center justify-between"
-                                    onMouseDown={(e) =>
-                                      handleNodeMouseDown(e, node.id)
-                                    }
-                                  >
-                                    <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">
-                                      {node.type}
-                                    </span>
-                                    <div className="flex gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleLinkStartOrEnd(node.id)
-                                        }
-                                        className="p-1 hover:bg-slate-200 rounded text-slate-500 border-none bg-transparent cursor-pointer flex items-center justify-center"
-                                        title="Hubungkan (Edge)"
-                                      >
-                                        <Icon name="link" className="text-xs" />
-                                      </button>
-                                      {node.type !== "root" && (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            removeNodeRow(
-                                              nodes.findIndex(
-                                                (n) => n.id === node.id,
-                                              ),
-                                            )
-                                          }
-                                          className="p-1 hover:bg-red-100 rounded text-red-500 border-none bg-transparent cursor-pointer flex items-center justify-center"
-                                          title="Hapus Node"
-                                        >
-                                          <Icon
-                                            name="close"
-                                            className="text-xs"
-                                          />
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <input
-                                    type="text"
-                                    value={node.character}
-                                    onChange={(e) => {
-                                      const idx = nodes.findIndex(
-                                        (n) => n.id === node.id,
-                                      );
-                                      const newNodes = [...nodes];
-                                      newNodes[idx].character = e.target.value;
-                                      setNodes(newNodes);
-                                    }}
-                                    placeholder="Karakter"
-                                    className="w-full border-none bg-transparent outline-none text-center font-bold text-base text-on-surface"
-                                  />
-
-                                  <input
-                                    type="text"
-                                    value={node.meaning}
-                                    onChange={(e) => {
-                                      const idx = nodes.findIndex(
-                                        (n) => n.id === node.id,
-                                      );
-                                      const newNodes = [...nodes];
-                                      newNodes[idx].meaning = e.target.value;
-                                      setNodes(newNodes);
-                                    }}
-                                    placeholder="Arti"
-                                    className="w-full border-none bg-transparent outline-none text-center text-[10px] text-on-surface-variant font-medium mt-0.5"
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Edge Connections Log */}
-                  {edges.length > 0 && (
-                    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm flex flex-col gap-3">
-                      <h5 className="text-xs font-bold text-secondary border-b border-outline-variant/10 pb-1 flex items-center gap-1">
-                        <Icon name="link" className="text-primary text-sm" />
-                        Koneksi Garis Hubungan Antar Simpul ({edges.length})
-                      </h5>
-                      <div className="flex gap-2 flex-wrap max-h-[140px] overflow-y-auto pr-1 sidebar-scroll">
-                        {edges.map((edge, index) => {
-                          const sourceNode = nodes.find(
-                            (n) => n.id === edge.source,
-                          );
-                          const targetNode = nodes.find(
-                            (n) => n.id === edge.target,
-                          );
-                          const labelSource = sourceNode
-                            ? sourceNode.character ||
-                              `[ID: ${sourceNode.id.replace(`${kanjiChar}-`, "")}]`
-                            : edge.source.replace(`${kanjiChar}-`, "");
-                          const labelTarget = targetNode
-                            ? targetNode.character ||
-                              `[ID: ${targetNode.id.replace(`${kanjiChar}-`, "")}]`
-                            : edge.target.replace(`${kanjiChar}-`, "");
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 bg-white border border-outline-variant/30 px-3 py-1 rounded-full text-xs font-semibold text-on-surface shadow-sm select-none"
-                            >
-                              <span>{labelSource}</span>
-                              <Icon
-                                name="arrow_forward"
-                                className="text-xs text-primary"
-                              />
-                              <span>{labelTarget}</span>
-                              <button
-                                type="button"
-                                onClick={() => removeEdge(index)}
-                                className="ml-1 text-error hover:bg-error-container/20 p-0.5 rounded-full cursor-pointer bg-transparent border-none flex items-center justify-center"
-                                title="Hapus Koneksi"
-                              >
-                                <Icon name="close" className="text-xs block" />
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Section 4: e. Hubungan Makna Antar Kanji */}
-                <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
+                {/* Sections 4, 5, 6, 7 (Only shown in Module context) */}
+                {Boolean(moduleId) && (
+                  <>
+                    {/* Section 4: e. Hubungan Makna Antar Kanji */}
+                    <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
                   <div className="border-b border-outline-variant/20 pb-2 flex flex-wrap gap-2 justify-between items-center">
                     <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-2">
                       <Icon
                         name="account_tree"
                         className="text-primary text-base"
                       />
-                      4. Hubungan Makna Antar Kanji
+                      3. Hubungan Makna Antar Kanji
                     </h4>
                     <button
                       type="button"
@@ -1955,7 +1315,7 @@ export const KanjiFormPage: React.FC = () => {
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-4 animate-scale-up">
               <div className="flex flex-wrap gap-2 justify-between items-end border-b border-outline-variant/20 pb-1">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary">
-                  5. Latihan membaca
+                  4. Latihan membaca
                 </h4>
                 <button
                   type="button"
@@ -2041,7 +1401,7 @@ export const KanjiFormPage: React.FC = () => {
             <div className="bg-white border border-outline-variant/30 p-6 rounded-2xl shadow-sm flex flex-col gap-6 animate-scale-up">
               <div className="flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/20 pb-2">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-sm">
-                  6. Quiz
+                  5. Quiz
                 </h4>
                 <span className="text-xs text-slate-400 font-medium">
                   {quizQuestions.length} soal total
@@ -2398,7 +1758,7 @@ export const KanjiFormPage: React.FC = () => {
               <div className="flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/20 pb-2">
                 <h4 className="font-label-lg text-label-lg font-bold text-primary flex items-center gap-2">
                   <Icon name="help" className="text-primary text-base" />
-                  7. Pertanyaan Refleksi
+                  6. Pertanyaan Refleksi
                 </h4>
                 <button
                   type="button"
@@ -2448,6 +1808,9 @@ export const KanjiFormPage: React.FC = () => {
                 ))}
               </div>
             </div>
+          </>
+        )}
+          </div>
 
             {/* Floating Toast Notification */}
             {(actionSuccess || actionError) && (
@@ -2484,13 +1847,7 @@ export const KanjiFormPage: React.FC = () => {
 
             {/* Save Buttons */}
             <div className="flex flex-wrap gap-2 justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => navigate(`/admin/module-detail?id=${moduleId}`)}
-                className="px-5 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all cursor-pointer font-bold text-on-surface bg-transparent"
-              >
-                Batal
-              </button>
+              <CancelButton onClick={handleCancel} />
               <button
                 type="submit"
                 disabled={submitting}

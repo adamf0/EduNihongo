@@ -105,14 +105,12 @@ model Kanji {
   isJukugo       Boolean             @default(false)
   border         String?
   moduleId       Int?
-  etymologies    Etymology[]
   examples       ExampleSentence[]
   jukugos           Jukugo[]
   semanticRelations SemanticRelation[]
   quizzes           Quiz[]
   module            Module?             @relation(fields: [moduleId], references: [id])
   graphEdges     KanjiGraphEdge[]
-  graphNodes     KanjiGraphNode[]
   Task           Task[]
   userProgress   UserKanjiProgress[]
   masterRefleksi MasterRefleksi[]
@@ -150,50 +148,48 @@ model ExampleSentence {
   @@index([kanjiId], map: "ExampleSentence_kanjiId_fkey")
 }
 
-model KanjiGraphNode {
-  id          String  @id
-  kanjiId     Int
-  character   String
-  meaning     String
-  type        String
-  borderColor String?
-  isPill      Boolean @default(false)
-  parentPill  String?
-  kanjiRef    Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
 
-  @@index([kanjiId], map: "KanjiGraphNode_kanjiId_fkey")
-}
 
 model KanjiGraphEdge {
-  id       String @id
-  kanjiId  Int
-  source   String
-  target   String
-  kanjiRef Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  id        String  @id
+  kanjiId   Int
+  source    String
+  target    String
+  predicate String?
+  kanjiRef  Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
 
   @@index([kanjiId], map: "KanjiGraphEdge_kanjiId_fkey")
 }
 
-model Etymology {
-  id        Int    @id @default(autoincrement())
-  kanjiId   Int
-  character String
-  romaji    String
-  detail    String @db.Text
-  kanji     Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
-
-  @@index([kanjiId], map: "Etymology_kanjiId_fkey")
-}
-
 model Jukugo {
-  id      Int    @id @default(autoincrement())
-  kanjiId Int
-  word    String
-  reading String
-  meaning String @db.Text
-  kanji   Kanji  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  id            Int             @id @default(autoincrement())
+  kanjiId       Int
+  word          String
+  reading       String
+  meaning       String          @db.Text
+  kanji         Kanji           @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  kategoriKanji KategoriKanji[]
 
   @@index([kanjiId], map: "Jukugo_kanjiId_fkey")
+}
+
+model KategoriKanji {
+  id         Int            @id @default(autoincrement())
+  categoryId Int
+  jokugoId   Int
+  jokugo     Jukugo         @relation(fields: [jokugoId], references: [id], onDelete: Cascade)
+  category   MasterCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([jokugoId], map: "KategoriKanji_jokugoId_fkey")
+  @@index([categoryId], map: "KategoriKanji_categoryId_fkey")
+}
+
+model MasterCategory {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+  description   String?         @db.Text
+  createdAt     DateTime        @default(now())
+  kategoriKanji KategoriKanji[]
 }
 
 model SemanticRelation {
@@ -305,3 +301,4 @@ model Quiz {
 
   @@index([kanjiId], map: "Quiz_kanjiId_fkey")
 }
+

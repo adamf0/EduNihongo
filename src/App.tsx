@@ -10,6 +10,10 @@ import ProfilePage from "./Module/Profile/Page/Page";
 import AdminPage from "./Module/Admin/Page/Page";
 import ModuleDetailPage from "./Module/Admin/Page/ModuleDetailPage";
 import KanjiFormPage from "./Module/Admin/Page/KanjiFormPage";
+import JukugoPage from "./Module/Admin/Page/JukugoPage";
+import KanjiListPage from "./Module/Admin/Page/KanjiListPage";
+import CategoryListPage from "./Module/Admin/Page/CategoryListPage";
+import SemanticControlPage from "./Module/Admin/Page/SemanticControlPage";
 
 function App() {
   return (
@@ -26,7 +30,11 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/module-detail" element={<ModuleDetailPage />} />
+        <Route path="/admin/kanji" element={<KanjiListPage />} />
         <Route path="/admin/kanji-form" element={<KanjiFormPage />} />
+        <Route path="/admin/jukugo" element={<JukugoPage />} />
+        <Route path="/admin/categories" element={<CategoryListPage />} />
+        <Route path="/admin/semantic-control" element={<SemanticControlPage />} />
       </Routes>
     </Router>
   );

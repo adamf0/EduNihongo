@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/auth";
+import { buildDynamicKanjiGraph } from "../services/graphService";
 
 const prisma = new PrismaClient();
 
@@ -23,10 +24,8 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       where: { character },
       include: {
         examples: true,
-        graphNodes: true,
         graphEdges: true,
         module: true,
-        etymologies: true,
         jukugos: true,
         semanticRelations: true,
         masterRefleksi: true,
@@ -62,24 +61,8 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
     if (masteryPercent >= 80) levelTitle = "Tingkat Emas";
     else if (masteryPercent >= 50) levelTitle = "Tingkat Perak";
 
-    // Format Graph Nodes to match frontend initialRawNodes format
-    const nodes = kanji.graphNodes.map((n) => ({
-      id: n.id,
-      kanji: n.character,
-      meaning: n.meaning,
-      type: n.type,
-      borderColor: n.borderColor || undefined,
-      isPill: n.isPill || undefined,
-      parentPill: n.parentPill || undefined,
-      isRoot: n.type === "root" ? true : undefined,
-    }));
-
-    // Format Graph Edges
-    const edges = kanji.graphEdges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-    }));
+    // Build Graph Nodes & Edges dynamically from Kanji + KategoriKanji + Jukugo
+    const { nodes, edges } = await buildDynamicKanjiGraph(kanji.id);
 
     // Record user activity for accessing this Kanji/Module
     // Only create LESSON activity once per day per kanji to avoid duplicates
@@ -106,16 +89,20 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       });
       xpEarnedAccess = hasAccessedEver ? 0 : 5;
 
-      await prisma.userActivity.create({
-        data: {
-          userId,
-          kanjiCount: 0,
-          vocabCount: 1,
-          xpEarned: xpEarnedAccess,
-          activityType: "LESSON",
-          description: `Membuka Modul: Mempelajari tata bahasa & etimologi Kanji ${character}`,
-        },
-      });
+      try {
+        await prisma.userActivity.create({
+          data: {
+            userId,
+            kanjiCount: 0,
+            vocabCount: 1,
+            xpEarned: xpEarnedAccess,
+            activityType: "LESSON",
+            description: `Membuka Modul: Mempelajari tata bahasa & etimologi Kanji ${character}`,
+          },
+        });
+      } catch (actErr) {
+        console.warn("Gagal membuat userActivity (user mungkin sudah di-reset):", actErr);
+      }
     }
 
     const claimedActivities = await prisma.userActivity.findMany({
@@ -280,11 +267,6 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         reading: j.reading,
         meaning: j.meaning,
       })),
-      etymologies: kanji.etymologies.map((et) => ({
-        character: et.character,
-        romaji: et.romaji,
-        detail: et.detail,
-      })),
       graph: {
         nodes,
         edges,
@@ -296,6 +278,75 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       refleksiData: await prisma.refleksiData.findMany({
         where: { userId, kanjiId: kanji.id },
       }),
+      researchDetails: await (async () => {
+        const allKanji = await prisma.kanji.findMany();
+        const kanjiMap: Record<string, any> = {};
+        allKanji.forEach(k => {
+          kanjiMap[k.character] = k;
+        });
+
+        const allJukugos = await prisma.jukugo.findMany({
+          include: {
+            kategoriKanji: {
+              include: { category: true }
+            }
+          }
+        });
+
+        const resObj: Record<string, { explanation: string; charRoles: Record<string, string>; category: string }> = {};
+        for (const jk of allJukugos) {
+          const charRoles: Record<string, string> = {};
+          for (const char of jk.word) {
+            if (kanjiMap[char]) {
+              charRoles[char] = kanjiMap[char].meaning;
+            }
+          }
+          const catName = jk.kategoriKanji[0]?.category?.name || "Kombinasi Utama";
+          resObj[jk.word] = {
+            explanation: jk.meaning || "",
+            charRoles,
+            category: catName
+          };
+        }
+        return resObj;
+      })(),
+      constituentKanjiData: await (async () => {
+        const allKanji = await prisma.kanji.findMany();
+        const resObj: Record<string, any> = {};
+        allKanji.forEach(k => {
+          resObj[k.character] = {
+            romaji: k.romaji || "-",
+            meaning: k.meaning || "-",
+            baseMeaning: k.baseMeaning || k.meaning || "-",
+            bushu: k.bushuu || "-",
+            kunyomi: k.kunyomi || "-",
+            onyomi: k.onyomi || "-",
+            category: "Kanji"
+          };
+        });
+        return resObj;
+      })(),
+      crossLinkTriples: await (async () => {
+        const edges = await prisma.kanjiGraphEdge.findMany({
+          where: {
+            predicate: {
+              notIn: ["kategori", "mencakup"]
+            }
+          }
+        });
+        const set = new Set<string>();
+        const triples: [string, string, string][] = [];
+        edges.forEach(e => {
+          if (e.predicate) {
+            const key = `${e.source}|${e.predicate}|${e.target}`;
+            if (!set.has(key)) {
+              set.add(key);
+              triples.push([e.source, e.predicate, e.target]);
+            }
+          }
+        });
+        return triples;
+      })()
     });
   } catch (error) {
     console.error("Latihan detail error:", error);

@@ -44,6 +44,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? [
         { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
         { icon: "layers", label: "Kelola Modul", route: "/admin" },
+        { icon: "draw", label: "Kelola Kanji", route: "/admin/kanji" },
+        { icon: "menu_book", label: "Kelola Jukugo", route: "/admin/jukugo" },
+        { icon: "category", label: "Kategori Kanji", route: "/admin/categories" },
       ]
     : [
         { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
@@ -91,7 +94,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.route}
               icon={item.icon}
               label={item.label}
-              isActive={currentPath === item.route || (item.route === "/admin" && currentPath.startsWith("/admin"))}
+              isActive={
+                currentPath === item.route ||
+                (item.route === "/admin" && currentPath === "/admin") ||
+                (item.route === "/admin/kanji" && (currentPath.startsWith("/admin/kanji") || currentPath.startsWith("/admin/kanji-form"))) ||
+                (item.route === "/admin/jukugo" && currentPath.startsWith("/admin/jukugo")) ||
+                (item.route === "/admin/categories" && currentPath.startsWith("/admin/categories"))
+              }
               onClick={() => {
                 navigate(item.route);
                 onClose();

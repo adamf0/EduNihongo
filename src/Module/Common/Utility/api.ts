@@ -167,6 +167,13 @@ export const api = {
         });
         return handleResponse(res);
       },
+      getDetail: async (id: number) => {
+        const res = await fetch(`${BASE_URL}/admin/modules/${id}`, {
+          method: "GET",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      },
       create: async (title: string, tujuanPembelajaran?: string) => {
         const res = await fetch(`${BASE_URL}/admin/modules`, {
           method: "POST",
@@ -217,6 +224,105 @@ export const api = {
       },
       delete: async (id: number) => {
         const res = await fetch(`${BASE_URL}/admin/kanjis/${id}`, {
+          method: "DELETE",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      }
+    },
+    jukugos: {
+      list: async () => {
+        const res = await fetch(`${BASE_URL}/admin/jukugos`, {
+          method: "GET",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      },
+      create: async (data: { kanjiId: number; word: string; reading: string; meaning: string; categories?: string[] }) => {
+        const res = await fetch(`${BASE_URL}/admin/jukugos`, {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      update: async (id: number, data: { kanjiId?: number; word?: string; reading?: string; meaning?: string; categories?: string[] }) => {
+        const res = await fetch(`${BASE_URL}/admin/jukugos/${id}`, {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      delete: async (id: number) => {
+        const res = await fetch(`${BASE_URL}/admin/jukugos/${id}`, {
+          method: "DELETE",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      }
+    },
+    categories: {
+      list: async () => {
+        const res = await fetch(`${BASE_URL}/admin/categories`, {
+          method: "GET",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      },
+      create: async (data: { name: string; description?: string }) => {
+        const res = await fetch(`${BASE_URL}/admin/categories`, {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      update: async (id: number, data: { name?: string; description?: string }) => {
+        const res = await fetch(`${BASE_URL}/admin/categories/${id}`, {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      delete: async (id: number) => {
+        const res = await fetch(`${BASE_URL}/admin/categories/${id}`, {
+          method: "DELETE",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      }
+    },
+    graphEdges: {
+      list: async (kanjiId?: number) => {
+        const url = kanjiId
+          ? `${BASE_URL}/admin/graph-edges?kanjiId=${kanjiId}`
+          : `${BASE_URL}/admin/graph-edges`;
+        const res = await fetch(url, {
+          method: "GET",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      },
+      create: async (data: { kanjiId: number; source: string; target: string; predicate?: string }) => {
+        const res = await fetch(`${BASE_URL}/admin/graph-edges`, {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      update: async (id: string, data: { predicate?: string }) => {
+        const res = await fetch(`${BASE_URL}/admin/graph-edges/${id}`, {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      },
+      delete: async (id: string) => {
+        const res = await fetch(`${BASE_URL}/admin/graph-edges/${id}`, {
           method: "DELETE",
           headers: getHeaders(),
         });

@@ -77,6 +77,10 @@
   --spacing-max-width: 1200px;
 }
 
+.react-flow__panel{
+  bottom: 80px !important;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-on-surface);

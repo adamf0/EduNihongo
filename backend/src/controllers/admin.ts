@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { sanitizeObject } from "../utils/sanitize";
+import { buildDynamicKanjiGraph } from "../services/graphService";
 
 const prisma = new PrismaClient();
 
@@ -15,7 +16,6 @@ export const getModules = async (req: Request, res: Response) => {
             examples: true,
             jukugos: true,
             semanticRelations: true,
-            etymologies: true,
             masterRefleksi: true,
             quizzes: { orderBy: { type: "asc" } },
           },
@@ -45,6 +45,61 @@ export const getModules = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Admin getModules error:", error);
     res.status(500).json({ error: error?.message || "Gagal mengambil data modul." });
+  }
+};
+
+export const getModuleDetail = async (req: Request, res: Response) => {
+  try {
+    const moduleId = parseInt(req.params.id, 10);
+    if (isNaN(moduleId)) {
+      return res.status(400).json({ error: "ID Modul tidak valid." });
+    }
+
+    const mod = await prisma.module.findUnique({
+      where: { id: moduleId },
+      include: {
+        kanjis: {
+          include: {
+            examples: true,
+            jukugos: true,
+            semanticRelations: true,
+            masterRefleksi: true,
+            quizzes: { orderBy: { type: "asc" } },
+          },
+          orderBy: { id: "asc" },
+        },
+      },
+    });
+
+    if (!mod) {
+      return res.status(404).json({ error: "Modul tidak ditemukan." });
+    }
+
+    const formattedKanji = await Promise.all(
+      (mod.kanjis || []).map(async (k) => {
+        const quizQuestions = (k.quizzes || []).map(formatQuizFromDb);
+        const refQuestions = (k.masterRefleksi || []).map((mr) => mr.question);
+        const dynamicGraph = await buildDynamicKanjiGraph(k.id);
+
+        return {
+          ...k,
+          graphNodes: dynamicGraph.nodes,
+          graphEdges: dynamicGraph.edges,
+          quizData: JSON.stringify(quizQuestions),
+          quizzes: quizQuestions,
+          reflectionData: JSON.stringify(refQuestions),
+          masterRefleksi: k.masterRefleksi || [],
+        };
+      })
+    );
+
+    res.json({
+      ...mod,
+      kanjis: formattedKanji,
+    });
+  } catch (error: any) {
+    console.error("Admin getModuleDetail error:", error);
+    res.status(500).json({ error: error?.message || "Gagal mengambil detail modul." });
   }
 };
 
@@ -327,30 +382,33 @@ export const getKanjis = async (req: Request, res: Response) => {
     const kanjis = await prisma.kanji.findMany({
       include: {
         examples: true,
-        graphNodes: true,
         graphEdges: true,
         module: true,
         jukugos: true,
         semanticRelations: true,
-        etymologies: true,
         masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },
       orderBy: { id: "asc" },
     });
 
-    const formatted = kanjis.map((k) => {
-      const quizQuestions = (k.quizzes || []).map(formatQuizFromDb);
-      const refQuestions = (k.masterRefleksi || []).map((mr) => mr.question);
+    const formatted = await Promise.all(
+      kanjis.map(async (k) => {
+        const quizQuestions = (k.quizzes || []).map(formatQuizFromDb);
+        const refQuestions = (k.masterRefleksi || []).map((mr) => mr.question);
+        const dynamicGraph = await buildDynamicKanjiGraph(k.id);
 
-      return {
-        ...k,
-        quizData: JSON.stringify(quizQuestions),
-        quizzes: quizQuestions,
-        reflectionData: JSON.stringify(refQuestions),
-        masterRefleksi: k.masterRefleksi || [],
-      };
-    });
+        return {
+          ...k,
+          graphNodes: dynamicGraph.nodes,
+          graphEdges: dynamicGraph.edges,
+          quizData: JSON.stringify(quizQuestions),
+          quizzes: quizQuestions,
+          reflectionData: JSON.stringify(refQuestions),
+          masterRefleksi: k.masterRefleksi || [],
+        };
+      })
+    );
 
     res.json(formatted);
   } catch (error: any) {
@@ -446,18 +504,6 @@ export const createKanji = async (req: Request, res: Response) => {
       });
     }
 
-    // Create Etymologies
-    if (Array.isArray(etymologies) && etymologies.length > 0) {
-      await prisma.etymology.createMany({
-        data: etymologies.map((et: any) => ({
-          kanjiId: kanji.id,
-          character: et.character || "",
-          romaji: et.romaji || "",
-          detail: et.detail || "",
-        })),
-      });
-    }
-
     // Create Quizzes in Quiz table
     const rawQuizzes = Array.isArray(quizzes)
       ? quizzes
@@ -479,21 +525,7 @@ export const createKanji = async (req: Request, res: Response) => {
       });
     }
 
-    // Create Graph Nodes
-    if (Array.isArray(graphNodes) && graphNodes.length > 0) {
-      await prisma.kanjiGraphNode.createMany({
-        data: graphNodes.map((n: any) => ({
-          id: n.id,
-          kanjiId: kanji.id,
-          character: n.character || "",
-          meaning: n.meaning || "",
-          type: n.type || "root",
-          borderColor: n.borderColor || null,
-          isPill: !!n.isPill,
-          parentPill: n.parentPill || null,
-        })),
-      });
-    }
+
 
     // Create Graph Edges
     if (Array.isArray(graphEdges) && graphEdges.length > 0) {
@@ -503,6 +535,7 @@ export const createKanji = async (req: Request, res: Response) => {
           kanjiId: kanji.id,
           source: e.source || "",
           target: e.target || "",
+          predicate: e.predicate || e.label || null,
         })),
       });
     }
@@ -528,22 +561,23 @@ export const createKanji = async (req: Request, res: Response) => {
       where: { id: kanji.id },
       include: {
         examples: true,
-        graphNodes: true,
         graphEdges: true,
         module: true,
         jukugos: true,
         semanticRelations: true,
-        etymologies: true,
         masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },
     });
 
     const formattedQuizList = fullKanji?.quizzes.map(formatQuizFromDb) || [];
-    const refQuestions = fullKanji?.masterRefleksi.map(mr => mr.question) || [];
+    const refQuestions = fullKanji?.masterRefleksi.map((mr: any) => mr.question) || [];
+    const dynamicGraph = await buildDynamicKanjiGraph(kanji.id);
 
     res.status(201).json({
       ...fullKanji,
+      graphNodes: dynamicGraph.nodes,
+      graphEdges: dynamicGraph.edges,
       quizData: JSON.stringify(formattedQuizList),
       quizzes: formattedQuizList,
       reflectionData: JSON.stringify(refQuestions),
@@ -606,12 +640,14 @@ const parseSemanticRelationFields = (sr: any) => {
 
 export const updateKanji = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const kanjiId = parseInt(id, 10);
+    const kanjiId = parseInt(req.params.id, 10);
+    if (isNaN(kanjiId)) {
+      return res.status(400).json({ error: "ID Kanji tidak valid." });
+    }
 
     const existingKanji = await prisma.kanji.findUnique({ where: { id: kanjiId } });
     if (!existingKanji) {
-      return res.status(404).json({ error: `Karakter Kanji dengan ID ${kanjiId} tidak ditemukan. Silakan refresh halaman admin.` });
+      return res.status(404).json({ error: "Kanji tidak ditemukan." });
     }
 
     const body = sanitizeObject(req.body);
@@ -636,20 +672,34 @@ export const updateKanji = async (req: Request, res: Response) => {
       quizQuestions,
       quizData,
       reflectionData,
+      masterRefleksi,
     } = body;
 
-    if (!character || !romaji || !meaning) {
-      return res.status(400).json({ error: "Karakter, romaji, dan arti wajib diisi." });
+    const finalCharacter = character !== undefined ? character : existingKanji.character;
+    const finalRomaji = romaji !== undefined ? romaji : existingKanji.romaji;
+    const finalMeaning = meaning !== undefined ? meaning : existingKanji.meaning;
+    const finalBushuu = bushuu !== undefined ? bushuu : existingKanji.bushuu;
+    const finalOnyomi = onyomi !== undefined ? onyomi : existingKanji.onyomi;
+    const finalKunyomi = kunyomi !== undefined ? kunyomi : existingKanji.kunyomi;
+    const finalBaseMeaning = baseMeaning !== undefined ? baseMeaning : existingKanji.baseMeaning;
+    const finalIsJukugo = isJukugo !== undefined ? !!isJukugo : existingKanji.isJukugo;
+    const finalBorder = border !== undefined ? border : existingKanji.border;
+
+    if (!finalCharacter) {
+      return res.status(400).json({ error: "Karakter kanji wajib diisi." });
     }
 
-    // Verify moduleId exists if provided
-    let targetModuleId: number | null = null;
-    if (moduleId !== undefined && moduleId !== null) {
-      const parsedMod = typeof moduleId === "number" ? moduleId : parseInt(moduleId, 10);
-      if (!isNaN(parsedMod)) {
-        const existingMod = await prisma.module.findUnique({ where: { id: parsedMod } });
-        if (existingMod) {
-          targetModuleId = parsedMod;
+    let targetModuleId: number | null = existingKanji.moduleId;
+    if (moduleId !== undefined) {
+      if (moduleId === null) {
+        targetModuleId = null;
+      } else {
+        const parsedMod = typeof moduleId === "number" ? moduleId : parseInt(moduleId, 10);
+        if (!isNaN(parsedMod)) {
+          const existingMod = await prisma.module.findUnique({ where: { id: parsedMod } });
+          if (existingMod) {
+            targetModuleId = parsedMod;
+          }
         }
       }
     }
@@ -658,155 +708,125 @@ export const updateKanji = async (req: Request, res: Response) => {
     const kanji = await prisma.kanji.update({
       where: { id: kanjiId },
       data: {
-        character,
-        romaji,
-        meaning,
-        bushuu: bushuu || null,
-        onyomi: onyomi || null,
-        kunyomi: kunyomi || null,
-        baseMeaning: baseMeaning || null,
-        isJukugo: !!isJukugo,
-        border: border || null,
+        character: finalCharacter,
+        romaji: finalRomaji,
+        meaning: finalMeaning,
+        bushuu: finalBushuu,
+        onyomi: finalOnyomi,
+        kunyomi: finalKunyomi,
+        baseMeaning: finalBaseMeaning,
+        isJukugo: finalIsJukugo,
+        border: finalBorder,
         moduleId: targetModuleId,
       },
     });
 
-    // Update Example Sentences: Delete and Re-create
-    await prisma.exampleSentence.deleteMany({ where: { kanjiId } });
-    if (Array.isArray(examples) && examples.length > 0) {
-      await prisma.exampleSentence.createMany({
-        data: examples.map((ex: any) => ({
-          kanjiId,
-          japanese: ex.japanese || "",
-          romaji: ex.romaji || "",
-          translation: ex.translation || "",
-          isReading: !!ex.isReading,
-        })),
-      });
+    // Update Example Sentences if provided
+    if (examples !== undefined) {
+      await prisma.exampleSentence.deleteMany({ where: { kanjiId } });
+      if (Array.isArray(examples) && examples.length > 0) {
+        await prisma.exampleSentence.createMany({
+          data: examples.map((ex: any) => ({
+            kanjiId,
+            japanese: ex.japanese || "",
+            romaji: ex.romaji || "",
+            translation: ex.translation || "",
+            isReading: !!ex.isReading,
+          })),
+        });
+      }
     }
 
-    // Update Jukugos: Delete and Re-create
-    await prisma.jukugo.deleteMany({ where: { kanjiId } });
-    if (Array.isArray(jukugos) && jukugos.length > 0) {
-      await prisma.jukugo.createMany({
-        data: jukugos.map((j: any) => ({
-          kanjiId,
-          word: j.word || "",
-          reading: j.reading || "",
-          meaning: j.meaning || "",
-        })),
-      });
+    // Update Jukugos if provided
+    if (jukugos !== undefined) {
+      await prisma.jukugo.deleteMany({ where: { kanjiId } });
+      if (Array.isArray(jukugos) && jukugos.length > 0) {
+        await prisma.jukugo.createMany({
+          data: jukugos.map((j: any) => ({
+            kanjiId,
+            word: j.word || "",
+            reading: j.reading || "",
+            meaning: j.meaning || "",
+          })),
+        });
+      }
     }
 
-    // Update SemanticRelations: Delete and Re-create
-    await prisma.semanticRelation.deleteMany({ where: { kanjiId } });
-    if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
-      await prisma.semanticRelation.createMany({
-        data: semanticRelations.map((sr: any) => ({
-          kanjiId,
-          ...parseSemanticRelationFields(sr),
-        })),
-      });
+    // Update SemanticRelations if provided
+    if (semanticRelations !== undefined) {
+      await prisma.semanticRelation.deleteMany({ where: { kanjiId } });
+      if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
+        await prisma.semanticRelation.createMany({
+          data: semanticRelations.map((sr: any) => ({
+            kanjiId,
+            ...parseSemanticRelationFields(sr),
+          })),
+        });
+      }
     }
 
-    // Update Etymologies: Delete and Re-create
-    await prisma.etymology.deleteMany({ where: { kanjiId } });
-    if (Array.isArray(etymologies) && etymologies.length > 0) {
-      await prisma.etymology.createMany({
-        data: etymologies.map((et: any) => ({
-          kanjiId,
-          character: et.character || "",
-          romaji: et.romaji || "",
-          detail: et.detail || "",
-        })),
-      });
+    // Update Quizzes if provided
+    if (quizzes !== undefined || quizQuestions !== undefined || quizData !== undefined) {
+      await prisma.quiz.deleteMany({ where: { kanjiId } });
+      const rawQuizzes = Array.isArray(quizzes)
+        ? quizzes
+        : Array.isArray(quizQuestions)
+        ? quizQuestions
+        : typeof quizData === "string"
+        ? (() => {
+            try {
+              return JSON.parse(quizData);
+            } catch (e) {
+              return [];
+            }
+          })()
+        : [];
+
+      if (Array.isArray(rawQuizzes) && rawQuizzes.length > 0) {
+        await prisma.quiz.createMany({
+          data: prepareQuizForDb(kanjiId, rawQuizzes),
+        });
+      }
     }
 
-    // Update Quizzes: Delete and Re-create in Quiz table
-    await prisma.quiz.deleteMany({ where: { kanjiId } });
-    const rawQuizzes = Array.isArray(quizzes)
-      ? quizzes
-      : Array.isArray(quizQuestions)
-      ? quizQuestions
-      : typeof quizData === "string"
-      ? (() => {
-          try {
-            return JSON.parse(quizData);
-          } catch (e) {
-            return [];
-          }
-        })()
-      : [];
-
-    if (Array.isArray(rawQuizzes) && rawQuizzes.length > 0) {
-      await prisma.quiz.createMany({
-        data: prepareQuizForDb(kanjiId, rawQuizzes),
+    // Update Graph Edges if provided
+    if (graphEdges !== undefined) {
+      const edgeIds = Array.isArray(graphEdges) ? graphEdges.map((e: any) => e.id).filter(Boolean) : [];
+      await prisma.kanjiGraphEdge.deleteMany({
+        where: {
+          OR: [
+            { kanjiId },
+            ...(edgeIds.length > 0 ? [{ id: { in: edgeIds } }] : []),
+          ],
+        },
       });
+
+      if (Array.isArray(graphEdges) && graphEdges.length > 0) {
+        await prisma.kanjiGraphEdge.createMany({
+          data: graphEdges.map((e: any) => ({
+            id: e.id,
+            kanjiId,
+            source: e.source || "",
+            target: e.target || "",
+            predicate: e.predicate || e.label || null,
+          })),
+        });
+      }
     }
 
-    // Update Graph Edges FIRST (to prevent foreign key/duplicate ID constraints)
-    const edgeIds = Array.isArray(graphEdges) ? graphEdges.map((e: any) => e.id).filter(Boolean) : [];
-    await prisma.kanjiGraphEdge.deleteMany({
-      where: {
-        OR: [
-          { kanjiId },
-          ...(edgeIds.length > 0 ? [{ id: { in: edgeIds } }] : []),
-        ],
-      },
-    });
-
-    // Update Graph Nodes (by kanjiId OR target node IDs)
-    const nodeIds = Array.isArray(graphNodes) ? graphNodes.map((n: any) => n.id).filter(Boolean) : [];
-    await prisma.kanjiGraphNode.deleteMany({
-      where: {
-        OR: [
-          { kanjiId },
-          ...(nodeIds.length > 0 ? [{ id: { in: nodeIds } }] : []),
-        ],
-      },
-    });
-
-    // Create Graph Nodes
-    if (Array.isArray(graphNodes) && graphNodes.length > 0) {
-      await prisma.kanjiGraphNode.createMany({
-        data: graphNodes.map((n: any) => ({
-          id: n.id,
-          kanjiId,
-          character: n.character || "",
-          meaning: n.meaning || "",
-          type: n.type || "root",
-          borderColor: n.borderColor || null,
-          isPill: !!n.isPill,
-          parentPill: n.parentPill || null,
-        })),
-      });
+    // Save MasterRefleksi if provided
+    if (reflectionData !== undefined || masterRefleksi !== undefined) {
+      await saveMasterRefleksiForKanji(kanjiId, reflectionData || masterRefleksi);
     }
-
-    // Create Graph Edges
-    if (Array.isArray(graphEdges) && graphEdges.length > 0) {
-      await prisma.kanjiGraphEdge.createMany({
-        data: graphEdges.map((e: any) => ({
-          id: e.id,
-          kanjiId,
-          source: e.source || "",
-          target: e.target || "",
-        })),
-      });
-    }
-
-    // Save MasterRefleksi
-    await saveMasterRefleksiForKanji(kanjiId, reflectionData || body.masterRefleksi);
 
     const fullKanji = await prisma.kanji.findUnique({
       where: { id: kanjiId },
       include: {
         examples: true,
-        graphNodes: true,
         graphEdges: true,
         module: true,
         jukugos: true,
         semanticRelations: true,
-        etymologies: true,
         masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },
@@ -814,13 +834,16 @@ export const updateKanji = async (req: Request, res: Response) => {
 
     const formattedQuizList = fullKanji?.quizzes.map(formatQuizFromDb) || [];
     const refQuestions = fullKanji?.masterRefleksi.map(mr => mr.question) || [];
+    const dynamicGraph = await buildDynamicKanjiGraph(kanjiId);
 
     res.json({
       ...fullKanji,
-      quizData: JSON.stringify(formattedQuizList),
+      graphNodes: dynamicGraph.nodes,
+      graphEdges: dynamicGraph.edges,
       quizzes: formattedQuizList,
-      reflectionData: JSON.stringify(refQuestions),
+      quizData: JSON.stringify(formattedQuizList),
       masterRefleksi: fullKanji?.masterRefleksi || [],
+      reflectionData: JSON.stringify(refQuestions)
     });
   } catch (error: any) {
     console.error("Admin updateKanji error:", error);
@@ -836,9 +859,7 @@ export const deleteKanji = async (req: Request, res: Response) => {
     // Delete associated relations first due to constraints
     await prisma.userKanjiProgress.deleteMany({ where: { kanjiId } });
     await prisma.exampleSentence.deleteMany({ where: { kanjiId } });
-    await prisma.kanjiGraphNode.deleteMany({ where: { kanjiId } });
     await prisma.kanjiGraphEdge.deleteMany({ where: { kanjiId } });
-    await prisma.etymology.deleteMany({ where: { kanjiId } });
 
     await prisma.kanji.delete({
       where: { id: kanjiId },

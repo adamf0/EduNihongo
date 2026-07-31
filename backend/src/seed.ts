@@ -24,7 +24,7 @@ const kanjiInfo: Record<string, {
     bushuu: "言",
     onyomi: "シ",
     kunyomi: "ためす",
-    baseMeaning: "Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil (Kanjipedia)",
+    baseMeaning: "Mencoba, menguji, melakukan percobaan untuk mengetahui kemampuan, kualitas atau pun hasil",
     quizData: JSON.stringify([
       {
         type: "unscramble",
@@ -287,10 +287,10 @@ const kanjiInfo: Record<string, {
         question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
         words: ["試験", "受験", "資格試験", "経験", "体験", "経験者", "実験", "実験室", "被験者", "受験生", "検定試験", "受験番号"],
         groups: [
-          { "Pengujian": ["試験", "受験", "受験生", "受験番号"] },
-          { "Penelitian": ["実験", "実験室", "被験者"] },
+          { "Pengujian": ["試験", "受験", "資格試験"] },
           { "Pengalaman": ["経験", "体験", "経験者"] },
-          { "Sertifikasi": ["資格試験", "検定試験"] }
+          { "Penelitian": ["実験", "実験室", "被験者"] },
+          { "Sertifikasi": ["受験生", "検定試験", "受験番号"] }
         ],
         explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 験."
       },
@@ -1054,37 +1054,37 @@ const kanjiInfo: Record<string, {
   },
 
   // Module 2: Penelitian dan Pembuktian Ilmiah
-  "研": { romaji: "Ken", meaning: "Mengasah / Penelitian", bushuu: "石", onyomi: "KEN", kunyomi: "to.gu", jukugos: [
+  "研": { romaji: "Ken", meaning: "Mengasah / Penelitian", bushuu: "石", onyomi: "ケン", kunyomi: "と（ぐ）", jukugos: [
     { word: "研究", reading: "けんきゅう", meaning: "Penelitian" },
     { word: "研修", reading: "けんしゅう", meaning: "Pelatihan" },
     { word: "研磨", reading: "けんま", meaning: "Pengasahan" },
     { word: "研究者", reading: "けんきゅうしゃ", meaning: "Peneliti" }
   ]},
-  "究": { romaji: "Kyuu", meaning: "Menyelidiki Mendalam", bushuu: "穴", onyomi: "KYUU", kunyomi: "kiwa.meru", jukugos: [
+  "究": { romaji: "Kyuu", meaning: "Menyelidiki Mendalam", bushuu: "穴", onyomi: "キュウ", kunyomi: "きわ（める）", jukugos: [
     { word: "研究", reading: "けんきゅう", meaning: "Penelitian" },
     { word: "探究", reading: "たんきゅう", meaning: "Pencarian" },
     { word: "究極", reading: "きゅうきょく", meaning: "Ultimatum / Ekstrem" },
     { word: "追究", reading: "ついきゅう", meaning: "Pengejaran Kebenaran" }
   ]},
-  "集": { romaji: "Shuu", meaning: "Mengumpulkan", bushuu: "隹", onyomi: "SHUU", kunyomi: "atsu.maru", jukugos: [
+  "集": { romaji: "Shuu", meaning: "Mengumpulkan", bushuu: "隹", onyomi: "シュウ", kunyomi: "あつ（まる）、あつ（める）", jukugos: [
     { word: "集会", reading: "しゅうかい", meaning: "Pertemuan" },
     { word: "集合", reading: "しゅうごう", meaning: "Berkumpul" },
     { word: "集中", reading: "しゅうちゅう", meaning: "Konsentrasi" },
     { word: "編集", reading: "へんしゅう", meaning: "Mengedit" }
   ]},
-  "調": { romaji: "Chou", meaning: "Menyelidiki / Nada", bushuu: "言", onyomi: "CHOU", kunyomi: "shira.beru", jukugos: [
+  "調": { romaji: "Chou", meaning: "Menyelidiki / Nada", bushuu: "言", onyomi: "チョウ", kunyomi: "しら（べる）、ととの（う）", jukugos: [
     { word: "調査", reading: "ちょうさ", meaning: "Investigasi" },
     { word: "調整", reading: "ちょうせい", meaning: "Penyesuaian" },
     { word: "調子", reading: "ちょうし", meaning: "Kondisi" },
     { word: "調和", reading: "ちょうわ", meaning: "Harmoni" }
   ]},
-  "査": { romaji: "Sa", meaning: "Memeriksa", bushuu: "木", onyomi: "SA", kunyomi: "-", jukugos: [
+  "査": { romaji: "Sa", meaning: "Memeriksa", bushuu: "木", onyomi: "サ", kunyomi: "-", jukugos: [
     { word: "調査", reading: "ちょうさ", meaning: "Investigasi" },
     { word: "検査", reading: "けんさ", meaning: "Pemeriksaan" },
     { word: "審査", reading: "しんさ", meaning: "Penilaian / Audit" },
     { word: "査定", reading: "さてい", meaning: "Evaluasi/Asesmen" }
   ]},
-  "実": { romaji: "Jitsu", meaning: "Kenyataan / Kebenaran", bushuu: "宀", onyomi: "JITSU", kunyomi: "mi", jukugos: [
+  "実": { romaji: "Jitsu", meaning: "Kenyataan / Kebenaran", bushuu: "宀", onyomi: "ジツ", kunyomi: "み、みの（る）", jukugos: [
     { word: "実験", reading: "じっけん", meaning: "Eksperimen" },
     { word: "現実", reading: "げんじつ", meaning: "Kenyataan" },
     { word: "事実", reading: "じじつ", meaning: "Fakta" },
@@ -1092,37 +1092,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 3: Informasi dan Data
-  "情": { romaji: "Jou", meaning: "Perasaan / Keadaan", bushuu: "心 (忄)", onyomi: "JOU", kunyomi: "nasake", jukugos: [
+  "情": { romaji: "Jou", meaning: "Perasaan / Keadaan", bushuu: "心 (忄)", onyomi: "ジョウ", kunyomi: "なさ（け）", jukugos: [
     { word: "情報", reading: "じょうほう", meaning: "Informasi" },
     { word: "感情", reading: "かんじょう", meaning: "Emosi" },
     { word: "友情", reading: "ゆうじょう", meaning: "Persahabatan" },
     { word: "同情", reading: "どうじょう", meaning: "Simpati" }
   ]},
-  "報": { romaji: "Hou", meaning: "Laporan / Balasan", bushuu: "土", onyomi: "HOU", kunyomi: "muku.iru", jukugos: [
+  "報": { romaji: "Hou", meaning: "Laporan / Balasan", bushuu: "土", onyomi: "ホウ", kunyomi: "むく（いる）", jukugos: [
     { word: "情報", reading: "じょうほう", meaning: "Informasi" },
     { word: "報告", reading: "ほうこく", meaning: "Laporan" },
     { word: "報道", reading: "ほうどう", meaning: "Pemberitaan" },
     { word: "予報", reading: "よほう", meaning: "Prakiraan" }
   ]},
-  "伝": { romaji: "Den", meaning: "Menyampaikan", bushuu: "人 (亻)", onyomi: "DEN", kunyomi: "tsuta.eru", jukugos: [
+  "伝": { romaji: "Den", meaning: "Menyampaikan", bushuu: "人 (亻)", onyomi: "デン", kunyomi: "つた（わる）、つた（える）", jukugos: [
     { word: "伝言", reading: "でんごん", meaning: "Pesan" },
     { word: "伝統", reading: "でんとう", meaning: "Tradisi" },
     { word: "伝達", reading: "でんたつ", meaning: "Penyampaian" },
     { word: "手伝う", reading: "てつだう", meaning: "Membantu" }
   ]},
-  "信": { romaji: "Shin", meaning: "Percaya", bushuu: "人 (亻)", onyomi: "SHIN", kunyomi: "shin.jiru", jukugos: [
+  "信": { romaji: "Shin", meaning: "Percaya", bushuu: "人 (亻)", onyomi: "シン", kunyomi: "しん（じる）", jukugos: [
     { word: "信用", reading: "しんよう", meaning: "Kepercayaan" },
     { word: "信号", reading: "しんごう", meaning: "Lampu Lalu Lintas" },
     { word: "自信", reading: "じしん", meaning: "Percaya Diri" },
     { word: "通信", reading: "つうしん", meaning: "Telekomunikasi" }
   ]},
-  "受": { romaji: "Ju", meaning: "Menerima", bushuu: "又", onyomi: "JU", kunyomi: "u.keru", jukugos: [
+  "受": { romaji: "Ju", meaning: "Menerima", bushuu: "又", onyomi: "ジュ", kunyomi: "う（ける）", jukugos: [
     { word: "受信", reading: "じゅしん", meaning: "Menerima Pesan" },
     { word: "受験", reading: "じゅけん", meaning: "Mengikuti Ujian" },
     { word: "受取", reading: "うけとり", meaning: "Tanda Terima" },
     { word: "授業", reading: "じゅぎょう", meaning: "Kelas / Pelajaran" }
   ]},
-  "送": { romaji: "Sou", meaning: "Mengirim", bushuu: "辵 (⻌)", onyomi: "SOU", kunyomi: "oku.ru", jukugos: [
+  "送": { romaji: "Sou", meaning: "Mengirim", bushuu: "辵 (⻌)", onyomi: "ソウ", kunyomi: "おく（る）", jukugos: [
     { word: "送信", reading: "そうしん", meaning: "Mengirim Pesan" },
     { word: "送金", reading: "そうきん", meaning: "Transfer Uang" },
     { word: "配送", reading: "はいそう", meaning: "Pengiriman barang" },
@@ -1130,37 +1130,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 4: Profesi dan Dunia Kerja
-  "職": { romaji: "Shoku", meaning: "Pekerjaan / Jabatan", bushuu: "耳", onyomi: "SHOKU", kunyomi: "-", jukugos: [
+  "職": { romaji: "Shoku", meaning: "Pekerjaan / Jabatan", bushuu: "耳", onyomi: "ショク", kunyomi: "-", jukugos: [
     { word: "職業", reading: "しょくぎょう", meaning: "Profesi" },
     { word: "職場", reading: "しょくば", meaning: "Tempat Kerja" },
     { word: "職員", reading: "しょくいん", meaning: "Staf / Karyawan" },
     { word: "退職", reading: "たいしょく", meaning: "Resign / Pensiun" }
   ]},
-  "業": { romaji: "Gyou", meaning: "Usaha / Industri", bushuu: "木", onyomi: "GYOU", kunyomi: "waza", jukugos: [
+  "業": { romaji: "Gyou", meaning: "Usaha / Industri", bushuu: "木", onyomi: "ギョウ、ゴウ", kunyomi: "わざ", jukugos: [
     { word: "職業", reading: "しょくぎょう", meaning: "Profesi" },
     { word: "産業", reading: "さんぎょう", meaning: "Industri" },
     { word: "事業", reading: "じぎょう", meaning: "Bisnis / Proyek" },
     { word: "授業", reading: "じゅぎょう", meaning: "Pelajaran" }
   ]},
-  "働": { romaji: "Dou", meaning: "Bekerja", bushuu: "人 (亻)", onyomi: "DOU", kunyomi: "hatara.ku", jukugos: [
+  "働": { romaji: "Dou", meaning: "Bekerja", bushuu: "人 (亻)", onyomi: "ドウ", kunyomi: "はたら（く）", jukugos: [
     { word: "労働", reading: "ろうどう", meaning: "Tenaga Kerja" },
     { word: "共働き", reading: "ともばたらき", meaning: "Suami Istri Bekerja" },
     { word: "労働者", reading: "ろうどうしゃ", meaning: "Pekerja" },
     { word: "働く", reading: "はたらく", meaning: "Bekerja" }
   ]},
-  "務": { romaji: "Mu", meaning: "Tugas / Kewajiban", bushuu: "力", onyomi: "MU", kunyomi: "tsuto.meru", jukugos: [
+  "務": { romaji: "Mu", meaning: "Tugas / Kewajiban", bushuu: "力", onyomi: "ム", kunyomi: "つと（める）", jukugos: [
     { word: "義務", reading: "ぎむ", meaning: "Kewajiban" },
     { word: "公務", reading: "こうむ", meaning: "Tugas Publik" },
     { word: "事務所", reading: "じむしょ", meaning: "Kantor" },
     { word: "勤務", reading: "きんむ", meaning: "Dinas / Kerja" }
   ]},
-  "技": { romaji: "Gi", meaning: "Keahlian / Teknik", bushuu: "手 (扌)", onyomi: "GI", kunyomi: "waza", jukugos: [
+  "技": { romaji: "Gi", meaning: "Keahlian / Teknik", bushuu: "手 (扌)", onyomi: "ギ", kunyomi: "わざ", jukugos: [
     { word: "技術", reading: "ぎじゅつ", meaning: "Teknologi" },
     { word: "特技", reading: "とくぎ", meaning: "Keahlian Khusus" },
     { word: "演技", reading: "えんぎ", meaning: "Akting / Peran" },
     { word: "技能", reading: "ぎのう", meaning: "Keterampilan" }
   ]},
-  "術": { romaji: "Jutsu", meaning: "Seni / Cara", bushuu: "行", onyomi: "JUTSU", kunyomi: "sube", jukugos: [
+  "術": { romaji: "Jutsu", meaning: "Seni / Cara", bushuu: "行", onyomi: "ジュツ", kunyomi: "すべ", jukugos: [
     { word: "技術", reading: "ぎじゅつ", meaning: "Teknologi" },
     { word: "美術", reading: "びじゅつ", meaning: "Seni Rupa" },
     { word: "手術", reading: "しゅじゅつ", meaning: "Operasi Medis" },
@@ -1168,37 +1168,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 5: Komunikasi dan Pertukaran Ide
-  "議": { romaji: "Gi", meaning: "Diskusi / Musyawarah", onyomi: "GI", kunyomi: "-", jukugos: [
+  "議": { romaji: "Gi", meaning: "Diskusi / Musyawarah", onyomi: "ギ", kunyomi: "-", jukugos: [
     { word: "会議", reading: "かいぎ", meaning: "Rapat" },
     { word: "議論", reading: "ぎろん", meaning: "Diskusi" },
     { word: "議員", reading: "ぎいん", meaning: "Anggota Parlemen" },
     { word: "不思議", reading: "ふしぎ", meaning: "Ajaib / Aneh" }
   ]},
-  "論": { romaji: "Ron", meaning: "Teori / Pendapat", onyomi: "RON", kunyomi: "-", jukugos: [
+  "論": { romaji: "Ron", meaning: "Teori / Pendapat", onyomi: "ロン", kunyomi: "-", jukugos: [
     { word: "議論", reading: "ぎろん", meaning: "Diskusi" },
     { word: "論文", reading: "ろんぶん", meaning: "Tesis / Karya Ilmiah" },
     { word: "理論", reading: "りろん", meaning: "Teori" },
     { word: "論理", reading: "ろんり", meaning: "Logika" }
   ]},
-  "談": { romaji: "Dan", meaning: "Pembicaraan", onyomi: "DAN", kunyomi: "-", jukugos: [
+  "談": { romaji: "Dan", meaning: "Pembicaraan", onyomi: "ダン", kunyomi: "-", jukugos: [
     { word: "相談", reading: "そうだん", meaning: "Konsultasi" },
     { word: "談話", reading: "だんわ", meaning: "Percakapan Resmi" },
     { word: "会談", reading: "かいだん", meaning: "Pertemuan" },
     { word: "雑談", reading: "ざつだん", meaning: "Obrolan Santai" }
   ]},
-  "討": { romaji: "Tou", meaning: "Membahas", onyomi: "TOU", kunyomi: "u.tsu", jukugos: [
+  "討": { romaji: "Tou", meaning: "Membahas", onyomi: "トウ", kunyomi: "う（つ）", jukugos: [
     { word: "討論", reading: "とうろん", meaning: "Debat" },
     { word: "検討", reading: "けんとう", meaning: "Pertimbangan / Telaah" },
     { word: "討議", reading: "とうぎ", meaning: "Debat / Pembahasan" },
     { word: "討伐", reading: "とうばつ", meaning: "Penumpasan" }
   ]},
-  "見": { romaji: "Ken", meaning: "Melihat", onyomi: "KEN", kunyomi: "mi.ru", jukugos: [
+  "見": { romaji: "Ken", meaning: "Melihat", onyomi: "ケン", kunyomi: "み（る）、み（せる）", jukugos: [
     { word: "意見", reading: "いけん", meaning: "Pendapat" },
     { word: "見学", reading: "けんがく", meaning: "Studi Banding" },
     { word: "夢を見る", reading: "ゆめをみる", meaning: "Bermimpi" },
     { word: "見本", reading: "みほん", meaning: "Sampel / Contoh" }
   ]},
-  "意": { romaji: "I", meaning: "Maksud / Pikiran", onyomi: "I", kunyomi: "-", jukugos: [
+  "意": { romaji: "I", meaning: "Maksud / Pikiran", onyomi: "イ", kunyomi: "-", jukugos: [
     { word: "意見", reading: "いけん", meaning: "Pendapat" },
     { word: "意味", reading: "いみ", meaning: "Arti" },
     { word: "注意", reading: "ちゅうい", meaning: "Peringatan / Hati-hati" },
@@ -1206,37 +1206,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 6: Waktu dan Pengalaman
-  "経": { romaji: "Kei", meaning: "Melalui / Mengalami", onyomi: "KEI", kunyomi: "he.ru", jukugos: [
+  "経": { romaji: "Kei", meaning: "Melalui / Mengalami", onyomi: "ケイ、キョウ", kunyomi: "へ（る）", jukugos: [
     { word: "経験", reading: "けいけん", meaning: "Pengalaman" },
     { word: "経済", reading: "けいざい", meaning: "Ekonomi" },
     { word: "経由", reading: "けいゆ", meaning: "Transit / Via" },
     { word: "経営", reading: "けいえい", meaning: "Manajemen" }
   ]},
-  "昔": { romaji: "Mukashi", meaning: "Masa Lampau", onyomi: "SEKI", kunyomi: "mukashi", jukugos: [
+  "昔": { romaji: "Mukashi", meaning: "Masa Lampau", onyomi: "セキ、シャク", kunyomi: "むかし", jukugos: [
     { word: "昔話", reading: "むかしばなし", meaning: "Dongeng Kuno" },
     { word: "大昔", reading: "おおむかし", meaning: "Zaman Purbakala" },
     { word: "昔日", reading: "せきじつ", meaning: "Hari-hari Lampau" },
     { word: "今昔", reading: "こんじゃく", meaning: "Masa Lalu & Sekarang" }
   ]},
-  "歴": { romaji: "Reki", meaning: "Sejarah / Melewati", onyomi: "REKI", kunyomi: "-", jukugos: [
+  "歴": { romaji: "Reki", meaning: "Sejarah / Melewati", onyomi: "レキ", kunyomi: "-", jukugos: [
     { word: "歴史", reading: "れきし", meaning: "Sejarah" },
     { word: "履歴書", reading: "りれきしょ", meaning: "CV / Riwayat Hidup" },
     { word: "学歴", reading: "がくれき", meaning: "Latar Belakang Pendidikan" },
     { word: "経歴", reading: "けいれき", meaning: "Karir / Riwayat Pekerjaan" }
   ]},
-  "史": { romaji: "Shi", meaning: "Sejarah", onyomi: "SHI", kunyomi: "-", jukugos: [
+  "史": { romaji: "Shi", meaning: "Sejarah", onyomi: "シ", kunyomi: "-", jukugos: [
     { word: "歴史", reading: "れきし", meaning: "Sejarah" },
     { word: "日本史", reading: "にほんし", meaning: "Sejarah Jepang" },
     { word: "世界史", reading: "せかいし", meaning: "Sejarah Dunia" },
     { word: "史料", reading: "しりょう", meaning: "Dokumen Sejarah" }
   ]},
-  "期": { romaji: "Ki", meaning: "Periode / Harapan", onyomi: "KI", kunyomi: "-", jukugos: [
+  "期": { romaji: "Ki", meaning: "Periode / Harapan", onyomi: "キ、ゴ", kunyomi: "-", jukugos: [
     { word: "期間", reading: "きかん", meaning: "Jangka Waktu" },
     { word: "期待", reading: "きたい", meaning: "Harapan" },
     { word: "学期", reading: "がっき", meaning: "Semester" },
     { word: "定期", reading: "ていに", meaning: "Reguler / Berkala" }
   ]},
-  "間": { romaji: "Kan", meaning: "Antara / Ruang / Waktu", onyomi: "KAN", kunyomi: "aida", jukugos: [
+  "間": { romaji: "Kan", meaning: "Antara / Ruang / Waktu", onyomi: "カン、ケン", kunyomi: "あいだ、ま", jukugos: [
     { word: "時間", reading: "じかん", meaning: "Waktu / Jam" },
     { word: "人間", reading: "にんげん", meaning: "Manusia" },
     { word: "期間", reading: "きかん", meaning: "Jangka Waktu" },
@@ -1244,37 +1244,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 7: Perubahan dan Perkembangan
-  "変": { romaji: "Hen", meaning: "Berubah / Aneh", onyomi: "HEN", kunyomi: "ka.waru", jukugos: [
+  "変": { romaji: "Hen", meaning: "Berubah / Aneh", onyomi: "ヘン", kunyomi: "か（わる）、か（える）", jukugos: [
     { word: "変化", reading: "へんか", meaning: "Perubahan" },
     { word: "大変", reading: "たいへん", meaning: "Sangat / Berat" },
     { word: "変更", reading: "へんこう", meaning: "Modifikasi" },
     { word: "変質", reading: "へんしつ", meaning: "Perubahan Sifat" }
   ]},
-  "化": { romaji: "Ka", meaning: "Berubah menjadi", onyomi: "KA", kunyomi: "ba.keru", jukugos: [
+  "化": { romaji: "Ka", meaning: "Berubah menjadi", onyomi: "カ、ケ", kunyomi: "ば（ける）", jukugos: [
     { word: "変化", reading: "へんか", meaning: "Perubahan" },
     { word: "文化", reading: "ぶんか", meaning: "Kebudayaan" },
     { word: "化学", reading: "かがく", meaning: "Kimia" },
     { word: "化粧", reading: "けしょう", meaning: "Make-up" }
   ]},
-  "発": { romaji: "Hatsu", meaning: "Memancarkan / Memulai", onyomi: "HATSU", kunyomi: "ta.tsu", jukugos: [
+  "発": { romaji: "Hatsu", meaning: "Memancarkan / Memulai", onyomi: "ハツ、ホツ", kunyomi: "た（つ）", jukugos: [
     { word: "発見", reading: "はっけん", meaning: "Penemuan" },
     { word: "発表", reading: "はっぴょう", meaning: "Pengumuman" },
     { word: "発生", reading: "はっせい", meaning: "Timbul / Terjadi" },
     { word: "出発", reading: "しゅっぱつ", meaning: "Keberangkatan" }
   ]},
-  "展": { romaji: "Ten", meaning: "Berkembang", onyomi: "TEN", kunyomi: "-", jukugos: [
+  "展": { romaji: "Ten", meaning: "Berkembang", onyomi: "テン", kunyomi: "-", jukugos: [
     { word: "展開", reading: "てんかい", meaning: "Perkembangan" },
     { word: "展示", reading: "てんじ", meaning: "Pameran" },
     { word: "発展", reading: "はってん", meaning: "Kemajuan / Perkembangan" },
     { word: "展覧会", reading: "てんらんかい", meaning: "Pameran Seni" }
   ]},
-  "進": { romaji: "Shin", meaning: "Maju / Melangkah", onyomi: "SHIN", kunyomi: "susu.mu", jukugos: [
+  "進": { romaji: "Shin", meaning: "Maju / Melangkah", onyomi: "シン", kunyomi: "すす（む）", jukugos: [
     { word: "進歩", reading: "しんぽ", meaning: "Kemajuan" },
     { word: "進化", reading: "しんか", meaning: "Evolusi" },
     { word: "進学", reading: "しんがく", meaning: "Melanjutkan Sekolah" },
     { word: "進行", reading: "しんこう", meaning: "Kemajuan / Progres" }
   ]},
-  "成": { romaji: "Sei", meaning: "Menjadi / Tumbuh", onyomi: "SEI", kunyomi: "na.ru", jukugos: [
+  "成": { romaji: "Sei", meaning: "Menjadi / Tumbuh", onyomi: "セイ、ジョウ", kunyomi: "な（る）", jukugos: [
     { word: "成功", reading: "せいこう", meaning: "Sukses" },
     { word: "成長", reading: "せいちょう", meaning: "Pertumbuhan" },
     { word: "完成", reading: "かんせい", meaning: "Penyelesaian" },
@@ -1282,37 +1282,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 8: Berpikir dan Pengambilan Keputusan
-  "認": { romaji: "Nin", meaning: "Mengakui / Menyetujui", onyomi: "NIN", kunyomi: "mito.meru", jukugos: [
+  "認": { romaji: "Nin", meaning: "Mengakui / Menyetujui", onyomi: "ニン", kunyomi: "みと（める）", jukugos: [
     { word: "確認", reading: "かくにん", meaning: "Konfirmasi" },
     { word: "認識", reading: "にんしき", meaning: "Persepsi / Pengenalan" },
     { word: "承認", reading: "しょうにん", meaning: "Persetujuan" },
     { word: "認定", reading: "にんてい", meaning: "Sertifikasi" }
   ]},
-  "識": { romaji: "Shiki", meaning: "Pengetahuan / Membedakan", onyomi: "SHIKI", kunyomi: "-", jukugos: [
+  "識": { romaji: "Shiki", meaning: "Pengetahuan / Membedakan", onyomi: "シキ", kunyomi: "-", jukugos: [
     { word: "認識", reading: "にんしき", meaning: "Persepsi" },
     { word: "知識", reading: "ちしき", meaning: "Pengetahuan" },
     { word: "意識", reading: "いしき", meaning: "Kesadaran" },
     { word: "常識", reading: "じょうしき", meaning: "Akal Sehat" }
   ]},
-  "判": { romaji: "Han", meaning: "Menilai / Memutuskan", onyomi: "HAN", kunyomi: "waka.ru", jukugos: [
+  "判": { romaji: "Han", meaning: "Menilai / Memutuskan", onyomi: "ハン", kunyomi: "わか（る）", jukugos: [
     { word: "判断", reading: "はんだん", meaning: "Keputusan" },
     { word: "判決", reading: "はんけつ", meaning: "Putusan Pengadilan" },
     { word: "評判", reading: "ひょうばん", meaning: "Reputasi" },
     { word: "審判", reading: "しんぱん", meaning: "Wasit / Juri" }
   ]},
-  "断": { romaji: "Dan", meaning: "Memutuskan / Menolak", onyomi: "DAN", kunyomi: "ta.tsu / kotowa.ru", jukugos: [
+  "断": { romaji: "Dan", meaning: "Memutuskan / Menolak", onyomi: "ダン", kunyomi: "た（つ）、ことわ（る）", jukugos: [
     { word: "判断", reading: "はんだん", meaning: "Keputusan" },
     { word: "決断", reading: "けつだん", meaning: "Keberanian Memutuskan" },
     { word: "断水", reading: "だんすい", meaning: "Pemutusan Air" },
     { word: "断る", reading: "ことわる", meaning: "Menolak" }
   ]},
-  "考": { romaji: "Kou", meaning: "Berpikir", onyomi: "KOU", kunyomi: "kanga.eru", jukugos: [
+  "考": { romaji: "Kou", meaning: "Berpikir", onyomi: "コウ", kunyomi: "かんが（える）", jukugos: [
     { word: "思考", reading: "しこう", meaning: "Pemikiran" },
     { word: "考慮", reading: "こうりょ", meaning: "Pertimbangan" },
     { word: "考古学", reading: "こうこがく", meaning: "Arkeologi" },
     { word: "参考", reading: "さんこう", meaning: "Referensi" }
   ]},
-  "想": { romaji: "Sou", meaning: "Membayangkan / Ide", onyomi: "SOU", kunyomi: "-", jukugos: [
+  "想": { romaji: "Sou", meaning: "Membayangkan / Ide", onyomi: "ソウ、ソ", kunyomi: "-", jukugos: [
     { word: "想像", reading: "そうぞう", meaning: "Imajinasi" },
     { word: "理想", reading: "りそう", meaning: "Ideal" },
     { word: "思想", reading: "しそう", meaning: "Ideologi" },
@@ -1320,37 +1320,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 9: Perasaan dan Sikap
-  "感": { romaji: "Kan", meaning: "Merasa / Perasaan", onyomi: "KAN", kunyomi: "-", jukugos: [
+  "感": { romaji: "Kan", meaning: "Merasa / Perasaan", onyomi: "カン", kunyomi: "-", jukugos: [
     { word: "感情", reading: "かんじょう", meaning: "Emosi" },
     { word: "感謝", reading: "かんしゃ", meaning: "Terima Kasih" },
     { word: "感動", reading: "かんどう", meaning: "Terharu" },
     { word: "感想", reading: "かんそう", meaning: "Kesan" }
   ]},
-  "覚": { romaji: "Kaku", meaning: "Mengingat / Sadar", onyomi: "KAKU", kunyomi: "obo.eru / sa.meru", jukugos: [
+  "覚": { romaji: "Kaku", meaning: "Mengingat / Sadar", onyomi: "カク", kunyomi: "おぼ（える）、さ（める）", jukugos: [
     { word: "感覚", reading: "かんかく", meaning: "Sensoris / Perasaan" },
     { word: "覚悟", reading: "かくご", meaning: "Kesiapan Mental" },
     { word: "目覚まし", reading: "めざまし", meaning: "Jam Beker" },
     { word: "覚える", reading: "おぼえる", meaning: "Mengingat" }
   ]},
-  "心": { romaji: "Shin", meaning: "Hati", onyomi: "SHIN", kunyomi: "kokoro", jukugos: [
+  "心": { romaji: "Shin", meaning: "Hati", onyomi: "シン", kunyomi: "こころ", jukugos: [
     { word: "心配", reading: "しんぱい", meaning: "Khawatir" },
     { word: "心理学", reading: "しんりがく", meaning: "Psikologi" },
     { word: "中心", reading: "ちゅうしん", meaning: "Pusat" },
     { word: "心臓", reading: "しんぞう", meaning: "Jantung" }
   ]},
-  "志": { romaji: "Shi", meaning: "Arah / Keinginan kuat", onyomi: "SHI", kunyomi: "kokorozashi", jukugos: [
+  "志": { romaji: "Shi", meaning: "Arah / Keinginan kuat", onyomi: "シ", kunyomi: "こころざし", jukugos: [
     { word: "志望", reading: "しぼう", meaning: "Aspirasi" },
     { word: "意志", reading: "いし", meaning: "Kehendak" },
     { word: "志向", reading: "しこう", meaning: "Orientasi" },
     { word: "志", reading: "こころざし", meaning: "Tujuan Mulia" }
   ]},
-  "態": { romaji: "Tai", meaning: "Kondisi / Sikap", onyomi: "TAI", kunyomi: "-", jukugos: [
+  "態": { romaji: "Tai", meaning: "Kondisi / Sikap", onyomi: "タイ", kunyomi: "-", jukugos: [
     { word: "態度", reading: "たいど", meaning: "Sikap" },
     { word: "状態", reading: "じょうたい", meaning: "Keadaan" },
     { word: "事態", reading: "じたい", meaning: "Keadaan Darurat" },
     { word: "形態", reading: "けいたい", meaning: "Bentuk / Wujud" }
   ]},
-  "愛": { romaji: "Ai", meaning: "Cinta / Kasih Sayang", onyomi: "AI", kunyomi: "ito.shii", jukugos: [
+  "愛": { romaji: "Ai", meaning: "Cinta / Kasih Sayang", onyomi: "アイ", kunyomi: "いと（しい）", jukugos: [
     { word: "愛情", reading: "あいじょう", meaning: "Kasih Sayang" },
     { word: "恋愛", reading: "れんあい", meaning: "Asmara" },
     { word: "愛国心", reading: "あいこくしん", meaning: "Patriotisme" },
@@ -1358,37 +1358,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 10: Masyarakat dan Organisasi
-  "係": { romaji: "Kei", meaning: "Hubungan / Petugas", onyomi: "KEI", kunyomi: "kaka.ri", jukugos: [
+  "係": { romaji: "Kei", meaning: "Hubungan / Petugas", onyomi: "ケイ", kunyomi: "かか（り）", jukugos: [
     { word: "関係", reading: "かんけい", meaning: "Hubungan" },
     { word: "係員", reading: "かかりいん", meaning: "Petugas" },
     { word: "連係", reading: "れんけい", meaning: "Koneksi" },
     { word: "係数", reading: "けいすう", meaning: "Koefisien" }
   ]},
-  "制": { romaji: "Sei", meaning: "Sistem / Aturan", onyomi: "SEI", kunyomi: "-", jukugos: [
+  "制": { romaji: "Sei", meaning: "Sistem / Aturan", onyomi: "セイ", kunyomi: "-", jukugos: [
     { word: "制度", reading: "せいど", meaning: "Sistem" },
     { word: "制限", reading: "せいげん", meaning: "Batasan" },
     { word: "制作", reading: "せいさく", meaning: "Pembuatan / Produksi" },
     { word: "制御", reading: "せいぎょ", meaning: "Pengendalian" }
   ]},
-  "関": { romaji: "Kan", meaning: "Hubungan / Gerbang", onyomi: "KAN", kunyomi: "seki", jukugos: [
+  "関": { romaji: "Kan", meaning: "Hubungan / Gerbang", onyomi: "カン", kunyomi: "せき、かか（わる）", jukugos: [
     { word: "関係", reading: "かんけい", meaning: "Hubungan" },
     { word: "玄関", reading: "げんかん", meaning: "Pintu Masuk" },
     { word: "関心", reading: "かんしん", meaning: "Ketertarikan" },
     { word: "機関", reading: "きかん", meaning: "Lembaga" }
   ]},
-  "団": { romaji: "Dan", meaning: "Kelompok / Organisasi", onyomi: "DAN", kunyomi: "-", jukugos: [
+  "団": { romaji: "Dan", meaning: "Kelompok / Organisasi", onyomi: "ダン", kunyomi: "-", jukugos: [
     { word: "団体", reading: "だんたい", meaning: "Organisasi" },
     { word: "団地", reading: "だんち", meaning: "Kompleks Perumahan" },
     { word: "布団", reading: "ふとん", meaning: "Kasur Jepang" },
     { word: "集団", reading: "しゅうだん", meaning: "Kelompok Orang" }
   ]},
-  "組": { romaji: "Kumi", meaning: "Kelompok / Menyusun", onyomi: "SO", kunyomi: "kumi", jukugos: [
+  "組": { romaji: "Kumi", meaning: "Kelompok / Menyusun", onyomi: "ソ", kunyomi: "く（む）、くみ", jukugos: [
     { word: "組合", reading: "くみあい", meaning: "Asosiasi / Serikat" },
     { word: "組織", reading: "そしき", meaning: "Organisasi" },
     { word: "番組", reading: "ばんぐみ", meaning: "Acara TV" },
     { word: "組み立て", reading: "くみたて", meaning: "Perakitan" }
   ]},
-  "協": { romaji: "Kyou", meaning: "Bekerja Sama", onyomi: "KYOU", kunyomi: "-", jukugos: [
+  "協": { romaji: "Kyou", meaning: "Bekerja Sama", onyomi: "キョウ", kunyomi: "-", jukugos: [
     { word: "協力", reading: "きょうりょく", meaning: "Kerja Sama" },
     { word: "協会", reading: "きょうかい", meaning: "Asosiasi" },
     { word: "妥協", reading: "だきょう", meaning: "Kompromi" },
@@ -1396,37 +1396,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 11: Logika dan Argumentasi
-  "理": { romaji: "Ri", meaning: "Alasan / Logika", onyomi: "RI", kunyomi: "kotowari", jukugos: [
+  "理": { romaji: "Ri", meaning: "Alasan / Logika", onyomi: "リ", kunyomi: "ことわり", jukugos: [
     { word: "理由", reading: "りゆう", meaning: "Alasan" },
     { word: "理解", reading: "りかい", meaning: "Pemahaman" },
     { word: "心理", reading: "しんり", meaning: "Psikologi" },
     { word: "修理", reading: "しゅうり", meaning: "Perbaikan" }
   ]},
-  "解": { romaji: "Kai", meaning: "Memahami / Memecahkan", onyomi: "KAI", kunyomi: "to.ku", jukugos: [
+  "解": { romaji: "Kai", meaning: "Memahami / Memecahkan", onyomi: "カイ、ゲ", kunyomi: "と（く）", jukugos: [
     { word: "理解", reading: "りかい", meaning: "Pemahaman" },
     { word: "解決", reading: "かいけつ", meaning: "Solusi" },
     { word: "解説", reading: "かいせつ", meaning: "Penjelasan" },
     { word: "解散", reading: "かいさん", meaning: "Pembubaran" }
   ]},
-  "証": { romaji: "Shou", meaning: "Bukti / Kesaksian", onyomi: "SHOU", kunyomi: "akashi", jukugos: [
+  "証": { romaji: "Shou", meaning: "Bukti / Kesaksian", onyomi: "ショウ", kunyomi: "あかし", jukugos: [
     { word: "証明", reading: "しょうめい", meaning: "Pembuktian" },
     { word: "証拠", reading: "しょうこ", meaning: "Bukti" },
     { word: "保証", reading: "ほしょう", meaning: "Jaminan" },
     { word: "証言", reading: "しょうげん", meaning: "Kesaksian" }
   ]},
-  "明": { romaji: "Mei", meaning: "Terang / Jelas", onyomi: "MEI", kunyomi: "aka.rui / a.keru", jukugos: [
+  "明": { romaji: "Mei", meaning: "Terang / Jelas", onyomi: "メイ、ミョウ", kunyomi: "あか（るい）、あ（ける）", jukugos: [
     { word: "説明", reading: "せつめい", meaning: "Penjelasan" },
     { word: "証明", reading: "しょうめい", meaning: "Pembuktian" },
     { word: "明日", reading: "あした", meaning: "Besok" },
     { word: "明白", reading: "めいはく", meaning: "Jelas" }
   ]},
-  "説": { romaji: "Setsu", meaning: "Menjelaskan / Teori", onyomi: "SETSU", kunyomi: "to.ku", jukugos: [
+  "説": { romaji: "Setsu", meaning: "Menjelaskan / Teori", onyomi: "セツ", kunyomi: "と（く）", jukugos: [
     { word: "説明", reading: "せつめい", meaning: "Penjelasan" },
     { word: "小説", reading: "しょうせつ", meaning: "Novel" },
     { word: "伝説", reading: "でんせつ", meaning: "Legenda" },
     { word: "説得", reading: "せっとく", meaning: "Persuasi" }
   ]},
-  "拠": { romaji: "Kyo", meaning: "Dasar / Sandaran", onyomi: "KYO", kunyomi: "yo.ru", jukugos: [
+  "拠": { romaji: "Kyo", meaning: "Dasar / Sandaran", onyomi: "キョ", kunyomi: "よ（る）", jukugos: [
     { word: "根拠", reading: "こんきょ", meaning: "Alasan Mendasar" },
     { word: "拠点", reading: "きょてん", meaning: "Basis / Pos" },
     { word: "証拠", reading: "しょうこ", meaning: "Bukti" },
@@ -1434,37 +1434,37 @@ const kanjiInfo: Record<string, {
   ]},
 
   // Module 12: Ekonomi dan Kehidupan Modern
-  "財": { romaji: "Zai", meaning: "Harta / Kekayaan", onyomi: "ZAI", kunyomi: "-", jukugos: [
+  "財": { romaji: "Zai", meaning: "Harta / Kekayaan", onyomi: "ザイ", kunyomi: "-", jukugos: [
     { word: "財布", reading: "さいふ", meaning: "Dompet" },
     { word: "財産", reading: "ざいさん", meaning: "Kekayaan" },
     { word: "財務", reading: "ざいむ", meaning: "Keuangan" },
     { word: "財団", reading: "ざいだん", meaning: "Yayasan" }
   ]},
-  "済": { romaji: "Sai", meaning: "Selesai / Menoolong", onyomi: "SAI", kunyomi: "su.mu", jukugos: [
+  "済": { romaji: "Sai", meaning: "Selesai / Menoolong", onyomi: "サイ", kunyomi: "す（む）", jukugos: [
     { word: "経済", reading: "けいざい", meaning: "Ekonomi" },
     { word: "返済", reading: "へんさい", meaning: "Pembayaran Hutang" },
     { word: "決済", reading: "けっさい", meaning: "Penyelesaian Pembayaran" },
     { word: "済む", reading: "すむ", meaning: "Selesai" }
   ]},
-  "費": { romaji: "Hi", meaning: "Biaya / Ongkos", onyomi: "HI", kunyomi: "tui.yasu", jukugos: [
+  "費": { romaji: "Hi", meaning: "Biaya / Ongkos", onyomi: "ヒ", kunyomi: "つい（やす）", jukugos: [
     { word: "費用", reading: "ひよう", meaning: "Biaya" },
     { word: "消費", reading: "しょうひ", meaning: "Konsumsi" },
     { word: "学費", reading: "がくひ", meaning: "Uang Sekolah" },
     { word: "会費", reading: "かいひ", meaning: "Iuran Anggota" }
   ]},
-  "消": { romaji: "Shou", meaning: "Padam / Menghapus", onyomi: "SHOU", kunyomi: "ki.eru / ke.su", jukugos: [
+  "消": { romaji: "Shou", meaning: "Padam / Menghapus", onyomi: "ショウ", kunyomi: "き（える）、け（す）", jukugos: [
     { word: "消費", reading: "しょうひ", meaning: "Konsumsi" },
     { word: "消しゴム", reading: "けしごむ", meaning: "Penghapus" },
     { word: "消去", reading: "しょうきょ", meaning: "Penghapusan" },
     { word: "消防車", reading: "しょうぼうしゃ", meaning: "Pemadam" }
   ]},
-  "供": { romaji: "Kyou", meaning: "Menyediakan / Pengikut", onyomi: "KYOU", kunyomi: "tomo", jukugos: [
+  "供": { romaji: "Kyou", meaning: "Menyediakan / Pengikut", onyomi: "キョウ", kunyomi: "そな（える）、とも", jukugos: [
     { word: "提供", reading: "ていきょう", meaning: "Penyediaan" },
     { word: "子供", reading: "こども", meaning: "Anak-anak" },
     { word: "試供品", reading: "しきょうひん", meaning: "Sampel" },
     { word: "供述", reading: "きょうじゅつ", meaning: "Pernyataan" }
   ]},
-  "給": { romaji: "Kyuu", meaning: "Gaji / Menyediakan", onyomi: "KYUU", kunyomi: "tama.u", jukugos: [
+  "給": { romaji: "Kyuu", meaning: "Gaji / Menyediakan", onyomi: "キュウ", kunyomi: "たま（う）", jukugos: [
     { word: "給料", reading: "きゅうりょう", meaning: "Gaji" },
     { word: "供給", reading: "きょうきゅう", meaning: "Penawaran / Supply" },
     { word: "給食", reading: "きゅうしょく", meaning: "Makan Siang Sekolah" },
@@ -1477,9 +1477,7 @@ async function main() {
 
   // Clear existing data
   await prisma.jukugo.deleteMany();
-  await prisma.etymology.deleteMany();
   await prisma.kanjiGraphEdge.deleteMany();
-  await prisma.kanjiGraphNode.deleteMany();
   await prisma.exampleSentence.deleteMany();
   await prisma.userKanjiProgress.deleteMany();
   await prisma.kanji.deleteMany();
@@ -1806,7 +1804,7 @@ async function main() {
               color: "border-blue-500",
               jukugos: [
                 { word: "試食", reading: "ししょく", meaning: "Uji Rasa" },
-                { word: "試yin", reading: "しいん", meaning: "Coba Minuman" }, // Note: we can keep "試yin" or "試飲" - the document uses "試yin" and "試飲". Let's write "試飲" as in Jukugo.
+                { word: "試飲", reading: "しいん", meaning: "Coba Minuman" },
                 { word: "試薬", reading: "しやく", meaning: "Reagen Uji" }
               ]
             },
@@ -1907,7 +1905,7 @@ async function main() {
               jukugos: [
                 { word: "設問", reading: "せつもん", meaning: "Butir Pertanyaan" },
                 { word: "問題集", reading: "もんだいしゅう", meaning: "Kumpulan Soal" },
-                { word: "一問一答", reading: "いちもんいっとう", meaning: "Satu Tanya Satu Jawab" }
+                { word: "問一", reading: "もんいち", meaning: "Soal Nomor 1" }
               ]
             },
             {
@@ -1947,7 +1945,7 @@ async function main() {
               jukugos: [
                 { word: "研究課題", reading: "けんきゅうかだい", meaning: "Topik Penelitian" },
                 { word: "論題", reading: "ろんだい", meaning: "Tema Kajian" },
-                { word: "出題", reading: "しつmood", meaning: "Pembuatan Soal" } // Wait, let's look at OCR for 出題 reading. OCR says "Pembuatan Soal", reading is "しゅつだい". Let's write "しゅつだい".
+                { word: "出題", reading: "しゅつだい", meaning: "Pembuatan Soal" } // Wait, let's look at OCR for 出題 reading. OCR says "Pembuatan Soal", reading is "しゅつだい". Let's write "しゅつだい".
               ]
             },
             {
@@ -2136,6 +2134,46 @@ async function main() {
             });
           });
         });
+
+        // Populate database MasterCategory and KategoriKanji relations
+        for (const cat of config.categories) {
+          let masterCat = await prisma.masterCategory.findUnique({
+            where: { name: cat.title },
+          });
+          if (!masterCat) {
+            masterCat = await prisma.masterCategory.create({
+              data: { name: cat.title },
+            });
+          }
+
+          for (const jk of cat.jukugos) {
+            let dbJukugo = await prisma.jukugo.findFirst({
+              where: { kanjiId: kanji.id, word: jk.word },
+            });
+            if (!dbJukugo) {
+              dbJukugo = await prisma.jukugo.create({
+                data: {
+                  kanjiId: kanji.id,
+                  word: jk.word,
+                  reading: jk.reading,
+                  meaning: jk.meaning,
+                },
+              });
+            }
+
+            const existingMap = await prisma.kategoriKanji.findFirst({
+              where: { jokugoId: dbJukugo.id, categoryId: masterCat.id },
+            });
+            if (!existingMap) {
+              await prisma.kategoriKanji.create({
+                data: {
+                  jokugoId: dbJukugo.id,
+                  categoryId: masterCat.id,
+                },
+              });
+            }
+          }
+        }
       } else {
         graphNodes = [
           { id: `${char}-root`, character: char, meaning: `(${info.romaji})\n${info.meaning}`, type: "root" },
@@ -2161,25 +2199,15 @@ async function main() {
         ];
       }
 
-      await prisma.kanjiGraphNode.createMany({
-        data: graphNodes.map(gn => ({
-          id: gn.id,
-          kanjiId: kanji.id,
-          character: gn.character,
-          meaning: gn.meaning,
-          type: gn.type,
-          borderColor: gn.borderColor || null,
-          isPill: gn.isPill || false,
-          parentPill: gn.parentPill || null
-        }))
-      });
+
 
       await prisma.kanjiGraphEdge.createMany({
         data: graphEdges.map(ge => ({
           id: ge.id,
           kanjiId: kanji.id,
           source: ge.source,
-          target: ge.target
+          target: ge.target,
+          predicate: ge.predicate || ge.label || null,
         }))
       });
 
