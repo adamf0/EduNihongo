@@ -31,7 +31,7 @@ export const StrokeByStroke = ({ kanji }: Props) => {
     <div className="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30 shadow-sm flex flex-col gap-sm">
       <h3 className="font-headline-md text-on-surface font-semibold flex items-center gap-2 select-none">
         <Icon name="format_list_numbered" className="text-primary text-xl block" />
-        Stroke-by-Stroke Order
+        Urutan Tulis
       </h3>
       <div className="flex flex-wrap gap-sm mt-xs">
         {strokes.map((_, idx) => {

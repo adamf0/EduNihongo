@@ -7,7 +7,6 @@ import confetti from "canvas-confetti";
 import KanjiStrokeVisualizer from "../../Module/Component/Atom/KanjiStrokeVisualizer";
 import { createWorker, PSM } from "tesseract.js";
 import KanjiAtlasFlow from "../../Module/Component/Atom/KanjiAtlasFlow";
-import Breadcrumbs from "../Component/Atoms/Breadcrumbs";
 import { api } from "../../Common/Utility/api";
 import tts from "../../Common/Utility/tts";
 import StrokeByStroke from "../Component/Atoms/StrokeByStroke";
@@ -31,7 +30,7 @@ import {
     Paperclip,
     GitGraph,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const worker = await createWorker("jpn");
@@ -294,6 +293,39 @@ export const LatihanPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<
         "detail" | "reading" | "quiz" | "lms"
     >("detail");
+    const [activePill, setActivePill] = useState<string>("learning-materials");
+
+    const JAPANESE_HERO_BG_IMAGES = useMemo(
+        () => [
+            "https://antaraya.co.id/wp-content/uploads/2023/02/6-Budaya-Jepang-Yang-Unik-Dan-Menarik-Untuk-Diketahui.jpg",
+            "https://itoen-ultrajaya.co.id/wp-content/uploads/2024/06/Budaya-Jepang-Apa-Saja-Ini-yang-Paling-Terkenal-dan-Unik-di-Dunia.jpg",
+            "https://cdn.pixabay.com/photo/2016/11/14/03/43/kimono-1822520_1280.jpg",
+            "https://cdn.pixabay.com/photo/2016/11/07/14/03/japan-1805865_640.jpg",
+            "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/245/2025/10/27/WhatsApp-Image-2025-10-27-at-102300_7bd75400-2510856370.jpg",
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_lqbsO68Cs9CsjR9Nd4f2CX6fxoflTPGTGVqOu9TPr9pyNgOf5QszZ_AY&s=10",
+            "https://media.unseen-japan.com/wp-content/uploads/2025/03/pixta_78714900_M-768x512.jpg",
+            "https://image.idntimes.com/post/20250809/hobby-932_38e8f419-34b3-4c3c-8b58-167fc16e67aa.jpg",
+            "https://imgsrv2.voi.id/pJQYT-s2JH_1g9Aj8NQ0_iM_SxeFKkCMlBNTWCj20Kw/auto/1200/675/sm/1/bG9jYWw6Ly8vcHVibGlzaGVycy8zNzgwMS8yMDIxMDMwODE2NDMtbW9iaWxlLmNyb3BwZWRfMTYxNTIwMzIwNy5qcGc.jpg",
+            "https://cdns.klimg.com/resized/1200x600/p/headline/budaya-jepang-apa-saja-ini-daftar-lengk-700cb8.jpg",
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTa-j1Mn4gR8xVmf04XDG3FeXnqKcspIlsxKmD56dRjxUBoMH3WDjmtyAe&s=10",
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRj3Vr8oPAN_a2k9Nm3yAbHyDlgMTeFBzm-NE6PQG9Oy0V3epJtUNXijss&s=10",
+            "https://img.magnific.com/free-photo/close-up-pupils-doing-japanese-calligraphy-called-shodo_23-2149105367.jpg",
+        ],
+        [],
+    );
+
+    const randomHeroBg = useMemo(() => {
+        const idx = Math.floor(Math.random() * JAPANESE_HERO_BG_IMAGES.length);
+        return JAPANESE_HERO_BG_IMAGES[idx];
+    }, [charParam, JAPANESE_HERO_BG_IMAGES]);
+
+    // Preload all background images into browser cache for instant lag-free rendering
+    useEffect(() => {
+        JAPANESE_HERO_BG_IMAGES.forEach((src) => {
+            const img = new Image();
+            img.src = src;
+        });
+    }, [JAPANESE_HERO_BG_IMAGES]);
 
     // Reading tab states
     const [readSentences, setReadSentences] = useState<Record<number, boolean>>(
@@ -864,6 +896,17 @@ export const LatihanPage: React.FC = () => {
     const handleTabChange = (tab: "detail" | "reading" | "quiz" | "lms") => {
         playTabClickSound();
         setActiveTab(tab);
+    };
+
+    const handlePillClick = (pillKey: string, mainTab: "detail" | "reading" | "quiz" | "lms", targetElementId?: string) => {
+        playTabClickSound();
+        setActivePill(pillKey);
+        setActiveTab(mainTab);
+        if (targetElementId) {
+            setTimeout(() => {
+                document.getElementById(targetElementId)?.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+        }
     };
 
     const playTingTing = () => {
@@ -1736,171 +1779,291 @@ export const LatihanPage: React.FC = () => {
 
     return (
         <Layout>
-            <div className="w-full mx-auto px-4 md:px-8 py-8 flex flex-col gap-6 select-none relative z-10">
-                {/* Custom style for background */}
-                <style>{`
-          .seigaiha-bg {
-            background-image: radial-gradient(circle at 100% 150%, #edeef0 24%, white 25%, white 28%, #edeef0 29%, #edeef0 36%, white 36%, white 40%, transparent 40%, transparent);
-            background-size: 40px 20px;
-          }
-
-          @keyframes slideInLeft {
-            from {
-              opacity: 0;
-              transform: translateX(-60px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-          .animate-slide-in-left {
-            animation: slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          }
-
-          @keyframes zoomIn {
-            from {
-              opacity: 0;
-              transform: scale(0.6);
-            }
-            to {
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
-          .animate-zoom-in {
-            animation: zoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-          }
-        `}</style>
-
+            <div className="w-full mx-auto px-4 md:px-8 pb-8 flex flex-col gap-6 select-none relative z-10">
                 {/* Background Texture */}
                 <div className="absolute inset-0 seigaiha-bg pointer-events-none opacity-20 -z-10"></div>
 
-                {/* Breadcrumbs */}
-                <Breadcrumbs
-                    items={[
-                        { label: "Dasbor", path: "/dashboard" },
-                        { label: "Kanji & Kosakata", path: "/module" },
-                        {
-                            label: `Latihan & Evaluasi: ${kanji} (${kanjiData.moduleTitle || "Kanji"})`,
-                        },
-                    ]}
-                />
+                {/* Dark Ukiyo-e Japanese Scenic Hero Banner (Image 2 Redesign) */}
+                <div
+                    className="relative w-full rounded-3xl overflow-hidden border border-white/10 shadow-2xl p-6 md:p-8 flex flex-col justify-end gap-6 min-h-[90vh]"
+                    style={{
+                        background: `url(${randomHeroBg}) center/cover no-repeat`,
+                    }}
+                >
+                    {/* Dark Tint Overlay for Readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b101d]/90 via-[#0F172A]/60 to-[#0b101d]/70 pointer-events-none z-0"></div>
 
-                {/* Primary Header Card with Detailed Percent Stats */}
-                <div className="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
-                    <div className="flex items-center gap-6 self-start md:self-center animate-slide-in-left opacity-0">
-                        <div className="w-24 h-24 bg-[#8f0020]/5 rounded-2xl flex items-center justify-center text-slate-800 font-bold border border-slate-100 relative shrink-0">
-                            <span className="font-serif text-5xl leading-none">
-                                {kanji}
-                            </span>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5 text-left">
-                            <span className="bg-[#fcebeb] text-[#8f0020] px-3 py-1 rounded-full text-xs font-bold w-fit uppercase tracking-wider">
-                                {kanjiData.moduleTitle || "Syllabus"}
-                            </span>
-                            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none">
-                                {kanjiMeaning}
-                            </h1>
-                            <p className="text-sm font-medium text-slate-400">
-                                Romaji:{" "}
-                                <span className="font-semibold text-slate-600 font-mono">
-                                    {kanjiRomaji}
-                                </span>{" "}
-                                | Tingkat kesulitan:{" "}
-                                <span className="font-bold text-[#8f0020]">
-                                    {kanjiData.difficulty || "N4"}
+                    {/* Main Flex Wrapper (Kanji Box Left + Glass Card Center/Right) */}
+                    <div className="relative z-10 flex flex-col md:flex-row items-stretch gap-6 w-full">
+                        {/* 1. Left Kanji Showcase Card */}
+                        <div className="bg-slate-900/60 backdrop-blur-xl border border-amber-400/30 rounded-3xl p-3.5 shadow-2xl flex flex-col items-center justify-between min-w-[200px] md:w-[220px] shrink-0">
+                            {/* Inner Metallic Kanji Frame */}
+                            <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-200 rounded-2xl p-6 shadow-[inset_0_2px_4px_rgba(255,255,255,0.9),0_10px_25px_rgba(0,0,0,0.5)] border border-amber-300/60 w-full flex flex-col items-center justify-center relative min-h-[140px]">
+                                <span className="font-serif text-7xl font-black text-slate-950 leading-none drop-shadow-sm tracking-tighter">
+                                    {kanji}
                                 </span>
-                            </p>
-                        </div>
-                    </div>
+                            </div>
 
-                    {/* Progress Breakdown Grid */}
-                    <div className="flex flex-wrap items-center gap-4 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 justify-around animate-zoom-in opacity-0">
-                        <div className="flex flex-col items-center select-none bg-slate-50/50 p-3 rounded-2xl border border-slate-100 min-w-[70px]">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
-                                Total
-                            </span>
-                            <div className="w-11 h-11 rounded-full bg-[#8f0020] flex items-center justify-center text-white font-extrabold text-sm shadow-md">
-                                {masteryPercent}%
+                            {/* Attached On/Kun Readings Box */}
+                            <div className="bg-slate-950/70 backdrop-blur-md rounded-xl p-3 mt-3 w-full border border-white/10 text-xs flex flex-col gap-1.5 text-left select-text">
+                                <div className="text-slate-300 font-medium">
+                                    <span className="text-amber-400/90 font-bold uppercase tracking-wider">Onyomi:</span>{" "}
+                                    <span className="font-semibold text-white">{kanjiData.onyomi || "-"}</span>
+                                </div>
+                                <div className="text-slate-300 font-medium">
+                                    <span className="text-amber-400/90 font-bold uppercase tracking-wider">Kunyomi:</span>{" "}
+                                    <span className="font-semibold text-white">{kanjiData.kunyomi || "-"}</span>
+                                </div>
+                                <div className="text-slate-300 font-medium">
+                                    <span className="text-amber-400/90 font-bold uppercase tracking-wider">Bushuu:</span>{" "}
+                                    <span className="font-semibold text-white">{kanjiData.bushuu || "-"}</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[60px]">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                                Tulis
-                            </span>
-                            <span className="text-sm font-bold text-slate-700">
-                                {writingPercent}%
-                            </span>
-                        </div>
+                        {/* 2. Middle/Right Main Header Info Glass Card */}
+                        <div className="bg-[#121929]/10 backdrop-blur-sm border border-white/10 rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 flex-1 shadow-2xl">
+                            {/* Title & Subtitle Section */}
+                            <div className="flex flex-col gap-3 text-left w-full lg:w-auto flex-1">
+                                <div className="flex items-center gap-2.5 flex-wrap">
+                                    <span className="bg-[#8F0020] text-white px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-md border border-red-500/30">
+                                        {kanjiData.moduleTitle || "MODULE ?"}
+                                    </span>
+                                </div>
 
-                        <div className="flex flex-col items-center min-w-[60px]">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                                Baca
-                            </span>
-                            <span className="text-sm font-bold text-slate-700">
-                                {readingPercent}%
-                            </span>
-                        </div>
+                                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                                    {kanjiMeaning}
+                                </h1>
 
-                        <div className="flex flex-col items-center min-w-[60px]">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                                Kuis
-                            </span>
-                            <span className="text-sm font-bold text-slate-700">
-                                {quizPercent}%
-                            </span>
+                                <p className="text-sm font-medium text-slate-400 leading-relaxed">
+                                    {kanjiData.baseMeaning || (kanjiRomaji ? `Point, Dot, Mark, Score, Focus` : "Point, Dot, Mark, Score, Focus")}
+                                </p>
+                            </div>
+
+                            {/* Circular SVG Donut Progress Gauges */}
+                            <div className="flex items-center justify-around gap-4 shrink-0 w-full lg:w-auto border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6">
+                                {/* Gauge 1: Green - Learning Mastery */}
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="relative w-16 h-16 flex items-center justify-center">
+                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                            <path
+                                                className="text-slate-800/80"
+                                                strokeWidth="3.5"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                            <path
+                                                className="text-emerald-500 transition-all duration-1000 drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]"
+                                                strokeDasharray={`${masteryPercent || 0}, 100`}
+                                                strokeWidth="3.5"
+                                                strokeLinecap="round"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                        </svg>
+                                        <span className="absolute font-extrabold text-sm text-white">
+                                            {masteryPercent || 0}%
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-slate-300 mt-2 max-w-[80px] leading-tight">
+                                        Total
+                                    </span>
+                                </div>
+
+                                {/* Gauge 2: Orange - Stroke Order Accuracy */}
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="relative w-16 h-16 flex items-center justify-center">
+                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                            <path
+                                                className="text-slate-800/80"
+                                                strokeWidth="3.5"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                            <path
+                                                className="text-amber-500 transition-all duration-1000 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                                                strokeDasharray={`${writingPercent || 0}, 100`}
+                                                strokeWidth="3.5"
+                                                strokeLinecap="round"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                        </svg>
+                                        <span className="absolute font-extrabold text-sm text-white">
+                                            {writingPercent || 0}%
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-slate-300 mt-2 max-w-[80px] leading-tight">
+                                        Tulis
+                                    </span>
+                                </div>
+
+                                {/* Gauge 3: Blue - Vocabulary Usage */}
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="relative w-16 h-16 flex items-center justify-center">
+                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                            <path
+                                                className="text-slate-800/80"
+                                                strokeWidth="3.5"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                            <path
+                                                className="text-blue-500 transition-all duration-1000 drop-shadow-[0_0_6px_rgba(59,130,246,0.6)]"
+                                                strokeDasharray={`${readingPercent || 0}, 100`}
+                                                strokeWidth="3.5"
+                                                strokeLinecap="round"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                        </svg>
+                                        <span className="absolute font-extrabold text-sm text-white">
+                                            {readingPercent || 0}%
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-slate-300 mt-2 max-w-[80px] leading-tight">
+                                        Baca
+                                    </span>
+                                </div>
+
+                                {/* Gauge 3: Blue - Vocabulary Usage */}
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="relative w-16 h-16 flex items-center justify-center">
+                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                            <path
+                                                className="text-slate-800/80"
+                                                strokeWidth="3.5"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                            <path
+                                                className="text-red-500 transition-all duration-1000 drop-shadow-[0_0_6px_rgba(59,130,246,0.6)]"
+                                                strokeDasharray={`${quizPercent || 0}, 100`}
+                                                strokeWidth="3.5"
+                                                strokeLinecap="round"
+                                                stroke="currentColor"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                        </svg>
+                                        <span className="absolute font-extrabold text-sm text-white">
+                                            {quizPercent || 0}%
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-slate-300 mt-2 max-w-[80px] leading-tight">
+                                        Kuis
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Tab Navigation Menu */}
-                <div className="flex border-b border-slate-200/80 mb-2 bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-xs gap-2">
+                {/* 3. Glass Pill Navigation Tab Bar (Placed Outside & Below Hero Banner Image) */}
+                <div className="w-full bg-[#121929] backdrop-blur-xl p-1.5 rounded-full border border-slate-800 flex items-center justify-between overflow-x-auto shadow-xl gap-1 my-1 scrollbar-none">
                     <button
-                        onClick={() => handleTabChange("detail")}
-                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
-                            activeTab === "detail"
-                                ? "bg-[#8f0020] text-white shadow-md"
-                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        onClick={() => handlePillClick("learning-materials", "detail")}
+                        className={`flex-1 min-w-[120px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
+                            activePill === "learning-materials"
+                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
+                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                         }`}
                     >
-                        <PenTool className="w-4 h-4" />
-                        Menulis & Detail
+                        Learning Materials
+                        {activePill === "learning-materials" && (
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
+                        )}
                     </button>
+
                     <button
-                        onClick={() => handleTabChange("reading")}
-                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
-                            activeTab === "reading"
-                                ? "bg-[#8f0020] text-white shadow-md"
-                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        onClick={() => handlePillClick("stroke-order", "detail", "stroke-order-section")}
+                        className={`flex-1 min-w-[110px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
+                            activePill === "stroke-order"
+                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
+                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                         }`}
                     >
-                        <BookOpen className="w-4 h-4" />
-                        Latihan Membaca
+                        Latihan Menulis
+                        {activePill === "stroke-order" && (
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
+                        )}
                     </button>
+
                     <button
-                        onClick={() => handleTabChange("quiz")}
-                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
-                            activeTab === "quiz"
-                                ? "bg-[#8f0020] text-white shadow-md"
-                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        onClick={() => handlePillClick("examples", "reading")}
+                        className={`flex-1 min-w-[100px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
+                            activePill === "examples"
+                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
+                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                         }`}
                     >
-                        <HelpCircle className="w-4 h-4" />
-                        Kuis Evaluasi
+                        Examples
+                        {activePill === "examples" && (
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
+                        )}
                     </button>
+
                     <button
-                        onClick={() => handleTabChange("lms")}
-                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
-                            activeTab === "lms"
-                                ? "bg-[#8f0020] text-white shadow-md"
-                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        onClick={() => handlePillClick("readings", "reading")}
+                        className={`flex-1 min-w-[100px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
+                            activePill === "readings"
+                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
+                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                         }`}
                     >
-                        <MessageSquare className="w-4 h-4" />
-                        Tugas & Diskusi
+                        Readings
+                        {activePill === "readings" && (
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={() => handlePillClick("quizzes", "quiz")}
+                        className={`flex-1 min-w-[100px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
+                            activePill === "quizzes"
+                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
+                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                        }`}
+                    >
+                        Quizzes
+                        {activePill === "quizzes" && (
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={() => handlePillClick("mnemonics", "detail", "semantic-graph-section")}
+                        className={`flex-1 min-w-[110px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
+                            activePill === "mnemonics"
+                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
+                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                        }`}
+                    >
+                        Mnemonics
+                        {activePill === "mnemonics" && (
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={() => handlePillClick("discussion", "lms")}
+                        className={`flex-1 min-w-[110px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
+                            activePill === "discussion"
+                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
+                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                        }`}
+                    >
+                        Discussion
+                        {activePill === "discussion" && (
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
+                        )}
                     </button>
                 </div>
 
@@ -1908,7 +2071,7 @@ export const LatihanPage: React.FC = () => {
                 {activeTab === "detail" && (
                     <div className="flex flex-col gap-4">
                         {/* a. Informasi Kanji Card */}
-                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in">
+                        {/* <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in">
                             <h4 className="font-extrabold text-lg text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                                 <span className="flex items-center gap-2">
                                     <Info className="text-[#8f0020] w-5 h-5" />
@@ -1983,10 +2146,10 @@ export const LatihanPage: React.FC = () => {
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Semantic Graph */}
-                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in overflow-hidden flex flex-col gap-2">
+                        <div id="semantic-graph-section" className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in overflow-hidden flex flex-col gap-2">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="flex items-center gap-2">
                                     <GitGraph className="text-[#8f0020] w-5 h-5" />
@@ -2339,12 +2502,12 @@ export const LatihanPage: React.FC = () => {
                         </div>
 
                         {/* Handwriting Practice Canvas */}
-                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs flex flex-col">
+                        <div id="stroke-order-section" className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs flex flex-col">
                             <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-50">
                                 <h2 className="text-lg font-bold text-slate-800 flex items-center justify-between w-full">
                                     <span className="flex items-center gap-2">
                                         <PenTool className="text-[#8f0020] w-5 h-5 animate-bounce" />
-                                        Latihan Menulis Goresan
+                                        Latihan Menulis
                                     </span>
                                     {renderXpBadge(
                                         !!kanjiData?.xpClaimed?.writing,
