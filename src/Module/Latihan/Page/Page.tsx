@@ -1969,15 +1969,15 @@ export const LatihanPage: React.FC = () => {
                 {/* 3. Glass Pill Navigation Tab Bar (Placed Outside & Below Hero Banner Image) */}
                 <div className="w-full bg-[#121929] backdrop-blur-xl p-1.5 rounded-full border border-slate-800 flex items-center justify-between overflow-x-auto shadow-xl gap-1 my-1 scrollbar-none">
                     <button
-                        onClick={() => handlePillClick("learning-materials", "detail")}
-                        className={`flex-1 min-w-[120px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
-                            activePill === "learning-materials"
+                        onClick={() => handlePillClick("mnemonics", "detail", "semantic-graph-section")}
+                        className={`flex-1 min-w-[110px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
+                            activePill === "mnemonics"
                                 ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
                                 : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                         }`}
                     >
-                        Learning Materials
-                        {activePill === "learning-materials" && (
+                        Semantic
+                        {activePill === "mnemonics" && (
                             <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
                         )}
                     </button>
@@ -1997,20 +1997,6 @@ export const LatihanPage: React.FC = () => {
                     </button>
 
                     <button
-                        onClick={() => handlePillClick("examples", "reading")}
-                        className={`flex-1 min-w-[100px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
-                            activePill === "examples"
-                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                        }`}
-                    >
-                        Examples
-                        {activePill === "examples" && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
-                        )}
-                    </button>
-
-                    <button
                         onClick={() => handlePillClick("readings", "reading")}
                         className={`flex-1 min-w-[100px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
                             activePill === "readings"
@@ -2018,7 +2004,7 @@ export const LatihanPage: React.FC = () => {
                                 : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                         }`}
                     >
-                        Readings
+                        Membaca
                         {activePill === "readings" && (
                             <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
                         )}
@@ -2032,22 +2018,8 @@ export const LatihanPage: React.FC = () => {
                                 : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                         }`}
                     >
-                        Quizzes
+                        Kuis
                         {activePill === "quizzes" && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
-                        )}
-                    </button>
-
-                    <button
-                        onClick={() => handlePillClick("mnemonics", "detail", "semantic-graph-section")}
-                        className={`flex-1 min-w-[110px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
-                            activePill === "mnemonics"
-                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                        }`}
-                    >
-                        Mnemonics
-                        {activePill === "mnemonics" && (
                             <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
                         )}
                     </button>
@@ -2060,7 +2032,7 @@ export const LatihanPage: React.FC = () => {
                                 : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                         }`}
                     >
-                        Discussion
+                        Tugas & Diskusi
                         {activePill === "discussion" && (
                             <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
                         )}
