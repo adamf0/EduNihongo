@@ -730,22 +730,28 @@ async function migrateStaticDataToDb() {
     const role1 = details.charRoles[char1] || (CONSTITUENT_KANJI_DATA[char1]?.meaning || "Peran 1");
     const role2 = details.charRoles[char2] || (CONSTITUENT_KANJI_DATA[char2]?.meaning || "Peran 2");
 
+    const matchedJukugo = await prisma.jukugo.findFirst({
+      where: { kanjiId: parentKanjiId, word: word }
+    });
+
     const existingSemantic = await prisma.semanticRelation.findFirst({
-      where: { kanji: word },
+      where: { kanjiId: parentKanjiId, jukugoId: matchedJukugo?.id || null },
     });
 
     if (!existingSemantic) {
-      await prisma.semanticRelation.create({
+      const createdSem = await prisma.semanticRelation.create({
         data: {
           kanjiId: parentKanjiId,
-          kanji: word,
-          arti: details.explanation.split("makna '")[1]?.replace("'", "") || details.explanation.slice(0, 50),
-          jukugo_1: char1,
-          jukugo_1_arti: role1,
-          jukugo_2: char2,
-          jukugo_2_arti: role2,
+          jukugoId: matchedJukugo?.id || null,
           penjelasan: details.explanation,
         },
+      });
+
+      await prisma.semanticRelationNode.createMany({
+        data: [
+          { semanticId: createdSem.id, jokugo: char1, arti: role1 },
+          { semanticId: createdSem.id, jokugo: char2, arti: role2 },
+        ].filter((n) => n.jokugo),
       });
       console.log(`✅ Created SemanticRelation for: ${word}`);
     }

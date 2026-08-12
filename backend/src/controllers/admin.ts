@@ -15,7 +15,7 @@ export const getModules = async (req: Request, res: Response) => {
           include: {
             examples: true,
             jukugos: true,
-            semanticRelations: true,
+            semanticRelations: { include: { jukugo: true, nodes: true } },
             masterRefleksi: true,
             quizzes: { orderBy: { type: "asc" } },
           },
@@ -62,7 +62,7 @@ export const getModuleDetail = async (req: Request, res: Response) => {
           include: {
             examples: true,
             jukugos: true,
-            semanticRelations: true,
+            semanticRelations: { include: { jukugo: true, nodes: true } },
             masterRefleksi: true,
             quizzes: { orderBy: { type: "asc" } },
           },
@@ -385,7 +385,7 @@ export const getKanjis = async (req: Request, res: Response) => {
         graphEdges: true,
         module: true,
         jukugos: true,
-        semanticRelations: true,
+        semanticRelations: { include: { jukugo: true, nodes: true } },
         masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },
@@ -494,14 +494,63 @@ export const createKanji = async (req: Request, res: Response) => {
       });
     }
 
-    // Create SemanticRelations
+    // Create SemanticRelations & SemanticRelationNode
     if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
-      await prisma.semanticRelation.createMany({
-        data: semanticRelations.map((sr: any) => ({
-          kanjiId: kanji.id,
-          ...parseSemanticRelationFields(sr),
-        })),
-      });
+      for (const sr of semanticRelations) {
+        let resolvedJukugoId: number | null = sr.jukugoId ? Number(sr.jukugoId) : null;
+        if (!resolvedJukugoId) {
+          const wordToMatch = (sr.kanji || sr.word || sr.jokugo || "").trim();
+          if (wordToMatch) {
+            const matchedJukugo = await prisma.jukugo.findFirst({
+              where: { kanjiId: kanji.id, word: wordToMatch }
+            });
+            if (matchedJukugo) {
+              resolvedJukugoId = matchedJukugo.id;
+            }
+          }
+        }
+
+        const createdSem = await prisma.semanticRelation.create({
+          data: {
+            kanjiId: kanji.id,
+            jukugoId: resolvedJukugoId,
+            penjelasan: (sr.penjelasan || "").trim(),
+          },
+        });
+
+        let nodesToCreate: { jokugo: string; arti: string }[] = [];
+        if (Array.isArray(sr.nodes) && sr.nodes.length > 0) {
+          nodesToCreate = sr.nodes
+            .map((n: any) => ({
+              jokugo: (n.jokugo || n.jukugo || n.word || "").trim(),
+              arti: (n.arti || "").trim(),
+            }))
+            .filter((n: any) => n.jokugo);
+        } else {
+          if (sr.jukugo_1 || sr.jokugo_1) {
+            nodesToCreate.push({
+              jokugo: (sr.jukugo_1 || sr.jokugo_1 || "").trim(),
+              arti: (sr.jukugo_1_arti || sr.jokugo_1_arti || "").trim(),
+            });
+          }
+          if (sr.jukugo_2 || sr.jokugo_2) {
+            nodesToCreate.push({
+              jokugo: (sr.jukugo_2 || sr.jokugo_2 || "").trim(),
+              arti: (sr.jukugo_2_arti || sr.jokugo_2_arti || "").trim(),
+            });
+          }
+        }
+
+        if (nodesToCreate.length > 0) {
+          await prisma.semanticRelationNode.createMany({
+            data: nodesToCreate.map((n) => ({
+              semanticId: createdSem.id,
+              jokugo: n.jokugo,
+              arti: n.arti,
+            })),
+          });
+        }
+      }
     }
 
     // Create Quizzes in Quiz table
@@ -564,7 +613,7 @@ export const createKanji = async (req: Request, res: Response) => {
         graphEdges: true,
         module: true,
         jukugos: true,
-        semanticRelations: true,
+        semanticRelations: { include: { jukugo: true, nodes: true } },
         masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },
@@ -756,12 +805,61 @@ export const updateKanji = async (req: Request, res: Response) => {
     if (semanticRelations !== undefined) {
       await prisma.semanticRelation.deleteMany({ where: { kanjiId } });
       if (Array.isArray(semanticRelations) && semanticRelations.length > 0) {
-        await prisma.semanticRelation.createMany({
-          data: semanticRelations.map((sr: any) => ({
-            kanjiId,
-            ...parseSemanticRelationFields(sr),
-          })),
-        });
+        for (const sr of semanticRelations) {
+          let resolvedJukugoId: number | null = sr.jukugoId ? Number(sr.jukugoId) : null;
+          if (!resolvedJukugoId) {
+            const wordToMatch = (sr.kanji || sr.word || sr.jokugo || "").trim();
+            if (wordToMatch) {
+              const matchedJukugo = await prisma.jukugo.findFirst({
+                where: { kanjiId, word: wordToMatch }
+              });
+              if (matchedJukugo) {
+                resolvedJukugoId = matchedJukugo.id;
+              }
+            }
+          }
+
+          const createdSem = await prisma.semanticRelation.create({
+            data: {
+              kanjiId,
+              jukugoId: resolvedJukugoId,
+              penjelasan: (sr.penjelasan || "").trim(),
+            },
+          });
+
+          let nodesToCreate: { jokugo: string; arti: string }[] = [];
+          if (Array.isArray(sr.nodes) && sr.nodes.length > 0) {
+            nodesToCreate = sr.nodes
+              .map((n: any) => ({
+                jokugo: (n.jokugo || n.jukugo || n.word || "").trim(),
+                arti: (n.arti || "").trim(),
+              }))
+              .filter((n: any) => n.jokugo);
+          } else {
+            if (sr.jukugo_1 || sr.jokugo_1) {
+              nodesToCreate.push({
+                jokugo: (sr.jukugo_1 || sr.jokugo_1 || "").trim(),
+                arti: (sr.jukugo_1_arti || sr.jokugo_1_arti || "").trim(),
+              });
+            }
+            if (sr.jukugo_2 || sr.jokugo_2) {
+              nodesToCreate.push({
+                jokugo: (sr.jukugo_2 || sr.jokugo_2 || "").trim(),
+                arti: (sr.jukugo_2_arti || sr.jokugo_2_arti || "").trim(),
+              });
+            }
+          }
+
+          if (nodesToCreate.length > 0) {
+            await prisma.semanticRelationNode.createMany({
+              data: nodesToCreate.map((n) => ({
+                semanticId: createdSem.id,
+                jokugo: n.jokugo,
+                arti: n.arti,
+              })),
+            });
+          }
+        }
       }
     }
 
@@ -826,7 +924,7 @@ export const updateKanji = async (req: Request, res: Response) => {
         graphEdges: true,
         module: true,
         jukugos: true,
-        semanticRelations: true,
+        semanticRelations: { include: { jukugo: true, nodes: true } },
         masterRefleksi: true,
         quizzes: { orderBy: { type: "asc" } },
       },

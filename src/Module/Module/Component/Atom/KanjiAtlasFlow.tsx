@@ -6,6 +6,7 @@ import {
   MarkerType,
   getBezierPath,
   type EdgeProps,
+  EdgeLabelRenderer,
   useNodesState,
   useEdgesState,
 } from "@xyflow/react";
@@ -87,7 +88,7 @@ const CustomCrossLinkEdge = ({
     labelY = ly;
   }
 
-  const strokeColor = (style as any).stroke || "#3b82f6";
+  // const strokeColor = (style as any).stroke || "#3b82f6";
   const labelText = typeof label === "string" ? label.replace(/_/g, " ") : label;
 
   return (
@@ -100,31 +101,20 @@ const CustomCrossLinkEdge = ({
         markerEnd={markerEnd}
       />
       {labelText && (
-        <g transform={`translate(${labelX}, ${labelY})`}>
-          <rect
-            x="-55"
-            y="-13"
-            width="110"
-            height="26"
-            rx="10"
-            ry="10"
-            fill="#ffffff"
-            stroke={strokeColor}
-            strokeWidth="2.5"
-            filter="drop-shadow(0 4px 8px rgba(0,0,0,0.12))"
-          />
-          <text
-            x="0"
-            y="4"
-            textAnchor="middle"
-            fill="#0f172a"
-            fontSize="11"
-            fontWeight="800"
-            fontFamily="sans-serif"
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: "all",
+            }}
+            className="nodrag nopan"
           >
-            {labelText}
-          </text>
-        </g>
+            <div className="bg-white border-2 border-slate-700 text-slate-900 px-3 py-1 rounded-full text-[11px] font-extrabold shadow-md whitespace-nowrap">
+              {labelText}
+            </div>
+          </div>
+        </EdgeLabelRenderer>
       )}
     </>
   );
@@ -167,13 +157,19 @@ export default function KanjiAtlasFlow({
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [kanjis, setKanjis] = useState<any[]>([]);
+  const [jukugos, setJukugos] = useState<any[]>([]);
 
-  // Fetch all kanji details for romaji & meaning lookup
+  // Fetch all kanji & jukugo details for romaji & meaning lookup
   useEffect(() => {
     api.admin.kanjis
       .list()
       .then((data) => setKanjis(data))
       .catch((err) => console.error("Gagal memuat detail kanji untuk atlas:", err));
+
+    api.admin.jukugos
+      .list()
+      .then((data) => setJukugos(data))
+      .catch((err) => console.error("Gagal memuat detail jukugo untuk atlas:", err));
   }, []);
 
   const kanjiMap = useMemo(() => {
@@ -181,6 +177,12 @@ export default function KanjiAtlasFlow({
     kanjis.forEach((k) => map.set(k.character, k));
     return map;
   }, [kanjis]);
+
+  const jukugoMap = useMemo(() => {
+    const map = new Map<string, any>();
+    jukugos.forEach((j) => map.set(j.word, j));
+    return map;
+  }, [jukugos]);
 
   // Automatically expand root and categories on initial mount
   useEffect(() => {
@@ -234,25 +236,27 @@ export default function KanjiAtlasFlow({
       nodePosMap.set(rootNode.id, { x: rootX, y: rootY });
     }
 
-    // 2. Optimized 360° Circular Network Positioning for Categories & Jukugo
-    const numCategories = categoryNodes.length;
-    const categoryRadius = 520;
+    // 2. Clean Hierarchical Tree Layout matching reference diagrams
+    // 2. Spacious 2D Quadrant / Radial Cluster Layout (Matching Gambar 2)
+    const rootChar = (rootNode?.kanji || rootNode?.character || rootNode?.word || rootNode?.label || "").trim();
+
+    // 4 Quadrants + Center-bottom layout positions for Category clusters with wide 2D spacing
+    const categoryPositions = [
+      { x: -1400, y: -400, dir: -1 }, // Top-Left Quadrant (Category 1)
+      { x: 1400, y: -400, dir: 1 },   // Top-Right Quadrant (Category 2)
+      { x: -1400, y: 900, dir: -1 },  // Bottom-Left Quadrant (Category 3)
+      { x: 1400, y: 900, dir: 1 },    // Bottom-Right Quadrant (Category 4)
+      { x: 0, y: 1600, dir: 1 },      // Bottom-Center (Category 5+)
+    ];
 
     categoryNodes.forEach((cat, catIdx) => {
       const catColor = getCategoryColor(catIdx, cat.kanji || cat.name || cat.id);
       catColorMap.set(cat.id, catColor);
 
-      let angleRad = 0;
-      if (numCategories === 1) {
-        angleRad = -Math.PI / 2;
-      } else if (numCategories === 2) {
-        angleRad = catIdx === 0 ? Math.PI : 0;
-      } else {
-        angleRad = -Math.PI * 0.75 + (catIdx / numCategories) * 2 * Math.PI;
-      }
-
-      const catX = rootX + categoryRadius * Math.cos(angleRad);
-      const catY = rootY + categoryRadius * Math.sin(angleRad);
+      const catPos = categoryPositions[catIdx % categoryPositions.length];
+      const catX = catPos.x;
+      const catY = catPos.y;
+      const dir = catPos.dir; // -1 for left-branching, +1 for right-branching
 
       positionedNodes.push({
         ...cat,
@@ -262,153 +266,267 @@ export default function KanjiAtlasFlow({
       });
       nodePosMap.set(cat.id, { x: catX, y: catY });
 
-      const children = initialRawNodes.filter(
+      // Edge: Root -> Category
+      const rootToCatEdgeId = `e-${rootNode?.id || "root"}-${cat.id}`;
+      if (!generatedEdges.some((e: any) => e.id === rootToCatEdgeId)) {
+        generatedEdges.push({
+          id: rootToCatEdgeId,
+          source: rootNode?.id || "root",
+          target: cat.id,
+          sourceHandle: catX < 0 ? "s-left" : "s-right",
+          targetHandle: catX < 0 ? "t-right" : "t-left",
+          label: "kategori",
+          color: catColor,
+          style: { stroke: catColor, strokeWidth: 3 },
+          animated: true,
+        });
+      }
+
+      // Fetch main Jukugo children of this category
+      const mainJukugos = initialRawNodes.filter(
         (n: any) => (n.type === "sub-bottom" || n.type === "sub") && (n.parentPill === cat.id || n.categoryId === cat.id)
       );
-      children.sort((a, b) => a.id.localeCompare(b.id));
+      mainJukugos.sort((a, b) => a.id.localeCompare(b.id));
 
-      const numChildren = children.length;
-      if (numChildren > 0) {
-        const childRadius = 380;
-        const arcSpreadRad = numChildren > 1 ? Math.min((150 * Math.PI) / 180, (numChildren - 1) * ((50 * Math.PI) / 180)) : 0;
-        const startChildAngleRad = angleRad - arcSpreadRad / 2;
+      if (mainJukugos.length === 0) return;
 
-        children.forEach((child, childIdx) => {
-          let cAngleRad = angleRad;
-          if (numChildren > 1) {
-            cAngleRad = startChildAngleRad + (childIdx / (numChildren - 1)) * arcSpreadRad;
-          }
+      // Column Spacing inside each quadrant cluster
+      const col1X = catX + dir * 420;
+      const col2X = catX + dir * 840;
+      const col3X = catX + dir * 1240;
 
-          const childX = catX + childRadius * Math.cos(cAngleRad);
-          const childY = catY + childRadius * Math.sin(cAngleRad);
+      const subCompoundRequests: Map<string, { subWord: string; meaning: string; parentJkIds: string[]; preferredY: number }> = new Map();
+      const leafKanjiRequests: Map<string, { char: string; parentIds: string[]; preferredY: number }> = new Map();
 
-          positionedNodes.push({
-            ...child,
-            categoryColor: catColor,
-            x: childX,
-            y: childY,
-          });
-          nodePosMap.set(child.id, { x: childX, y: childY });
+      // 1. Position Main Jukugos in Column 1 (spaced vertically)
+      const jukugoSpacingY = 200;
+      const numJk = mainJukugos.length;
+      const startJukugoY = catY - ((numJk - 1) * jukugoSpacingY) / 2;
+
+      mainJukugos.forEach((jk, jkIdx) => {
+        const jkX = col1X;
+        const jkY = startJukugoY + jkIdx * jukugoSpacingY;
+
+        positionedNodes.push({
+          ...jk,
+          categoryColor: catColor,
+          x: jkX,
+          y: jkY,
         });
-      }
-    });
+        nodePosMap.set(jk.id, { x: jkX, y: jkY });
 
-    // 2b. Deduplicate Leaf Kanji Nodes across ALL Jukugo Nodes
-    const allSubNodes = initialRawNodes.filter(
-      (n: any) => n.type === "sub-bottom" || n.type === "sub"
-    );
-
-    interface LeafCluster {
-      char: string;
-      parentIds: string[];
-    }
-
-    const leafMap = new Map<string, LeafCluster>();
-
-    allSubNodes.forEach((sub: any) => {
-      const word = (sub.kanji || sub.character || sub.word || "").trim();
-      if (word) {
-        const charList: string[] = Array.from(new Set(Array.from(String(word))));
-        charList.forEach((char: string) => {
-          if (!leafMap.has(char)) {
-            leafMap.set(char, { char, parentIds: [sub.id] });
-          } else {
-            const existing = leafMap.get(char)!;
-            if (!existing.parentIds.includes(sub.id)) {
-              existing.parentIds.push(sub.id);
-            }
-          }
-        });
-      }
-    });
-
-    // Position each UNIQUE Leaf Kanji Node (and reroute root character directly to KANJI INTI)
-    const rootChar = (rootNode?.kanji || rootNode?.character || rootNode?.label || "").trim();
-
-    leafMap.forEach((leafData, char) => {
-      const isRootChar = rootChar && char.trim() === rootChar;
-
-      let primaryCatColor = PALETTE[0];
-      leafData.parentIds.forEach((pId, idx) => {
-        if (idx === 0) {
-          const pNode = initialRawNodes.find((n: any) => n.id === pId);
-          const catId = pNode?.parentPill || pNode?.categoryId;
-          if (catId && catColorMap.has(catId)) {
-            primaryCatColor = catColorMap.get(catId)!;
-          }
-        }
-      });
-
-      if (isRootChar && rootNode) {
-        // DO NOT create duplicate leaf node! Connect parent Jukugos directly to KANJI INTI root node
-        leafData.parentIds.forEach((pId) => {
-          const edgeColor = primaryCatColor || "#10b981";
+        // Edge: Category -> Jukugo
+        const catToJkEdgeId = `e-${cat.id}-${jk.id}`;
+        if (!generatedEdges.some((e: any) => e.id === catToJkEdgeId)) {
           generatedEdges.push({
-            id: `edge-${pId}-${rootNode.id}`,
-            source: pId,
-            target: rootNode.id,
-            color: edgeColor,
-            style: { stroke: edgeColor, strokeWidth: 2, strokeDasharray: "4 3" },
+            id: catToJkEdgeId,
+            source: cat.id,
+            target: jk.id,
+            sourceHandle: dir === 1 ? "s-right" : "s-left",
+            targetHandle: dir === 1 ? "t-left" : "t-right",
+            label: "mencakup",
+            color: catColor,
+            style: { stroke: catColor, strokeWidth: 2 },
             animated: true,
           });
-        });
-        return; // Skip adding duplicate leaf node
-      }
+        }
 
-      const leafId = `unique-leaf-${char}`;
-      const kInfo = kanjiMap.get(char);
+        const word = (jk.kanji || jk.character || jk.word || "").trim();
+        if (!word) return;
 
-      // Compute average position of parent Jukugo nodes
-      let avgX = 0;
-      let avgY = 0;
-      let validCount = 0;
+        // Extract semantic parts
+        let parts: Array<{ word: string; meaning: string }> = [];
+        if (Array.isArray(jk.semanticNodes) && jk.semanticNodes.length > 0) {
+          parts = jk.semanticNodes
+            .map((sn: any) => ({
+              word: (sn.jokugo || sn.kanji || "").trim(),
+              meaning: sn.arti || "",
+            }))
+            .filter((p: any) => p.word.length > 0);
+        }
 
-      leafData.parentIds.forEach((pId) => {
-        const pos = nodePosMap.get(pId);
-        if (pos) {
-          avgX += pos.x;
-          avgY += pos.y;
-          validCount++;
+        if (word.length >= 3 && parts.length === 0) {
+          const isKnownSub = (w: string) => jukugoMap.has(w);
+
+          if (word.length === 4) {
+            const head2 = word.slice(0, 2);
+            const tail2 = word.slice(2, 4);
+            if (head2 !== tail2) {
+              parts = [
+                { word: head2, meaning: jukugoMap.get(head2)?.meaning || "" },
+                { word: tail2, meaning: jukugoMap.get(tail2)?.meaning || "" },
+              ];
+            } else {
+              parts = Array.from(word as string).map((c) => ({ word: c, meaning: "" }));
+            }
+          } else if (word.length === 3) {
+            const head2 = word.slice(0, 2);
+            const tail2 = word.slice(1, 3);
+            if (isKnownSub(head2)) {
+              parts = [
+                { word: head2, meaning: jukugoMap.get(head2)?.meaning || "" },
+                { word: word.slice(2), meaning: "" },
+              ];
+            } else if (isKnownSub(tail2)) {
+              parts = [
+                { word: word.slice(0, 1), meaning: "" },
+                { word: tail2, meaning: jukugoMap.get(tail2)?.meaning || "" },
+              ];
+            } else {
+              parts = Array.from(word as string).map((c) => ({ word: c, meaning: "" }));
+            }
+          } else if (word.length > 4) {
+            const head2 = word.slice(0, 2);
+            const tailSub = word.slice(2);
+            parts = [
+              { word: head2, meaning: jukugoMap.get(head2)?.meaning || "" },
+              { word: tailSub, meaning: jukugoMap.get(tailSub)?.meaning || "" },
+            ];
+          }
+        }
+
+        const subCompounds = parts.filter((p) => p.word.length >= 2);
+        const hasSubCompounds = subCompounds.length > 0;
+
+        if (hasSubCompounds) {
+          subCompounds.forEach((p) => {
+            const req = subCompoundRequests.get(p.word) || {
+              subWord: p.word,
+              meaning: p.meaning,
+              parentJkIds: [],
+              preferredY: jkY,
+            };
+            if (!req.parentJkIds.includes(jk.id)) req.parentJkIds.push(jk.id);
+            if (p.meaning && (!req.meaning || req.meaning === "Sub-Jukugo")) {
+              req.meaning = p.meaning;
+            }
+            subCompoundRequests.set(p.word, req);
+          });
+        } else {
+          // 2-kanji word constituents
+          const chars: string[] = Array.from(new Set(Array.from(word as string))).filter((c: string) => c !== rootChar);
+          chars.forEach((char: string) => {
+            const req = leafKanjiRequests.get(char) || { char, parentIds: [], preferredY: jkY };
+            if (!req.parentIds.includes(jk.id)) req.parentIds.push(jk.id);
+            leafKanjiRequests.set(char, req);
+          });
         }
       });
 
-      if (validCount > 0) {
-        avgX /= validCount;
-        avgY /= validCount;
-      }
+      // 2. Render Deduplicated Sub-Jukugo Cards in Column 2
+      const subCompArray = Array.from(subCompoundRequests.values());
+      const subSpacingY = 220;
+      const numSub = subCompArray.length;
+      const startSubY = catY - ((numSub - 1) * subSpacingY) / 2;
 
-      // Radiate outward from average position
-      const angleFromCenter = Math.atan2(avgY, avgX);
-      const leafDistance = 240;
-      const leafX = Math.round(avgX + Math.cos(angleFromCenter) * leafDistance);
-      const leafY = Math.round(avgY + Math.sin(angleFromCenter) * leafDistance);
+      subCompArray.forEach((req, sIdx) => {
+        const subNodeId = `sub-jokugo-${cat.id}-${req.subWord}`;
+        const dbJ = jukugoMap.get(req.subWord);
+        const rText = dbJ?.reading || (req.subWord === "分野" ? "ぶんや" : req.subWord === "方法" ? "ほうほう" : "");
+        const mText = (req.meaning && req.meaning !== "Sub-Jukugo")
+          ? req.meaning
+          : (dbJ?.meaning || (req.subWord === "分野" ? "bidang ilmu" : req.subWord === "方法" ? "cara atau prosedur" : req.subWord));
 
-      const parentCount = leafData.parentIds.length;
+        const subX = col2X;
+        const subY = startSubY + sIdx * subSpacingY;
 
-      positionedNodes.push({
-        id: leafId,
-        type: "leafKanji",
-        kanji: char,
-        romaji: kInfo?.romaji || "",
-        meaning: kInfo?.meaning || "",
-        parentIds: leafData.parentIds,
-        parentCount: parentCount,
-        categoryColor: primaryCatColor,
-        x: leafX,
-        y: leafY,
+        if (!positionedNodes.some((n: any) => n.id === subNodeId)) {
+          positionedNodes.push({
+            id: subNodeId,
+            type: "sub-bottom",
+            kanji: req.subWord,
+            label: req.subWord,
+            subLabel: rText ? `(${rText})` : "",
+            reading: rText,
+            meaning: mText,
+            description: mText,
+            categoryColor: catColor,
+            parentPill: cat.id,
+            categoryId: cat.id,
+            x: subX,
+            y: subY,
+          });
+          nodePosMap.set(subNodeId, { x: subX, y: subY });
+        }
+
+        // Edge: Main Jukugo -> Sub-Jukugo
+        req.parentJkIds.forEach((pId) => {
+          const subEdgeId = `edge-subjokugo-${pId}-${subNodeId}`;
+          if (!generatedEdges.some((e: any) => e.id === subEdgeId)) {
+            generatedEdges.push({
+              id: subEdgeId,
+              source: pId,
+              target: subNodeId,
+              sourceHandle: dir === 1 ? "s-right" : "s-left",
+              targetHandle: dir === 1 ? "t-left" : "t-right",
+              label: mText || "unsur",
+              color: catColor,
+              style: { stroke: catColor, strokeWidth: 2, strokeDasharray: "4 3" },
+              animated: true,
+            });
+          }
+        });
+
+        // Request Leaf Kanjis for this Sub-Jukugo
+        const pChars: string[] = Array.from(req.subWord as string).filter((c: string) => c !== rootChar);
+        pChars.forEach((char: string) => {
+          const lReq = leafKanjiRequests.get(char) || { char, parentIds: [], preferredY: subY };
+          if (!lReq.parentIds.includes(subNodeId)) lReq.parentIds.push(subNodeId);
+          leafKanjiRequests.set(char, lReq);
+        });
       });
-      nodePosMap.set(leafId, { x: leafX, y: leafY });
 
-      // Add animated edge connecting EVERY parent Jukugo to this Leaf Kanji
-      leafData.parentIds.forEach((pId) => {
-        const edgeColor = primaryCatColor || "#10b981";
-        generatedEdges.push({
-          id: `edge-${pId}-${leafId}`,
-          source: pId,
-          target: leafId,
-          color: edgeColor,
-          style: { stroke: edgeColor, strokeWidth: 2, strokeDasharray: "4 3" },
-          animated: true,
+      // 3. Render Deduplicated Leaf Kanjis in Column 3
+      const leafRequestsArray = Array.from(leafKanjiRequests.values());
+      leafRequestsArray.sort((a, b) => a.preferredY - b.preferredY);
+
+      const leafSpacingY = 180;
+      const numLeaves = leafRequestsArray.length;
+      const startLeafY = catY - ((numLeaves - 1) * leafSpacingY) / 2;
+
+      leafRequestsArray.forEach((lReq, lIdx) => {
+        const leafNodeId = `leaf-${cat.id}-${lReq.char}`;
+        const leafX = col3X;
+        const leafY = startLeafY + lIdx * leafSpacingY;
+
+        const kInfo = kanjiMap.get(lReq.char);
+        const romajiText = kInfo?.romaji || kInfo?.onyomi || kInfo?.kunyomi || lReq.char;
+        const kanjiMeaning = kInfo?.meaning || `Kanji ${lReq.char}`;
+
+        if (!positionedNodes.some((n: any) => n.id === leafNodeId)) {
+          positionedNodes.push({
+            id: leafNodeId,
+            type: "leafKanji",
+            kanji: lReq.char,
+            label: lReq.char,
+            subLabel: `(${romajiText})`,
+            romaji: romajiText,
+            reading: romajiText,
+            meaning: kanjiMeaning,
+            description: kanjiMeaning,
+            categoryColor: catColor,
+            x: leafX,
+            y: leafY,
+          });
+          nodePosMap.set(leafNodeId, { x: leafX, y: leafY });
+        }
+
+        // Edge: Parent -> Leaf Kanji
+        lReq.parentIds.forEach((pId) => {
+          const leafEdgeId = `edge-leaf-${pId}-${leafNodeId}`;
+          if (!generatedEdges.some((e: any) => e.id === leafEdgeId)) {
+            generatedEdges.push({
+              id: leafEdgeId,
+              source: pId,
+              target: leafNodeId,
+              sourceHandle: dir === 1 ? "s-right" : "s-left",
+              targetHandle: dir === 1 ? "t-left" : "t-right",
+              label: "penyusun",
+              color: catColor,
+              style: { stroke: catColor, strokeWidth: 1.8, strokeDasharray: "4 3" },
+              animated: true,
+            });
+          }
         });
       });
     });
@@ -448,46 +566,52 @@ export default function KanjiAtlasFlow({
         return rootExpanded && (parentId ? expandedNodes.has(parentId) : true);
       }
       if (node.data.type === "leafKanji") {
-        const parentIds: string[] = node.data.parentIds || [];
-        return rootExpanded && parentIds.some((pId) => {
-          const parentNode = initialRawNodes.find((n: any) => n.id === pId);
-          const catId = parentNode?.parentPill || parentNode?.categoryId;
-          return catId ? expandedNodes.has(catId) : true;
-        });
+        return rootExpanded;
       }
       return true;
     });
 
-    // 4. Format Edges with Custom Cross-Link Outward Arc Routing and Animation for EVERY edge
+    // 4. Format Edges with Organic Bezier Curves & Smooth Animations (Rope-style lines)
     const baseEdges = [...generatedEdges];
-    const subWordMap = new Map<string, string>();
-    positionedNodes.forEach((n: any) => {
-      if (n.type === "sub-bottom" && (n.character || n.kanji)) {
-        subWordMap.set((n.character || n.kanji).trim(), n.id);
-      }
-    });
 
-    // Cross-links between related jukugo cards derived dynamically from raw edges
-    const crossLinkTriples: [string, string, string, string?][] = (initialRawEdges || [])
-      .filter((e: any) => e.isCrossLink || (e.predicate && e.predicate !== "kategori" && e.predicate !== "mencakup"))
-      .map((e: any) => [e.source, e.predicate || e.label || "", e.target, e.color]);
+    (initialRawEdges || []).forEach((rawEdge: any) => {
+      const pred = (rawEdge.predicate || rawEdge.label || "").trim();
+      if (!pred || pred === "kategori" || pred === "mencakup" || pred === "penyusun") return;
 
-    crossLinkTriples.forEach(([srcWord, pred, tgtWord, color]) => {
-      const srcId = subWordMap.get(srcWord);
-      const tgtId = subWordMap.get(tgtWord);
-      if (srcId && tgtId) {
-        const edgeId = `cross-${srcId}-${tgtId}`;
-        if (!baseEdges.some((e) => e.id === edgeId)) {
-          baseEdges.push({
-            id: edgeId,
-            source: srcId,
-            target: tgtId,
-            label: pred,
-            color,
-            isCrossLink: true,
-          });
-        }
-      }
+      const srcWord = (rawEdge.source || "").trim();
+      const tgtWord = (rawEdge.target || "").trim();
+
+      if (!srcWord || !tgtWord || srcWord === tgtWord) return;
+
+      const srcNodes = positionedNodes.filter((n: any) => {
+        const word = (n.kanji || n.character || n.word || n.label || "").trim();
+        return word === srcWord;
+      });
+
+      const tgtNodes = positionedNodes.filter((n: any) => {
+        const word = (n.kanji || n.character || n.word || n.label || "").trim();
+        return word === tgtWord;
+      });
+
+      srcNodes.forEach((sNode) => {
+        tgtNodes.forEach((tNode) => {
+          if (sNode.id !== tNode.id) {
+            const crossEdgeId = `cross-${sNode.id}-${tNode.id}`;
+            if (!baseEdges.some((e: any) => e.id === crossEdgeId)) {
+              baseEdges.push({
+                id: crossEdgeId,
+                source: sNode.id,
+                target: tNode.id,
+                label: pred,
+                color: "#3b82f6",
+                isCrossLink: true,
+                style: { stroke: "#3b82f6", strokeWidth: 2.2, strokeDasharray: "6 4" },
+                animated: true,
+              });
+            }
+          }
+        });
+      });
     });
 
     const formattedEdges = baseEdges.map((edge: any) => {
@@ -495,64 +619,112 @@ export default function KanjiAtlasFlow({
       const srcPos = nodePosMap.get(edge.source);
       const tgtPos = nodePosMap.get(edge.target);
 
-      const isCross = Boolean(edge.isCrossLink || (edge.id && edge.id.startsWith("cross-")) || (edge.predicate && edge.predicate !== "kategori" && edge.predicate !== "mencakup"));
       const { sourceHandle, targetHandle } = getOptimalHandles(srcPos, tgtPos);
-      const labelText = isCross ? (edge.label || edge.predicate) : undefined;
+
+      // Check target node text to eliminate duplicate/redundant edge label badges
+      const tgtNodeObj = positionedNodes.find((n: any) => n.id === edge.target);
+      let edgeLabel = edge.label;
+
+      if (edgeLabel && tgtNodeObj) {
+        const rawLabel = edgeLabel.trim().toLowerCase();
+        const nodeKanji = (tgtNodeObj.kanji || tgtNodeObj.character || tgtNodeObj.word || tgtNodeObj.label || "").trim().toLowerCase();
+        const nodeMeaning = (tgtNodeObj.meaning || tgtNodeObj.description || "").trim().toLowerCase();
+        const nodeReading = (tgtNodeObj.reading || tgtNodeObj.subLabel || "").trim().replace(/[()]/g, "").toLowerCase();
+
+        // Preserve cross-link edge labels (e.g. "metode", "referensi", "lokasi") so they are always displayed
+        if (!edge.isCrossLink) {
+          if (
+            rawLabel === nodeKanji ||
+            rawLabel === nodeMeaning ||
+            rawLabel === nodeReading ||
+            rawLabel === "unsur"
+          ) {
+            edgeLabel = undefined;
+          }
+        }
+      }
 
       return {
         ...edge,
-        type: isCross ? "crossLinkEdge" : "default",
-        sourceHandle,
-        targetHandle,
-        label: labelText,
-        animated: true,
+        type: "bezier", // Organic rope-style curved lines!
+        sourceHandle: edge.sourceHandle || sourceHandle,
+        targetHandle: edge.targetHandle || targetHandle,
+        label: edgeLabel,
+        labelBgPadding: edgeLabel ? [8, 4] : undefined,
+        labelBgBorderRadius: edgeLabel ? 8 : undefined,
+        labelBgStyle: edgeLabel ? { fill: "#ffffff", color: "#1e293b", stroke: strokeColor, strokeWidth: 1.5 } : undefined,
+        labelStyle: edgeLabel ? { fill: "#1e293b", fontWeight: 800, fontSize: 10 } : undefined,
+        animated: true, // Smooth animated flow on all edges!
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 14,
-          height: 14,
+          width: 12,
+          height: 12,
           color: strokeColor,
         },
         style: { 
           stroke: strokeColor, 
-          strokeWidth: isCross ? 2.5 : 2,
-          strokeDasharray: "5 4",
-          opacity: isCross ? 1 : 0.85,
+          strokeWidth: edge.style?.strokeWidth || 2.2,
+          strokeDasharray: edge.style?.strokeDasharray || undefined,
+          opacity: 0.95,
           ...edge.style,
         },
       };
     });
 
-    // 5. Active Jukugo Isolation / Focus Mode (Exact Node ID matching first, then Word fallback)
+    // 5. Active Node Isolation / Focus Mode (Scoped to relevant local connections only)
     if (activeNodeId || activeJukugoWord) {
-      let targetJukugoNode: any = null;
+      let targetNode: any = null;
 
       if (activeNodeId) {
-        targetJukugoNode = baseVisibleNodes.find((n: any) => n.id === activeNodeId);
+        targetNode = baseVisibleNodes.find((n: any) => n.id === activeNodeId);
       }
-      if (!targetJukugoNode && activeJukugoWord) {
+      if (!targetNode && activeJukugoWord) {
         const activeWordTrim = activeJukugoWord.trim();
-        targetJukugoNode = baseVisibleNodes.find(
+        targetNode = baseVisibleNodes.find(
           (n: any) => (n.data.kanji || n.data.character || n.data.word || "").trim() === activeWordTrim
         );
       }
 
-      if (targetJukugoNode) {
-        const targetId = targetJukugoNode.id;
-        const connectedNodeIds = new Set<string>([targetId]);
+      if (targetNode) {
+        const targetId = targetNode.id;
+        const targetCatId = targetNode.data.parentPill || targetNode.data.categoryId;
 
-        // Find root and category nodes
-        if (rootNodeObj) connectedNodeIds.add(rootNodeObj.id);
-        const catId = targetJukugoNode.data.parentPill || targetJukugoNode.data.categoryId;
-        if (catId) connectedNodeIds.add(catId);
+        // Traverse only locally from targetId (do NOT cross through root into other categories)
+        const relevantNodeIds = new Set<string>([targetId]);
 
-        // Find all connected nodes via edges
+        // 1. Direct children / parents / cross-linked neighbors of target
         formattedEdges.forEach((e: any) => {
-          if (e.source === targetId) connectedNodeIds.add(e.target);
-          if (e.target === targetId) connectedNodeIds.add(e.source);
+          if (e.source === rootNodeObj?.id || e.target === rootNodeObj?.id) return;
+
+          if (e.source === targetId) relevantNodeIds.add(e.target);
+          if (e.target === targetId) relevantNodeIds.add(e.source);
         });
 
-        // Filter visible nodes to only connected ones
-        baseVisibleNodes = baseVisibleNodes.filter((n: any) => connectedNodeIds.has(n.id));
+        // 2. Expand 1 more hop for constituent leaves or sub-nodes (strictly within same category)
+        const hop1Ids = Array.from(relevantNodeIds);
+        hop1Ids.forEach((hId) => {
+          formattedEdges.forEach((e: any) => {
+            if (e.source === rootNodeObj?.id || e.target === rootNodeObj?.id) return;
+
+            if (e.source === hId && !relevantNodeIds.has(e.target)) {
+              const nodeObj = baseVisibleNodes.find((n: any) => n.id === e.target);
+              const nodeCat = nodeObj?.data.parentPill || nodeObj?.data.categoryId;
+              if (nodeCat === targetCatId) relevantNodeIds.add(e.target);
+            }
+            if (e.target === hId && !relevantNodeIds.has(e.source)) {
+              const nodeObj = baseVisibleNodes.find((n: any) => n.id === e.source);
+              const nodeCat = nodeObj?.data.parentPill || nodeObj?.data.categoryId;
+              if (nodeCat === targetCatId) relevantNodeIds.add(e.source);
+            }
+          });
+        });
+
+        // 3. Add Category Node and Root Node for context
+        if (targetCatId) relevantNodeIds.add(targetCatId);
+        if (rootNodeObj) relevantNodeIds.add(rootNodeObj.id);
+
+        // Filter visible nodes to only relevant isolated subgraph
+        baseVisibleNodes = baseVisibleNodes.filter((n: any) => relevantNodeIds.has(n.id));
       }
     }
 
@@ -567,7 +739,7 @@ export default function KanjiAtlasFlow({
 
   // Click node handler
   const onNodeClick = (_: any, node: any) => {
-    if (node.data.type === "sub-bottom" || node.data.type === "sub") {
+    if (node.data.type === "sub-bottom" || node.data.type === "sub" || node.data.type === "leafKanji") {
       const word = (node.data.kanji || node.data.character || node.data.word || "").trim();
       onSelectJukugo?.(word, node.id);
     } else if (node.data.hasChildren) {

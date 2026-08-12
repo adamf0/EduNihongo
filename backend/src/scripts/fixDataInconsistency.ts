@@ -260,17 +260,23 @@ async function fixDataInconsistency() {
     }
     if (!rootKanjiId) rootKanjiId = kanjiDbMap.get("点") || 3217;
 
-    await prisma.semanticRelation.create({
+    const matchedJukugo = await prisma.jukugo.findFirst({
+      where: { kanjiId: rootKanjiId, word: word }
+    });
+
+    const createdSem = await prisma.semanticRelation.create({
       data: {
         kanjiId: rootKanjiId,
-        kanji: word,
-        arti: details.explanation.split("makna '")[1]?.replace("'", "") || details.explanation.slice(0, 50),
-        jukugo_1: char1,
-        jukugo_1_arti: role1,
-        jukugo_2: char2,
-        jukugo_2_arti: role2,
+        jukugoId: matchedJukugo?.id || null,
         penjelasan: details.explanation,
       },
+    });
+
+    await prisma.semanticRelationNode.createMany({
+      data: [
+        { semanticId: createdSem.id, jokugo: char1, arti: role1 },
+        { semanticId: createdSem.id, jokugo: char2, arti: role2 },
+      ].filter((n) => n.jokugo),
     });
     semInsertCount++;
   }

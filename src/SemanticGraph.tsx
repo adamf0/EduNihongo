@@ -297,7 +297,7 @@ export default function SemanticGraph({
     }
 
     const numCategories = categoryNodes.length;
-    const categoryRadius = 520;
+    const categoryRadius = 1000;
 
     categoryNodes.forEach((cat, catIdx) => {
       let angleRad = 0;
@@ -316,8 +316,9 @@ export default function SemanticGraph({
 
       const numChildren = children.length;
       if (numChildren > 0) {
-        const childRadius = 380;
-        const arcSpreadRad = numChildren > 1 ? Math.min((150 * Math.PI) / 180, (numChildren - 1) * ((50 * Math.PI) / 180)) : 0;
+        const childRadius = 560;
+        const maxArcSpreadRad = (90 * Math.PI) / 180;
+        const arcSpreadRad = numChildren > 1 ? Math.min(maxArcSpreadRad, (numChildren - 1) * ((28 * Math.PI) / 180)) : 0;
         const startChildAngleRad = angleRad - arcSpreadRad / 2;
 
         children.forEach((child, childIdx) => {

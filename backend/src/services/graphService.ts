@@ -21,7 +21,17 @@ export async function buildDynamicKanjiGraph(kanjiId: number) {
             include: {
               category: true
             }
+          },
+          semanticRelations: {
+            include: {
+              nodes: true
+            }
           }
+        }
+      },
+      semanticRelations: {
+        include: {
+          nodes: true
         }
       },
       graphEdges: true
@@ -104,8 +114,15 @@ export async function buildDynamicKanjiGraph(kanjiId: number) {
     catJukugos.forEach((jk, jkIdx) => {
       const subId = `${char}-sub-${catIdx + 1}-${jkIdx + 1}`;
 
+      const matchedSR = jk.semanticRelations?.[0] || kanji.semanticRelations.find(sr => sr.jukugoId === jk.id);
+      const semanticNodes = matchedSR?.nodes?.map(n => ({
+        jokugo: n.jokugo,
+        arti: n.arti
+      })) || [];
+
       nodes.push({
         id: subId,
+        jukugoId: jk.id,
         kanji: jk.word,
         label: jk.word,
         subLabel: `(${jk.reading})`,
@@ -113,7 +130,8 @@ export async function buildDynamicKanjiGraph(kanjiId: number) {
         meaning: `(${jk.reading}) ${jk.meaning}`,
         type: "sub-bottom",
         parentPill: catId,
-        categoryId: catId
+        categoryId: catId,
+        semanticNodes: semanticNodes
       });
       nodeIdSet.add(subId);
       wordToSubNodeIdMap.set(jk.word.trim(), subId);
@@ -129,38 +147,22 @@ export async function buildDynamicKanjiGraph(kanjiId: number) {
     });
   });
 
-  // 4. Cross-link Edges with Predicates
+  // 4. Cross-link Edges with Predicates (Pass word-based cross-links directly so frontend can match to any Jukugo or Sub-Jukugo)
   for (const edge of kanji.graphEdges) {
-    // Resolve source & target IDs if specified by word name or node ID
-    let srcId = edge.source;
-    let tgtId = edge.target;
+    const isCross = Boolean(
+      edge.predicate &&
+      edge.predicate !== "kategori" &&
+      edge.predicate !== "mencakup"
+    );
 
-    if (wordToSubNodeIdMap.has(edge.source.trim())) {
-      srcId = wordToSubNodeIdMap.get(edge.source.trim())!;
-    }
-    if (wordToSubNodeIdMap.has(edge.target.trim())) {
-      tgtId = wordToSubNodeIdMap.get(edge.target.trim())!;
-    }
-
-    if (nodeIdSet.has(srcId) && nodeIdSet.has(tgtId) && srcId !== tgtId) {
-      const isCross = Boolean(
-        edge.predicate &&
-        edge.predicate !== "kategori" &&
-        edge.predicate !== "mencakup"
-      );
-
-      // Avoid duplicating hierarchy edges
-      if (isCross || !edges.some((e) => e.source === srcId && e.target === tgtId)) {
-        edges.push({
-          id: edge.id,
-          source: srcId,
-          target: tgtId,
-          predicate: edge.predicate || undefined,
-          label: edge.predicate || undefined,
-          isCrossLink: isCross
-        });
-      }
-    }
+    edges.push({
+      id: edge.id,
+      source: edge.source.trim(),
+      target: edge.target.trim(),
+      predicate: edge.predicate || undefined,
+      label: edge.predicate || undefined,
+      isCrossLink: isCross
+    });
   }
 
   return { nodes, edges };

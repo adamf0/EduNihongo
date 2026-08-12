@@ -13,15 +13,29 @@ import adminRoutes from "./routes/admin";
 import lmsRoutes from "./routes/lms";
 import { startQueueWorker } from "./utils/mailer";
 
+import { createYoga, createSchema } from "graphql-yoga";
+import { typeDefs } from "./graphql/schema";
+import { resolvers } from "./graphql/resolvers";
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+const yoga = createYoga({
+  schema: createSchema({
+    typeDefs,
+    resolvers,
+  }),
+  graphqlEndpoint: "/graphql",
+});
+
 // Strict CORS Allowed Origins (only allow requests from trusted frontend locations)
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "http://localhost:5001",
+  "http://127.0.0.1:5001",
   "https://kanji.fishiden.com",
 ];
 
@@ -56,6 +70,14 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve Custom GraphiQL IDE Web Interface on GET requests
+app.get(["/graphql", "/graphiql"], (req, res) => {
+  res.sendFile(path.join(__dirname, "../graphiql.html"));
+});
+
+// GraphQL API Endpoint for POST queries & GraphQL Yoga router
+app.use("/graphql", yoga);
 
 // Serve uploaded static images (RCE prevention: files are served statically and never executed)
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

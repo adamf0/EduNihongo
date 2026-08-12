@@ -27,7 +27,11 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         graphEdges: true,
         module: true,
         jukugos: true,
-        semanticRelations: true,
+        semanticRelations: {
+          include: {
+            nodes: true,
+          },
+        },
         masterRefleksi: true,
         quizzes: {
           orderBy: {
@@ -346,6 +350,204 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
           }
         });
         return triples;
+      })(),
+      breakdownTrees: await (async () => {
+        const allKanji = await prisma.kanji.findMany({
+          include: { module: true }
+        });
+        const kanjiMap = new Map<string, any>();
+        allKanji.forEach(k => {
+          kanjiMap.set(k.character, {
+            character: k.character,
+            romaji: k.romaji || "-",
+            meaning: k.meaning || "-",
+            baseMeaning: k.baseMeaning || k.meaning || "-",
+            bushu: k.bushuu || "-",
+            kunyomi: k.kunyomi || "-",
+            onyomi: k.onyomi || "-",
+            category: k.module?.title || "Kanji"
+          });
+        });
+
+        const allJukugos = await prisma.jukugo.findMany();
+        const jukugoMap = new Map<string, { word: string; reading: string; meaning: string }>();
+        allJukugos.forEach(j => {
+          jukugoMap.set(j.word.trim(), { word: j.word.trim(), reading: j.reading, meaning: j.meaning });
+        });
+
+        const isHiragana = (ch: string) => /^[\u3040-\u309F]$/.test(ch);
+
+        const getRoleOrMeaning = (c: string) => {
+          if (isHiragana(c)) return `Okurigana (${c})`;
+          const k = kanjiMap.get(c);
+          if (k && k.meaning && k.meaning !== "-") return k.meaning;
+          if (k && k.baseMeaning && k.baseMeaning !== "-") return k.baseMeaning;
+          return `Kanji ${c}`;
+        };
+
+        const getSubObj = (w: string) => {
+          const j = jukugoMap.get(w);
+          const meaning = j?.meaning || w;
+          const reading = j?.reading || "";
+          const nestedKanjis = Array.from(w).map(c => {
+            const k = kanjiMap.get(c);
+            if (k) return k;
+            return {
+              character: c,
+              romaji: "-",
+              meaning: getRoleOrMeaning(c),
+              baseMeaning: "-",
+              bushu: "-",
+              kunyomi: "-",
+              onyomi: "-",
+              category: isHiragana(c) ? "Hiragana" : "Kanji"
+            };
+          });
+
+          return {
+            word: w,
+            reading,
+            meaning,
+            nestedKanjis
+          };
+        };
+
+        const trees: Record<string, any> = {};
+
+        for (const j of allJukugos) {
+          const word = j.word.trim();
+          const dbJukugo = jukugoMap.get(word) || j;
+          const wordMeaning = dbJukugo.meaning || word;
+          const wordReading = dbJukugo.reading || "";
+
+          // 1. DUAL_SUB_JUKUGO: Any compound word where both split halves exist in DB Jukugo table
+          let sub1Obj: any = null;
+          let sub2Obj: any = null;
+
+          for (let splitIdx = 1; splitIdx < word.length; splitIdx++) {
+            const part1 = word.slice(0, splitIdx);
+            const part2 = word.slice(splitIdx);
+            if (jukugoMap.has(part1) && jukugoMap.has(part2)) {
+              sub1Obj = getSubObj(part1);
+              sub2Obj = getSubObj(part2);
+              break;
+            }
+          }
+
+          if (sub1Obj && sub2Obj) {
+            trees[word] = {
+              word,
+              reading: wordReading,
+              meaning: wordMeaning,
+              breakdownType: "DUAL_SUB_JUKUGO",
+              explanationItems: [
+                { word: sub1Obj.word, meaning: sub1Obj.meaning },
+                { word: sub2Obj.word, meaning: sub2Obj.meaning }
+              ],
+              relationshipExplanation: `Hubungan makna antara ${sub1Obj.word} (${sub1Obj.meaning}) dan ${sub2Obj.word} (${sub2Obj.meaning}) menjadi ${word}, menunjukkan bahwa gabungan tersebut membentuk makna "${wordMeaning}".`,
+              formulaElements: [
+                { word: sub1Obj.word, reading: sub1Obj.reading, meaning: sub1Obj.meaning },
+                { word: sub2Obj.word, reading: sub2Obj.reading, meaning: sub2Obj.meaning }
+              ],
+              breakdownItems: [
+                { type: "SUB_JUKUGO", word: sub1Obj.word, reading: sub1Obj.reading, meaning: sub1Obj.meaning, nestedKanjis: sub1Obj.nestedKanjis },
+                { type: "SUB_JUKUGO", word: sub2Obj.word, reading: sub2Obj.reading, meaning: sub2Obj.meaning, nestedKanjis: sub2Obj.nestedKanjis }
+              ]
+            };
+            continue;
+          }
+
+          // 2. ROOT_KANJI_COMPOUND: Words >= 3 kanjis with sub-compounds in DB
+          if (word.length >= 3) {
+            let headWord = "";
+            let tailWord = "";
+
+            const head2 = word.slice(0, 2);
+            if (jukugoMap.has(head2)) {
+              headWord = head2;
+              tailWord = word.slice(2);
+            } else {
+              const tail2 = word.slice(word.length - 2);
+              if (jukugoMap.has(tail2)) {
+                headWord = word.slice(0, word.length - 2);
+                tailWord = tail2;
+              }
+            }
+
+            if (headWord) {
+              const explanationItems: any[] = [];
+              const formulaElements: any[] = [];
+              const breakdownItems: any[] = [];
+
+              if (headWord.length === 2) {
+                for (const c of Array.from(headWord)) {
+                  const kCard = getSubObj(c).nestedKanjis[0];
+                  const m = getRoleOrMeaning(c);
+                  explanationItems.push({ word: c, meaning: m });
+                  formulaElements.push({ word: c, reading: kCard.romaji !== "-" ? kCard.romaji : "", meaning: m });
+                  breakdownItems.push({ type: "KANJI", word: c, meaning: m, kanjiDetail: kCard });
+                }
+              } else {
+                const headSub = getSubObj(headWord);
+                explanationItems.push({ word: headSub.word, meaning: headSub.meaning });
+                formulaElements.push({ word: headSub.word, reading: headSub.reading, meaning: headSub.meaning });
+                breakdownItems.push({ type: "SUB_JUKUGO", word: headSub.word, reading: headSub.reading, meaning: headSub.meaning, nestedKanjis: headSub.nestedKanjis });
+              }
+
+              if (tailWord.length === 1) {
+                const kCard = getSubObj(tailWord).nestedKanjis[0];
+                const m = getRoleOrMeaning(tailWord);
+                explanationItems.push({ word: tailWord, meaning: m });
+                formulaElements.push({ word: tailWord, reading: kCard.romaji !== "-" ? kCard.romaji : "", meaning: m });
+                breakdownItems.push({ type: "KANJI", word: tailWord, meaning: m, kanjiDetail: kCard });
+              } else if (tailWord.length >= 2) {
+                const tailSub = getSubObj(tailWord);
+                explanationItems.push({ word: tailSub.word, meaning: tailSub.meaning });
+                formulaElements.push({ word: tailSub.word, reading: tailSub.reading, meaning: tailSub.meaning });
+                breakdownItems.push({ type: "SUB_JUKUGO", word: tailSub.word, reading: tailSub.reading, meaning: tailSub.meaning, nestedKanjis: tailSub.nestedKanjis });
+              }
+
+              trees[word] = {
+                word,
+                reading: wordReading,
+                meaning: wordMeaning,
+                breakdownType: "ROOT_KANJI_COMPOUND",
+                explanationItems,
+                relationshipExplanation: `Hubungan makna antara ${headWord} dan ${tailWord} menjadi ${word}, menunjukkan bahwa gabungan kedua unsur tersebut membentuk makna "${wordMeaning}".`,
+                formulaElements,
+                breakdownItems
+              };
+              continue;
+            }
+          }
+
+          // 3. Fallback: STANDARD_2KANJI or Multi-kanji without sub-compounds in DB (e.g. 学究心)
+          const chars = Array.from(word);
+          const explanationItems = chars.map(c => ({ word: c, meaning: getRoleOrMeaning(c) }));
+          const formulaElements = chars.map(c => {
+            const kCard = getSubObj(c).nestedKanjis[0];
+            return { word: c, reading: kCard.romaji !== "-" ? kCard.romaji : "", meaning: getRoleOrMeaning(c) };
+          });
+          const breakdownItems = chars.map(c => ({
+            type: "KANJI",
+            word: c,
+            meaning: getRoleOrMeaning(c),
+            kanjiDetail: getSubObj(c).nestedKanjis[0]
+          }));
+
+          trees[word] = {
+            word,
+            reading: wordReading,
+            meaning: wordMeaning,
+            breakdownType: word.length === 2 ? "STANDARD_2KANJI" : "ROOT_KANJI_COMPOUND",
+            explanationItems,
+            relationshipExplanation: `Hubungan makna antar kanji ${chars.join(" dan ")} menjadi ${word}, menunjukkan bahwa gabungan unsur tersebut membentuk makna "${wordMeaning}".`,
+            formulaElements,
+            breakdownItems
+          };
+        }
+
+        return trees;
       })()
     });
   } catch (error) {

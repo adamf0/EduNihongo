@@ -162,13 +162,14 @@ model KanjiGraphEdge {
 }
 
 model Jukugo {
-  id            Int             @id @default(autoincrement())
-  kanjiId       Int
-  word          String
-  reading       String
-  meaning       String          @db.Text
-  kanji         Kanji           @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
-  kategoriKanji KategoriKanji[]
+  id                Int                @id @default(autoincrement())
+  kanjiId           Int
+  word              String
+  reading           String
+  meaning           String             @db.Text
+  kanji             Kanji              @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  kategoriKanji     KategoriKanji[]
+  semanticRelations SemanticRelation[]
 
   @@index([kanjiId], map: "Jukugo_kanjiId_fkey")
 }
@@ -193,18 +194,26 @@ model MasterCategory {
 }
 
 model SemanticRelation {
-  id            Int     @id @default(autoincrement())
-  kanjiId       Int
-  kanji         String?
-  arti          String? @db.Text
-  jukugo_1      String?
-  jukugo_1_arti String? @db.Text
-  jukugo_2      String?
-  jukugo_2_arti String? @db.Text
-  penjelasan    String? @db.Text
-  kanjiRef      Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  id         Int                    @id @default(autoincrement())
+  kanjiId    Int
+  jukugoId   Int?
+  penjelasan String?                @db.Text
+  kanjiRef   Kanji                  @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  jukugo     Jukugo?                @relation(fields: [jukugoId], references: [id], onDelete: Cascade)
+  nodes      SemanticRelationNode[]
 
   @@index([kanjiId], map: "SemanticRelation_kanjiId_fkey")
+  @@index([jukugoId], map: "SemanticRelation_jukugoId_fkey")
+}
+
+model SemanticRelationNode {
+  id               Int              @id @default(autoincrement())
+  semanticId       Int
+  jokugo           String
+  arti             String           @db.Text
+  semanticRelation SemanticRelation @relation(fields: [semanticId], references: [id], onDelete: Cascade)
+
+  @@index([semanticId], map: "SemanticRelationNode_semanticId_fkey")
 }
 
 model SubmissionComment {

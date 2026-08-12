@@ -119,23 +119,19 @@ export const KanjiFormPage: React.FC = () => {
   const [jukugos, setJukugos] = useState<any[]>([]);
   const [semanticRelations, setSemanticRelations] = useState<
     Array<{
+      jukugoId?: number | null;
       kanji: string;
       arti: string;
-      jukugo_1: string;
-      jukugo_1_arti: string;
-      jukugo_2: string;
-      jukugo_2_arti: string;
       penjelasan: string;
+      nodes: Array<{ jokugo: string; arti: string }>;
     }>
   >([
     {
+      jukugoId: null,
       kanji: "",
       arti: "",
-      jukugo_1: "",
-      jukugo_1_arti: "",
-      jukugo_2: "",
-      jukugo_2_arti: "",
       penjelasan: "",
+      nodes: [{ jokugo: "", arti: "" }],
     },
   ]);
   const [etymologies, setEtymologies] = useState<any[]>([]);
@@ -521,12 +517,15 @@ export const KanjiFormPage: React.FC = () => {
           setJukugos(
             target.jukugos && target.jukugos.length > 0
               ? target.jukugos.map((j: any) => ({
+                  id: j.id,
+                  jukugoId: j.id,
                   word: j.word,
                   reading: j.reading,
                   meaning: j.meaning,
                 }))
               : [
                   {
+                    id: null,
                     word: "",
                     reading: "",
                     meaning: "",
@@ -535,24 +534,40 @@ export const KanjiFormPage: React.FC = () => {
           );
           setSemanticRelations(
             target.semanticRelations && target.semanticRelations.length > 0
-              ? target.semanticRelations.map((sr: any) => ({
-                  kanji: sr.kanji || sr.jokugo || "",
-                  arti: sr.arti || "",
-                  jukugo_1: sr.jukugo_1 || "",
-                  jukugo_1_arti: sr.jukugo_1_arti || sr.jokugo_arti || "",
-                  jukugo_2: sr.jukugo_2 || "",
-                  jukugo_2_arti: sr.jukugo_2_arti || "",
-                  penjelasan: sr.penjelasan || "",
-                }))
+              ? target.semanticRelations.map((sr: any) => {
+                  let parsedNodes: Array<{ jokugo: string; arti: string }> = [];
+                  if (Array.isArray(sr.nodes) && sr.nodes.length > 0) {
+                    parsedNodes = sr.nodes.map((n: any) => ({
+                      jokugo: n.jokugo || n.jukugo || "",
+                      arti: n.arti || "",
+                    }));
+                  } else {
+                    parsedNodes = [
+                      { jokugo: sr.jukugo_1 || sr.jokugo_1 || "", arti: sr.jukugo_1_arti || sr.jokugo_1_arti || "" },
+                      { jokugo: sr.jukugo_2 || sr.jokugo_2 || "", arti: sr.jukugo_2_arti || sr.jokugo_2_arti || "" },
+                    ].filter((n) => n.jokugo || n.arti);
+                  }
+                  if (parsedNodes.length === 0) {
+                    parsedNodes = [{ jokugo: "", arti: "" }];
+                  }
+
+                  const matchedJukugo = sr.jukugo || (sr.jukugoId && (target.jukugos || []).find((j: any) => j.id === sr.jukugoId));
+
+                  return {
+                    jukugoId: sr.jukugoId || (matchedJukugo ? matchedJukugo.id : null),
+                    kanji: matchedJukugo ? matchedJukugo.word : (sr.kanji || sr.jokugo || ""),
+                    arti: matchedJukugo ? matchedJukugo.meaning : (sr.arti || ""),
+                    penjelasan: sr.penjelasan || "",
+                    nodes: parsedNodes,
+                  };
+                })
               : [
                   {
+                    jukugoId: null,
                     kanji: "",
                     arti: "",
-                    jukugo_1: "",
-                    jukugo_1_arti: "",
-                    jukugo_2: "",
-                    jukugo_2_arti: "",
                     penjelasan: "",
+                    nodes: [{ jokugo: "", arti: "" }],
                   },
                 ],
           );
@@ -618,11 +633,8 @@ export const KanjiFormPage: React.FC = () => {
             {
               kanji: "",
               arti: "",
-              jukugo_1: "",
-              jukugo_1_arti: "",
-              jukugo_2: "",
-              jukugo_2_arti: "",
               penjelasan: "",
+              nodes: [{ jokugo: "", arti: "" }],
             },
           ]);
           setEtymologies([{ character: "", romaji: "", detail: "" }]);
@@ -676,18 +688,42 @@ export const KanjiFormPage: React.FC = () => {
     setSemanticRelations((prev) => [
       ...prev,
       {
+        jukugoId: null,
         kanji: "",
         arti: "",
-        jukugo_1: "",
-        jukugo_1_arti: "",
-        jukugo_2: "",
-        jukugo_2_arti: "",
         penjelasan: "",
+        nodes: [{ jokugo: "", arti: "" }],
       },
     ]);
   };
   const removeSemanticRelationRow = (idx: number) => {
     setSemanticRelations((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const addSemanticRelationNode = (srIdx: number) => {
+    setSemanticRelations((prev) =>
+      prev.map((sr, i) =>
+        i === srIdx
+          ? {
+              ...sr,
+              nodes: [...(sr.nodes || []), { jokugo: "", arti: "" }],
+            }
+          : sr
+      )
+    );
+  };
+
+  const removeSemanticRelationNode = (srIdx: number, nodeIdx: number) => {
+    setSemanticRelations((prev) =>
+      prev.map((sr, i) => {
+        if (i !== srIdx) return sr;
+        const newNodes = (sr.nodes || []).filter((_, nI) => nI !== nodeIdx);
+        return {
+          ...sr,
+          nodes: newNodes.length > 0 ? newNodes : [{ jokugo: "", arti: "" }],
+        };
+      })
+    );
   };
 
   const handleCancel = () => {
@@ -764,11 +800,8 @@ export const KanjiFormPage: React.FC = () => {
         .map((sr) => ({
           kanji: sr.kanji,
           arti: sr.arti || null,
-          jukugo_1: sr.jukugo_1 || null,
-          jukugo_1_arti: sr.jukugo_1_arti || null,
-          jukugo_2: sr.jukugo_2 || null,
-          jukugo_2_arti: sr.jukugo_2_arti || null,
           penjelasan: sr.penjelasan || null,
+          nodes: (sr.nodes || []).filter((n) => n.jokugo && n.jokugo.trim() !== ""),
         })),
       etymologies: etymologies.filter((et) => et.character.trim() !== ""),
       graphNodes: formattedNodes,
@@ -1177,118 +1210,178 @@ export const KanjiFormPage: React.FC = () => {
                             </button>
                           </div>
 
-                          {/* Row 1: Kanji & Arti / Terjemahan */}
+                          {/* Row 1: Relasi Jukugo ID & Arti */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Karakter Kanji
+                              <label className="text-[9px] uppercase font-bold text-slate-500 flex items-center justify-between">
+                                <span>PILIH KATA JUKUGO (JUKUGO ID)</span>
+                                {sr.jukugoId && (
+                                  <span className="text-indigo-600 font-mono text-[10px] font-extrabold bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                                    ID: #{sr.jukugoId}
+                                  </span>
+                                )}
                               </label>
-                              <input
-                                type="text"
-                                value={sr.kanji}
-                                onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].kanji = e.target.value;
-                                  setSemanticRelations(newSR);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
-                                placeholder="Contoh: 試験"
-                              />
+                              {jukugos && jukugos.length > 0 ? (
+                                <select
+                                  value={
+                                    sr.jukugoId
+                                      ? String(sr.jukugoId)
+                                      : (jukugos.find((j: any) => j.word && j.word === sr.kanji)?.id
+                                          ? String(jukugos.find((j: any) => j.word === sr.kanji)?.id)
+                                          : "")
+                                  }
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const matchedJukugo = jukugos.find((j: any) => 
+                                      String(j.id || j.jukugoId) === val || `word-${j.word}` === val
+                                    );
+                                    const selectedId = matchedJukugo && (matchedJukugo.id || matchedJukugo.jukugoId)
+                                      ? Number(matchedJukugo.id || matchedJukugo.jukugoId)
+                                      : (val && !isNaN(Number(val)) ? Number(val) : null);
+
+                                    const newSR = [...semanticRelations];
+                                    newSR[idx].jukugoId = selectedId;
+                                    newSR[idx].kanji = matchedJukugo ? matchedJukugo.word : (newSR[idx].kanji || "");
+                                    newSR[idx].arti = matchedJukugo ? matchedJukugo.meaning : (newSR[idx].arti || "");
+                                    setSemanticRelations(newSR);
+                                  }}
+                                  className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold cursor-pointer hover:border-primary transition-all"
+                                >
+                                  <option value="">-- Pilih Kata Jukugo --</option>
+                                  {jukugos.map((j: any, jIdx: number) => {
+                                    const optValue = (j.id || j.jukugoId) ? String(j.id || j.jukugoId) : `word-${j.word}`;
+                                    return (
+                                      <option key={jIdx} value={optValue}>
+                                        {j.word} ({j.meaning})
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={sr.kanji}
+                                  onChange={(e) => {
+                                    const newSR = [...semanticRelations];
+                                    newSR[idx].kanji = e.target.value;
+                                    setSemanticRelations(newSR);
+                                  }}
+                                  className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-bold"
+                                  placeholder="Contoh: 資格試験"
+                                />
+                              )}
                             </div>
 
                             <div className="flex flex-col gap-1">
                               <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti / Terjemahan
+                                ARTI / TERJEMAHAN (OTOMATIS DARI JUKUGO)
                               </label>
                               <input
                                 type="text"
+                                readOnly={!!sr.jukugoId}
                                 value={sr.arti}
                                 onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].arti = e.target.value;
-                                  setSemanticRelations(newSR);
+                                  if (!sr.jukugoId) {
+                                    const newSR = [...semanticRelations];
+                                    newSR[idx].arti = e.target.value;
+                                    setSemanticRelations(newSR);
+                                  }
                                 }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: Ujian"
+                                className={`border border-outline-variant/30 rounded-lg p-2 text-xs outline-none ${
+                                  sr.jukugoId
+                                    ? "bg-slate-100/70 text-slate-600 font-medium cursor-not-allowed"
+                                    : "bg-white text-on-surface"
+                                }`}
+                                placeholder="Arti terisi otomatis setelah memilih Jukugo..."
                               />
                             </div>
                           </div>
 
-                          {/* Row 2: Kata Jukugo 1 & Arti Kata Jukugo 1 */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Kata Jukugo 1
-                              </label>
-                              <input
-                                type="text"
-                                value={sr.jukugo_1}
-                                onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].jukugo_1 = e.target.value;
-                                  setSemanticRelations(newSR);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
-                                placeholder="Contoh: 試"
-                              />
-                            </div>
+                          {/* Row 2: Dynamic Kata Jukugo Fields */}
+                          <div className="flex flex-col gap-3">
+                            {(sr.nodes || []).map((node, nodeIdx) => (
+                              <div key={nodeIdx} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[9px] uppercase font-bold text-slate-500">
+                                    KATA JUKUGO {nodeIdx + 1}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={node.jokugo || (node as any).jukugo || (node as any).word || ""}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setSemanticRelations((prev) =>
+                                        prev.map((srItem, srI) =>
+                                          srI === idx
+                                            ? {
+                                                ...srItem,
+                                                nodes: srItem.nodes.map((n, nI) =>
+                                                  nI === nodeIdx ? { ...n, jokugo: val } : n
+                                                ),
+                                              }
+                                            : srItem
+                                        )
+                                      );
+                                    }}
+                                    className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
+                                    placeholder={`Contoh: ${nodeIdx === 0 ? "試" : nodeIdx === 1 ? "験" : "資格"}`}
+                                  />
+                                </div>
 
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti Kata Jukugo 1
-                              </label>
-                              <input
-                                type="text"
-                                value={sr.jukugo_1_arti}
-                                onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].jukugo_1_arti = e.target.value;
-                                  setSemanticRelations(newSR);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: Menguji"
-                              />
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center justify-between">
+                                    <label className="text-[9px] uppercase font-bold text-slate-500">
+                                      ARTI KATA JUKUGO {nodeIdx + 1}
+                                    </label>
+                                    {sr.nodes.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeSemanticRelationNode(idx, nodeIdx)}
+                                        className="text-error bg-transparent hover:bg-error-container/20 p-0.5 rounded cursor-pointer border-none"
+                                        title={`Hapus Jukugo ${nodeIdx + 1}`}
+                                      >
+                                        <Icon name="delete" className="text-xs block" />
+                                      </button>
+                                    )}
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={node.arti || ""}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setSemanticRelations((prev) =>
+                                        prev.map((srItem, srI) =>
+                                          srI === idx
+                                            ? {
+                                                ...srItem,
+                                                nodes: srItem.nodes.map((n, nI) =>
+                                                  nI === nodeIdx ? { ...n, arti: val } : n
+                                                ),
+                                              }
+                                            : srItem
+                                        )
+                                      );
+                                    }}
+                                    className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
+                                    placeholder={`Contoh: ${nodeIdx === 0 ? "Menguji" : nodeIdx === 1 ? "Hasil / Verifikasi" : "Kualifikasi"}`}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+
+                            <div className="flex justify-start">
+                              <button
+                                type="button"
+                                onClick={() => addSemanticRelationNode(idx)}
+                                className="px-3 py-1.5 text-[11px] font-bold bg-primary/10 text-primary hover:bg-primary/20 rounded-lg border-none cursor-pointer flex items-center gap-1.5 transition-all"
+                              >
+                                <Icon name="add" className="text-sm" />
+                                <span>+ Tambah Kata Jukugo</span>
+                              </button>
                             </div>
                           </div>
 
-                          {/* Row 3: Kata Jukugo 2 & Arti Kata Jukugo 2 */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Kata Jukugo 2
-                              </label>
-                              <input
-                                type="text"
-                                value={sr.jukugo_2}
-                                onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].jukugo_2 = e.target.value;
-                                  setSemanticRelations(newSR);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none font-medium"
-                                placeholder="Contoh: 験"
-                              />
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[9px] uppercase font-bold text-slate-500">
-                                Arti Kata Jukugo 2
-                              </label>
-                              <input
-                                type="text"
-                                value={sr.jukugo_2_arti}
-                                onChange={(e) => {
-                                  const newSR = [...semanticRelations];
-                                  newSR[idx].jukugo_2_arti = e.target.value;
-                                  setSemanticRelations(newSR);
-                                }}
-                                className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none"
-                                placeholder="Contoh: Hasil / Verifikasi"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Row 4: Penjelasan Hubungan Makna */}
+                          {/* Row 3: Penjelasan Hubungan Makna */}
                           <div className="flex flex-col gap-1">
                             <label className="text-[9px] uppercase font-bold text-slate-500">
                               Penjelasan Hubungan Makna
@@ -1302,7 +1395,7 @@ export const KanjiFormPage: React.FC = () => {
                               }}
                               rows={2}
                               className="bg-white border border-outline-variant/30 rounded-lg p-2 text-xs text-on-surface outline-none leading-relaxed"
-                              placeholder="Contoh: Hubungan makna antara kanji 試 (menguji) dan 験 (verifikasi) membentuk kata 試験 yang berarti Ujian."
+                              placeholder="Contoh: Hubungan makna antara 資格 dan 試験 membentuk 資格試験 yang berarti Ujian Sertifikasi."
                             />
                           </div>
                         </div>

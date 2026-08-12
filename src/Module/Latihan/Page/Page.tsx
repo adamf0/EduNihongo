@@ -7,7 +7,9 @@ import confetti from "canvas-confetti";
 import KanjiStrokeVisualizer from "../../Module/Component/Atom/KanjiStrokeVisualizer";
 import { createWorker, PSM } from "tesseract.js";
 import KanjiAtlasFlow from "../../Module/Component/Atom/KanjiAtlasFlow";
+import Breadcrumbs from "../Component/Atoms/Breadcrumbs";
 import { api } from "../../Common/Utility/api";
+import { fetchGraphQL, GET_KANJI_SEMANTIC_GRAPH_QUERY } from "../../../Common/Utility/graphqlClient";
 import tts from "../../Common/Utility/tts";
 import StrokeByStroke from "../Component/Atoms/StrokeByStroke";
 import {
@@ -30,7 +32,7 @@ import {
     Paperclip,
     GitGraph,
 } from "lucide-react";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const worker = await createWorker("jpn");
@@ -293,38 +295,6 @@ export const LatihanPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<
         "detail" | "reading" | "quiz" | "lms"
     >("detail");
-    const [activePill, setActivePill] = useState<string>("learning-materials");
-
-    const JAPANESE_HERO_BG_IMAGES = useMemo(
-        () => [
-            "https://antaraya.co.id/wp-content/uploads/2023/02/6-Budaya-Jepang-Yang-Unik-Dan-Menarik-Untuk-Diketahui.jpg",
-            "https://itoen-ultrajaya.co.id/wp-content/uploads/2024/06/Budaya-Jepang-Apa-Saja-Ini-yang-Paling-Terkenal-dan-Unik-di-Dunia.jpg",
-            "https://cdn.pixabay.com/photo/2016/11/14/03/43/kimono-1822520_1280.jpg",
-            "https://cdn.pixabay.com/photo/2016/11/07/14/03/japan-1805865_640.jpg",
-            "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/245/2025/10/27/WhatsApp-Image-2025-10-27-at-102300_7bd75400-2510856370.jpg",
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_lqbsO68Cs9CsjR9Nd4f2CX6fxoflTPGTGVqOu9TPr9pyNgOf5QszZ_AY&s=10",
-            "https://media.unseen-japan.com/wp-content/uploads/2025/03/pixta_78714900_M-768x512.jpg",
-            "https://image.idntimes.com/post/20250809/hobby-932_38e8f419-34b3-4c3c-8b58-167fc16e67aa.jpg",
-            "https://imgsrv2.voi.id/pJQYT-s2JH_1g9Aj8NQ0_iM_SxeFKkCMlBNTWCj20Kw/auto/1200/675/sm/1/bG9jYWw6Ly8vcHVibGlzaGVycy8zNzgwMS8yMDIxMDMwODE2NDMtbW9iaWxlLmNyb3BwZWRfMTYxNTIwMzIwNy5qcGc.jpg",
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTa-j1Mn4gR8xVmf04XDG3FeXnqKcspIlsxKmD56dRjxUBoMH3WDjmtyAe&s=10",
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRj3Vr8oPAN_a2k9Nm3yAbHyDlgMTeFBzm-NE6PQG9Oy0V3epJtUNXijss&s=10",
-            "https://img.magnific.com/free-photo/close-up-pupils-doing-japanese-calligraphy-called-shodo_23-2149105367.jpg",
-        ],
-        [],
-    );
-
-    const randomHeroBg = useMemo(() => {
-        const idx = Math.floor(Math.random() * JAPANESE_HERO_BG_IMAGES.length);
-        return JAPANESE_HERO_BG_IMAGES[idx];
-    }, [charParam, JAPANESE_HERO_BG_IMAGES]);
-
-    // Preload all background images into browser cache for instant lag-free rendering
-    useEffect(() => {
-        JAPANESE_HERO_BG_IMAGES.forEach((src) => {
-            const img = new Image();
-            img.src = src;
-        });
-    }, [JAPANESE_HERO_BG_IMAGES]);
 
     // Reading tab states
     const [readSentences, setReadSentences] = useState<Record<number, boolean>>(
@@ -461,11 +431,21 @@ export const LatihanPage: React.FC = () => {
     >({});
     const [loadingLms, setLoadingLms] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
-    const [activeJukugoWord, setActiveJukugoWord] = useState<string | null>(null);
+    const [activeJukugoWord, setActiveJukugoWord] = useState<string | null>(
+        null,
+    );
     const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
-    const [allKanjisMap, setAllKanjisMap] = useState<Map<string, any>>(new Map());
+    const [allKanjisMap, setAllKanjisMap] = useState<Map<string, any>>(
+        new Map(),
+    );
+    const [allJukugosMap, setAllJukugosMap] = useState<Map<string, any>>(
+        new Map(),
+    );
 
-    const handleSelectJukugo = (word: string | null, nodeId?: string | null) => {
+    const handleSelectJukugo = (
+        word: string | null,
+        nodeId?: string | null,
+    ) => {
         setActiveJukugoWord(word);
         setActiveNodeId(nodeId || null);
     };
@@ -478,15 +458,34 @@ export const LatihanPage: React.FC = () => {
                 list.forEach((k: any) => map.set(k.character, k));
                 setAllKanjisMap(map);
             })
-            .catch((err) => console.error("Gagal memuat detail kanji lengkap:", err));
+            .catch((err) =>
+                console.error("Gagal memuat detail kanji lengkap:", err),
+            );
+
+        api.admin.jukugos
+            .list()
+            .then((list) => {
+                const map = new Map<string, any>();
+                list.forEach((j: any) => map.set((j.word || "").trim(), j));
+                setAllJukugosMap(map);
+            })
+            .catch((err) =>
+                console.error("Gagal memuat detail jukugo lengkap:", err),
+            );
     }, []);
 
     // Auto-scroll carousel when activeJukugoWord changes
     useEffect(() => {
         if (activeJukugoWord) {
-            const el = document.getElementById(`jukugo-card-${activeJukugoWord}`);
+            const el = document.getElementById(
+                `jukugo-card-${activeJukugoWord}`,
+            );
             if (el) {
-                el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                el.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "center",
+                });
             }
         }
     }, [activeJukugoWord]);
@@ -897,17 +896,6 @@ export const LatihanPage: React.FC = () => {
         setActiveTab(tab);
     };
 
-    const handlePillClick = (pillKey: string, mainTab: "detail" | "reading" | "quiz" | "lms", targetElementId?: string) => {
-        playTabClickSound();
-        setActivePill(pillKey);
-        setActiveTab(mainTab);
-        if (targetElementId) {
-            setTimeout(() => {
-                document.getElementById(targetElementId)?.scrollIntoView({ behavior: "smooth" });
-            }, 100);
-        }
-    };
-
     const playTingTing = () => {
         try {
             const AudioContextClass =
@@ -1223,6 +1211,23 @@ export const LatihanPage: React.FC = () => {
             try {
                 setLoading(true);
                 const data = await api.latihan.get(charParam);
+
+                try {
+                    const gqlResult = await fetchGraphQL(GET_KANJI_SEMANTIC_GRAPH_QUERY, { character: charParam });
+                    if (gqlResult?.getKanjiSemanticGraph) {
+                        const { nodes, edges, breakdownTree } = gqlResult.getKanjiSemanticGraph;
+                        if (nodes && nodes.length > 0) {
+                            data.graphNodes = nodes;
+                            data.graphEdges = edges;
+                        }
+                        if (breakdownTree && breakdownTree.length > 0) {
+                            data.gqlBreakdownTree = breakdownTree;
+                        }
+                    }
+                } catch (gqlError) {
+                    console.warn("GraphQL semantic query warning, using REST graph:", gqlError);
+                }
+
                 setKanjiData(data);
 
                 if (data.refleksiData && Array.isArray(data.refleksiData)) {
@@ -1765,6 +1770,22 @@ export const LatihanPage: React.FC = () => {
         graph,
     } = kanjiData;
 
+    const allDisplayJukugos = (() => {
+        const map = new Map<string, any>();
+        (jukugos || []).forEach((j: any) => {
+            const w = (j.word || "").trim();
+            if (w) map.set(w, j);
+        });
+
+        allJukugosMap.forEach((j: any, w: string) => {
+            if (!map.has(w)) {
+                map.set(w, j);
+            }
+        });
+
+        return Array.from(map.values());
+    })();
+
     let quizQuestions: QuizQuestion[] = [];
     if (kanjiData.quizData) {
         try {
@@ -1776,265 +1797,175 @@ export const LatihanPage: React.FC = () => {
         quizQuestions = getQuizQuestions(kanji, jukugos, examples);
     }
 
+    console.log("graph: ", graph);
+
     return (
         <Layout>
-            <div className="w-full mx-auto px-4 md:px-8 pb-8 flex flex-col gap-6 select-none relative z-10">
+            <div className="w-full mx-auto px-4 md:px-8 py-8 flex flex-col gap-6 select-none relative z-10">
+                {/* Custom style for background */}
+                <style>{`
+          .seigaiha-bg {
+            background-image: radial-gradient(circle at 100% 150%, #edeef0 24%, white 25%, white 28%, #edeef0 29%, #edeef0 36%, white 36%, white 40%, transparent 40%, transparent);
+            background-size: 40px 20px;
+          }
+
+          @keyframes slideInLeft {
+            from {
+              opacity: 0;
+              transform: translateX(-60px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+          .animate-slide-in-left {
+            animation: slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+
+          @keyframes zoomIn {
+            from {
+              opacity: 0;
+              transform: scale(0.6);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+          .animate-zoom-in {
+            animation: zoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
+        `}</style>
+
                 {/* Background Texture */}
                 <div className="absolute inset-0 seigaiha-bg pointer-events-none opacity-20 -z-10"></div>
 
-                {/* Dark Ukiyo-e Japanese Scenic Hero Banner (Image 2 Redesign) */}
-                <div
-                    className="relative w-full rounded-3xl overflow-hidden border border-white/10 shadow-2xl p-6 md:p-8 flex flex-col justify-end gap-6 min-h-[90vh]"
-                    style={{
-                        background: `url(${randomHeroBg}) center/cover no-repeat`,
-                    }}
-                >
-                    {/* Dark Tint Overlay for Readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b101d]/90 via-[#0F172A]/60 to-[#0b101d]/70 pointer-events-none z-0"></div>
+                {/* Breadcrumbs */}
+                <Breadcrumbs
+                    items={[
+                        { label: "Dasbor", path: "/dashboard" },
+                        { label: "Kanji & Kosakata", path: "/module" },
+                        {
+                            label: `Latihan & Evaluasi: ${kanji} (${kanjiData.moduleTitle || "Kanji"})`,
+                        },
+                    ]}
+                />
 
-                    {/* Main Flex Wrapper (Kanji Box Left + Glass Card Center/Right) */}
-                    <div className="relative z-10 flex flex-col md:flex-row items-stretch gap-6 w-full">
-                        {/* 1. Left Kanji Showcase Card */}
-                        <div className="bg-slate-900/60 backdrop-blur-xl border border-amber-400/30 rounded-3xl p-3.5 shadow-2xl flex flex-col items-center justify-between min-w-[200px] md:w-[220px] shrink-0">
-                            {/* Inner Metallic Kanji Frame */}
-                            <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-200 rounded-2xl p-6 shadow-[inset_0_2px_4px_rgba(255,255,255,0.9),0_10px_25px_rgba(0,0,0,0.5)] border border-amber-300/60 w-full flex flex-col items-center justify-center relative min-h-[140px]">
-                                <span className="font-serif text-7xl font-black text-slate-950 leading-none drop-shadow-sm tracking-tighter">
-                                    {kanji}
+                {/* Primary Header Card with Detailed Percent Stats */}
+                <div className="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+                    <div className="flex items-center gap-6 self-start md:self-center animate-slide-in-left opacity-0">
+                        <div className="w-24 h-24 bg-[#8f0020]/5 rounded-2xl flex items-center justify-center text-slate-800 font-bold border border-slate-100 relative shrink-0">
+                            <span className="font-serif text-5xl leading-none">
+                                {kanji}
+                            </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5 text-left">
+                            <span className="bg-[#fcebeb] text-[#8f0020] px-3 py-1 rounded-full text-xs font-bold w-fit uppercase tracking-wider">
+                                {kanjiData.moduleTitle || "Syllabus"}
+                            </span>
+                            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none">
+                                {kanjiMeaning}
+                            </h1>
+                            <p className="text-sm font-medium text-slate-400">
+                                Romaji:{" "}
+                                <span className="font-semibold text-slate-600 font-mono">
+                                    {kanjiRomaji}
+                                </span>{" "}
+                                | Tingkat kesulitan:{" "}
+                                <span className="font-bold text-[#8f0020]">
+                                    {kanjiData.difficulty || "N4"}
                                 </span>
-                            </div>
+                            </p>
+                        </div>
+                    </div>
 
-                            {/* Attached On/Kun Readings Box */}
-                            <div className="bg-slate-950/70 backdrop-blur-md rounded-xl p-3 mt-3 w-full border border-white/10 text-xs flex flex-col gap-1.5 text-left select-text">
-                                <div className="text-slate-300 font-medium">
-                                    <span className="text-amber-400/90 font-bold uppercase tracking-wider">Onyomi:</span>{" "}
-                                    <span className="font-semibold text-white">{kanjiData.onyomi || "-"}</span>
-                                </div>
-                                <div className="text-slate-300 font-medium">
-                                    <span className="text-amber-400/90 font-bold uppercase tracking-wider">Kunyomi:</span>{" "}
-                                    <span className="font-semibold text-white">{kanjiData.kunyomi || "-"}</span>
-                                </div>
-                                <div className="text-slate-300 font-medium">
-                                    <span className="text-amber-400/90 font-bold uppercase tracking-wider">Bushuu:</span>{" "}
-                                    <span className="font-semibold text-white">{kanjiData.bushuu || "-"}</span>
-                                </div>
+                    {/* Progress Breakdown Grid */}
+                    <div className="flex flex-wrap items-center gap-4 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 justify-around animate-zoom-in opacity-0">
+                        <div className="flex flex-col items-center select-none bg-slate-50/50 p-3 rounded-2xl border border-slate-100 min-w-[70px]">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                Total
+                            </span>
+                            <div className="w-11 h-11 rounded-full bg-[#8f0020] flex items-center justify-center text-white font-extrabold text-sm shadow-md">
+                                {masteryPercent}%
                             </div>
                         </div>
 
-                        {/* 2. Middle/Right Main Header Info Glass Card */}
-                        <div className="bg-[#121929]/10 backdrop-blur-sm border border-white/10 rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 flex-1 shadow-2xl">
-                            {/* Title & Subtitle Section */}
-                            <div className="flex flex-col gap-3 text-left w-full lg:w-auto flex-1">
-                                <div className="flex items-center gap-2.5 flex-wrap">
-                                    <span className="bg-[#8F0020] text-white px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-md border border-red-500/30">
-                                        {kanjiData.moduleTitle || "MODULE ?"}
-                                    </span>
-                                </div>
+                        <div className="flex flex-col items-center min-w-[60px]">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                Tulis
+                            </span>
+                            <span className="text-sm font-bold text-slate-700">
+                                {writingPercent}%
+                            </span>
+                        </div>
 
-                                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                                    {kanjiMeaning}
-                                </h1>
+                        <div className="flex flex-col items-center min-w-[60px]">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                Baca
+                            </span>
+                            <span className="text-sm font-bold text-slate-700">
+                                {readingPercent}%
+                            </span>
+                        </div>
 
-                                <p className="text-sm font-medium text-slate-400 leading-relaxed">
-                                    {kanjiData.baseMeaning || (kanjiRomaji ? `Point, Dot, Mark, Score, Focus` : "Point, Dot, Mark, Score, Focus")}
-                                </p>
-                            </div>
-
-                            {/* Circular SVG Donut Progress Gauges */}
-                            <div className="flex items-center justify-around gap-4 shrink-0 w-full lg:w-auto border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6">
-                                {/* Gauge 1: Green - Learning Mastery */}
-                                <div className="flex flex-col items-center text-center">
-                                    <div className="relative w-16 h-16 flex items-center justify-center">
-                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                            <path
-                                                className="text-slate-800/80"
-                                                strokeWidth="3.5"
-                                                stroke="currentColor"
-                                                fill="none"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            />
-                                            <path
-                                                className="text-emerald-500 transition-all duration-1000 drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]"
-                                                strokeDasharray={`${masteryPercent || 0}, 100`}
-                                                strokeWidth="3.5"
-                                                strokeLinecap="round"
-                                                stroke="currentColor"
-                                                fill="none"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            />
-                                        </svg>
-                                        <span className="absolute font-extrabold text-sm text-white">
-                                            {masteryPercent || 0}%
-                                        </span>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-300 mt-2 max-w-[80px] leading-tight">
-                                        Total
-                                    </span>
-                                </div>
-
-                                {/* Gauge 2: Orange - Stroke Order Accuracy */}
-                                <div className="flex flex-col items-center text-center">
-                                    <div className="relative w-16 h-16 flex items-center justify-center">
-                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                            <path
-                                                className="text-slate-800/80"
-                                                strokeWidth="3.5"
-                                                stroke="currentColor"
-                                                fill="none"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            />
-                                            <path
-                                                className="text-amber-500 transition-all duration-1000 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]"
-                                                strokeDasharray={`${writingPercent || 0}, 100`}
-                                                strokeWidth="3.5"
-                                                strokeLinecap="round"
-                                                stroke="currentColor"
-                                                fill="none"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            />
-                                        </svg>
-                                        <span className="absolute font-extrabold text-sm text-white">
-                                            {writingPercent || 0}%
-                                        </span>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-300 mt-2 max-w-[80px] leading-tight">
-                                        Tulis
-                                    </span>
-                                </div>
-
-                                {/* Gauge 3: Blue - Vocabulary Usage */}
-                                <div className="flex flex-col items-center text-center">
-                                    <div className="relative w-16 h-16 flex items-center justify-center">
-                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                            <path
-                                                className="text-slate-800/80"
-                                                strokeWidth="3.5"
-                                                stroke="currentColor"
-                                                fill="none"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            />
-                                            <path
-                                                className="text-blue-500 transition-all duration-1000 drop-shadow-[0_0_6px_rgba(59,130,246,0.6)]"
-                                                strokeDasharray={`${readingPercent || 0}, 100`}
-                                                strokeWidth="3.5"
-                                                strokeLinecap="round"
-                                                stroke="currentColor"
-                                                fill="none"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            />
-                                        </svg>
-                                        <span className="absolute font-extrabold text-sm text-white">
-                                            {readingPercent || 0}%
-                                        </span>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-300 mt-2 max-w-[80px] leading-tight">
-                                        Baca
-                                    </span>
-                                </div>
-
-                                {/* Gauge 3: Blue - Vocabulary Usage */}
-                                <div className="flex flex-col items-center text-center">
-                                    <div className="relative w-16 h-16 flex items-center justify-center">
-                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                            <path
-                                                className="text-slate-800/80"
-                                                strokeWidth="3.5"
-                                                stroke="currentColor"
-                                                fill="none"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            />
-                                            <path
-                                                className="text-red-500 transition-all duration-1000 drop-shadow-[0_0_6px_rgba(59,130,246,0.6)]"
-                                                strokeDasharray={`${quizPercent || 0}, 100`}
-                                                strokeWidth="3.5"
-                                                strokeLinecap="round"
-                                                stroke="currentColor"
-                                                fill="none"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            />
-                                        </svg>
-                                        <span className="absolute font-extrabold text-sm text-white">
-                                            {quizPercent || 0}%
-                                        </span>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-300 mt-2 max-w-[80px] leading-tight">
-                                        Kuis
-                                    </span>
-                                </div>
-                            </div>
+                        <div className="flex flex-col items-center min-w-[60px]">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                Kuis
+                            </span>
+                            <span className="text-sm font-bold text-slate-700">
+                                {quizPercent}%
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Glass Pill Navigation Tab Bar (Placed Outside & Below Hero Banner Image) */}
-                <div className="w-full bg-[#121929] backdrop-blur-xl p-1.5 rounded-full border border-slate-800 flex items-center justify-between overflow-x-auto shadow-xl gap-1 my-1 scrollbar-none">
+                {/* Tab Navigation Menu */}
+                <div className="flex border-b border-slate-200/80 mb-2 bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-xs gap-2">
                     <button
-                        onClick={() => handlePillClick("mnemonics", "detail", "semantic-graph-section")}
-                        className={`flex-1 min-w-[110px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
-                            activePill === "mnemonics"
-                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                        onClick={() => handleTabChange("detail")}
+                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+                            activeTab === "detail"
+                                ? "bg-[#8f0020] text-white shadow-md"
+                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                     >
-                        Semantic
-                        {activePill === "mnemonics" && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
-                        )}
+                        <PenTool className="w-4 h-4" />
+                        Menulis & Detail
                     </button>
-
                     <button
-                        onClick={() => handlePillClick("stroke-order", "detail", "stroke-order-section")}
-                        className={`flex-1 min-w-[110px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
-                            activePill === "stroke-order"
-                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                        onClick={() => handleTabChange("reading")}
+                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+                            activeTab === "reading"
+                                ? "bg-[#8f0020] text-white shadow-md"
+                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                     >
-                        Latihan Menulis
-                        {activePill === "stroke-order" && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
-                        )}
+                        <BookOpen className="w-4 h-4" />
+                        Latihan Membaca
                     </button>
-
                     <button
-                        onClick={() => handlePillClick("readings", "reading")}
-                        className={`flex-1 min-w-[100px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
-                            activePill === "readings"
-                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                        onClick={() => handleTabChange("quiz")}
+                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+                            activeTab === "quiz"
+                                ? "bg-[#8f0020] text-white shadow-md"
+                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                     >
-                        Membaca
-                        {activePill === "readings" && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
-                        )}
+                        <HelpCircle className="w-4 h-4" />
+                        Kuis Evaluasi
                     </button>
-
                     <button
-                        onClick={() => handlePillClick("quizzes", "quiz")}
-                        className={`flex-1 min-w-[100px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
-                            activePill === "quizzes"
-                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                        onClick={() => handleTabChange("lms")}
+                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+                            activeTab === "lms"
+                                ? "bg-[#8f0020] text-white shadow-md"
+                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                     >
-                        Kuis
-                        {activePill === "quizzes" && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
-                        )}
-                    </button>
-
-                    <button
-                        onClick={() => handlePillClick("discussion", "lms")}
-                        className={`flex-1 min-w-[110px] text-center py-2.5 px-4 rounded-full font-bold text-xs transition-all relative border-none cursor-pointer select-none ${
-                            activePill === "discussion"
-                                ? "text-white bg-white/15 border border-white/20 shadow-md font-extrabold"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                        }`}
-                    >
+                        <MessageSquare className="w-4 h-4" />
                         Tugas & Diskusi
-                        {activePill === "discussion" && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
-                        )}
                     </button>
                 </div>
 
@@ -2042,7 +1973,7 @@ export const LatihanPage: React.FC = () => {
                 {activeTab === "detail" && (
                     <div className="flex flex-col gap-4">
                         {/* a. Informasi Kanji Card */}
-                        {/* <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in">
+                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in">
                             <h4 className="font-extrabold text-lg text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                                 <span className="flex items-center gap-2">
                                     <Info className="text-[#8f0020] w-5 h-5" />
@@ -2117,10 +2048,10 @@ export const LatihanPage: React.FC = () => {
                                     </tbody>
                                 </table>
                             </div>
-                        </div> */}
+                        </div>
 
                         {/* Semantic Graph */}
-                        <div id="semantic-graph-section" className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in overflow-hidden flex flex-col gap-2">
+                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in overflow-hidden flex flex-col gap-2">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="flex items-center gap-2">
                                     <GitGraph className="text-[#8f0020] w-5 h-5" />
@@ -2249,236 +2180,992 @@ export const LatihanPage: React.FC = () => {
                             </div>
 
                             <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
-                                {jukugos.map((j: any, idx: number) => {
-                                    const wordStr = (j.word || "").trim();
-                                    const isActive = activeJukugoWord === wordStr;
-                                    return (
-                                        <div
-                                            key={idx}
-                                            id={`jukugo-card-${wordStr}`}
-                                            onClick={() => setActiveJukugoWord(isActive ? null : wordStr)}
-                                            className={`animate-jukugo-card min-w-[240px] max-w-[280px] shrink-0 snap-start rounded-2xl p-4 transition-all duration-300 flex items-center justify-between group cursor-pointer ${
-                                                isActive
-                                                    ? "ring-4 ring-[#8f0020] border-2 border-[#8f0020] bg-rose-50/90 shadow-lg scale-105"
-                                                    : "border border-slate-100 hover:border-[#8f0020]/20 bg-slate-50/20 hover:bg-white shadow-xs"
-                                            }`}
-                                            style={{
-                                                animationDelay: `${idx * 60}ms`,
-                                            }}
-                                        >
-                                            <div className="flex flex-col gap-1 text-left min-w-0 pr-2">
-                                                <div className="flex items-baseline gap-1.5 flex-wrap">
-                                                    <span className={`font-serif text-xl font-bold tracking-wide select-all ${isActive ? "text-[#8f0020]" : "text-slate-800"}`}>
-                                                        {j.word}
-                                                    </span>
-                                                    <span className="text-[10px] text-slate-400 font-bold shrink-0">
-                                                        ({j.reading})
+                                {allDisplayJukugos.map(
+                                    (j: any, idx: number) => {
+                                        const wordStr = (j.word || "").trim();
+                                        const isActive =
+                                            activeJukugoWord === wordStr;
+                                        return (
+                                            <div
+                                                key={idx}
+                                                id={`jukugo-card-${wordStr}`}
+                                                onClick={() =>
+                                                    setActiveJukugoWord(
+                                                        isActive
+                                                            ? null
+                                                            : wordStr,
+                                                    )
+                                                }
+                                                className={`animate-jukugo-card min-w-[240px] max-w-[280px] shrink-0 snap-start rounded-2xl p-4 transition-all duration-300 flex items-center justify-between group cursor-pointer ${
+                                                    isActive
+                                                        ? "ring-4 ring-[#8f0020] border-2 border-[#8f0020] bg-rose-50/90 shadow-lg scale-105"
+                                                        : "border border-slate-100 hover:border-[#8f0020]/20 bg-slate-50/20 hover:bg-white shadow-xs"
+                                                }`}
+                                                style={{
+                                                    animationDelay: `${idx * 60}ms`,
+                                                }}
+                                            >
+                                                <div className="flex flex-col gap-1 text-left min-w-0 pr-2">
+                                                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                                                        <span
+                                                            className={`font-serif text-xl font-bold tracking-wide select-all ${isActive ? "text-[#8f0020]" : "text-slate-800"}`}
+                                                        >
+                                                            {j.word}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-bold shrink-0">
+                                                            ({j.reading})
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-xs font-bold text-[#8f0020] leading-snug truncate">
+                                                        {j.meaning}
                                                     </span>
                                                 </div>
-                                                <span className="text-xs font-bold text-[#8f0020] leading-snug truncate">
-                                                    {j.meaning}
-                                                </span>
-                                            </div>
 
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    playAudio(j.word);
-                                                }}
-                                                className="w-9 h-9 rounded-full bg-white border border-slate-100 hover:bg-[#8f0020] hover:text-white text-slate-500 flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 shrink-0"
-                                                title="Putar Suara"
-                                            >
-                                                <Volume2 className="w-4.5 h-4.5" />
-                                            </button>
-                                        </div>
-                                    );
-                                })}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        playAudio(j.word);
+                                                    }}
+                                                    className="w-9 h-9 rounded-full bg-white border border-slate-100 hover:bg-[#8f0020] hover:text-white text-slate-500 flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 shrink-0"
+                                                    title="Putar Suara"
+                                                >
+                                                    <Volume2 className="w-4.5 h-4.5" />
+                                                </button>
+                                            </div>
+                                        );
+                                    },
+                                )}
                             </div>
 
                             {/* Active Jukugo Node Information Detail Panel */}
-                            {activeJukugoWord && (() => {
-                                const activeJukugoObj = jukugos.find((j: any) => (j.word || "").trim() === activeJukugoWord.trim());
-                                if (!activeJukugoObj) return null;
+                            {activeJukugoWord &&
+                                (() => {
+                                    const activeJukugoObj =
+                                        allDisplayJukugos.find(
+                                            (j: any) =>
+                                                (j.word || "").trim() ===
+                                                activeJukugoWord.trim(),
+                                        );
+                                    if (!activeJukugoObj) return null;
 
-                                const wordStr = activeJukugoObj.word.trim();
-                                const chars: string[] = Array.from(String(wordStr));
+                                    const wordStr = activeJukugoObj.word.trim();
+                                    const JUKUGO_RESEARCH_DETAILS: any = kanjiData?.researchDetails || {};
+                                    const crossLinkTriples: any[] = kanjiData?.crossLinkTriples || [];
 
-                                const JUKUGO_RESEARCH_DETAILS: Record<string, {
-                                    explanation: string;
-                                    charRoles: Record<string, string>;
-                                    category: string;
-                                }> = kanjiData?.researchDetails || {};
+                                    const resData =
+                                        JUKUGO_RESEARCH_DETAILS[wordStr];
 
-                                const CONSTITUENT_KANJI_DATA: Record<string, any> = kanjiData?.constituentKanjiData || {};
+                                    let semanticRelationSentence:
+                                        | string
+                                        | null = null;
+                                    const matchTriple = crossLinkTriples.find(
+                                        ([src, _, tgt]) =>
+                                            src === wordStr || tgt === wordStr,
+                                    );
+                                    if (matchTriple) {
+                                        const [srcWord, pred, tgtWord] =
+                                            matchTriple;
+                                        const srcObj = allDisplayJukugos.find(
+                                            (j: any) => j.word === srcWord,
+                                        );
+                                        const tgtObj = allDisplayJukugos.find(
+                                            (j: any) => j.word === tgtWord,
+                                        );
+                                        const srcMeaning =
+                                            srcObj?.meaning || srcWord;
+                                        const tgtMeaning =
+                                            tgtObj?.meaning || tgtWord;
+                                        semanticRelationSentence = `"${srcMeaning}" (${pred}) "${tgtMeaning}"`;
+                                    }
 
-                                const crossLinkTriples: [string, string, string][] = kanjiData?.crossLinkTriples || [];
-
-                                const resData = JUKUGO_RESEARCH_DETAILS[wordStr];
-
-                                let semanticRelationSentence: string | null = null;
-                                const matchTriple = crossLinkTriples.find(([src, _, tgt]) => src === wordStr || tgt === wordStr);
-                                if (matchTriple) {
-                                    const [srcWord, pred, tgtWord] = matchTriple;
-                                    const srcObj = jukugos.find((j: any) => j.word === srcWord);
-                                    const tgtObj = jukugos.find((j: any) => j.word === tgtWord);
-                                    const srcMeaning = srcObj?.meaning || srcWord;
-                                    const tgtMeaning = tgtObj?.meaning || tgtWord;
-                                    semanticRelationSentence = `"${srcMeaning}" (${pred}) "${tgtMeaning}"`;
-                                }
-
-                                return (
-                                    <div className="bg-white border-2 border-[#8f0020]/20 rounded-3xl p-6 shadow-sm space-y-6 mt-4 animate-zoom-in select-text">
-                                        {/* Header & Category Banner */}
-                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
-                                            <div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="font-serif text-3xl font-black text-slate-900">
-                                                        {activeJukugoObj.word}
-                                                    </span>
-                                                    <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                                                        ({activeJukugoObj.reading})
-                                                    </span>
-                                                    {resData?.category && (
-                                                        <span className="text-xs font-extrabold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-                                                            Cabang: {resData.category}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm font-bold text-[#8f0020] mt-1">
-                                                    {activeJukugoObj?.meaning ?? "-"}
-                                                </p>
-                                            </div>
-
-                                            {semanticRelationSentence && (
-                                                <div className="bg-indigo-50 border border-indigo-200 px-4 py-2.5 rounded-2xl flex items-center gap-2 text-indigo-900 text-xs font-extrabold shadow-xs">
-                                                    <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
-                                                    <span>Hubungan Semantik: <strong>{semanticRelationSentence}</strong></span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Penjelasan Hubungan Makna Penelitian */}
-                                        {resData?.explanation && (
-                                            <div className="bg-emerald-50/80 border border-emerald-200 p-4 rounded-2xl text-emerald-900 text-xs sm:text-sm font-bold leading-relaxed flex items-start gap-3 shadow-xs">
-                                                <Info className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                                    return (
+                                        <div className="bg-white border-2 border-[#8f0020]/20 rounded-3xl p-6 shadow-sm space-y-6 mt-4 animate-zoom-in select-text">
+                                            {/* Header & Category Banner */}
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
                                                 <div>
-                                                    <span className="block text-[10px] uppercase font-black tracking-widest text-emerald-700 mb-0.5">Penjelasan Hubungan Makna:</span>
-                                                    <p>{resData.explanation}</p>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="font-serif text-3xl font-black text-slate-900">
+                                                            {
+                                                                activeJukugoObj.word
+                                                            }
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        )}
 
-                                        {/* Rumusan Pembangun */}
-                                        <div className="bg-rose-50/60 border border-rose-100 p-4 rounded-2xl flex flex-wrap items-center justify-center gap-3 text-sm sm:text-base font-extrabold text-slate-800">
-                                            <span className="text-slate-500 font-bold">Rumusan Pembangun:</span>
-                                            <span className="text-[#8f0020] font-serif text-lg border-b-2 border-[#8f0020]">"{activeJukugoObj.meaning}" ({activeJukugoObj.word})</span>
-                                            <span className="text-slate-400 font-bold">=</span>
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                {chars.map((char, cIdx) => {
-                                                    const role = resData?.charRoles?.[char] || CONSTITUENT_KANJI_DATA[char]?.meaning || "";
-                                                    return (
-                                                        <React.Fragment key={cIdx}>
-                                                            {cIdx > 0 && <span className="text-[#8f0020] text-lg font-bold">+</span>}
-                                                            <div className="flex items-center gap-1.5 bg-white border-2 border-slate-200 px-3 py-1 rounded-xl shadow-xs">
-                                                                <span className="font-serif text-xl text-slate-900 font-black">
-                                                                    {char}
-                                                                </span>
-                                                                {role && (
-                                                                    <span className="text-xs text-[#8f0020] font-bold">
-                                                                        ({role})
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </React.Fragment>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
+                                            {/* Rumusan Pembangun & Breakdown Hierarki */}
+                                            {(() => {
+                                                const getFallbackTree = (
+                                                    wStr: string,
+                                                ) => {
+                                                    const isHiragana = (ch: string) => /^[\u3040-\u309F]$/.test(ch);
 
-                                        {/* 2-Column Responsive Kanji Detail Cards */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {chars.map((char, cIdx) => {
-                                                const dbInfo = allKanjisMap.get(char);
-                                                const fallbackInfo = CONSTITUENT_KANJI_DATA[char];
-                                                const kDetails = {
-                                                    romaji: dbInfo?.romaji || fallbackInfo?.romaji || "-",
-                                                    meaning: dbInfo?.meaning || fallbackInfo?.meaning || "-",
-                                                    baseMeaning: dbInfo?.baseMeaning || fallbackInfo?.baseMeaning || fallbackInfo?.meaning || "-",
-                                                    bushu: dbInfo?.bushu || fallbackInfo?.bushu || "-",
-                                                    kunyomi: dbInfo?.kunyomi || fallbackInfo?.kunyomi || "-",
-                                                    onyomi: dbInfo?.onyomi || fallbackInfo?.onyomi || "-",
-                                                    category: dbInfo?.category?.name || dbInfo?.category || fallbackInfo?.category || "Umum",
+                                                    const getRoleOrMeaning = (
+                                                        c: string,
+                                                    ) => {
+                                                        if (isHiragana(c)) return `Okurigana (${c})`;
+                                                        const k =
+                                                            allKanjisMap.get(c);
+                                                        if (
+                                                            k &&
+                                                            k.meaning &&
+                                                            k.meaning !== "-"
+                                                        )
+                                                            return k.meaning;
+                                                        if (
+                                                            k &&
+                                                            k.baseMeaning &&
+                                                            k.baseMeaning !== "-"
+                                                        )
+                                                            return k.baseMeaning;
+                                                        return `Kanji ${c}`;
+                                                    };
+
+                                                    const getKCard = (
+                                                        c: string,
+                                                    ) => {
+                                                        const dbK =
+                                                            allKanjisMap.get(c);
+                                                        return {
+                                                            character: c,
+                                                            romaji:
+                                                                dbK?.romaji ||
+                                                                "-",
+                                                            meaning:
+                                                                dbK?.meaning ||
+                                                                getRoleOrMeaning(
+                                                                    c,
+                                                                ),
+                                                            baseMeaning:
+                                                                dbK?.baseMeaning ||
+                                                                dbK?.meaning ||
+                                                                getRoleOrMeaning(
+                                                                    c,
+                                                                ),
+                                                            bushu:
+                                                                dbK?.bushuu ||
+                                                                dbK?.bushu ||
+                                                                "-",
+                                                            kunyomi:
+                                                                dbK?.kunyomi ||
+                                                                "-",
+                                                            onyomi:
+                                                                dbK?.onyomi ||
+                                                                "-",
+                                                            category:
+                                                                dbK?.category
+                                                                    ?.name ||
+                                                                dbK?.category ||
+                                                                (isHiragana(c) ? "Hiragana" : "Kanji"),
+                                                        };
+                                                    };
+
+                                                    const getSubObj = (
+                                                        w: string,
+                                                    ) => {
+                                                        const dbJ =
+                                                            allJukugosMap.get(
+                                                                w,
+                                                            );
+                                                        const meaning =
+                                                            dbJ?.meaning || w;
+                                                        const reading =
+                                                            dbJ?.reading || "";
+                                                        const nestedKanjis =
+                                                            Array.from(w).map(
+                                                                (c) =>
+                                                                    getKCard(c),
+                                                            );
+
+                                                        return {
+                                                            word: w,
+                                                            reading,
+                                                            meaning,
+                                                            nestedKanjis,
+                                                        };
+                                                    };
+
+                                                    const word = wStr.trim();
+                                                    const dbJukugo =
+                                                        allJukugosMap.get(
+                                                            word,
+                                                        ) || activeJukugoObj;
+                                                    const wordMeaning =
+                                                        dbJukugo?.meaning ||
+                                                        word;
+                                                    const wordReading =
+                                                        dbJukugo?.reading || "";
+
+                                                    // 1. DUAL_SUB_JUKUGO
+                                                    let sub1Obj: any = null;
+                                                    let sub2Obj: any = null;
+
+                                                    for (let splitIdx = 1; splitIdx < word.length; splitIdx++) {
+                                                        const part1 = word.slice(0, splitIdx);
+                                                        const part2 = word.slice(splitIdx);
+                                                        if (
+                                                            allJukugosMap.has(part1) &&
+                                                            allJukugosMap.has(part2)
+                                                        ) {
+                                                            sub1Obj = getSubObj(part1);
+                                                            sub2Obj = getSubObj(part2);
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if (sub1Obj && sub2Obj) {
+                                                        return {
+                                                            word,
+                                                            reading:
+                                                                wordReading,
+                                                            meaning:
+                                                                wordMeaning,
+                                                            breakdownType:
+                                                                "DUAL_SUB_JUKUGO",
+                                                            explanationItems: [
+                                                                {
+                                                                    word: sub1Obj.word,
+                                                                    meaning:
+                                                                        sub1Obj.meaning,
+                                                                },
+                                                                {
+                                                                    word: sub2Obj.word,
+                                                                    meaning:
+                                                                        sub2Obj.meaning,
+                                                                },
+                                                            ],
+                                                            relationshipExplanation: `Hubungan makna antara ${sub1Obj.word} (${sub1Obj.meaning}) dan ${sub2Obj.word} (${sub2Obj.meaning}) menjadi ${word}, menunjukkan bahwa gabungan tersebut membentuk makna "${wordMeaning}".`,
+                                                            formulaElements: [
+                                                                {
+                                                                    word: sub1Obj.word,
+                                                                    reading:
+                                                                        sub1Obj.reading,
+                                                                    meaning:
+                                                                        sub1Obj.meaning,
+                                                                },
+                                                                {
+                                                                    word: sub2Obj.word,
+                                                                    reading:
+                                                                        sub2Obj.reading,
+                                                                    meaning:
+                                                                        sub2Obj.meaning,
+                                                                },
+                                                            ],
+                                                            breakdownItems: [
+                                                                {
+                                                                    type: "SUB_JUKUGO",
+                                                                    word: sub1Obj.word,
+                                                                    reading:
+                                                                        sub1Obj.reading,
+                                                                    meaning:
+                                                                        sub1Obj.meaning,
+                                                                    nestedKanjis:
+                                                                        sub1Obj.nestedKanjis,
+                                                                },
+                                                                {
+                                                                    type: "SUB_JUKUGO",
+                                                                    word: sub2Obj.word,
+                                                                    reading:
+                                                                        sub2Obj.reading,
+                                                                    meaning:
+                                                                        sub2Obj.meaning,
+                                                                    nestedKanjis:
+                                                                        sub2Obj.nestedKanjis,
+                                                                },
+                                                            ],
+                                                        };
+                                                    }
+
+                                                    // 2. ROOT_KANJI_COMPOUND
+                                                    if (word.length >= 3) {
+                                                        let headWord = "";
+                                                        let tailWord = "";
+
+                                                        const head2 =
+                                                            word.slice(0, 2);
+                                                        if (
+                                                            allJukugosMap.has(
+                                                                head2,
+                                                            )
+                                                        ) {
+                                                            headWord = head2;
+                                                            tailWord =
+                                                                word.slice(2);
+                                                        } else {
+                                                            const tail2 =
+                                                                word.slice(
+                                                                    word.length -
+                                                                        2,
+                                                                );
+                                                            if (
+                                                                allJukugosMap.has(
+                                                                    tail2,
+                                                                )
+                                                            ) {
+                                                                headWord =
+                                                                    word.slice(
+                                                                        0,
+                                                                        word.length -
+                                                                            2,
+                                                                    );
+                                                                tailWord =
+                                                                    tail2;
+                                                            }
+                                                        }
+
+                                                        if (headWord) {
+                                                            const explanationItems: any[] =
+                                                                [];
+                                                            const formulaElements: any[] =
+                                                                [];
+                                                            const breakdownItems: any[] =
+                                                                [];
+
+                                                            if (
+                                                                headWord.length ===
+                                                                2
+                                                            ) {
+                                                                for (const c of Array.from(
+                                                                    headWord,
+                                                                )) {
+                                                                    const kCard =
+                                                                        getKCard(
+                                                                            c,
+                                                                        );
+                                                                    const m =
+                                                                        getRoleOrMeaning(
+                                                                            c,
+                                                                        );
+                                                                    explanationItems.push(
+                                                                        {
+                                                                            word: c,
+                                                                            meaning:
+                                                                                m,
+                                                                        },
+                                                                    );
+                                                                    formulaElements.push(
+                                                                        {
+                                                                            word: c,
+                                                                            reading:
+                                                                                kCard.romaji !==
+                                                                                "-"
+                                                                                    ? kCard.romaji
+                                                                                    : "",
+                                                                            meaning:
+                                                                                m,
+                                                                        },
+                                                                    );
+                                                                    breakdownItems.push(
+                                                                        {
+                                                                            type: "KANJI",
+                                                                            word: c,
+                                                                            meaning:
+                                                                                m,
+                                                                            kanjiDetail:
+                                                                                kCard,
+                                                                        },
+                                                                    );
+                                                                }
+                                                            } else {
+                                                                const headSub =
+                                                                    getSubObj(
+                                                                        headWord,
+                                                                    );
+                                                                explanationItems.push(
+                                                                    {
+                                                                        word: headSub.word,
+                                                                        meaning:
+                                                                            headSub.meaning,
+                                                                    },
+                                                                );
+                                                                formulaElements.push(
+                                                                    {
+                                                                        word: headSub.word,
+                                                                        reading:
+                                                                            headSub.reading,
+                                                                        meaning:
+                                                                            headSub.meaning,
+                                                                    },
+                                                                );
+                                                                breakdownItems.push(
+                                                                    {
+                                                                        type: "SUB_JUKUGO",
+                                                                        word: headSub.word,
+                                                                        reading:
+                                                                            headSub.reading,
+                                                                        meaning:
+                                                                            headSub.meaning,
+                                                                        nestedKanjis:
+                                                                            headSub.nestedKanjis,
+                                                                    },
+                                                                );
+                                                            }
+
+                                                            if (
+                                                                tailWord.length ===
+                                                                1
+                                                            ) {
+                                                                const kCard =
+                                                                    getKCard(
+                                                                        tailWord,
+                                                                    );
+                                                                const m =
+                                                                    getRoleOrMeaning(
+                                                                        tailWord,
+                                                                    );
+                                                                explanationItems.push(
+                                                                    {
+                                                                        word: tailWord,
+                                                                        meaning:
+                                                                            m,
+                                                                    },
+                                                                );
+                                                                formulaElements.push(
+                                                                    {
+                                                                        word: tailWord,
+                                                                        reading:
+                                                                            kCard.romaji !==
+                                                                            "-"
+                                                                                ? kCard.romaji
+                                                                                : "",
+                                                                        meaning:
+                                                                            m,
+                                                                    },
+                                                                );
+                                                                breakdownItems.push(
+                                                                    {
+                                                                        type: "KANJI",
+                                                                        word: tailWord,
+                                                                        meaning:
+                                                                            m,
+                                                                        kanjiDetail:
+                                                                            kCard,
+                                                                    },
+                                                                );
+                                                            } else if (
+                                                                tailWord.length >=
+                                                                2
+                                                            ) {
+                                                                const tailSub =
+                                                                    getSubObj(
+                                                                        tailWord,
+                                                                    );
+                                                                explanationItems.push(
+                                                                    {
+                                                                        word: tailSub.word,
+                                                                        meaning:
+                                                                            tailSub.meaning,
+                                                                    },
+                                                                );
+                                                                formulaElements.push(
+                                                                    {
+                                                                        word: tailSub.word,
+                                                                        reading:
+                                                                            tailSub.reading,
+                                                                        meaning:
+                                                                            tailSub.meaning,
+                                                                    },
+                                                                );
+                                                                breakdownItems.push(
+                                                                    {
+                                                                        type: "SUB_JUKUGO",
+                                                                        word: tailSub.word,
+                                                                        reading:
+                                                                            tailSub.reading,
+                                                                        meaning:
+                                                                            tailSub.meaning,
+                                                                        nestedKanjis:
+                                                                            tailSub.nestedKanjis,
+                                                                    },
+                                                                );
+                                                            }
+
+                                                            return {
+                                                                word,
+                                                                reading:
+                                                                    wordReading,
+                                                                meaning:
+                                                                    wordMeaning,
+                                                                breakdownType:
+                                                                    "ROOT_KANJI_COMPOUND",
+                                                                explanationItems,
+                                                                relationshipExplanation: `Hubungan makna antara ${headWord} dan ${tailWord} menjadi ${word}, menunjukkan bahwa gabungan kedua unsur tersebut membentuk makna "${wordMeaning}".`,
+                                                                formulaElements,
+                                                                breakdownItems,
+                                                            };
+                                                        }
+                                                    }
+
+                                                    // 3. Fallback: STANDARD_2KANJI or Multi-kanji without sub-compounds in DB (e.g. 学究心)
+                                                    const chars =
+                                                        Array.from(word);
+                                                    const explanationItems =
+                                                        chars.map((c) => ({
+                                                            word: c,
+                                                            meaning:
+                                                                getRoleOrMeaning(
+                                                                    c,
+                                                                ),
+                                                        }));
+                                                    const formulaElements =
+                                                        chars.map((c) => {
+                                                            const kCard =
+                                                                getKCard(c);
+                                                            return {
+                                                                word: c,
+                                                                reading:
+                                                                    kCard.romaji !==
+                                                                    "-"
+                                                                        ? kCard.romaji
+                                                                        : "",
+                                                                meaning:
+                                                                    getRoleOrMeaning(
+                                                                        c,
+                                                                    ),
+                                                            };
+                                                        });
+                                                    const breakdownItems =
+                                                        chars.map((c) => ({
+                                                            type: "KANJI",
+                                                            word: c,
+                                                            meaning:
+                                                                getRoleOrMeaning(
+                                                                    c,
+                                                                ),
+                                                            kanjiDetail:
+                                                                getKCard(c),
+                                                        }));
+
+                                                    return {
+                                                        word,
+                                                        reading: wordReading,
+                                                        meaning: wordMeaning,
+                                                        breakdownType:
+                                                            word.length === 2
+                                                                ? "STANDARD_2KANJI"
+                                                                : "ROOT_KANJI_COMPOUND",
+                                                        explanationItems,
+                                                        relationshipExplanation: `Hubungan makna antar kanji ${chars.join(" dan ")} menjadi ${word}, menunjukkan bahwa gabungan unsur tersebut membentuk makna "${wordMeaning}".`,
+                                                        formulaElements,
+                                                        breakdownItems,
+                                                    };
                                                 };
 
-                                                return (
-                                                    <div
-                                                        key={cIdx}
-                                                        className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4"
-                                                    >
-                                                        {/* Header Kanji Character & Category */}
-                                                        <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="text-3xl font-black font-serif text-slate-900 bg-white border-2 border-slate-300 w-12 h-12 rounded-2xl flex items-center justify-center shadow-xs">
-                                                                    {char}
-                                                                </span>
-                                                                <div>
-                                                                    <div className="text-[10px] uppercase tracking-widest font-extrabold text-slate-400">
-                                                                        Karakter Kanji
-                                                                    </div>
-                                                                    <div className="text-sm font-extrabold text-slate-800">
-                                                                        ({kDetails.romaji})
+                                                const tree =
+                                                    kanjiData?.breakdownTrees?.[
+                                                        wordStr
+                                                    ] ||
+                                                    getFallbackTree(wordStr);
+
+                                                const renderFullKanjiCardObj = (
+                                                    kDetails: any,
+                                                    keyVal: any,
+                                                ) => {
+                                                    if (!kDetails) return null;
+                                                    return (
+                                                        <div
+                                                            key={keyVal}
+                                                            className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4 text-left"
+                                                        >
+                                                            {/* Header Kanji Character & Category */}
+                                                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className="text-3xl font-black font-serif text-slate-900 bg-slate-50 border-2 border-slate-200 w-12 h-12 rounded-2xl flex items-center justify-center shadow-xs">
+                                                                        {
+                                                                            kDetails.character
+                                                                        }
+                                                                    </span>
+                                                                    <div>
+                                                                        <div className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                                                                            KARAKTER
+                                                                            KANJI
+                                                                        </div>
+                                                                        <div className="text-base font-extrabold text-slate-900">
+                                                                            (
+                                                                            {
+                                                                                kDetails.romaji
+                                                                            }
+                                                                            )
+                                                                        </div>
                                                                     </div>
                                                                 </div>
+
+                                                                <span className="bg-emerald-100/80 text-emerald-800 text-xs font-black px-3.5 py-1.5 rounded-full border border-emerald-200">
+                                                                    {
+                                                                        kDetails.category
+                                                                    }
+                                                                </span>
                                                             </div>
 
-                                                            <span className="bg-emerald-100 text-emerald-800 text-xs font-extrabold px-3 py-1.5 rounded-xl border border-emerald-200">
-                                                                {kDetails.category}
+                                                            {/* Kanji Information Table Grid */}
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                                                                <div className="bg-slate-50/70 p-3 rounded-2xl border border-slate-100/90">
+                                                                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider mb-0.5">
+                                                                        ROMAJI
+                                                                    </span>
+                                                                    <span className="text-sm font-extrabold text-slate-900">
+                                                                        {
+                                                                            kDetails.romaji
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="bg-slate-50/70 p-3 rounded-2xl border border-slate-100/90">
+                                                                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider mb-0.5">
+                                                                        BUSHU /
+                                                                        RADIKAL
+                                                                    </span>
+                                                                    <span className="text-sm font-extrabold text-slate-900">
+                                                                        {
+                                                                            kDetails.bushu
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="bg-slate-50/70 p-3 rounded-2xl border border-slate-100/90">
+                                                                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider mb-0.5">
+                                                                        ARTI
+                                                                        (MEANING)
+                                                                    </span>
+                                                                    <span className="text-sm font-extrabold text-[#8f0020]">
+                                                                        {
+                                                                            kDetails.meaning
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="bg-slate-50/70 p-3 rounded-2xl border border-slate-100/90">
+                                                                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider mb-0.5">
+                                                                        ARTI
+                                                                        DASAR
+                                                                    </span>
+                                                                    <span className="text-sm font-extrabold text-slate-900 leading-snug">
+                                                                        {
+                                                                            kDetails.baseMeaning
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="bg-slate-50/70 p-3 rounded-2xl border border-slate-100/90 sm:col-span-2">
+                                                                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider mb-0.5">
+                                                                        KUNYOMI
+                                                                        (BACAAN
+                                                                        JEPANG)
+                                                                    </span>
+                                                                    <span className="text-sm font-extrabold text-indigo-700">
+                                                                        {
+                                                                            kDetails.kunyomi
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="bg-slate-50/70 p-3 rounded-2xl border border-slate-100/90 sm:col-span-2">
+                                                                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider mb-0.5">
+                                                                        ONYOMI
+                                                                        (BACAAN
+                                                                        CINA)
+                                                                    </span>
+                                                                    <span className="text-sm font-extrabold text-teal-700">
+                                                                        {
+                                                                            kDetails.onyomi
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                };
+
+                                                if (!tree) return null;
+
+                                                return (
+                                                    <div className="space-y-6">
+                                                        {/* Penjelasan Box */}
+                                                        <div className="bg-emerald-50/80 border border-emerald-200 p-5 rounded-2xl text-emerald-900 text-xs sm:text-sm font-bold leading-relaxed space-y-3 shadow-xs">
+                                                            <div className="flex items-start gap-3">
+                                                                <Info className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                                                                <div className="space-y-2.5 w-full">
+                                                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/80 pb-2">
+                                                                        <span className="text-xs font-black uppercase tracking-widest text-emerald-800">
+                                                                            Penjelasan:
+                                                                        </span>
+                                                                        <span className="text-xs font-bold text-emerald-700">
+                                                                            {tree.reading &&
+                                                                                `(${tree.reading}) `}
+                                                                            {
+                                                                                tree.meaning
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+
+                                                                    {/* List unsur-unsur pembangun */}
+                                                                    <div className="space-y-1.5 py-1 font-medium">
+                                                                        {(
+                                                                            tree?.explanationItems ||
+                                                                            []
+                                                                        ).map(
+                                                                            (
+                                                                                item: any,
+                                                                                idx: number,
+                                                                            ) => (
+                                                                                <div
+                                                                                    key={
+                                                                                        idx
+                                                                                    }
+                                                                                    className="flex items-center gap-2"
+                                                                                >
+                                                                                    <span className="font-serif font-black text-base text-emerald-950 min-w-[2.5rem]">
+                                                                                        {
+                                                                                            item.word
+                                                                                        }
+                                                                                    </span>
+                                                                                    <span className="text-emerald-700 font-bold">
+                                                                                        ：
+                                                                                    </span>
+                                                                                    <span className="text-emerald-900 font-bold">
+                                                                                        {
+                                                                                            item.meaning
+                                                                                        }
+                                                                                    </span>
+                                                                                </div>
+                                                                            ),
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Hubungan Makna */}
+                                                                    <div className="pt-2 border-t border-emerald-200/80 text-xs text-emerald-900 leading-relaxed">
+                                                                        {
+                                                                            tree.relationshipExplanation
+                                                                        }
+                                                                    </div>
+
+                                                                    {resData?.category && (
+                                                                        <div className="pt-2 border-t border-emerald-200/80 flex items-center gap-2">
+                                                                            <span className="text-[10px] uppercase font-black tracking-widest text-emerald-700">
+                                                                                Cabang:
+                                                                            </span>
+                                                                            <span className="text-xs font-extrabold text-emerald-900">
+                                                                                {
+                                                                                    resData.category
+                                                                                }
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {semanticRelationSentence && (
+                                                                        <div className="pt-2 border-t border-emerald-200/80 flex items-center gap-2">
+                                                                            <span className="text-[10px] uppercase font-black tracking-widest text-emerald-700">
+                                                                                Hubungan
+                                                                                Semantik:
+                                                                            </span>
+                                                                            <span className="text-xs font-bold text-emerald-900">
+                                                                                {
+                                                                                    semanticRelationSentence
+                                                                                }
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Rumusan Pembangun */}
+                                                        <div className="bg-rose-50/60 border border-rose-100 p-4 rounded-2xl flex flex-wrap items-center justify-center gap-3 text-sm sm:text-base font-extrabold text-slate-800">
+                                                            <span className="text-slate-500 font-bold">
+                                                                Rumusan
+                                                                Pembangun:
                                                             </span>
+                                                            <span className="text-[#8f0020] font-serif text-lg border-b-2 border-[#8f0020]">
+                                                                "{tree.meaning}
+                                                                " ({tree.word})
+                                                            </span>
+                                                            <span className="text-slate-400 font-bold">
+                                                                =
+                                                            </span>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                {(
+                                                                    tree?.formulaElements ||
+                                                                    []
+                                                                ).map(
+                                                                    (
+                                                                        elem: any,
+                                                                        idx: number,
+                                                                    ) => (
+                                                                        <React.Fragment
+                                                                            key={
+                                                                                idx
+                                                                            }
+                                                                        >
+                                                                            {idx >
+                                                                                0 && (
+                                                                                <span className="text-[#8f0020] text-lg font-bold">
+                                                                                    +
+                                                                                </span>
+                                                                            )}
+                                                                            <div className="flex items-center gap-1.5 bg-white border-2 border-slate-200 px-3.5 py-1.5 rounded-xl shadow-xs">
+                                                                                <span className="font-serif text-xl text-slate-900 font-black">
+                                                                                    {
+                                                                                        elem.word
+                                                                                    }
+                                                                                </span>
+                                                                                {elem.reading && (
+                                                                                    <span className="text-xs text-blue-600 font-bold">
+                                                                                        (
+                                                                                        {
+                                                                                            elem.reading
+                                                                                        }
+                                                                                        )
+                                                                                    </span>
+                                                                                )}
+                                                                                <span className="text-xs text-[#8f0020] font-bold">
+                                                                                    :{" "}
+                                                                                    {
+                                                                                        elem.meaning
+                                                                                    }
+                                                                                </span>
+                                                                            </div>
+                                                                        </React.Fragment>
+                                                                    ),
+                                                                )}
+                                                            </div>
                                                         </div>
 
-                                                        {/* Kanji Information Table Grid */}
-                                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                                            <div className="bg-white p-2.5 rounded-xl border border-slate-100">
-                                                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Romaji</span>
-                                                                <span className="font-extrabold text-slate-800">{kDetails.romaji}</span>
+                                                        {/* Breakdown Cards */}
+                                                        {tree.breakdownType ===
+                                                        "STANDARD_2KANJI" ? (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                {(
+                                                                    tree?.breakdownItems ||
+                                                                    []
+                                                                ).map(
+                                                                    (
+                                                                        item: any,
+                                                                        idx: number,
+                                                                    ) =>
+                                                                        renderFullKanjiCardObj(
+                                                                            item.kanjiDetail,
+                                                                            `std-${idx}`,
+                                                                        ),
+                                                                )}
                                                             </div>
-                                                            <div className="bg-white p-2.5 rounded-xl border border-slate-100">
-                                                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Bushu / Radikal</span>
-                                                                <span className="font-extrabold text-slate-800">{kDetails.bushu}</span>
+                                                        ) : (
+                                                            <div className="space-y-6">
+                                                                {(
+                                                                    tree?.breakdownItems ||
+                                                                    []
+                                                                ).map(
+                                                                    (
+                                                                        item: any,
+                                                                        idx: number,
+                                                                    ) => {
+                                                                        if (
+                                                                            item.type ===
+                                                                            "KANJI"
+                                                                        ) {
+                                                                            return (
+                                                                                <div
+                                                                                    key={
+                                                                                        idx
+                                                                                    }
+                                                                                    className="space-y-3"
+                                                                                >
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <span className="text-xs font-black uppercase tracking-wider text-sky-900 bg-sky-100/90 px-3 py-1 rounded-xl border border-sky-200">
+                                                                                            KANJI
+                                                                                            TUNGGAL
+                                                                                            PENYUSUN
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    {renderFullKanjiCardObj(
+                                                                                        item.kanjiDetail,
+                                                                                        `item-${idx}`,
+                                                                                    )}
+                                                                                </div>
+                                                                            );
+                                                                        }
+
+                                                                        return (
+                                                                            <div
+                                                                                key={
+                                                                                    idx
+                                                                                }
+                                                                                className="bg-amber-50/40 border-2 border-amber-200/90 rounded-3xl p-5 sm:p-6 space-y-5 shadow-xs"
+                                                                            >
+                                                                                {/* Header Sub-Jukugo */}
+                                                                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-amber-200/80 pb-3 gap-2">
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <span className="text-xs font-black uppercase tracking-wider text-amber-900 bg-amber-200/80 px-3 py-1 rounded-xl">
+                                                                                            SUB-JUKUGO{" "}
+                                                                                            {tree.breakdownType ===
+                                                                                            "DUAL_SUB_JUKUGO"
+                                                                                                ? idx +
+                                                                                                  1
+                                                                                                : ""}
+                                                                                        </span>
+                                                                                        <span className="font-serif font-black text-2xl text-slate-900">
+                                                                                            {
+                                                                                                item.word
+                                                                                            }
+                                                                                        </span>
+                                                                                        {item.reading && (
+                                                                                            <span className="text-sm font-extrabold text-slate-500">
+                                                                                                (
+                                                                                                {
+                                                                                                    item.reading
+                                                                                                }
+                                                                                                )
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <span className="text-sm font-black text-[#8f0020]">
+                                                                                        {
+                                                                                            item.meaning
+                                                                                        }
+                                                                                    </span>
+                                                                                </div>
+
+                                                                                {/* Render nested kanjis if present (e.g. for DUAL_SUB_JUKUGO) */}
+                                                                                {Array.isArray(
+                                                                                    item.nestedKanjis,
+                                                                                ) &&
+                                                                                    item.nestedKanjis
+                                                                                        .length >
+                                                                                        0 && (
+                                                                                        <div className="space-y-3">
+                                                                                            <div className="text-xs font-black uppercase tracking-wider text-slate-400">
+                                                                                                Kanji
+                                                                                                Penyusun:
+                                                                                            </div>
+                                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                                {item.nestedKanjis.map(
+                                                                                                    (
+                                                                                                        nK: any,
+                                                                                                        nIdx: number,
+                                                                                                    ) =>
+                                                                                                        renderFullKanjiCardObj(
+                                                                                                            nK,
+                                                                                                            `nest-${idx}-${nIdx}`,
+                                                                                                        ),
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )}
+                                                                            </div>
+                                                                        );
+                                                                    },
+                                                                )}
                                                             </div>
-                                                            <div className="bg-white p-2.5 rounded-xl border border-slate-100">
-                                                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Arti (Meaning)</span>
-                                                                <span className="font-extrabold text-[#8f0020]">{kDetails.meaning}</span>
-                                                            </div>
-                                                            <div className="bg-white p-2.5 rounded-xl border border-slate-100">
-                                                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Arti Dasar</span>
-                                                                <span className="font-extrabold text-slate-800">{kDetails.baseMeaning}</span>
-                                                            </div>
-                                                            <div className="bg-white p-2.5 rounded-xl border border-slate-100 col-span-2">
-                                                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Kunyomi (Bacaan Jepang)</span>
-                                                                <span className="font-extrabold text-indigo-700">{kDetails.kunyomi}</span>
-                                                            </div>
-                                                            <div className="bg-white p-2.5 rounded-xl border border-slate-100 col-span-2">
-                                                                <span className="text-[10px] font-bold text-slate-400 block uppercase">Onyomi (Bacaan Cina)</span>
-                                                                <span className="font-extrabold text-teal-700">{kDetails.onyomi}</span>
-                                                            </div>
-                                                        </div>
+                                                        )}
                                                     </div>
                                                 );
-                                            })}
+                                            })()}
                                         </div>
-                                    </div>
-                                );
-                            })()}
+                                    );
+                                })()}
                         </div>
 
                         {/* Handwriting Practice Canvas */}
-                        <div id="stroke-order-section" className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs flex flex-col">
+                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs flex flex-col">
                             <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-50">
                                 <h2 className="text-lg font-bold text-slate-800 flex items-center justify-between w-full">
                                     <span className="flex items-center gap-2">
                                         <PenTool className="text-[#8f0020] w-5 h-5 animate-bounce" />
-                                        Latihan Menulis
+                                        Latihan Menulis Goresan
                                     </span>
                                     {renderXpBadge(
                                         !!kanjiData?.xpClaimed?.writing,
@@ -2487,7 +3174,7 @@ export const LatihanPage: React.FC = () => {
                                 </h2>
                             </div>
 
-                            <div className="flex flex-col gap-4">   
+                            <div className="flex flex-col gap-4">
                                 {/* SVG Animated Stroke Visualizer */}
                                 <div className="flex flex flex-col sm:flex-row gap-4">
                                     <div className="flex-1">
@@ -2739,32 +3426,99 @@ export const LatihanPage: React.FC = () => {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    {sr.jukugo_1 && (
-                                                        <div className="text-xs text-slate-700 font-medium grid grid-cols-1 sm:grid-cols-2 gap-1 bg-white/70 p-2 rounded-xl border border-slate-100">
-                                                            <div>
-                                                                <strong className="text-slate-900 font-bold">
-                                                                    Kata Kanji
-                                                                    1:{" "}
-                                                                </strong>
-                                                                {sr.jukugo_1}{" "}
-                                                                {sr.jukugo_1_arti
-                                                                    ? `(${sr.jukugo_1_arti})`
-                                                                    : ""}
-                                                            </div>
-                                                            {sr.jukugo_2 && (
-                                                                <div>
-                                                                    <strong className="text-slate-900 font-bold">
-                                                                        Kata
-                                                                        Kanji
-                                                                        2:{" "}
-                                                                    </strong>
-                                                                    {
-                                                                        sr.jukugo_2
-                                                                    }{" "}
-                                                                    {sr.jukugo_2_arti
-                                                                        ? `(${sr.jukugo_2_arti})`
-                                                                        : ""}
-                                                                </div>
+                                                    {((sr.nodes &&
+                                                        sr.nodes.length > 0) ||
+                                                        sr.jukugo_1) && (
+                                                        <div className="text-xs text-slate-700 font-medium flex flex-wrap gap-2 bg-white/70 p-2.5 rounded-xl border border-slate-100">
+                                                            {sr.nodes &&
+                                                            sr.nodes.length >
+                                                                0 ? (
+                                                                sr.nodes.map(
+                                                                    (
+                                                                        node: any,
+                                                                        nIdx: number,
+                                                                    ) => (
+                                                                        <div
+                                                                            key={
+                                                                                nIdx
+                                                                            }
+                                                                            className="bg-slate-100/70 px-2.5 py-1 rounded-lg border border-slate-200/60 flex items-center gap-1.5"
+                                                                        >
+                                                                            <strong className="text-slate-900 font-bold">
+                                                                                Unsur{" "}
+                                                                                {nIdx +
+                                                                                    1}
+
+                                                                                :
+                                                                            </strong>
+                                                                            <span className="font-serif font-bold text-slate-800 text-sm">
+                                                                                {node.jokugo ||
+                                                                                    node.jukugo}
+                                                                            </span>
+                                                                            {node.arti && (
+                                                                                <span className="text-slate-600 text-[11px]">
+                                                                                    (
+                                                                                    {
+                                                                                        node.arti
+                                                                                    }
+
+                                                                                    )
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    ),
+                                                                )
+                                                            ) : (
+                                                                <>
+                                                                    {sr.jukugo_1 && (
+                                                                        <div className="bg-slate-100/70 px-2.5 py-1 rounded-lg border border-slate-200/60 flex items-center gap-1.5">
+                                                                            <strong className="text-slate-900 font-bold">
+                                                                                Kata
+                                                                                Kanji
+                                                                                1:
+                                                                            </strong>
+                                                                            <span className="font-serif font-bold text-slate-800 text-sm">
+                                                                                {
+                                                                                    sr.jukugo_1
+                                                                                }
+                                                                            </span>
+                                                                            {sr.jukugo_1_arti && (
+                                                                                <span className="text-slate-600 text-[11px]">
+                                                                                    (
+                                                                                    {
+                                                                                        sr.jukugo_1_arti
+                                                                                    }
+
+                                                                                    )
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    {sr.jukugo_2 && (
+                                                                        <div className="bg-slate-100/70 px-2.5 py-1 rounded-lg border border-slate-200/60 flex items-center gap-1.5">
+                                                                            <strong className="text-slate-900 font-bold">
+                                                                                Kata
+                                                                                Kanji
+                                                                                2:
+                                                                            </strong>
+                                                                            <span className="font-serif font-bold text-slate-800 text-sm">
+                                                                                {
+                                                                                    sr.jukugo_2
+                                                                                }
+                                                                            </span>
+                                                                            {sr.jukugo_2_arti && (
+                                                                                <span className="text-slate-600 text-[11px]">
+                                                                                    (
+                                                                                    {
+                                                                                        sr.jukugo_2_arti
+                                                                                    }
+
+                                                                                    )
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </>
                                                             )}
                                                         </div>
                                                     )}
@@ -4789,7 +5543,7 @@ export const LatihanPage: React.FC = () => {
                 </div>
             )}
         </Layout>
-    );
+);
 };
 
 export default LatihanPage;

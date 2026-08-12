@@ -313,44 +313,33 @@ async function seedKanjiKenFull() {
   // 3. SemanticRelation
   console.log("\n📌 3. Seeding SemanticRelation for Kanji 研...");
   let semCount = 0;
+  await prisma.semanticRelation.deleteMany({ where: { kanjiId: kenKanji.id } });
 
   for (const item of JUKUGO_FULL_RESEARCH) {
     const chars = Array.from(item.word);
-    const char1 = chars[0] || item.word;
-    const char2 = chars[1] || "";
-    const role1 = item.charRoles[char1] || "Peran 1";
-    const role2 = item.charRoles[char2] || (item.charRoles[chars[2]] || "Peran 2");
+    const char1 = chars.length > 2 ? chars.slice(0, 2).join("") : (chars[0] || item.word);
+    const char2 = chars.length > 2 ? chars.slice(2).join("") : (chars[1] || "");
+    const role1 = item.charRoles[char1] || item.charRoles[chars[0]] || "Peran 1";
+    const role2 = item.charRoles[char2] || item.charRoles[chars[1]] || (item.charRoles[chars[2]] || "Peran 2");
 
-    const existingSem = await prisma.semanticRelation.findFirst({
-      where: { kanjiId: kenKanji.id, kanji: item.word },
+    const matchedJukugo = await prisma.jukugo.findFirst({
+      where: { kanjiId: kenKanji.id, word: item.word }
     });
 
-    if (existingSem) {
-      await prisma.semanticRelation.update({
-        where: { id: existingSem.id },
-        data: {
-          arti: item.meaning,
-          jukugo_1: char1,
-          jukugo_1_arti: role1,
-          jukugo_2: char2,
-          jukugo_2_arti: role2,
-          penjelasan: item.explanation,
-        },
-      });
-    } else {
-      await prisma.semanticRelation.create({
-        data: {
-          kanjiId: kenKanji.id,
-          kanji: item.word,
-          arti: item.meaning,
-          jukugo_1: char1,
-          jukugo_1_arti: role1,
-          jukugo_2: char2,
-          jukugo_2_arti: role2,
-          penjelasan: item.explanation,
-        },
-      });
-    }
+    const createdSem = await prisma.semanticRelation.create({
+      data: {
+        kanjiId: kenKanji.id,
+        jukugoId: matchedJukugo?.id || null,
+        penjelasan: item.explanation,
+      },
+    });
+
+    await prisma.semanticRelationNode.createMany({
+      data: [
+        { semanticId: createdSem.id, jokugo: char1, arti: role1 },
+        { semanticId: createdSem.id, jokugo: char2, arti: role2 },
+      ].filter((n) => n.jokugo),
+    });
     semCount++;
   }
   console.log(`  ✅ Saved ${semCount} SemanticRelation entries for Kanji 研.`);
