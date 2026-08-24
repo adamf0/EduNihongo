@@ -236,24 +236,54 @@ export default function KanjiAtlasFlow({
       nodePosMap.set(rootNode.id, { x: rootX, y: rootY });
     }
 
-    // 2. Clean Hierarchical Tree Layout matching reference diagrams
-    // 2. Spacious 2D Quadrant / Radial Cluster Layout (Matching Gambar 2)
+    // 2. Dynamic 2-Column Spacious Grid Layout for Category Clusters (Guarantees NO Overlapping)
     const rootChar = (rootNode?.kanji || rootNode?.character || rootNode?.word || rootNode?.label || "").trim();
 
-    // 4 Quadrants + Center-bottom layout positions for Category clusters with wide 2D spacing
-    const categoryPositions = [
-      { x: -1400, y: -400, dir: -1 }, // Top-Left Quadrant (Category 1)
-      { x: 1400, y: -400, dir: 1 },   // Top-Right Quadrant (Category 2)
-      { x: -1400, y: 900, dir: -1 },  // Bottom-Left Quadrant (Category 3)
-      { x: 1400, y: 900, dir: 1 },    // Bottom-Right Quadrant (Category 4)
-      { x: 0, y: 1600, dir: 1 },      // Bottom-Center (Category 5+)
-    ];
+    // Pre-calculate heights for all categories based on their Jukugo count
+    const catHeights = categoryNodes.map((cat) => {
+      const jks = initialRawNodes.filter(
+        (n: any) => (n.type === "sub-bottom" || n.type === "sub") && (n.parentPill === cat.id || n.categoryId === cat.id)
+      );
+      const numJk = jks.length || 1;
+      return Math.max(numJk * 220 + 150, 500); // Height needed by this category cluster
+    });
+
+    // Group categories into Left side (even indices 0, 2, 4...) and Right side (odd indices 1, 3, 5...)
+    const leftCatIndices: number[] = [];
+    const rightCatIndices: number[] = [];
+    categoryNodes.forEach((_, idx) => {
+      if (idx % 2 === 0) leftCatIndices.push(idx);
+      else rightCatIndices.push(idx);
+    });
+
+    // Total heights for Left and Right columns
+    const totalLeftHeight = leftCatIndices.reduce((sum, idx) => sum + catHeights[idx] + 350, -350);
+    const totalRightHeight = rightCatIndices.reduce((sum, idx) => sum + catHeights[idx] + 350, -350);
+
+    let currentLeftY = -totalLeftHeight / 2;
+    let currentRightY = -totalRightHeight / 2;
+
+    const categoryComputedPositions: Array<{ x: number; y: number; dir: number }> = new Array(categoryNodes.length);
+
+    leftCatIndices.forEach((catIdx) => {
+      const h = catHeights[catIdx];
+      const centerY = currentLeftY + h / 2;
+      categoryComputedPositions[catIdx] = { x: -1600, y: centerY, dir: -1 };
+      currentLeftY += h + 350;
+    });
+
+    rightCatIndices.forEach((catIdx) => {
+      const h = catHeights[catIdx];
+      const centerY = currentRightY + h / 2;
+      categoryComputedPositions[catIdx] = { x: 1600, y: centerY, dir: 1 };
+      currentRightY += h + 350;
+    });
 
     categoryNodes.forEach((cat, catIdx) => {
       const catColor = getCategoryColor(catIdx, cat.kanji || cat.name || cat.id);
       catColorMap.set(cat.id, catColor);
 
-      const catPos = categoryPositions[catIdx % categoryPositions.length];
+      const catPos = categoryComputedPositions[catIdx] || { x: catIdx % 2 === 0 ? -1600 : 1600, y: catIdx * 600, dir: catIdx % 2 === 0 ? -1 : 1 };
       const catX = catPos.x;
       const catY = catPos.y;
       const dir = catPos.dir; // -1 for left-branching, +1 for right-branching
@@ -614,7 +644,24 @@ export default function KanjiAtlasFlow({
       });
     });
 
-    const formattedEdges = baseEdges.map((edge: any) => {
+    // 4. Format Edges with Organic Bezier Curves & Smooth Animations (Rope-style lines)
+    // Deduplicate baseEdges by (source, target) pair so there is never more than 1 edge between the same two nodes
+    const uniqueEdgesMap = new Map<string, any>();
+    baseEdges.forEach((edge: any) => {
+      const pairKey = `${edge.source}->${edge.target}`;
+      if (!uniqueEdgesMap.has(pairKey)) {
+        uniqueEdgesMap.set(pairKey, edge);
+      } else {
+        const existing = uniqueEdgesMap.get(pairKey);
+        if (!existing.label && edge.label) {
+          uniqueEdgesMap.set(pairKey, edge);
+        }
+      }
+    });
+
+    const deduplicatedEdges = Array.from(uniqueEdgesMap.values());
+
+    const formattedEdges = deduplicatedEdges.map((edge: any) => {
       const strokeColor = edge.color || catColorMap.get(edge.source) || catColorMap.get(edge.target) || "#64748b";
       const srcPos = nodePosMap.get(edge.source);
       const tgtPos = nodePosMap.get(edge.target);
