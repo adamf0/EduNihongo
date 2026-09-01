@@ -792,6 +792,8 @@ function KanjiAtlasFlowInner({
         y: midY,
         bounds: { x: minX, y: minY, width, height },
       });
+    });
+
     return {
       positionedNodes,
       nodePosMap,
