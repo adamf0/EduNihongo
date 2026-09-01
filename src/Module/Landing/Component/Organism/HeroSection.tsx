@@ -38,12 +38,12 @@ export const HeroSection: React.FC = () => {
             >
               Mulai Belajar
             </button>
-            {/* <button
+            <button
               onClick={() => navigate("/dashboard")}
               className="bg-surface-container-lowest border-2 border-primary/20 text-primary px-10 py-4 rounded-xl font-headline-md text-headline-md hover:bg-primary/5 transition-all cursor-pointer"
             >
               Coba Demo
-            </button> */}
+            </button>
           </div>
         </div>
 

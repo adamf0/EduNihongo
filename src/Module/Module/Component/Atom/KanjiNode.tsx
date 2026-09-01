@@ -1,5 +1,6 @@
 import { Position } from "@xyflow/react";
 import NodeHandles from "./NodeHandles";
+import { Sparkles } from "lucide-react";
 
 const KanjiNode = ({ data }: { data: any }) => {
   // Extract reading and meaning safely
@@ -20,14 +21,22 @@ const KanjiNode = ({ data }: { data: any }) => {
   };
 
   const { reading, meaning } = getReadingAndMeaning();
+  const isActive = Boolean(data.isActiveStep);
+  const isDimmed = Boolean(data.isDimmed);
+
+  const activeGlowClass = isActive
+    ? "ring-4 ring-rose-500 shadow-[0_0_35px_rgba(244,63,94,0.7)] scale-110 z-30 transition-all duration-500"
+    : isDimmed
+    ? "opacity-45 scale-95 transition-all duration-300"
+    : "transition-all duration-300";
 
   // 1. Root Node (Top Center Main Module Kanji)
   if (data.isRoot || data.type === "root") {
     return (
       <div 
-        className={`bg-gradient-to-br from-[#ff3b7b] via-[#ff1b5f] to-[#e11d48] text-white px-8 py-5 rounded-3xl shadow-xl min-w-[240px] text-center relative border-2 border-white/40 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-rose-500/30 ${
-          !data.isExpanded ? "animate-pulse-glow" : "ring-4 ring-rose-400/20"
-        }`}
+        className={`bg-gradient-to-br from-[#ff3b7b] via-[#ff1b5f] to-[#e11d48] text-white px-8 py-5 rounded-3xl shadow-xl min-w-[240px] text-center relative border-2 border-white/40 cursor-pointer hover:scale-105 hover:shadow-rose-500/30 ${
+          isActive ? "ring-4 ring-amber-300 shadow-[0_0_40px_rgba(251,191,36,0.8)] scale-110 z-30" : !data.isExpanded ? "animate-pulse" : ""
+        } ${activeGlowClass}`}
       >
         <NodeHandles Position={Position} />
         <div className="flex flex-col items-center justify-center">
@@ -59,8 +68,15 @@ const KanjiNode = ({ data }: { data: any }) => {
     return (
       <div 
         style={{ backgroundColor: customBg }}
-        className="text-white px-6 py-3.5 rounded-2xl text-sm font-black border-2 border-white shadow-lg text-center relative whitespace-nowrap cursor-pointer transition-all duration-300 hover:scale-105 min-w-[180px]"
+        className={`text-white px-6 py-3.5 rounded-2xl text-sm font-black border-2 border-white shadow-lg text-center relative whitespace-nowrap cursor-pointer min-w-[180px] ${
+          isActive ? "ring-4 ring-yellow-300 shadow-[0_0_35px_rgba(234,179,8,0.8)] scale-110 z-30" : ""
+        } ${activeGlowClass}`}
       >
+        {isActive && (
+          <span className="absolute -top-2.5 -right-2.5 bg-yellow-300 text-slate-900 p-1 rounded-full shadow-md border border-white animate-bounce">
+            <Sparkles className="w-3.5 h-3.5 fill-slate-900" />
+          </span>
+        )}
         <NodeHandles Position={Position}/>
         <div className="flex items-center justify-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
@@ -78,8 +94,15 @@ const KanjiNode = ({ data }: { data: any }) => {
       return (
         <div 
           style={{ backgroundColor: catBgColor }}
-          className="text-white rounded-2xl p-3 shadow-lg min-w-[115px] max-w-[135px] text-center border-2 border-white select-none cursor-default font-extrabold flex flex-col items-center justify-center relative transition-all duration-300 hover:scale-105"
+          className={`text-white rounded-2xl p-3 shadow-lg min-w-[115px] max-w-[135px] text-center border-2 border-white select-none cursor-default font-extrabold flex flex-col items-center justify-center relative ${
+            isActive ? "ring-4 ring-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.8)] scale-110 z-30" : ""
+          } ${activeGlowClass}`}
         >
+          {isActive && (
+            <span className="absolute -top-2 -right-2 bg-emerald-400 text-slate-900 p-1 rounded-full shadow-md border border-white animate-bounce">
+              <Sparkles className="w-3 h-3 fill-slate-900" />
+            </span>
+          )}
           <NodeHandles Position={Position} />
           <div className="text-[8px] uppercase tracking-widest text-white/80 font-black mb-0.5">
             KANJI
@@ -100,7 +123,14 @@ const KanjiNode = ({ data }: { data: any }) => {
     }
 
     return (
-      <div className="bg-white text-slate-800 rounded-2xl p-3 shadow-md min-w-[115px] max-w-[135px] text-center border-2 border-slate-700 select-none cursor-default font-extrabold flex flex-col items-center justify-center relative transition-all duration-300 hover:scale-105">
+      <div className={`bg-white text-slate-800 rounded-2xl p-3 shadow-md min-w-[115px] max-w-[135px] text-center border-2 border-slate-700 select-none cursor-default font-extrabold flex flex-col items-center justify-center relative ${
+        isActive ? "ring-4 ring-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.8)] scale-110 z-30" : ""
+      } ${activeGlowClass}`}>
+        {isActive && (
+          <span className="absolute -top-2 -right-2 bg-blue-500 text-white p-1 rounded-full shadow-md border border-white animate-bounce">
+            <Sparkles className="w-3 h-3 fill-white" />
+          </span>
+        )}
         <NodeHandles Position={Position} />
         <div className="text-[8px] uppercase tracking-widest text-slate-400 font-black mb-0.5">
           KANJI
@@ -126,8 +156,15 @@ const KanjiNode = ({ data }: { data: any }) => {
   return (
     <div
       style={{ backgroundColor: customBg }}
-      className="text-white px-5 py-3.5 rounded-2xl border-2 border-white/50 shadow-lg text-center relative min-w-[150px] max-w-[190px] hover:shadow-xl hover:scale-105 transition-all duration-300"
+      className={`text-white px-5 py-3.5 rounded-2xl border-2 border-white/50 shadow-lg text-center relative min-w-[150px] max-w-[190px] ${
+        isActive ? "ring-4 ring-amber-300 shadow-[0_0_35px_rgba(251,191,36,0.85)] scale-110 z-30" : ""
+      } ${activeGlowClass}`}
     >
+      {isActive && (
+        <span className="absolute -top-2.5 -right-2.5 bg-amber-400 text-slate-900 p-1 rounded-full shadow-md border border-white animate-bounce">
+          <Sparkles className="w-3.5 h-3.5 fill-slate-900" />
+        </span>
+      )}
       <NodeHandles Position={Position}/>
       <div className="flex flex-col items-center justify-center">
         <span className="text-xl font-black text-white font-serif tracking-wide drop-shadow-xs mb-0.5">

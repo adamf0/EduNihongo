@@ -32,7 +32,7 @@ import {
     Paperclip,
     GitGraph,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const worker = await createWorker("jpn");
@@ -442,13 +442,13 @@ export const LatihanPage: React.FC = () => {
         new Map(),
     );
 
-    const handleSelectJukugo = (
-        word: string | null,
-        nodeId?: string | null,
-    ) => {
-        setActiveJukugoWord(word);
-        setActiveNodeId(nodeId || null);
-    };
+    const handleSelectJukugo = useCallback(
+        (word: string | null, nodeId?: string | null) => {
+            setActiveJukugoWord(word);
+            setActiveNodeId(nodeId || null);
+        },
+        [],
+    );
 
     useEffect(() => {
         api.admin.kanjis
@@ -2179,7 +2179,7 @@ export const LatihanPage: React.FC = () => {
                                     )}
                             </div>
 
-                            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
+                            <div className="flex gap-4 overflow-x-auto pb-4 pt-3 mt-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
                                 {allDisplayJukugos.map(
                                     (j: any, idx: number) => {
                                         const wordStr = (j.word || "").trim();
@@ -2196,10 +2196,10 @@ export const LatihanPage: React.FC = () => {
                                                             : wordStr,
                                                     )
                                                 }
-                                                className={`animate-jukugo-card min-w-[240px] max-w-[280px] shrink-0 snap-start rounded-2xl p-4 transition-all duration-300 flex items-center justify-between group cursor-pointer ${
+                                                className={`animate-jukugo-card min-w-[240px] max-w-[280px] shrink-0 snap-start rounded-[28px] p-4.5 transition-all duration-300 flex items-center justify-between group cursor-pointer border ${
                                                     isActive
-                                                        ? "ring-4 ring-[#8f0020] border-2 border-[#8f0020] bg-rose-50/90 shadow-lg scale-105"
-                                                        : "border border-slate-100 hover:border-[#8f0020]/20 bg-slate-50/20 hover:bg-white shadow-xs"
+                                                        ? "bg-rose-50/40 text-slate-800 border-2 border-rose-300 shadow-md shadow-rose-100/60 -translate-y-1"
+                                                        : "bg-white text-slate-800 border-slate-200/70 hover:border-rose-300/60 hover:bg-rose-50/20 shadow-sm hover:shadow-md hover:-translate-y-0.5"
                                                 }`}
                                                 style={{
                                                     animationDelay: `${idx * 60}ms`,
@@ -2208,15 +2208,25 @@ export const LatihanPage: React.FC = () => {
                                                 <div className="flex flex-col gap-1 text-left min-w-0 pr-2">
                                                     <div className="flex items-baseline gap-1.5 flex-wrap">
                                                         <span
-                                                            className={`font-serif text-xl font-bold tracking-wide select-all ${isActive ? "text-[#8f0020]" : "text-slate-800"}`}
+                                                            className={`font-serif text-2xl font-black tracking-wide select-all ${
+                                                                isActive ? "text-[#8f0020]" : "text-slate-900 group-hover:text-[#8f0020]"
+                                                            }`}
                                                         >
                                                             {j.word}
                                                         </span>
-                                                        <span className="text-[10px] text-slate-400 font-bold shrink-0">
+                                                        <span
+                                                            className={`text-xs font-bold shrink-0 ${
+                                                                isActive ? "text-slate-500" : "text-slate-400"
+                                                            }`}
+                                                        >
                                                             ({j.reading})
                                                         </span>
                                                     </div>
-                                                    <span className="text-xs font-bold text-[#8f0020] leading-snug truncate">
+                                                    <span
+                                                        className={`text-xs font-extrabold leading-snug truncate ${
+                                                            isActive ? "text-[#8f0020]" : "text-rose-800"
+                                                        }`}
+                                                    >
                                                         {j.meaning}
                                                     </span>
                                                 </div>
@@ -2226,7 +2236,11 @@ export const LatihanPage: React.FC = () => {
                                                         e.stopPropagation();
                                                         playAudio(j.word);
                                                     }}
-                                                    className="w-9 h-9 rounded-full bg-white border border-slate-100 hover:bg-[#8f0020] hover:text-white text-slate-500 flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 shrink-0"
+                                                    className={`w-10 h-10 rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 shrink-0 ${
+                                                        isActive
+                                                            ? "bg-[#edf2f7] hover:bg-rose-600 text-slate-600 hover:text-white border-slate-200/80"
+                                                            : "bg-slate-100 hover:bg-rose-600 text-slate-500 hover:text-white border-slate-200/70"
+                                                    }`}
                                                     title="Putar Suara"
                                                 >
                                                     <Volume2 className="w-4.5 h-4.5" />
@@ -3810,16 +3824,16 @@ export const LatihanPage: React.FC = () => {
                                                         className="text-xs font-bold text-[#8f0020] hover:underline bg-transparent border-none cursor-pointer w-fit text-left p-0"
                                                     >
                                                         {isRevealed
-                                                            ? "Sembunyikan arti & romaji"
-                                                            : "Tampilkan arti & romaji"}
+                                                            ? "Sembunyikan arti"
+                                                            : "Tampilkan arti"}
                                                     </button>
 
                                                     {isRevealed && (
                                                         <div className="mt-2 text-sm space-y-1 bg-white p-3 rounded-xl border border-slate-100 shadow-xs leading-relaxed animate-fade-in font-medium text-slate-600">
-                                                            <p className="font-mono text-slate-500 text-xs">
+                                                            {/* <p className="font-mono text-slate-500 text-xs">
                                                                 Romaji:{" "}
                                                                 {item.romaji}
-                                                            </p>
+                                                            </p> */}
                                                             <p className="text-slate-700">
                                                                 Arti:{" "}
                                                                 {
