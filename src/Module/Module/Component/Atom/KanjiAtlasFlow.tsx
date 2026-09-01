@@ -653,13 +653,23 @@ function KanjiAtlasFlowInner({
     // 4. Build Guided Quest Steps dynamically
     const stepsList: QuestStepItem[] = [];
 
-    // Phase 1: Individual Jukugo Vocabulary Steps
+    // Phase 1: Individual Main Jukugo Vocabulary Steps (Excluding constituent sub-Jukugos and single leaf Kanjis)
     categoryNodes.forEach((cat) => {
       const catWord = (cat.kanji || cat.name || cat.label || "").trim();
       const catColor = catColorMap.get(cat.id) || "#f97316";
 
-      const childJukugos = positionedNodes.filter(
-        (n: any) => (n.type === "sub-bottom" || n.type === "sub") && (n.parentPill === cat.id || n.categoryId === cat.id)
+      const rawCatJkIds = new Set(
+        initialRawNodes
+          .filter(
+            (n: any) =>
+              (n.type === "sub-bottom" || n.type === "sub") &&
+              (n.parentPill === cat.id || n.categoryId === cat.id),
+          )
+          .map((n: any) => n.id),
+      );
+
+      const childJukugos = positionedNodes.filter((n: any) =>
+        rawCatJkIds.has(n.id),
       );
 
       childJukugos.forEach((jk) => {
@@ -694,22 +704,36 @@ function KanjiAtlasFlowInner({
       });
     });
 
-    // Phase 2: Cross-Link Semantic Relation Steps (EXCLUSIVELY for relations between 2 real Jukugo words)
+    // Phase 2: Cross-Link Semantic Relation Steps (EXCLUSIVELY for relations between 2 real main Jukugo words)
     const addedRelationPairs = new Set<string>();
 
     deduplicatedEdges.forEach((edge: any) => {
       const predRaw = (edge.label || edge.predicate || "").trim();
       if (!predRaw || predRaw === "kategori" || predRaw === "mencakup" || predRaw === "penyusun") return;
 
-      // Match ONLY non-root and non-category Jukugo nodes!
+      // Match ONLY non-root, non-category, non-constituent main Jukugo nodes!
       const sNode = positionedNodes.find((n: any) => {
-        if (n.type === "root" || n.isRoot || n.type === "category" || n.meaning === "Kategori") return false;
+        if (
+          n.type === "root" ||
+          n.isRoot ||
+          n.type === "category" ||
+          n.meaning === "Kategori" ||
+          (typeof n.id === "string" && (n.id.startsWith("sub-jokugo-") || n.id.startsWith("leaf-")))
+        )
+          return false;
         const w = (n.kanji || n.character || n.word || n.label || "").trim();
         return n.id === edge.source || w === edge.source;
       });
 
       const tNode = positionedNodes.find((n: any) => {
-        if (n.type === "root" || n.isRoot || n.type === "category" || n.meaning === "Kategori") return false;
+        if (
+          n.type === "root" ||
+          n.isRoot ||
+          n.type === "category" ||
+          n.meaning === "Kategori" ||
+          (typeof n.id === "string" && (n.id.startsWith("sub-jokugo-") || n.id.startsWith("leaf-")))
+        )
+          return false;
         const w = (n.kanji || n.character || n.word || n.label || "").trim();
         return n.id === edge.target || w === edge.target;
       });
@@ -914,26 +938,34 @@ function KanjiAtlasFlowInner({
   // Synchronize Quest Step Index when activeJukugoWord or activeNodeId is set externally
   useEffect(() => {
     if (activeJukugoWord && questSteps.length > 0) {
+      const currentStep = questSteps[currentStepIndex];
+      if (currentStep?.type === "relation") return;
+
       const matchingIdx = questSteps.findIndex(
-        (s) => s.word === activeJukugoWord || s.nodeId === activeNodeId
+        (s) => s.type !== "relation" && (s.word === activeJukugoWord || s.nodeId === activeNodeId)
       );
       if (matchingIdx !== -1 && matchingIdx !== currentStepIndex) {
         setCurrentStepIndex(matchingIdx);
       }
     }
-  }, [activeJukugoWord, activeNodeId, questSteps]);
+  }, [activeJukugoWord, activeNodeId, questSteps, currentStepIndex]);
 
   // Clean camera framing centered on active node(s) with 0% screen obstruction!
   useEffect(() => {
     if (questMode && !isQuestMinimized && questSteps.length > 0 && questSteps[currentStepIndex]) {
       const activeStep = questSteps[currentStepIndex];
-      if (activeStep.type === "relation" && activeStep.bounds) {
-        fitBounds(activeStep.bounds, { padding: 0.35, duration: 800 });
+      if (activeStep.type === "relation") {
+        if (activeStep.bounds) {
+          fitBounds(activeStep.bounds, { padding: 0.35, duration: 800 });
+        }
+        if (activeJukugoWord !== null) {
+          onSelectJukugoRef.current?.(null, null);
+        }
       } else {
         setCenter(activeStep.x, activeStep.y, { zoom: 1.2, duration: 800 });
-      }
-      if (activeStep.word && !activeStep.word.includes("↔") && activeJukugoWord !== activeStep.word) {
-        onSelectJukugoRef.current?.(activeStep.word, activeStep.nodeId);
+        if (activeStep.word && !activeStep.word.includes("↔") && activeJukugoWord !== activeStep.word) {
+          onSelectJukugoRef.current?.(activeStep.word, activeStep.nodeId);
+        }
       }
     }
   }, [currentStepIndex, questMode, isQuestMinimized, questSteps, setCenter, fitBounds, activeJukugoWord]);
