@@ -199,7 +199,6 @@ function KanjiAtlasFlowInner({
   const [questMode, setQuestMode] = useState(true);
   const [isQuestMinimized, setIsQuestMinimized] = useState(true);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [questSteps, setQuestSteps] = useState<QuestStepItem[]>([]);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const onSelectJukugoRef = useRef(onSelectJukugo);
@@ -245,7 +244,7 @@ function KanjiAtlasFlowInner({
     }
   }, [initialRawNodes]);
 
-  useEffect(() => {
+  const { positionedNodes, nodePosMap, deduplicatedEdges, catColorMap, questSteps } = useMemo(() => {
     // 1. Identify root, category, and sub-word nodes
     const rootNode = initialRawNodes.find((n: any) => n.type === "root" || n.isRoot);
     const categoryNodes = initialRawNodes.filter((n: any) => n.type === "bottom" || n.type === "category");
@@ -793,13 +792,19 @@ function KanjiAtlasFlowInner({
         y: midY,
         bounds: { x: minX, y: minY, width, height },
       });
-    });
+    return {
+      positionedNodes,
+      nodePosMap,
+      deduplicatedEdges,
+      catColorMap,
+      questSteps: stepsList,
+    };
+  }, [initialRawNodes, initialRawEdges, kanjiMap, jukugoMap]);
 
-    setQuestSteps(stepsList);
-
+  useEffect(() => {
     // 5. Format nodes for ReactFlow
-    const isStepActiveAndShowing = questMode && !isQuestMinimized && stepsList.length > 0;
-    const currentStep = isStepActiveAndShowing ? stepsList[currentStepIndex] : null;
+    const isStepActiveAndShowing = questMode && !isQuestMinimized && questSteps.length > 0;
+    const currentStep = isStepActiveAndShowing ? questSteps[currentStepIndex] : null;
     const isRelationStep = currentStep?.type === "relation";
 
     const formattedNodes = positionedNodes.map((node: any) => {
@@ -933,7 +938,7 @@ function KanjiAtlasFlowInner({
 
     setNodes(baseVisibleNodes);
     setEdges(visibleEdges);
-  }, [initialRawNodes, initialRawEdges, expandedNodes, kanjiMap, activeJukugoWord, activeNodeId, questMode, isQuestMinimized, currentStepIndex]);
+  }, [positionedNodes, deduplicatedEdges, catColorMap, expandedNodes, activeJukugoWord, activeNodeId, questMode, isQuestMinimized, currentStepIndex, questSteps, initialRawNodes]);
 
   // Synchronize Quest Step Index when activeJukugoWord or activeNodeId is set externally
   useEffect(() => {
