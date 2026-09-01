@@ -9,8 +9,6 @@ import {
   getBezierPath,
   type EdgeProps,
   EdgeLabelRenderer,
-  useNodesState,
-  useEdgesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import KanjiNode from "./KanjiNode";
@@ -189,8 +187,6 @@ function KanjiAtlasFlowInner({
   const { setCenter, fitBounds, fitView } = useReactFlow();
   const nodeTypes = useMemo(() => ({ kanjiNode: KanjiNode }), []);
   const edgeTypes = useMemo(() => ({ crossLinkEdge: CustomCrossLinkEdge }), []);
-  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [kanjis, setKanjis] = useState<any[]>([]);
   const [jukugos, setJukugos] = useState<any[]>([]);
@@ -803,7 +799,7 @@ function KanjiAtlasFlowInner({
     };
   }, [initialRawNodes, initialRawEdges, kanjiMap, jukugoMap]);
 
-  useEffect(() => {
+  const nodes = useMemo(() => {
     // 5. Format nodes for ReactFlow
     const isStepActiveAndShowing = questMode && !isQuestMinimized && questSteps.length > 0;
     const currentStep = isStepActiveAndShowing ? questSteps[currentStepIndex] : null;
@@ -856,7 +852,7 @@ function KanjiAtlasFlowInner({
     const rootNodeObj = initialRawNodes.find((n: any) => n.type === "root" || n.isRoot);
     const rootExpanded = rootNodeObj ? expandedNodes.has(rootNodeObj.id) : true;
 
-    let baseVisibleNodes = formattedNodes.filter((node: any) => {
+    return formattedNodes.filter((node: any) => {
       if (node.data.isRoot || node.data.type === "root") return true;
       if (node.data.type === "bottom" || node.data.type === "category") return rootExpanded;
       if (node.data.type === "sub-bottom" || node.data.type === "sub") {
@@ -866,8 +862,13 @@ function KanjiAtlasFlowInner({
       if (node.data.type === "leafKanji") return rootExpanded;
       return true;
     });
+  }, [positionedNodes, expandedNodes, activeJukugoWord, activeNodeId, questMode, isQuestMinimized, currentStepIndex, questSteps, initialRawNodes]);
 
-    // 6. Format Edges for ReactFlow
+  const edges = useMemo(() => {
+    const isStepActiveAndShowing = questMode && !isQuestMinimized && questSteps.length > 0;
+    const currentStep = isStepActiveAndShowing ? questSteps[currentStepIndex] : null;
+    const isRelationStep = currentStep?.type === "relation";
+
     const formattedEdges = deduplicatedEdges.map((edge: any) => {
       const strokeColor = edge.color || catColorMap.get(edge.source) || catColorMap.get(edge.target) || "#64748b";
       const srcPos = nodePosMap.get(edge.source);
@@ -908,7 +909,7 @@ function KanjiAtlasFlowInner({
 
       return {
         ...edge,
-        type: "bezier",
+        type: edge.isCrossLink ? "crossLinkEdge" : (edge.type || "default"),
         sourceHandle: edge.sourceHandle || sourceHandle,
         targetHandle: edge.targetHandle || targetHandle,
         label: edgeLabel,
@@ -933,49 +934,53 @@ function KanjiAtlasFlowInner({
       };
     });
 
-    const visibleEdgeSet = new Set(baseVisibleNodes.map((n: any) => n.id));
-    const visibleEdges = formattedEdges.filter(
+    const visibleEdgeSet = new Set(nodes.map((n: any) => n.id));
+    return formattedEdges.filter(
       (e: any) => visibleEdgeSet.has(e.source) && visibleEdgeSet.has(e.target)
     );
+  }, [positionedNodes, deduplicatedEdges, nodePosMap, catColorMap, nodes, questMode, isQuestMinimized, currentStepIndex, questSteps]);
 
-    setNodes(baseVisibleNodes);
-    setEdges(visibleEdges);
-  }, [positionedNodes, deduplicatedEdges, catColorMap, expandedNodes, activeJukugoWord, activeNodeId, questMode, isQuestMinimized, currentStepIndex, questSteps, initialRawNodes]);
+  // Synchronous Event-Driven Step Navigator
+  const gotoStep = (stepIdx: number) => {
+    if (questSteps.length === 0) return;
+    const validIdx = Math.max(0, Math.min(stepIdx, questSteps.length - 1));
+    setCurrentStepIndex(validIdx);
+
+    const targetStep = questSteps[validIdx];
+    if (targetStep) {
+      if (targetStep.type === "relation") {
+        if (targetStep.bounds) {
+          fitBounds(targetStep.bounds, { padding: 0.35, duration: 800 });
+        }
+        onSelectJukugoRef.current?.(null, null);
+      } else {
+        setCenter(targetStep.x, targetStep.y, { zoom: 1.2, duration: 800 });
+        if (targetStep.word && !targetStep.word.includes("↔")) {
+          onSelectJukugoRef.current?.(targetStep.word, targetStep.nodeId);
+        }
+      }
+    }
+  };
 
   // Synchronize Quest Step Index when activeJukugoWord or activeNodeId is set externally
   useEffect(() => {
     if (activeJukugoWord && questSteps.length > 0) {
       const currentStep = questSteps[currentStepIndex];
       if (currentStep?.type === "relation") return;
+      if (currentStep?.word === activeJukugoWord || currentStep?.nodeId === activeNodeId) return;
 
       const matchingIdx = questSteps.findIndex(
         (s) => s.type !== "relation" && (s.word === activeJukugoWord || s.nodeId === activeNodeId)
       );
       if (matchingIdx !== -1 && matchingIdx !== currentStepIndex) {
         setCurrentStepIndex(matchingIdx);
+        const targetStep = questSteps[matchingIdx];
+        if (targetStep) {
+          setCenter(targetStep.x, targetStep.y, { zoom: 1.2, duration: 800 });
+        }
       }
     }
   }, [activeJukugoWord, activeNodeId, questSteps, currentStepIndex]);
-
-  // Clean camera framing centered on active node(s) with 0% screen obstruction!
-  useEffect(() => {
-    if (questMode && !isQuestMinimized && questSteps.length > 0 && questSteps[currentStepIndex]) {
-      const activeStep = questSteps[currentStepIndex];
-      if (activeStep.type === "relation") {
-        if (activeStep.bounds) {
-          fitBounds(activeStep.bounds, { padding: 0.35, duration: 800 });
-        }
-        if (activeJukugoWord !== null) {
-          onSelectJukugoRef.current?.(null, null);
-        }
-      } else {
-        setCenter(activeStep.x, activeStep.y, { zoom: 1.2, duration: 800 });
-        if (activeStep.word && !activeStep.word.includes("↔") && activeJukugoWord !== activeStep.word) {
-          onSelectJukugoRef.current?.(activeStep.word, activeStep.nodeId);
-        }
-      }
-    }
-  }, [currentStepIndex, questMode, isQuestMinimized, questSteps, setCenter, fitBounds, activeJukugoWord]);
 
   // Keyboard Step Controls (Left / Right / Space)
   useEffect(() => {
@@ -984,10 +989,10 @@ function KanjiAtlasFlowInner({
 
       if (e.key === "ArrowRight") {
         e.preventDefault();
-        setCurrentStepIndex((prev) => Math.min(prev + 1, questSteps.length - 1));
+        gotoStep(currentStepIndex + 1);
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        setCurrentStepIndex((prev) => Math.max(prev - 1, 0));
+        gotoStep(currentStepIndex - 1);
       } else if (e.key === " " && questSteps[currentStepIndex]) {
         e.preventDefault();
         const activeStep = questSteps[currentStepIndex];
@@ -1008,7 +1013,8 @@ function KanjiAtlasFlowInner({
   // Close Quest HUD, reset step counter to 0 (Start 1), and return entire graph to normal view
   const handleCloseQuestHUD = () => {
     setIsQuestMinimized(true);
-    setCurrentStepIndex(0); // Reset step back to Start 1!
+    setCurrentStepIndex(0);
+    onSelectJukugoRef.current?.(null, null);
     fitView({ padding: 0.35, duration: 700 });
   };
 
@@ -1016,41 +1022,26 @@ function KanjiAtlasFlowInner({
   const handleStartQuest = (stepIdx: number = 0) => {
     setQuestMode(true);
     setIsQuestMinimized(false);
-    if (questSteps.length > 0) {
-      const validIdx = Math.max(0, Math.min(stepIdx, questSteps.length - 1));
-      setCurrentStepIndex(validIdx);
-      const targetStep = questSteps[validIdx];
-      if (targetStep) {
-        if (targetStep.type === "relation" && targetStep.bounds) {
-          fitBounds(targetStep.bounds, { padding: 0.35, duration: 800 });
-        } else {
-          setCenter(targetStep.x, targetStep.y, { zoom: 1.2, duration: 800 });
-        }
-        if (targetStep.word && !targetStep.word.includes("↔")) {
-          onSelectJukugo?.(targetStep.word, targetStep.nodeId);
-        }
-      }
-    }
+    gotoStep(stepIdx);
   };
 
   // Click node handler
   const onNodeClick = (_: any, node: any) => {
     const isRootNode = node.data.isRoot || node.data.type === "root";
     const word = (node.data.kanji || node.data.character || node.data.word || "").trim();
-    onSelectJukugo?.(word, node.id);
 
-    // Root Kanji acts as Trigger Start Belajar
     if (isRootNode) {
       handleStartQuest(0);
       return;
     }
 
-    // If node is a vocabulary word or relation node, open HUD at matching step
     const matchingStepIdx = questSteps.findIndex(
       (s) => s.nodeId === node.id || s.word === word || s.sourceNodeId === node.id || s.targetNodeId === node.id
     );
     if (matchingStepIdx !== -1) {
       handleStartQuest(matchingStepIdx);
+    } else {
+      onSelectJukugoRef.current?.(word, node.id);
     }
   };
 
@@ -1125,7 +1116,7 @@ function KanjiAtlasFlowInner({
             <button
               type="button"
               disabled={currentStepIndex === 0}
-              onClick={() => setCurrentStepIndex((prev) => Math.max(prev - 1, 0))}
+              onClick={() => gotoStep(currentStepIndex - 1)}
               className="flex-1 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none text-white text-xs font-bold flex items-center justify-center border border-white/15 transition-all cursor-pointer"
               title="Langkah Sebelumnya (Kembali)"
             >
@@ -1138,7 +1129,7 @@ function KanjiAtlasFlowInner({
                 if (currentStepIndex === questSteps.length - 1) {
                   handleCloseQuestHUD();
                 } else {
-                  setCurrentStepIndex((prev) => Math.min(prev + 1, questSteps.length - 1));
+                  gotoStep(currentStepIndex + 1);
                 }
               }}
               className={`flex-1 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-white text-xs font-black flex items-center justify-center border border-white/30 shadow-md transition-all cursor-pointer ${
@@ -1200,8 +1191,6 @@ function KanjiAtlasFlowInner({
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         fitView
         fitViewOptions={{ padding: 0.35 }}

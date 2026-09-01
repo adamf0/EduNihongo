@@ -1797,8 +1797,6 @@ export const LatihanPage: React.FC = () => {
         quizQuestions = getQuizQuestions(kanji, jukugos, examples);
     }
 
-    console.log("graph: ", graph);
-
     return (
         <Layout>
             <div className="w-full mx-auto px-4 md:px-8 py-8 flex flex-col gap-6 select-none relative z-10">
