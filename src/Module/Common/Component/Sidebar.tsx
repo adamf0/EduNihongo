@@ -70,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-3">
             <MusubiLogo mode="badge" size={40} />
             <div>
-              <h1 className="text-lg font-bold text-primary tracking-tight leading-tight">MUSUBI</h1>
+              <h1 className="text-lg font-bold text-primary tracking-tight leading-tight">KanGraph</h1>
               <p className="text-[9px] text-on-surface-variant tracking-[0.15em] uppercase">Connect the Dots of Japanese Mastery</p>
             </div>
           </div>

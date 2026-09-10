@@ -86,8 +86,8 @@ export const Layout: React.FC<LayoutProps> = ({
         {/* Desktop and Mobile Footer */}
         <footer className="w-full bg-surface-container-lowest py-lg px-md flex flex-col md:flex-row justify-between items-center gap-md border-t border-outline-variant/10 mt-auto">
           <div>
-            <p className="font-headline-md font-bold text-on-surface">MUSUBI</p>
-            <p className="text-body-md text-on-surface-variant">© 2024 MUSUBI. Connect the Dots of Japanese Mastery.</p>
+            <p className="font-headline-md font-bold text-on-surface">KanGraph</p>
+            <p className="text-body-md text-on-surface-variant">© 2024 KanGraph. Connect the Dots of Japanese Mastery.</p>
           </div>
           <div className="flex flex-wrap gap-md">
             <span onClick={() => navigate("/")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Tentang Kami</span>

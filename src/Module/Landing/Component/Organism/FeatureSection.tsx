@@ -1,80 +1,162 @@
 import React from "react";
-import Icon from "../../../Common/Component/Icon";
+import { useNavigate } from "react-router-dom";
+import { BookOpen, Search, Network, Edit3, BarChart2, ArrowRight, Award, Database, Briefcase } from "lucide-react";
 
 export const FeatureSection: React.FC = () => {
-  const features = [
+  const navigate = useNavigate();
+
+  const quickFeatures = [
     {
-      icon: "school",
-      title: "Kanji Learning",
-      description: "Sistem pembelajaran berjenjang dari N5 hingga N1 dengan metodologi mnemonik visual yang dipatenkan.",
-      borderColor: "hover:border-primary/30",
-      iconBg: "bg-primary-fixed",
-      iconColor: "text-on-primary-fixed"
+      icon: <BookOpen className="w-6 h-6 text-[#EC6C9A]" />,
+      title: "Modul Pembelajaran",
+      desc: "Materi tematik dengan semantic graph",
+      bg: "bg-[#FDE8F0]",
+      link: "/module",
     },
     {
-      icon: "draw",
-      title: "Stroke Order Animation",
-      description: "Lihat dan pelajari urutan guratan yang tepat dengan animasi halus yang membantu memori otot Anda.",
-      borderColor: "hover:border-secondary/30",
-      iconBg: "bg-secondary-container",
-      iconColor: "text-on-secondary-container"
+      icon: <span className="font-serif font-black text-lg text-[#0D47A1]">漢</span>,
+      title: "Daftar Kanji",
+      desc: "Pelajari makna dan penggunaan kanji",
+      bg: "bg-[#e3f2fd]",
+      link: "/kanji",
     },
     {
-      icon: "gesture",
-      title: "Interactive Writing",
-      description: "Latihan menulis langsung di layar dengan deteksi kesalahan guratan secara real-time.",
-      borderColor: "hover:border-tertiary/30",
-      iconBg: "bg-tertiary-fixed",
-      iconColor: "text-on-tertiary-fixed"
+      icon: <Network className="w-6 h-6 text-[#0D47A1]" />,
+      title: "Jukugo Explorer",
+      desc: "Temukan hubungan makna antar kanji",
+      bg: "bg-[#e8eaf6]",
+      link: "/jukugo",
     },
     {
-      icon: "hub",
-      title: "Semantic Graph",
-      description: "Lihat bagaimana satu Kanji berhubungan dengan ratusan kata lainnya dalam jaring laba-laba makna.",
-      borderColor: "hover:border-primary/30",
-      iconBg: "bg-primary-container/20",
-      iconColor: "text-primary"
+      icon: <Edit3 className="w-6 h-6 text-[#40c4ff]" />,
+      title: "Latihan Interaktif",
+      desc: "Uji pemahaman dengan latihan",
+      bg: "bg-[#e0f7fa]",
+      link: "/latihan",
     },
     {
-      icon: "analytics",
-      title: "Jukugo Analysis",
-      description: "Bedah setiap kata majemuk (Jukugo) untuk memahami kontribusi makna dari tiap elemen Kanji.",
-      borderColor: "hover:border-secondary/30",
-      iconBg: "bg-secondary-fixed",
-      iconColor: "text-on-secondary-fixed"
+      icon: <BarChart2 className="w-6 h-6 text-[#00b0ff]" />,
+      title: "Pantau Progress",
+      desc: "Lihat perkembangan belajarmu",
+      bg: "bg-[#e1f5fe]",
+      link: "/progress",
+    },
+  ];
+
+  const modules = [
+    {
+      id: 1,
+      title: "Modul 1",
+      subtitle: "Akademik dan Evaluasi",
+      kanjis: "試・験・問・題・答",
+      icon: <Award className="w-8 h-8 text-[#0D47A1]" />,
+      bg: "bg-[#e3f2fd]/80 border-[#A8D5FF]/40",
+      accentColor: "text-[#0D47A1]",
+      kanjiChar: "試",
     },
     {
-      icon: "rule",
-      title: "Evaluation",
-      description: "Kuis adaptif yang menyesuaikan tingkat kesulitan berdasarkan kecepatan dan akurasi belajar Anda.",
-      borderColor: "hover:border-tertiary/30",
-      iconBg: "bg-tertiary-fixed-dim/20",
-      iconColor: "text-tertiary"
-    }
+      id: 2,
+      title: "Modul 2",
+      subtitle: "Penelitian dan Pembuktian Ilmiah",
+      kanjis: "研・究・集・調・査",
+      icon: <Search className="w-8 h-8 text-[#00796b]" />,
+      bg: "bg-[#e0f2f1]/80 border-[#80cbc4]/40",
+      accentColor: "text-[#00796b]",
+      kanjiChar: "研",
+    },
+    {
+      id: 3,
+      title: "Modul 3",
+      subtitle: "Informasi dan Data",
+      kanjis: "情・報・伝・信・送",
+      icon: <Database className="w-8 h-8 text-[#f57f17]" />,
+      bg: "bg-[#fff8e1]/80 border-[#ffe082]/40",
+      accentColor: "text-[#f57f17]",
+      kanjiChar: "情",
+    },
+    {
+      id: 4,
+      title: "Modul 4",
+      subtitle: "Profesi dan Dunia Kerja",
+      kanjis: "職・業・商・務・術",
+      icon: <Briefcase className="w-8 h-8 text-[#c2185b]" />,
+      bg: "bg-[#fce4ec]/80 border-[#f48fb1]/40",
+      accentColor: "text-[#c2185b]",
+      kanjiChar: "職",
+    },
   ];
 
   return (
-    <section className="bg-surface-container-low py-12 relative">
-      <div className="max-w-[1200px] mx-auto px-4 md:px-12">
-        <div className="mb-12 text-center">
-          <h2 className="font-headline-lg text-headline-lg md:text-5xl text-on-surface mb-base">Fitur Utama</h2>
-          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-3xl mx-auto">
-            Dirancang untuk memudahkan kognisi visual dan membangun hubungan konsep Kanji yang kuat.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
-          {features.map((feature, idx) => (
+    <section className="py-12 bg-slate-50/50">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 space-y-12">
+        {/* Quick Feature Access Cards (5 Horizontal Tiles) */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {quickFeatures.map((item, idx) => (
             <div
               key={idx}
-              className={`group bg-surface-container-lowest p-lg rounded-3xl border border-outline-variant/30 transition-all hover:-translate-y-2 hover:shadow-md ${feature.borderColor}`}
+              onClick={() => navigate(item.link)}
+              className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3 group"
             >
-              <div className={`w-16 h-16 ${feature.iconBg} rounded-2xl flex items-center justify-center mb-md group-hover:scale-110 transition-transform`}>
-                <Icon name={feature.icon} className={`${feature.iconColor} text-3xl block`} />
+              <div className={`w-12 h-12 rounded-2xl ${item.bg} flex items-center justify-center group-hover:scale-105 transition-transform shrink-0`}>
+                {item.icon}
               </div>
-              <h3 className="font-headline-md text-headline-md mb-base text-on-surface">{feature.title}</h3>
-              <p className="text-on-surface-variant font-body-md leading-relaxed">{feature.description}</p>
+              <div>
+                <h4 className="font-extrabold text-sm text-slate-800 group-hover:text-[#0D47A1] transition-colors leading-tight">
+                  {item.title}
+                </h4>
+                <p className="text-[11px] font-medium text-slate-500 mt-1 leading-snug">
+                  {item.desc}
+                </p>
+              </div>
             </div>
           ))}
+        </div>
+
+        {/* Module Cards Grid ("Modul Pembelajaran") */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl md:text-2xl font-black text-[#0D47A1]">
+              Modul Pembelajaran
+            </h2>
+            <button
+              onClick={() => navigate("/module")}
+              className="text-xs font-extrabold text-[#EC6C9A] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>Lihat Semua</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {modules.map((mod) => (
+              <div
+                key={mod.id}
+                onClick={() => navigate(`/latihan/${mod.kanjiChar}`)}
+                className={`${mod.bg} border p-5 rounded-3xl shadow-xs hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer flex flex-col justify-between min-h-[160px] relative overflow-hidden group`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      {mod.title}
+                    </span>
+                    <h3 className={`font-black text-sm md:text-base mt-1 ${mod.accentColor} leading-snug`}>
+                      {mod.subtitle}
+                    </h3>
+                  </div>
+                  <div className="p-2 rounded-2xl bg-white/80 shadow-xs shrink-0 group-hover:scale-110 transition-transform">
+                    {mod.icon}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-900/5 flex justify-between items-center">
+                  <span className="font-serif font-extrabold text-sm tracking-widest text-slate-700">
+                    {mod.kanjis}
+                  </span>
+                  <ArrowRight className={`w-4 h-4 ${mod.accentColor} opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all`} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

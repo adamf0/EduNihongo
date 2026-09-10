@@ -1544,7 +1544,7 @@ async function main() {
     },
     {
       title: "Module 4",
-      tujuanPembelajaran: "Mahasiswa mampu:\n- memahami makna dasar kanji profesi dan pekerjaan\n- menjelaskan hubungan makna antar-kanji dalam dunia kerja\n- menganalisis jukugo yang berkaitan dengan profesi\n- menyusun semantic graph bidang pekerjaan\n- menggunakan jukugo dalam konteks profesi"
+      tujuanPembelajaran: "Mahasiswa mampu:\nMemahami makna dasar kanji yang berkaitan dengan pekerjaan dan perdagangan.\nMenjelaskan hubungan makna antar-kanji dalam dunia kerja dan perdagangan.\nMenganalisis jukugo yang berkaitan dengan pekerjaan dan perdagangan.\nMenyusun semantic graph bidang pekerjaan dan perdagangan.\nMenggunakan jukugo dalam konteks pekerjaan dan perdagangan."
     },
     {
       title: "Module 5",
@@ -1609,9 +1609,9 @@ async function main() {
     0: ["試", "験", "問", "題", "答", "点"], // Modul 1
     1: ["研", "究", "集", "調", "査", "実"], // Modul 2
     2: ["情", "報", "伝", "信", "受", "送"], // Modul 3
-    3: ["職", "業", "働", "務", "技", "術"], // Modul 4
+    3: ["職", "業", "商", "務", "術"], // Modul 4
     4: ["議", "論", "談", "討", "見", "意"], // Modul 5
-    5: ["経", "昔", "歴", "史", "期", "間"], // Modul 6
+    5: ["経", "始", "歴", "史", "期"], // Modul 6
     6: ["変", "化", "発", "展", "進", "成"], // Modul 7
     7: ["認", "識", "判", "断", "考", "想"], // Modul 8
     8: ["感", "覚", "心", "志", "態", "愛"], // Modul 9

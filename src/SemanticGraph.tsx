@@ -8,6 +8,7 @@ import {
   MarkerType,
   getBezierPath,
   type EdgeProps,
+  EdgeLabelRenderer,
   useNodesState,
   useEdgesState,
 } from "@xyflow/react";
@@ -29,17 +30,29 @@ const CustomCrossLinkEdge = ({
   const midX = (sourceX + targetX) / 2;
   const midY = (sourceY + targetY) / 2;
   const distFromCenter = Math.sqrt(midX * midX + midY * midY);
+  const dx = targetX - sourceX;
+  const dy = targetY - sourceY;
 
   let edgePath = "";
   let labelX = midX;
   let labelY = midY;
 
-  // Jika jalur mendekati titik pusat (0,0), dorong melengkung KELUAR ke orbit luar
-  if (distFromCenter < 380) {
+  // 1. Same-column / vertical cross links (e.g. 経験 -> 経歴 in same vertical stack)
+  if (Math.abs(dx) < 160 && Math.abs(dy) > 100) {
+    const isLeftSide = midX < 0;
+    const curveOffset = isLeftSide ? -240 : 240;
+    const ctrlX = Math.min(sourceX, targetX) + curveOffset;
+
+    edgePath = `M ${sourceX} ${sourceY} C ${ctrlX} ${sourceY}, ${ctrlX} ${targetY}, ${targetX} ${targetY}`;
+    labelX = ctrlX * 0.75 + midX * 0.25;
+    labelY = midY;
+  }
+  // 2. Lines passing close to central root node (within 380px radius)
+  else if (distFromCenter < 380) {
     const dirX = distFromCenter > 1 ? midX / distFromCenter : 0;
     const dirY = distFromCenter > 1 ? midY / distFromCenter : -1;
     
-    // Titik kontrol melengkung keluar
+    // Outward control point
     const ctrlX = midX + dirX * 320;
     const ctrlY = midY + dirY * 320;
 
@@ -103,12 +116,81 @@ const CustomCrossLinkEdge = ({
   );
 };
 
+// Custom Edge component for Structural Hierarchy Edges (kategori, mencakup, penyusun)
+const CustomHierarchyEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+  label,
+}: EdgeProps) => {
+  const [edgePath, _lx, ly] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+
+  const labelX = sourceX + (targetX - sourceX) * 0.36;
+  const labelY = ly;
+
+  const labelText = typeof label === "string" ? label.replace(/_/g, " ") : label;
+
+  return (
+    <>
+      <path
+        id={id}
+        style={style}
+        className="react-flow__edge-path"
+        d={edgePath}
+        markerEnd={markerEnd}
+      />
+      {labelText && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: "none",
+              transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
+              opacity: style.opacity ?? 1,
+            }}
+            className="nodrag nopan"
+          >
+            <div className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/95 text-slate-700 border border-slate-300 shadow-xs whitespace-nowrap backdrop-blur-xs">
+              {labelText}
+            </div>
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+};
+
 // 2. Helper Handle Terluar Dinamis
-function getOptimalHandles(srcPos?: { x: number; y: number }, tgtPos?: { x: number; y: number }) {
+function getOptimalHandles(
+  srcPos?: { x: number; y: number },
+  tgtPos?: { x: number; y: number },
+  isCross?: boolean
+) {
   if (!srcPos || !tgtPos) return { sourceHandle: undefined, targetHandle: undefined };
 
   const dx = tgtPos.x - srcPos.x;
   const dy = tgtPos.y - srcPos.y;
+
+  if (isCross && Math.abs(dx) < 160 && Math.abs(dy) > 100) {
+    const isLeft = srcPos.x < 0;
+    return isLeft
+      ? { sourceHandle: "s-left", targetHandle: "t-left" }
+      : { sourceHandle: "s-right", targetHandle: "t-right" };
+  }
 
   if (Math.abs(dx) > Math.abs(dy)) {
     return dx > 0
@@ -258,7 +340,7 @@ export default function SemanticGraph({
   rawEdges?: any[];
 }) {
   const nodeTypes = useMemo(() => ({ semanticNode: CustomSemanticNode }), []);
-  const edgeTypes = useMemo(() => ({ crossLinkEdge: CustomCrossLinkEdge }), []);
+  const edgeTypes = useMemo(() => ({ crossLinkEdge: CustomCrossLinkEdge, hierarchyEdge: CustomHierarchyEdge }), []);
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -364,12 +446,12 @@ export default function SemanticGraph({
       const tgtPos = nodePosMap.get(edge.target);
 
       const isCross = Boolean(edge.isCrossLink || (edge.predicate && edge.predicate !== "kategori" && edge.predicate !== "mencakup"));
-      const { sourceHandle, targetHandle } = getOptimalHandles(srcPos, tgtPos);
+      const { sourceHandle, targetHandle } = getOptimalHandles(srcPos, tgtPos, isCross);
       const labelText = isCross ? edge.predicate : undefined;
 
       return {
         ...edge,
-        type: isCross ? "crossLinkEdge" : "default",
+        type: isCross ? "crossLinkEdge" : "hierarchyEdge",
         sourceHandle,
         targetHandle,
         label: labelText,

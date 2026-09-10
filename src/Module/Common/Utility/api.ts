@@ -2,8 +2,14 @@ const BASE_URL = window.location.hostname === "localhost" || window.location.hos
   ? "http://localhost:5001/api"
   : "https://kanji.fishiden.com/api";
 
+const getToken = () => 
+  localStorage.getItem("kangraph_token");
+
+const getRoleKey = () => 
+  localStorage.getItem("kangraph_role") || "USER";
+
 const getHeaders = () => {
-  const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
+  const token = getToken();
   return {
     "Content-Type": "application/json",
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
@@ -14,8 +20,6 @@ const handleResponse = async (response: Response) => {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401 || (response.status === 404 && data.error === "User tidak ditemukan")) {
-      // localStorage.removeItem("kanjigraph_token");
-      // localStorage.removeItem("kanjigraph_role");
       window.location.hash = "/login";
     }
     throw new Error(data.error || "Terjadi kesalahan koneksi ke server.");
@@ -34,8 +38,8 @@ export const api = {
       const data = await handleResponse(res);
       console.log(data)
       if (data.token) {
-        localStorage.setItem("musubi_token", data.token);
-        localStorage.setItem("musubi_role", data.user.role || "USER");
+        localStorage.setItem("kangraph_token", data.token);
+        localStorage.setItem("kangraph_role", data.user.role || "USER");
       }
       return data;
     },
@@ -47,22 +51,20 @@ export const api = {
       });
       const data = await handleResponse(res);
       if (data.token) {
-        localStorage.setItem("musubi_token", data.token);
-        localStorage.setItem("musubi_role", data.user.role || "USER");
+        localStorage.setItem("kangraph_token", data.token);
+        localStorage.setItem("kangraph_role", data.user.role || "USER");
       }
       return data;
     },
     logout: () => {
-      localStorage.removeItem("musubi_token");
-      localStorage.removeItem("musubi_role");
-      localStorage.removeItem("kanjigraph_token");
-      localStorage.removeItem("kanjigraph_role");
+      localStorage.removeItem("kangraph_token");
+      localStorage.removeItem("kangraph_role");
     },
     isAuthenticated: () => {
-      return !!(localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token"));
+      return !!getToken();
     },
     getRole: () => {
-      return localStorage.getItem("musubi_role") || localStorage.getItem("kanjigraph_role") || "USER";
+      return getRoleKey();
     }
   },
   dashboard: {
@@ -141,13 +143,13 @@ export const api = {
       });
       const data = await handleResponse(res);
       if (data && data.role) {
-        localStorage.setItem("musubi_role", data.role);
+        localStorage.setItem("kangraph_role", data.role);
       }
       return data;
     },
     update: async (data: any) => {
       const isFormData = data instanceof FormData;
-      const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
+      const token = localStorage.getItem("kangraph_token") || localStorage.getItem("kanjigraph_token");
       const headers = isFormData 
         ? { ...(token ? { "Authorization": `Bearer ${token}` } : {}) } 
         : getHeaders();
@@ -346,7 +348,7 @@ export const api = {
         return handleResponse(res);
       },
       create: async (data: FormData) => {
-        const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
+        const token = localStorage.getItem("kangraph_token") || localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/assignments`, {
           method: "POST",
           headers: {
@@ -357,7 +359,7 @@ export const api = {
         return handleResponse(res);
       },
       update: async (id: number, data: FormData) => {
-        const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
+        const token = localStorage.getItem("kangraph_token") || localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/assignments/${id}`, {
           method: "PUT",
           headers: {
@@ -387,7 +389,7 @@ export const api = {
         return handleResponse(res);
       },
       submit: async (data: FormData) => {
-        const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
+        const token = localStorage.getItem("kangraph_token") || localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/submissions`, {
           method: "POST",
           headers: {

@@ -89,7 +89,7 @@ export const RegisterPage: React.FC = () => {
                 <MusubiLogo mode="standalone" size={72} />
               </div>
               <h1 className="font-headline-lg text-primary mt-sm tracking-tight leading-tight">
-                MUSUBI
+                KanGraph
               </h1>
               <p className="text-[10px] text-on-surface-variant tracking-[0.2em] uppercase font-semibold">
                 Connect the Dots of Japanese Mastery

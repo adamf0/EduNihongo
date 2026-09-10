@@ -53,9 +53,12 @@ export default {
                 "on-secondary-fixed-variant": "#2d486d",
                 "on-tertiary-fixed": "#261a00",
                 "on-primary-fixed": "#400009",
-                "secondary-fixed-dim": "#adc8f5",
                 "matcha": "#4F7942",
                 "indigo-custom": "#2E4482",
+                "navy-primary": "#0D47A1",
+                "pink-primary": "#EC6C9A",
+                "sky-accent": "#A8D5FF",
+                "rose-tint": "#FDE8F0",
             },
 
             borderRadius: {

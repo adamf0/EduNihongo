@@ -1,100 +1,104 @@
 import React from "react";
-import Icon from "../../../Common/Component/Icon";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 
 export const HeroSection: React.FC = () => {
   const navigate = useNavigate();
 
-  const stats = [
-    { icon: "menu_book", value: "2000+", label: "Kanji Utama", color: "text-primary" },
-    { icon: "translate", value: "5000+", label: "Kosakata Jukugo", color: "text-secondary" },
-    { icon: "verified_user", value: "JLPT N5-N1", label: "Materi Lengkap", color: "text-tertiary" },
-    { icon: "mood", value: "98%", label: "Tingkat Kelulusan", color: "text-primary" },
-  ];
-
   return (
-    <div className="relative overflow-hidden pt-12 pb-24">
-      {/* Background radial gradient */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -z-10"></div>
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[100px] -z-10"></div>
+    <div className="relative overflow-hidden bg-gradient-to-b from-[#e3f2fd]/60 via-[#fde8f0]/40 to-white pt-8 pb-16 border-b border-slate-100">
+      {/* Subtle Sakura Blossom & Fuji Silhouette Overlay Decor */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#EC6C9A]/10 to-[#A8D5FF]/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
 
-      <section className="max-w-[1200px] mx-auto px-4 md:px-12 py-12 flex flex-col lg:flex-row items-center gap-12 relative">
-        {/* Left content: Hero text */}
-        <div className="flex-1 space-y-md text-center lg:text-left z-10 animate-fade-in">
-          <div className="inline-flex items-center gap-2 bg-primary-fixed text-on-primary-fixed px-4 py-1.5 rounded-full mb-xs border border-outline-variant/30">
-            <Icon name="auto_awesome" className="text-base text-primary block" />
-            <span className="font-label-md text-label-md">Pembelajaran Berbasis Graph Terdepan</span>
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row items-center justify-between gap-10 relative">
+        {/* Left Hero Content */}
+        <div className="flex-1 space-y-6 text-center lg:text-left z-10">
+          <div className="inline-flex items-center gap-2 bg-[#FDE8F0] border border-[#EC6C9A]/20 text-[#EC6C9A] px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wide">
+            <span>つながる、ひろがる、漢字の世界へ</span>
           </div>
-          <h1 className="font-headline-lg text-headline-lg lg:text-7xl lg:leading-[1.1] text-on-surface">
-            Belajar <span className="text-primary kanji-glow">Jukugo Kanji</span> Melalui Semantic Graph
+
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#0D47A1] leading-tight tracking-tight">
+            Menghubungkan Kanji, <br />
+            Memperluas Makna, <br />
+            <span className="text-[#EC6C9A]">Melangkah Lebih Jauh</span>
           </h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto lg:mx-0">
-            Visualisasi interaktif, animasi urutan guratan, dan audio native untuk menguasai Kanji dengan cara yang lebih alami dan menyenangkan.
+
+          <p className="text-slate-600 font-medium text-base md:text-lg w-full mx-auto lg:mx-0 leading-relaxed">
+            Belajar kanji melalui semantic graph untuk memahami jukugo secara lebih sistematis dan terstruktur.
           </p>
-          <div className="flex flex-col sm:flex-row gap-base pt-md justify-center lg:justify-start">
+
+          <div className="pt-2 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center">
             <button
               onClick={() => navigate("/login")}
-              className="bg-primary text-on-primary px-10 py-4 rounded-xl font-headline-md text-headline-md button-shadow transition-all hover:brightness-110 active:scale-95 cursor-pointer"
+              className="bg-[#EC6C9A] hover:bg-[#d85b88] text-white px-8 py-3.5 rounded-full font-extrabold text-base shadow-lg shadow-[#EC6C9A]/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer"
             >
-              Mulai Belajar
+              <span>Mulai Belajar</span>
+              <ArrowRight className="w-5 h-5" />
             </button>
             <button
               onClick={() => navigate("/dashboard")}
-              className="bg-surface-container-lowest border-2 border-primary/20 text-primary px-10 py-4 rounded-xl font-headline-md text-headline-md hover:bg-primary/5 transition-all cursor-pointer"
+              className="bg-white border-2 border-[#0D47A1]/20 text-[#0D47A1] hover:bg-[#0D47A1]/5 px-8 py-3.5 rounded-full font-bold text-base transition-all cursor-pointer"
             >
-              Coba Demo
+              Jelajahi Graph
             </button>
           </div>
         </div>
 
-        {/* Right content: Floating Kanji Card illustration */}
-        <div className="flex-1 relative w-full aspect-square max-w-[500px] flex items-center justify-center">
-          <div className="w-72 h-72 lg:w-96 lg:h-96 glass-card rounded-[40px] shadow-2xl flex flex-col items-center justify-center relative animate-float">
-            <span className="font-display-kanji text-[120px] lg:text-[140px] text-primary select-none">学</span>
-            <div className="absolute bottom-10 text-center select-none">
-              <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Learn • Belajar</p>
-              <p className="font-headline-md text-headline-md text-secondary mt-1">GAKU</p>
+        {/* Right Content: Interactive Semantic Graph Node Visual (学) */}
+        <div className="flex-1 relative w-full aspect-square max-w-[480px] flex items-center justify-center">
+          {/* Central Background Ring & Connecting Edge Lines */}
+          <div className="relative w-80 h-80 flex items-center justify-center">
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
+              <line x1="160" y1="160" x2="160" y2="40" stroke="#A8D5FF" strokeWidth="2.5" strokeDasharray="4 4" />
+              <line x1="160" y1="160" x2="270" y2="100" stroke="#A8D5FF" strokeWidth="2.5" strokeDasharray="4 4" />
+              <line x1="160" y1="160" x2="250" y2="240" stroke="#A8D5FF" strokeWidth="2.5" strokeDasharray="4 4" />
+              <line x1="160" y1="160" x2="70" y2="240" stroke="#A8D5FF" strokeWidth="2.5" strokeDasharray="4 4" />
+              <line x1="160" y1="160" x2="50" y2="100" stroke="#A8D5FF" strokeWidth="2.5" strokeDasharray="4 4" />
+            </svg>
+
+            {/* Central Node (学) */}
+            <div className="w-28 h-28 rounded-full bg-[#FDE8F0] border-4 border-[#EC6C9A] shadow-xl flex flex-col items-center justify-center z-10 animate-pulse">
+              <span className="font-serif font-black text-4xl text-[#EC6C9A]">学</span>
+            </div>
+
+            {/* Satellite Node 1: 学校 (sekolah) - Top */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white border border-slate-100 p-2.5 rounded-2xl shadow-md flex flex-col items-center select-none hover:scale-110 transition-transform">
+              <span className="font-serif font-bold text-lg text-slate-800">学校</span>
+              <span className="text-[10px] text-slate-400 font-semibold">(sekolah)</span>
+            </div>
+
+            {/* Satellite Node 2: 学習 (belajar) - Top Right */}
+            <div className="absolute top-12 right-0 bg-white border border-slate-100 p-2.5 rounded-2xl shadow-md flex flex-col items-center select-none hover:scale-110 transition-transform">
+              <span className="font-serif font-bold text-lg text-slate-800">学習</span>
+              <span className="text-[10px] text-slate-400 font-semibold">(belajar)</span>
+            </div>
+
+            {/* Satellite Node 3: 科学 (ilmu pengetahuan) - Bottom Right */}
+            <div className="absolute bottom-6 right-4 bg-white border border-slate-100 p-2.5 rounded-2xl shadow-md flex flex-col items-center select-none hover:scale-110 transition-transform">
+              <span className="font-serif font-bold text-lg text-slate-800">科学</span>
+              <span className="text-[10px] text-slate-400 font-semibold">(ilmu pengetahuan)</span>
+            </div>
+
+            {/* Satellite Node 4: 文学 (sastra) - Bottom Left */}
+            <div className="absolute bottom-6 left-4 bg-white border border-slate-100 p-2.5 rounded-2xl shadow-md flex flex-col items-center select-none hover:scale-110 transition-transform">
+              <span className="font-serif font-bold text-lg text-slate-800">文学</span>
+              <span className="text-[10px] text-slate-400 font-semibold">(sastra)</span>
+            </div>
+
+            {/* Satellite Node 5: 学生 (mahasiswa) - Top Left */}
+            <div className="absolute top-12 left-0 bg-white border border-slate-100 p-2.5 rounded-2xl shadow-md flex flex-col items-center select-none hover:scale-110 transition-transform">
+              <span className="font-serif font-bold text-lg text-slate-800">学生</span>
+              <span className="text-[10px] text-slate-400 font-semibold">(mahasiswa)</span>
             </div>
           </div>
 
-          {/* Floating Semantic Connections (Nodes) */}
-          <div className="absolute top-4 right-4 p-4 glass-card rounded-2xl shadow-lg border-l-4 border-primary translate-x-4 -translate-y-4 lg:translate-x-12 lg:-translate-y-8 select-none transition-transform hover:scale-105">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl font-display-kanji">校</span>
-              <div>
-                <p className="text-xs font-bold text-primary">Sekolah</p>
-                <p className="text-[10px] text-on-surface-variant">Gakkou (学校)</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="absolute bottom-12 left-4 p-4 glass-card rounded-2xl shadow-lg border-l-4 border-secondary -translate-x-4 translate-y-4 lg:-translate-x-12 lg:translate-y-8 select-none transition-transform hover:scale-105">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl font-display-kanji">生</span>
-              <div>
-                <p className="text-xs font-bold text-secondary">Siswa</p>
-                <p className="text-[10px] text-on-surface-variant">Gakusei (学生)</p>
-              </div>
-            </div>
+          {/* Japanese Quote Badge */}
+          <div className="absolute -bottom-4 right-2 bg-white/90 backdrop-blur-xs p-3 rounded-2xl shadow-md border border-slate-100 text-right text-xs">
+            <p className="font-serif font-bold text-[#0D47A1]">一つの漢字から、もっと広い世界へ</p>
+            <p className="text-[10px] text-slate-500 font-medium mt-0.5">Satu kanji, banyak koneksi, makna tak terbatas.</p>
           </div>
         </div>
-      </section>
-
-      {/* Stats Bento Grid */}
-      <section className="max-w-[1200px] mx-auto px-4 md:px-12 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-base md:gap-md">
-          {stats.map((stat, idx) => (
-            <div
-              key={idx}
-              className="bg-surface-container-lowest p-md rounded-2xl flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all"
-            >
-              <Icon name={stat.icon} className={`${stat.color} text-3xl mb-2 block`} />
-              <h3 className="font-headline-lg text-headline-lg text-primary">{stat.value}</h3>
-              <p className="font-label-md text-label-md text-on-surface-variant">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      </div>
     </div>
   );
 };

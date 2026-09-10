@@ -111,13 +111,26 @@ const CustomCrossLinkEdge = ({
   const midX = (sourceX + targetX) / 2;
   const midY = (sourceY + targetY) / 2;
   const distFromCenter = Math.sqrt(midX * midX + midY * midY);
+  const dx = targetX - sourceX;
+  const dy = targetY - sourceY;
 
   let edgePath = "";
   let labelX = midX;
   let labelY = midY;
 
-  // If the line passes close to central root node (within 380px radius), push curve OUTWARD into outer orbit
-  if (distFromCenter < 380) {
+  // 1. Same-column / vertical cross links (e.g. 経験 -> 経歴 in same vertical stack)
+  if (Math.abs(dx) < 160 && Math.abs(dy) > 100) {
+    const isLeftSide = midX < 0;
+    const curveOffset = isLeftSide ? -240 : 240;
+    const ctrlX = Math.min(sourceX, targetX) + curveOffset;
+
+    // Cubic bezier curve extending outward to avoid middle nodes (e.g. 経過)
+    edgePath = `M ${sourceX} ${sourceY} C ${ctrlX} ${sourceY}, ${ctrlX} ${targetY}, ${targetX} ${targetY}`;
+    labelX = ctrlX * 0.75 + midX * 0.25;
+    labelY = midY;
+  }
+  // 2. Lines passing close to central root node (within 380px radius)
+  else if (distFromCenter < 380) {
     const dirX = distFromCenter > 1 ? midX / distFromCenter : 0;
     const dirY = distFromCenter > 1 ? midY / distFromCenter : -1;
     
@@ -190,12 +203,84 @@ const CustomCrossLinkEdge = ({
   );
 };
 
+// Custom Edge component for Structural Hierarchy Edges (kategori, mencakup, penyusun)
+const CustomHierarchyEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+  label,
+}: EdgeProps) => {
+  const [edgePath, _lx, ly] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+
+  // Calculate label position at 36% along the X axis between source and target,
+  // keeping it cleanly in the open gap near source node and away from target node cards.
+  const labelX = sourceX + (targetX - sourceX) * 0.36;
+  const labelY = ly;
+
+  const labelText = typeof label === "string" ? label.replace(/_/g, " ") : label;
+  const isVisible = style.opacity === undefined || (typeof style.opacity === "number" && style.opacity > 0);
+
+  return (
+    <>
+      <path
+        id={id}
+        style={style}
+        className="react-flow__edge-path"
+        d={edgePath}
+        markerEnd={markerEnd}
+      />
+      {labelText && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: isVisible ? "all" : "none",
+              transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
+              opacity: isVisible ? (style.opacity ?? 1) : 0,
+            }}
+            className="nodrag nopan"
+          >
+            <div className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/95 text-slate-700 border border-slate-300 shadow-xs whitespace-nowrap backdrop-blur-xs">
+              {labelText}
+            </div>
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+};
+
 // Helper function to pick optimal handles on all 4 sides
-function getOptimalHandles(srcPos?: { x: number; y: number }, tgtPos?: { x: number; y: number }) {
+function getOptimalHandles(
+  srcPos?: { x: number; y: number },
+  tgtPos?: { x: number; y: number },
+  isCross?: boolean
+) {
   if (!srcPos || !tgtPos) return { sourceHandle: undefined, targetHandle: undefined };
 
   const dx = tgtPos.x - srcPos.x;
   const dy = tgtPos.y - srcPos.y;
+
+  if (isCross && Math.abs(dx) < 160 && Math.abs(dy) > 100) {
+    const isLeft = srcPos.x < 0;
+    return isLeft
+      ? { sourceHandle: "s-left", targetHandle: "t-left" }
+      : { sourceHandle: "s-right", targetHandle: "t-right" };
+  }
 
   if (Math.abs(dx) > Math.abs(dy)) {
     return dx > 0
@@ -223,7 +308,7 @@ function KanjiAtlasFlowInner({
 }) {
   const { setCenter, fitBounds, fitView } = useReactFlow();
   const nodeTypes = useMemo(() => ({ kanjiNode: KanjiNode }), []);
-  const edgeTypes = useMemo(() => ({ crossLinkEdge: CustomCrossLinkEdge }), []);
+  const edgeTypes = useMemo(() => ({ crossLinkEdge: CustomCrossLinkEdge, hierarchyEdge: CustomHierarchyEdge }), []);
 
   // Progressive Interactive State
   const [areCategoriesVisible, setAreCategoriesVisible] = useState(false);
@@ -387,9 +472,9 @@ function KanjiAtlasFlowInner({
 
       if (mainJukugos.length === 0) return;
 
-      const col1X = catX + dir * 420;
-      const col2X = catX + dir * 840;
-      const col3X = catX + dir * 1240;
+      const col1X = catX + dir * 540;
+      const col2X = catX + dir * 1020;
+      const col3X = catX + dir * 1480;
 
       const subCompoundRequests: Map<string, { subWord: string; meaning: string; parentJkIds: string[]; preferredY: number }> = new Map();
       const leafKanjiRequests: Map<string, { char: string; parentIds: string[]; preferredY: number; animIndex?: number }> = new Map();
@@ -932,7 +1017,7 @@ function KanjiAtlasFlowInner({
       const srcPos = nodePosMap.get(edge.source);
       const tgtPos = nodePosMap.get(edge.target);
 
-      const { sourceHandle, targetHandle } = getOptimalHandles(srcPos, tgtPos);
+      const { sourceHandle, targetHandle } = getOptimalHandles(srcPos, tgtPos, edge.isCrossLink);
 
       const tgtNodeObj = positionedNodes.find((n: any) => n.id === edge.target);
       let edgeLabel = edge.label;
@@ -972,7 +1057,7 @@ function KanjiAtlasFlowInner({
 
       return {
         ...edge,
-        type: edge.isCrossLink ? "crossLinkEdge" : (edge.type || "default"),
+        type: edge.isCrossLink ? "crossLinkEdge" : "hierarchyEdge",
         sourceHandle: edge.sourceHandle || sourceHandle,
         targetHandle: edge.targetHandle || targetHandle,
         label: edgeLabel,
@@ -1103,10 +1188,17 @@ function KanjiAtlasFlowInner({
       return;
     }
 
-    // 3. Click JUKUGO / LEAF / SUB-JUKUGO Node: Focus camera, play select SFX & select jukugo
-    playPopSfx(0, "node");
-    setCenter(node.position.x, node.position.y, { zoom: 1.2, duration: 800 });
-    onSelectJukugoRef.current?.(word, node.id);
+    // 3. Click JUKUGO / LEAF / SUB-JUKUGO Node: Toggle off if already active, else focus camera, play select SFX & select jukugo
+    const isAlreadyActive = node.id === activeNodeId || (Boolean(word) && word === activeJukugoWord);
+
+    if (isAlreadyActive) {
+      onSelectJukugoRef.current?.(null, null);
+      restoreCameraView();
+    } else {
+      playPopSfx(0, "node");
+      setCenter(node.position.x, node.position.y, { zoom: 1.2, duration: 800 });
+      onSelectJukugoRef.current?.(word, node.id);
+    }
   };
 
   return (
@@ -1124,8 +1216,16 @@ function KanjiAtlasFlowInner({
           }
         }}
         onPaneClick={() => {
+          let needsCameraReset = false;
           if (selectedRelationEdgeId) {
             setSelectedRelationEdgeId(null);
+            needsCameraReset = true;
+          }
+          if (activeNodeId || activeJukugoWord) {
+            onSelectJukugoRef.current?.(null, null);
+            needsCameraReset = true;
+          }
+          if (needsCameraReset) {
             restoreCameraView();
           }
         }}
