@@ -15,7 +15,7 @@ services:
       - PORT=5001
       - NODE_ENV=production
       - DATABASE_URL=file:/app/prisma/dev.db
-      - JWT_SECRET=super-secret-kanjigraph-key-12345
+      - JWT_SECRET=super-secret-musubi-key-12345
     restart: always
 
   frontend:

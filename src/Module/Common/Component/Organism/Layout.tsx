@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "../Sidebar";
 import Icon from "../Icon";
+import MusubiLogo from "../MusubiLogo";
 import { useNavigate, useLocation } from "react-router-dom";
 
 interface LayoutProps {
@@ -33,28 +34,21 @@ export const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-background text-on-surface flex flex-col overflow-x-hidden">
-      {/* Sidebar Navigation (Desktop and Mobile Drawer) */}
+      {/* Sidebar Navigation (Desktop Only) */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content Layout area */}
       <div className="lg:pl-64 flex flex-col flex-1 min-h-screen pb-24 lg:pb-0">
         {/* Top Header / Navigation Bar */}
-        <header className="sticky top-0 z-40 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-md flex justify-between items-center w-full px-4 md:px-6 py-1 max-w-[1200px] mx-auto border-b border-outline-variant/10">
+        <header className="sticky top-0 z-40 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-md flex justify-between items-center w-full px-4 md:px-6 py-2 max-w-[1200px] mx-auto border-b border-outline-variant/10">
           <div className="flex items-center gap-md flex-1">
-            {/* Hamburger menu trigger for mobile drawer */}
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-full hover:bg-surface-container text-on-surface-variant cursor-pointer transition-colors"
-              aria-label="Open menu"
+            {/* Mobile Brand Logo */}
+            <div
+              onClick={() => navigate("/dashboard")}
+              className="lg:hidden cursor-pointer transition-transform hover:scale-105"
             >
-              <Icon name="menu" className="block text-2xl" />
-            </button>
-            <span 
-              onClick={() => navigate("/dashboard")} 
-              className="font-headline-md text-headline-md font-black text-primary lg:hidden cursor-pointer tracking-tight"
-            >
-              KANJIGRAPH
-            </span>
+              <MusubiLogo mode="standalone" size={32} showText={true} />
+            </div>
             
             {/* Search Input Bar (Desktop/Tablet Only) */}
             <div className="relative w-full max-w-md hidden md:block">
@@ -92,8 +86,8 @@ export const Layout: React.FC<LayoutProps> = ({
         {/* Desktop and Mobile Footer */}
         <footer className="w-full bg-surface-container-lowest py-lg px-md flex flex-col md:flex-row justify-between items-center gap-md border-t border-outline-variant/10 mt-auto">
           <div>
-            <p className="font-headline-md font-bold text-on-surface">KANJIGRAPH</p>
-            <p className="text-body-md text-on-surface-variant">© 2024 Kanjigraph. Dibuat untuk penguasaan.</p>
+            <p className="font-headline-md font-bold text-on-surface">MUSUBI</p>
+            <p className="text-body-md text-on-surface-variant">© 2024 MUSUBI. Connect the Dots of Japanese Mastery.</p>
           </div>
           <div className="flex flex-wrap gap-md">
             <span onClick={() => navigate("/")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Tentang Kami</span>

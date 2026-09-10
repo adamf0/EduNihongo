@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import InputField from "../../Login/Component/Atoms/InputField";
 import ToriiButton from "../../Login/Component/Atoms/ToriiButton";
 import Icon from "../../Common/Component/Icon";
+import MusubiLogo from "../../Common/Component/MusubiLogo";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../Common/Utility/api";
 
@@ -83,15 +84,15 @@ export const RegisterPage: React.FC = () => {
             <div className="mb-md flex flex-col items-center">
               <div 
                 onClick={() => navigate("/")}
-                className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-md cursor-pointer transition-transform hover:scale-105"
+                className="cursor-pointer transition-transform hover:scale-105 mb-2"
               >
-                <Icon name="star_shine" className="text-white block text-4xl" />
+                <MusubiLogo mode="standalone" size={72} />
               </div>
               <h1 className="font-headline-lg text-primary mt-sm tracking-tight leading-tight">
-                KANJIGRAPH
+                MUSUBI
               </h1>
               <p className="text-[10px] text-on-surface-variant tracking-[0.2em] uppercase font-semibold">
-                Master the Stroke
+                Connect the Dots of Japanese Mastery
               </p>
             </div>
 

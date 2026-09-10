@@ -21,7 +21,7 @@ export const authenticateToken = (
   }
 
   try {
-    const secret = process.env.JWT_SECRET || "super-secret-kanjigraph-key-12345";
+    const secret = process.env.JWT_SECRET || "super-secret-musubi-key-12345";
     const decoded = jwt.verify(token, secret) as { id: number; email: string };
     req.user = decoded;
     next();

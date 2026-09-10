@@ -1,7 +1,7 @@
 {
   "name": "edunihongo-backend",
   "version": "1.0.0",
-  "description": "Backend service for EduNihongo (Kanjigraph)",
+  "description": "Backend service for MUSUBI",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",

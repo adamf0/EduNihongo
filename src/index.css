@@ -3,21 +3,21 @@
 @theme {
   /* Colors */
   --color-background: #f8f9fb;
-  --color-on-background: #191c1e;
+  --color-on-background: #0f172a;
 
-  --color-primary: #8f0020;
+  --color-primary: #0d2b52;
   --color-on-primary: #ffffff;
-  --color-primary-container: #bc002d;
-  --color-on-primary-container: #ffc9c8;
-  --color-primary-fixed: #ffdad9;
-  --color-primary-fixed-dim: #ffb3b3;
+  --color-primary-container: #1e3a8a;
+  --color-on-primary-container: #dbeafe;
+  --color-primary-fixed: #e0e7ff;
+  --color-primary-fixed-dim: #c7d2fe;
 
-  --color-secondary: #455f87;
+  --color-secondary: #c8232a;
   --color-on-secondary: #ffffff;
-  --color-secondary-container: #b5d0fd;
-  --color-on-secondary-container: #3e5980;
-  --color-secondary-fixed: #d5e3ff;
-  --color-secondary-fixed-dim: #adc8f5;
+  --color-secondary-container: #fee2e2;
+  --color-on-secondary-container: #991b1b;
+  --color-secondary-fixed: #fecaca;
+  --color-secondary-fixed-dim: #fca5a5;
 
   --color-tertiary: #5a4100;
   --color-on-tertiary: #ffffff;

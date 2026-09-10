@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import HeroSection from "../Component/Organism/HeroSection";
 import FeatureSection from "../Component/Organism/FeatureSection";
 import Icon from "../../Common/Component/Icon";
+import MusubiLogo from "../../Common/Component/MusubiLogo";
 import { useNavigate } from "react-router-dom";
 
 export const LandingPage: React.FC = () => {
@@ -31,11 +32,9 @@ export const LandingPage: React.FC = () => {
         <div className="flex justify-between items-center w-full px-4 md:px-6 lg:px-12 max-w-[1200px] mx-auto">
           {/* Logo block */}
           <div className="flex items-center gap-sm cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center shadow-md">
-              <Icon name="star_shine" className="text-white block text-xl" />
-            </div>
+            <MusubiLogo mode="badge" size={34} />
             <span className="font-headline-md text-headline-md font-black text-primary tracking-tight">
-              KANJIGRAPH
+              MUSUBI
             </span>
           </div>
 
@@ -81,7 +80,7 @@ export const LandingPage: React.FC = () => {
             {/* Steps list */}
             <div className="w-full lg:w-1/2">
               <h2 className="font-headline-lg text-headline-lg text-on-surface mb-lg">
-                Bagaimana Kanjigraph Mengubah Cara Anda Belajar
+                Bagaimana MUSUBI Mengubah Cara Anda Belajar
               </h2>
               <div className="space-y-lg relative">
                 {/* Connecting vertical timeline line */}
@@ -133,7 +132,7 @@ export const LandingPage: React.FC = () => {
             <div className="w-full lg:w-1/2 bg-surface-container rounded-3xl p-md aspect-video relative flex items-center justify-center overflow-hidden">
               <img
                 className="w-full h-full object-cover rounded-2xl shadow-xl select-none"
-                alt="A sleek user interface preview of Kanjigraph learning network."
+                alt="A sleek user interface preview of MUSUBI learning network."
                 src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&h=450"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent flex items-center justify-center">
@@ -178,11 +177,9 @@ export const LandingPage: React.FC = () => {
             {/* Branding Column */}
             <div className="space-y-md">
               <div className="flex items-center gap-sm">
-                <div className="w-8 h-8 rounded bg-primary flex items-center justify-center shadow-md">
-                  <Icon name="star_shine" className="text-white block text-xl" />
-                </div>
+                <MusubiLogo mode="badge" size={34} />
                 <span className="font-headline-md text-headline-md font-bold text-primary tracking-tight">
-                  KANJIGRAPH
+                  MUSUBI
                 </span>
               </div>
               <p className="text-body-md text-on-surface-variant leading-relaxed">
@@ -212,7 +209,7 @@ export const LandingPage: React.FC = () => {
 
             {/* Links Column 3 */}
             <div>
-              <h5 className="font-headline-md text-secondary mb-md">Tentang Kanjigraph</h5>
+              <h5 className="font-headline-md text-secondary mb-md">Tentang MUSUBI</h5>
               <ul className="space-y-sm">
                 <li><span onClick={() => navigate("/")} className="text-body-md text-on-surface-variant hover:text-primary cursor-pointer transition-colors">Tentang Kami</span></li>
                 <li><span onClick={() => navigate("/")} className="text-body-md text-on-surface-variant hover:text-primary cursor-pointer transition-colors">Hubungi Bantuan</span></li>
@@ -222,7 +219,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="border-t border-outline-variant/10 pt-lg flex flex-col sm:flex-row justify-between items-center gap-md">
-            <p className="text-caption text-on-surface-variant">© 2024 Kanjigraph. Dibuat untuk penguasaan Bahasa Jepang.</p>
+            <p className="text-caption text-on-surface-variant">© 2024 MUSUBI. Connect the Dots of Japanese Mastery.</p>
             <div className="flex gap-md">
               <span className="text-caption text-on-surface-variant hover:text-primary cursor-pointer">Facebook</span>
               <span className="text-caption text-on-surface-variant hover:text-primary cursor-pointer">Twitter</span>

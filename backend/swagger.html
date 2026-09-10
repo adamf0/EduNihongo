@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Kanjigraph API Documentation - Swagger UI</title>
+  <title>MUSUBI API Documentation - Swagger UI</title>
   <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/japanese-temple.png" />
   <!-- Swagger UI CDN -->
   <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.css" />
@@ -125,12 +125,14 @@
     <div class="brand-logo">
       <img src="https://img.icons8.com/color/96/000000/japanese-gate.png" alt="Torii Gate" />
       <div>
-        <h1 class="brand-title">KANJIGRAPH</h1>
-        <p class="brand-subtitle">Master the Stroke • API Docs</p>
+        <h1 class="brand-title">MUSUBI</h1>
+        <p class="brand-subtitle">Interactive Japanese Learning Platform API Specification (REST + Dynamic Graph Edges)</p>
       </div>
     </div>
-    <div class="badge-status">
-      🟢 v1.0.0 - Development Stable
+    <div>
+      <a href="/api/docs-json" target="_blank" style="background: rgba(255,255,255,0.15); color: #fff; text-decoration: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; transition: all 0.2s;">
+        📥 Open Raw OpenAPI JSON
+      </a>
     </div>
   </header>
 
@@ -142,16 +144,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js"></script>
   <script>
     window.onload = function() {
-      // Define OpenAPI Spec
+      // Inline OpenAPI Specification JSON
       const spec = {
-        "openapi": "3.0.0",
+        "openapi": "3.0.3",
         "info": {
-          "title": "Kanjigraph Backend API",
+          "title": "MUSUBI Backend API",
+          "description": "API RESTful untuk aplikasi EduNihongo (MUSUBI) yang mendukung fitur dynamic semantic graph, kuis interaktif, stroke drawing OCR, dan sistem LMS tugas & refleksi.",
           "version": "1.0.0",
-          "description": "REST API untuk mengelola pembelajaran Kanji, Jukugo, profil pengguna Haruki Sato, heatmap intensitas, lencana pencapaian, dan grafik hubungan semantik.",
           "contact": {
-            "name": "Kanjigraph Team Support",
-            "email": "support@kanjigraph.com"
+            "name": "MUSUBI Team Support",
+            "email": "support@musubi.com"
           }
         },
         "servers": [
@@ -321,7 +323,7 @@
                             "type": "object",
                             "properties": {
                               "quote": { "type": "string", "example": "Urutan goresan bukan sekadar aturan..." },
-                              "author": { "type": "string", "example": "Kanjigraph Sensei" }
+                              "author": { "type": "string", "example": "MUSUBI Sensei" }
                             }
                           }
                         }

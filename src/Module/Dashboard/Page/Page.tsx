@@ -38,7 +38,7 @@ export const DashboardPage: React.FC = () => {
     return (
       <Layout>
         <div className="flex-1 flex items-center justify-center min-h-[400px]">
-          <div className="text-[#8f0020] font-bold animate-pulse text-lg">Memuat data dasbor...</div>
+          <div className="text-[#c8232a] font-bold animate-pulse text-lg">Memuat data dasbor...</div>
         </div>
       </Layout>
     );
@@ -52,7 +52,7 @@ export const DashboardPage: React.FC = () => {
             {error}
             <button 
               onClick={() => window.location.reload()} 
-              className="block mx-auto mt-4 px-6 py-2 bg-[#8f0020] text-white rounded-full text-sm font-semibold hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
+              className="block mx-auto mt-4 px-6 py-2 bg-[#c8232a] text-white rounded-full text-sm font-semibold hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
             >
               Coba Lagi
             </button>
@@ -65,12 +65,7 @@ export const DashboardPage: React.FC = () => {
   const { stats, weeklyActivity, activities, continueLearning, dailyInsight } = data;
 
   return (
-    <Layout
-      showFAB={true}
-      fabLabel="Latih Goresan"
-      fabIcon="edit_square"
-      fabOnClick={() => navigate("/latihan")}
-    >
+    <Layout>
       <main className="flex-1 w-full px-4 md:px-6 max-w-[1200px] mx-auto py-6">
         <div className="flex flex-col gap-md py-md select-none">
           <h2 className="font-headline-lg text-headline-lg text-secondary font-bold">

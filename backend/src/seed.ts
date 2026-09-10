@@ -1507,7 +1507,7 @@ async function main() {
   const adminPasswordHash = await bcrypt.hash("admin123", 10);
   const admin = await prisma.user.create({
     data: {
-      email: "admin@kanjigraph.com",
+      email: "admin@musubi.com",
       password: adminPasswordHash,
       name: "Admin Sensei",
       role: "ADMIN",

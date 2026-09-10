@@ -3,7 +3,7 @@ const BASE_URL = window.location.hostname === "localhost" || window.location.hos
   : "https://kanji.fishiden.com/api";
 
 const getHeaders = () => {
-  const token = localStorage.getItem("kanjigraph_token");
+  const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
   return {
     "Content-Type": "application/json",
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
@@ -34,8 +34,8 @@ export const api = {
       const data = await handleResponse(res);
       console.log(data)
       if (data.token) {
-        localStorage.setItem("kanjigraph_token", data.token);
-        localStorage.setItem("kanjigraph_role", data.user.role || "USER");
+        localStorage.setItem("musubi_token", data.token);
+        localStorage.setItem("musubi_role", data.user.role || "USER");
       }
       return data;
     },
@@ -47,20 +47,22 @@ export const api = {
       });
       const data = await handleResponse(res);
       if (data.token) {
-        localStorage.setItem("kanjigraph_token", data.token);
-        localStorage.setItem("kanjigraph_role", data.user.role || "USER");
+        localStorage.setItem("musubi_token", data.token);
+        localStorage.setItem("musubi_role", data.user.role || "USER");
       }
       return data;
     },
     logout: () => {
+      localStorage.removeItem("musubi_token");
+      localStorage.removeItem("musubi_role");
       localStorage.removeItem("kanjigraph_token");
       localStorage.removeItem("kanjigraph_role");
     },
     isAuthenticated: () => {
-      return !!localStorage.getItem("kanjigraph_token");
+      return !!(localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token"));
     },
     getRole: () => {
-      return localStorage.getItem("kanjigraph_role") || "USER";
+      return localStorage.getItem("musubi_role") || localStorage.getItem("kanjigraph_role") || "USER";
     }
   },
   dashboard: {
@@ -139,13 +141,13 @@ export const api = {
       });
       const data = await handleResponse(res);
       if (data && data.role) {
-        localStorage.setItem("kanjigraph_role", data.role);
+        localStorage.setItem("musubi_role", data.role);
       }
       return data;
     },
     update: async (data: any) => {
       const isFormData = data instanceof FormData;
-      const token = localStorage.getItem("kanjigraph_token");
+      const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
       const headers = isFormData 
         ? { ...(token ? { "Authorization": `Bearer ${token}` } : {}) } 
         : getHeaders();
@@ -344,7 +346,7 @@ export const api = {
         return handleResponse(res);
       },
       create: async (data: FormData) => {
-        const token = localStorage.getItem("kanjigraph_token");
+        const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/assignments`, {
           method: "POST",
           headers: {
@@ -355,7 +357,7 @@ export const api = {
         return handleResponse(res);
       },
       update: async (id: number, data: FormData) => {
-        const token = localStorage.getItem("kanjigraph_token");
+        const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/assignments/${id}`, {
           method: "PUT",
           headers: {
@@ -385,7 +387,7 @@ export const api = {
         return handleResponse(res);
       },
       submit: async (data: FormData) => {
-        const token = localStorage.getItem("kanjigraph_token");
+        const token = localStorage.getItem("musubi_token") || localStorage.getItem("kanjigraph_token");
         const res = await fetch(`${BASE_URL}/lms/submissions`, {
           method: "POST",
           headers: {

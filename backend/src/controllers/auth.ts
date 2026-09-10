@@ -5,7 +5,7 @@ import * as jwt from "jsonwebtoken";
 import { sanitizeString } from "../utils/sanitize";
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret-kanjigraph-key-12345";
+const JWT_SECRET = process.env.JWT_SECRET || "super-secret-musubi-key-12345";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -79,7 +79,7 @@ export const register = async (req: Request, res: Response) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        level: "Kanjigraph Learner",
+        level: "MUSUBI Learner",
         levelName: "Siswa Aktif",
       },
     });
@@ -120,7 +120,7 @@ export const login = async (req: Request, res: Response) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        level: "Kanjigraph Learner",
+        level: "MUSUBI Learner",
         levelName: "Siswa Aktif",
       },
     });

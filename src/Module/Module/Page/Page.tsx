@@ -41,7 +41,7 @@ export const ModulePage: React.FC = () => {
     return (
       <Layout>
         <div className="flex-grow flex items-center justify-center min-h-[400px]">
-          <div className="text-[#8f0020] font-bold animate-pulse text-lg">Memuat kurikulum belajar...</div>
+          <div className="text-[#c8232a] font-bold animate-pulse text-lg">Memuat kurikulum belajar...</div>
         </div>
       </Layout>
     );
@@ -55,7 +55,7 @@ export const ModulePage: React.FC = () => {
             <p className="mb-4">{error || "Terjadi kesalahan koneksi"}</p>
             <button 
               onClick={() => window.location.reload()} 
-              className="px-6 py-2 bg-[#8f0020] text-white rounded-full text-sm font-semibold hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
+              className="px-6 py-2 bg-[#c8232a] text-white rounded-full text-sm font-semibold hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
             >
               Coba Lagi
             </button>
@@ -98,10 +98,10 @@ export const ModulePage: React.FC = () => {
               </p>
             </div>
             <div className="flex flex-col items-center shrink-0 self-start md:self-end">
-              <div className="w-16 h-16 rounded-full border-4 border-[#8f0020] flex items-center justify-center bg-white shadow-sm">
-                <span className="text-xl font-bold text-[#8f0020]">{overallProgress}%</span>
+              <div className="w-16 h-16 rounded-full border-4 border-[#c8232a] flex items-center justify-center bg-white shadow-sm">
+                <span className="text-xl font-bold text-[#c8232a]">{overallProgress}%</span>
               </div>
-              <span className="text-[10px] mt-1 font-bold uppercase tracking-wider text-[#8f0020]">PROGRES TOTAL</span>
+              <span className="text-[10px] mt-1 font-bold uppercase tracking-wider text-[#c8232a]">PROGRES TOTAL</span>
             </div>
           </section>
 
@@ -110,7 +110,7 @@ export const ModulePage: React.FC = () => {
             
             {/* Vertical Connector Line */}
             <div className="absolute left-6 md:left-1/2 top-8 bottom-8 w-[2px] bg-repeat-y -translate-x-1/2 z-0"
-                 style={{ backgroundImage: 'linear-gradient(to bottom, #8f0020 50%, transparent 50%)', backgroundSize: '2px 16px' }}></div>
+                 style={{ backgroundImage: 'linear-gradient(to bottom, #c8232a 50%, transparent 50%)', backgroundSize: '2px 16px' }}></div>
 
             {modules.map((mod: any, idx: number) => {
               const isEven = idx % 2 === 0;
@@ -145,13 +145,13 @@ export const ModulePage: React.FC = () => {
 
                   {/* Timeline Dot in the Center */}
                   <div className="absolute left-6 md:relative md:left-0 z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 bg-white shadow-md order-1 md:order-2 shrink-0 -translate-x-1/2 md:translate-x-0 transition-colors duration-300"
-                       style={{ borderColor: mod.isLocked ? '#e2e8f0' : (mod.isCompleted ? '#4F7942' : '#8f0020') }}>
+                       style={{ borderColor: mod.isLocked ? '#e2e8f0' : (mod.isCompleted ? '#4F7942' : '#c8232a') }}>
                     {mod.isLocked ? (
                       <Lock className="w-4 h-4 text-slate-400" />
                     ) : mod.isCompleted ? (
                       <CheckCircle2 className="w-6 h-6 fill-white text-[#4F7942] stroke-[#4F7942]" />
                     ) : (
-                      <span className="text-sm font-bold text-[#8f0020]">{idx + 1}</span>
+                      <span className="text-sm font-bold text-[#c8232a]">{idx + 1}</span>
                     )}
                   </div>
 
@@ -191,7 +191,7 @@ export const ModulePage: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 text-[#8f0020] border-b border-slate-100 pb-2">
+            <div className="flex items-center gap-2 text-[#c8232a] border-b border-slate-100 pb-2">
               <Info className="w-5 h-5 shrink-0" />
               <h3 className="text-lg font-bold text-slate-900 pr-6">
                 Tujuan Pembelajaran - {infoModalContent.title}
@@ -205,7 +205,7 @@ export const ModulePage: React.FC = () => {
             <div className="flex justify-end mt-4 pt-3 border-t border-slate-100">
               <button
                 onClick={() => setIsInfoModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-[#8f0020] text-white font-bold shadow-sm hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none text-sm"
+                className="px-5 py-2.5 rounded-xl bg-[#c8232a] text-white font-bold shadow-sm hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none text-sm"
               >
                 Mengerti
               </button>
@@ -240,7 +240,7 @@ const ModuleCard = ({
   onShowLms: (id: number, title: string) => void;
 }) => {
   return (
-    <div className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${mod.isLocked ? 'border-l-slate-300' : (mod.isCompleted ? 'border-l-[#4F7942]' : 'border-l-[#8f0020]')}`}>
+    <div className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${mod.isLocked ? 'border-l-slate-300' : (mod.isCompleted ? 'border-l-[#4F7942]' : 'border-l-[#c8232a]')}`}>
       
       {/* Title and Lock Status */}
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">

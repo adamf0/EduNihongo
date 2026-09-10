@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Icon from "./Icon";
 import SidebarLink from "./SidebarLink";
+import MusubiLogo from "./MusubiLogo";
 import { useNavigate, useLocation } from "react-router-dom";
 import { api } from "../Utility/api";
 
@@ -35,9 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [currentPath]); // Refetch on path changes to ensure consistency after login/logout
 
-  const sidebarClasses = `fixed top-0 bottom-0 w-64 bg-surface dark:bg-surface-dim border-r border-outline-variant/30 z-50 flex flex-col transition-all duration-300 ${
-    isOpen ? "left-0" : "-left-64 lg:left-0"
-  } lg:flex`;
+  const sidebarClasses = `fixed top-0 bottom-0 w-64 bg-surface dark:bg-surface-dim border-r border-outline-variant/30 z-50 hidden lg:flex flex-col left-0`;
 
   const role = profile?.role || api.auth.getRole();
   const menus = role === "ADMIN"
@@ -69,12 +68,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Logo block */}
         <div className="p-6 flex items-center justify-between border-b border-outline-variant/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-md">
-              <Icon name="star_shine" className="text-white block text-2xl" />
-            </div>
+            <MusubiLogo mode="badge" size={40} />
             <div>
-              <h1 className="text-lg font-bold text-primary tracking-tight leading-tight">KANJIGRAPH</h1>
-              <p className="text-[9px] text-on-surface-variant tracking-[0.15em] uppercase">Master the Stroke</p>
+              <h1 className="text-lg font-bold text-primary tracking-tight leading-tight">MUSUBI</h1>
+              <p className="text-[9px] text-on-surface-variant tracking-[0.15em] uppercase">Connect the Dots of Japanese Mastery</p>
             </div>
           </div>
           {/* Mobile close button */}
