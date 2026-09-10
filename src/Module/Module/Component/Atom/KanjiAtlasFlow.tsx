@@ -13,18 +13,6 @@ import {
 import "@xyflow/react/dist/style.css";
 import KanjiNode from "./KanjiNode";
 import { api } from "../../../Common/Utility/api";
-import tts from "../../../Common/Utility/tts";
-import {
-  Volume2,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  Gamepad2,
-  Compass,
-  X,
-  Play,
-  Check,
-} from "lucide-react";
 
 const PALETTE = [
   "#f97316", // Vibrant Orange
@@ -53,6 +41,59 @@ function getCategoryColor(index: number, name: string): string {
   return `hsl(${hue}, 85%, 42%)`;
 }
 
+// Web Audio API Synthesized SFX for Node & Category Pop Animations
+function playPopSfx(index: number = 0, type: "category" | "node" = "node") {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const ctx = new AudioCtx();
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === "category") {
+      // Soft pleasant chime pop for categories (C5, E5, G5, C6...)
+      const scale = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+      const freq = scale[index % scale.length];
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.25, ctx.currentTime + 0.12);
+
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.2);
+    } else {
+      // Crisp bubble pop / chime for Jukugo & Leaf pairs (E5, G5, B5, D6, F#6...)
+      const scale = [659.25, 783.99, 987.77, 1174.66, 1479.98];
+      const freq = scale[index % scale.length];
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq * 0.85, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.15, ctx.currentTime + 0.08);
+
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    }
+  } catch (err) {
+    // Ignore audio restrictions
+  }
+}
+
 // Custom Edge component for Cross-Links that bows OUTWARD away from central root node (0,0)
 const CustomCrossLinkEdge = ({
   id,
@@ -65,6 +106,7 @@ const CustomCrossLinkEdge = ({
   style = {},
   markerEnd,
   label,
+  data,
 }: EdgeProps) => {
   const midX = (sourceX + targetX) / 2;
   const midY = (sourceY + targetY) / 2;
@@ -101,12 +143,19 @@ const CustomCrossLinkEdge = ({
   }
 
   const labelText = typeof label === "string" ? label.replace(/_/g, " ") : label;
+  const isVisible = style.opacity === undefined || (typeof style.opacity === "number" && style.opacity > 0);
+  const isSelected = Boolean((data as any)?.isSelected);
 
   return (
     <>
       <path
         id={id}
-        style={style}
+        style={{
+          ...style,
+          stroke: isSelected ? "#f59e0b" : (style.stroke || "#3b82f6"),
+          strokeWidth: isSelected ? 4.5 : (style.strokeWidth || 2.2),
+          transition: "opacity 0.5s ease-out, stroke 0.5s ease-out, stroke-width 0.3s ease",
+        }}
         className="react-flow__edge-path"
         d={edgePath}
         markerEnd={markerEnd}
@@ -117,11 +166,21 @@ const CustomCrossLinkEdge = ({
             style={{
               position: "absolute",
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              pointerEvents: "all",
+              pointerEvents: isVisible ? "all" : "none",
+              transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
+              opacity: style.opacity ?? 1,
             }}
             className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              (data as any)?.onSelectRelation?.(id);
+            }}
           >
-            <div className="bg-white border-2 border-slate-700 text-slate-900 px-3 py-1 rounded-full text-[11px] font-extrabold shadow-md whitespace-nowrap">
+            <div className={`px-3.5 py-1 rounded-full text-[11px] font-black shadow-lg border-2 cursor-pointer transition-all duration-300 ${
+              isSelected
+                ? "bg-amber-400 text-slate-950 border-amber-300 ring-4 ring-amber-400/50 scale-115 z-50"
+                : "bg-white text-slate-900 border-slate-700 hover:bg-slate-900 hover:text-white hover:scale-110"
+            }`}>
               {labelText}
             </div>
           </div>
@@ -149,28 +208,6 @@ function getOptimalHandles(srcPos?: { x: number; y: number }, tgtPos?: { x: numb
   }
 }
 
-export interface QuestStepItem {
-  id: string;
-  nodeId: string;
-  type: "root" | "category" | "jukugo" | "leaf" | "relation";
-  word: string;
-  reading: string;
-  meaning: string;
-  categoryName?: string;
-  categoryColor?: string;
-  constituents?: Array<{ word: string; reading?: string; meaning?: string }>;
-  sourceWord?: string;
-  sourceReading?: string;
-  targetWord?: string;
-  targetReading?: string;
-  predicate?: string;
-  sourceNodeId?: string;
-  targetNodeId?: string;
-  x: number;
-  y: number;
-  bounds?: { x: number; y: number; width: number; height: number };
-}
-
 function KanjiAtlasFlowInner({
   initialRawEdges = [],
   initialRawNodes = [],
@@ -187,15 +224,15 @@ function KanjiAtlasFlowInner({
   const { setCenter, fitBounds, fitView } = useReactFlow();
   const nodeTypes = useMemo(() => ({ kanjiNode: KanjiNode }), []);
   const edgeTypes = useMemo(() => ({ crossLinkEdge: CustomCrossLinkEdge }), []);
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  // Progressive Interactive State
+  const [areCategoriesVisible, setAreCategoriesVisible] = useState(false);
+  const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<string>>(new Set());
+  const [openCategoryHistory, setOpenCategoryHistory] = useState<string[]>([]);
+  const [selectedRelationEdgeId, setSelectedRelationEdgeId] = useState<string | null>(null);
+
   const [kanjis, setKanjis] = useState<any[]>([]);
   const [jukugos, setJukugos] = useState<any[]>([]);
-
-  // Guided Quest Step & Minimized states
-  const [questMode, setQuestMode] = useState(true);
-  const [isQuestMinimized, setIsQuestMinimized] = useState(true);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const onSelectJukugoRef = useRef(onSelectJukugo);
   useEffect(() => {
@@ -227,20 +264,7 @@ function KanjiAtlasFlowInner({
     return map;
   }, [jukugos]);
 
-  // Automatically expand root and categories on initial mount
-  useEffect(() => {
-    if (initialRawNodes.length > 0 && expandedNodes.size === 0) {
-      const defaultExpanded = new Set<string>();
-      initialRawNodes.forEach((n: any) => {
-        if (n.type === "root" || n.isRoot || n.type === "bottom" || n.type === "category") {
-          defaultExpanded.add(n.id);
-        }
-      });
-      setExpandedNodes(defaultExpanded);
-    }
-  }, [initialRawNodes]);
-
-  const { positionedNodes, nodePosMap, deduplicatedEdges, catColorMap, questSteps } = useMemo(() => {
+  const { positionedNodes, nodePosMap, deduplicatedEdges, catColorMap } = useMemo(() => {
     // 1. Identify root, category, and sub-word nodes
     const rootNode = initialRawNodes.find((n: any) => n.type === "root" || n.isRoot);
     const categoryNodes = initialRawNodes.filter((n: any) => n.type === "bottom" || n.type === "category");
@@ -328,9 +352,12 @@ function KanjiAtlasFlowInner({
       const catY = catPos.y;
       const dir = catPos.dir;
 
+      // Stagger delay for categories (150ms, 300ms, 450ms...)
       positionedNodes.push({
         ...cat,
         categoryColor: catColor,
+        staggerIndex: catIdx,
+        animDelayMs: 150 + catIdx * 150,
         x: catX,
         y: catY,
       });
@@ -365,7 +392,7 @@ function KanjiAtlasFlowInner({
       const col3X = catX + dir * 1240;
 
       const subCompoundRequests: Map<string, { subWord: string; meaning: string; parentJkIds: string[]; preferredY: number }> = new Map();
-      const leafKanjiRequests: Map<string, { char: string; parentIds: string[]; preferredY: number }> = new Map();
+      const leafKanjiRequests: Map<string, { char: string; parentIds: string[]; preferredY: number; animIndex?: number }> = new Map();
 
       const jukugoSpacingY = 200;
       const numJk = mainJukugos.length;
@@ -375,9 +402,16 @@ function KanjiAtlasFlowInner({
         const jkX = col1X;
         const jkY = startJukugoY + jkIdx * jukugoSpacingY;
 
+        // Node Jukugo gets staggered wave delay: Pair 0 = 300ms, Pair 1 = 500ms, Pair 2 = 700ms...
+        const pairDelayMs = 300 + jkIdx * 200;
+
         positionedNodes.push({
           ...jk,
           categoryColor: catColor,
+          parentPill: cat.id,
+          categoryId: cat.id,
+          staggerIndex: jkIdx,
+          animDelayMs: pairDelayMs,
           x: jkX,
           y: jkY,
         });
@@ -459,7 +493,7 @@ function KanjiAtlasFlowInner({
             const req = subCompoundRequests.get(p.word) || {
               subWord: p.word,
               meaning: p.meaning,
-              parentJkIds: [],
+              parentJkIds: [] as string[],
               preferredY: jkY,
             };
             if (!req.parentJkIds.includes(jk.id)) req.parentJkIds.push(jk.id);
@@ -471,7 +505,7 @@ function KanjiAtlasFlowInner({
         } else {
           const chars: string[] = Array.from(new Set(Array.from(word as string))).filter((c: string) => c !== rootChar);
           chars.forEach((char: string) => {
-            const req = leafKanjiRequests.get(char) || { char, parentIds: [], preferredY: jkY };
+            const req = leafKanjiRequests.get(char) || { char, parentIds: [] as string[], preferredY: jkY, animIndex: jkIdx };
             if (!req.parentIds.includes(jk.id)) req.parentIds.push(jk.id);
             leafKanjiRequests.set(char, req);
           });
@@ -495,6 +529,10 @@ function KanjiAtlasFlowInner({
         const subX = col2X;
         const subY = startSubY + sIdx * subSpacingY;
 
+        const parentJkNode = positionedNodes.find((n) => req.parentJkIds.includes(n.id));
+        const sAnimIdx = parentJkNode?.staggerIndex ?? sIdx;
+        const sAnimDelay = 300 + sAnimIdx * 200;
+
         if (!positionedNodes.some((n: any) => n.id === subNodeId)) {
           positionedNodes.push({
             id: subNodeId,
@@ -508,6 +546,8 @@ function KanjiAtlasFlowInner({
             categoryColor: catColor,
             parentPill: cat.id,
             categoryId: cat.id,
+            staggerIndex: sAnimIdx,
+            animDelayMs: sAnimDelay,
             x: subX,
             y: subY,
           });
@@ -525,7 +565,7 @@ function KanjiAtlasFlowInner({
               targetHandle: dir === 1 ? "t-left" : "t-right",
               label: mText || "unsur",
               color: catColor,
-              style: { stroke: catColor, strokeWidth: 2, strokeDasharray: "4 3" },
+              style: { stroke: catColor, strokeWidth: 2 },
               animated: true,
             });
           }
@@ -533,13 +573,13 @@ function KanjiAtlasFlowInner({
 
         const pChars: string[] = Array.from(req.subWord as string).filter((c: string) => c !== rootChar);
         pChars.forEach((char: string) => {
-          const lReq = leafKanjiRequests.get(char) || { char, parentIds: [], preferredY: subY };
+          const lReq = leafKanjiRequests.get(char) || { char, parentIds: [] as string[], preferredY: subY, animIndex: sAnimIdx };
           if (!lReq.parentIds.includes(subNodeId)) lReq.parentIds.push(subNodeId);
           leafKanjiRequests.set(char, lReq);
         });
       });
 
-      // Render Leaf Kanjis in Column 3
+      // Render Leaf Kanjis in Column 3 - Matches parent Jukugo pair delay!
       const leafRequestsArray = Array.from(leafKanjiRequests.values());
       leafRequestsArray.sort((a, b) => a.preferredY - b.preferredY);
 
@@ -556,6 +596,9 @@ function KanjiAtlasFlowInner({
         const romajiText = kInfo?.romaji || kInfo?.onyomi || kInfo?.kunyomi || lReq.char;
         const kanjiMeaning = kInfo?.meaning || `Kanji ${lReq.char}`;
 
+        const animIdx = lReq.animIndex ?? lIdx;
+        const animDelayMs = 300 + animIdx * 200;
+
         if (!positionedNodes.some((n: any) => n.id === leafNodeId)) {
           positionedNodes.push({
             id: leafNodeId,
@@ -568,6 +611,10 @@ function KanjiAtlasFlowInner({
             meaning: kanjiMeaning,
             description: kanjiMeaning,
             categoryColor: catColor,
+            parentPill: cat.id,
+            categoryId: cat.id,
+            staggerIndex: animIdx,
+            animDelayMs: animDelayMs,
             x: leafX,
             y: leafY,
           });
@@ -605,8 +652,16 @@ function KanjiAtlasFlowInner({
 
       if (!srcWord || !tgtWord || srcWord === tgtWord) return;
 
-      const srcNodes = positionedNodes.filter((n: any) => (n.kanji || n.character || n.word || n.label || "").trim() === srcWord);
-      const tgtNodes = positionedNodes.filter((n: any) => (n.kanji || n.character || n.word || n.label || "").trim() === tgtWord);
+      let srcNodes = positionedNodes.filter((n: any) => (n.kanji || n.character || n.word || n.label || "").trim() === srcWord);
+      let tgtNodes = positionedNodes.filter((n: any) => (n.kanji || n.character || n.word || n.label || "").trim() === tgtWord);
+
+      // Prefer sub/leaf nodes over root node for cross links to avoid attaching cross links directly to root
+      if (srcNodes.some((n: any) => !n.isRoot && n.type !== "root")) {
+        srcNodes = srcNodes.filter((n: any) => !n.isRoot && n.type !== "root");
+      }
+      if (tgtNodes.some((n: any) => !n.isRoot && n.type !== "root")) {
+        tgtNodes = tgtNodes.filter((n: any) => !n.isRoot && n.type !== "root");
+      }
 
       srcNodes.forEach((sNode) => {
         tgtNodes.forEach((tNode) => {
@@ -645,195 +700,208 @@ function KanjiAtlasFlowInner({
 
     const deduplicatedEdges = Array.from(uniqueEdgesMap.values());
 
-    // 4. Build Guided Quest Steps dynamically
-    const stepsList: QuestStepItem[] = [];
-
-    // Phase 1: Individual Main Jukugo Vocabulary Steps (Excluding constituent sub-Jukugos and single leaf Kanjis)
-    categoryNodes.forEach((cat) => {
-      const catWord = (cat.kanji || cat.name || cat.label || "").trim();
-      const catColor = catColorMap.get(cat.id) || "#f97316";
-
-      const rawCatJkIds = new Set(
-        initialRawNodes
-          .filter(
-            (n: any) =>
-              (n.type === "sub-bottom" || n.type === "sub") &&
-              (n.parentPill === cat.id || n.categoryId === cat.id),
-          )
-          .map((n: any) => n.id),
-      );
-
-      const childJukugos = positionedNodes.filter((n: any) =>
-        rawCatJkIds.has(n.id),
-      );
-
-      childJukugos.forEach((jk) => {
-        const jkWord = (jk.kanji || jk.character || jk.word || jk.label || "").trim();
-        if (!jkWord) return;
-
-        const dbJ = jukugoMap.get(jkWord);
-        const rText = dbJ?.reading || jk.reading || "";
-        const mText = dbJ?.meaning || jk.meaning || jk.description || "";
-
-        const constituents: Array<{ word: string; reading?: string; meaning?: string }> = [];
-        Array.from(new Set(Array.from(jkWord as string))).forEach((char: string) => {
-          const kInf = kanjiMap.get(char);
-          const cReading = kInf?.romaji || kInf?.onyomi || kInf?.kunyomi || "";
-          const cMeaning = kInf?.meaning || "";
-          constituents.push({ word: char, reading: cReading, meaning: cMeaning });
-        });
-
-        stepsList.push({
-          id: `step-jk-${jk.id}`,
-          nodeId: jk.id,
-          type: "jukugo",
-          word: jkWord,
-          reading: rText,
-          meaning: mText,
-          categoryName: catWord,
-          categoryColor: catColor,
-          constituents,
-          x: nodePosMap.get(jk.id)?.x || 0,
-          y: nodePosMap.get(jk.id)?.y || 0,
-        });
-      });
-    });
-
-    // Phase 2: Cross-Link Semantic Relation Steps (EXCLUSIVELY for relations between 2 real main Jukugo words)
-    const addedRelationPairs = new Set<string>();
-
-    deduplicatedEdges.forEach((edge: any) => {
-      const predRaw = (edge.label || edge.predicate || "").trim();
-      if (!predRaw || predRaw === "kategori" || predRaw === "mencakup" || predRaw === "penyusun") return;
-
-      // Match ONLY non-root, non-category, non-constituent main Jukugo nodes!
-      const sNode = positionedNodes.find((n: any) => {
-        if (
-          n.type === "root" ||
-          n.isRoot ||
-          n.type === "category" ||
-          n.meaning === "Kategori" ||
-          (typeof n.id === "string" && (n.id.startsWith("sub-jokugo-") || n.id.startsWith("leaf-")))
-        )
-          return false;
-        const w = (n.kanji || n.character || n.word || n.label || "").trim();
-        return n.id === edge.source || w === edge.source;
-      });
-
-      const tNode = positionedNodes.find((n: any) => {
-        if (
-          n.type === "root" ||
-          n.isRoot ||
-          n.type === "category" ||
-          n.meaning === "Kategori" ||
-          (typeof n.id === "string" && (n.id.startsWith("sub-jokugo-") || n.id.startsWith("leaf-")))
-        )
-          return false;
-        const w = (n.kanji || n.character || n.word || n.label || "").trim();
-        return n.id === edge.target || w === edge.target;
-      });
-
-      if (!sNode || !tNode) return;
-
-      const sWord = (sNode.kanji || sNode.character || sNode.word || sNode.label || "").trim();
-      const tWord = (tNode.kanji || tNode.character || tNode.word || tNode.label || "").trim();
-
-      if (!sWord || !tWord || sWord === tWord) return;
-
-      const pairKey = [sWord, tWord].sort().join("<->");
-      if (addedRelationPairs.has(pairKey)) return;
-      addedRelationPairs.add(pairKey);
-
-      const formattedPred = predRaw.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
-
-      // Exact coordinates of source & target Jukugo nodes
-      const sX = sNode.x;
-      const sY = sNode.y;
-      const tX = tNode.x;
-      const tY = tNode.y;
-
-      const minX = Math.min(sX, tX) - 180;
-      const maxX = Math.max(sX, tX) + 180;
-      const minY = Math.min(sY, tY) - 140;
-      const maxY = Math.max(sY, tY) + 140;
-
-      const width = Math.max(maxX - minX, 450);
-      const height = Math.max(maxY - minY, 320);
-
-      const midX = (sX + tX) / 2;
-      const midY = (sY + tY) / 2;
-
-      const sDb = jukugoMap.get(sWord) || kanjiMap.get(sWord);
-      const tDb = jukugoMap.get(tWord) || kanjiMap.get(tWord);
-      const sMeaning = sNode.meaning || sDb?.meaning || "";
-      const tMeaning = tNode.meaning || tDb?.meaning || "";
-
-      stepsList.push({
-        id: `step-rel-${sNode.id}-${tNode.id}`,
-        nodeId: sNode.id,
-        type: "relation",
-        word: `${sWord} ↔ ${tWord}`,
-        reading: `Relasi Semantik`,
-        meaning: `Hubungan ${formattedPred}: Menghubungkan makna kata "${sWord}" (${sMeaning}) dengan "${tWord}" (${tMeaning}).`,
-        sourceWord: sWord,
-        sourceReading: sNode.reading || sDb?.reading || sDb?.romaji || "",
-        targetWord: tWord,
-        targetReading: tNode.reading || tDb?.reading || tDb?.romaji || "",
-        predicate: formattedPred,
-        sourceNodeId: sNode.id,
-        targetNodeId: tNode.id,
-        categoryName: `Relasi: ${formattedPred}`,
-        categoryColor: "#a855f7",
-        x: midX,
-        y: midY,
-        bounds: { x: minX, y: minY, width, height },
-      });
-    });
-
     return {
       positionedNodes,
       nodePosMap,
       deduplicatedEdges,
       catColorMap,
-      questSteps: stepsList,
     };
   }, [initialRawNodes, initialRawEdges, kanjiMap, jukugoMap]);
 
-  const nodes = useMemo(() => {
-    // 5. Format nodes for ReactFlow
-    const isStepActiveAndShowing = questMode && !isQuestMinimized && questSteps.length > 0;
-    const currentStep = isStepActiveAndShowing ? questSteps[currentStepIndex] : null;
-    const isRelationStep = currentStep?.type === "relation";
+  // Helper to focus camera on a specific category cluster
+  const focusOnCategoryCluster = (catId: string, duration: number = 800) => {
+    const catClusterNodes = positionedNodes.filter(
+      (n: any) => n.id === catId || n.parentPill === catId || n.categoryId === catId || n.id.includes(catId)
+    );
 
-    const formattedNodes = positionedNodes.map((node: any) => {
-      const isExpanded = expandedNodes.has(node.id);
-      const hasChildren = (node.type === "bottom" || node.type === "category") && initialRawNodes.some(
-        (n: any) => (n.type === "sub-bottom" || n.type === "sub") && (n.parentPill === node.id || n.categoryId === node.id)
+    if (catClusterNodes.length > 0) {
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      catClusterNodes.forEach((cn) => {
+        if (cn.x < minX) minX = cn.x;
+        if (cn.x > maxX) maxX = cn.x;
+        if (cn.y < minY) minY = cn.y;
+        if (cn.y > maxY) maxY = cn.y;
+      });
+
+      const padX = 250;
+      const padY = 200;
+      const width = Math.max(maxX - minX + padX * 2, 900);
+      const height = Math.max(maxY - minY + padY * 2, 600);
+
+      fitBounds(
+        { x: minX - padX, y: minY - padY, width, height },
+        { padding: 0.2, duration }
       );
+    } else {
+      const nodeObj = positionedNodes.find((n) => n.id === catId);
+      if (nodeObj) {
+        setCenter(nodeObj.x, nodeObj.y, { zoom: 0.9, duration });
+      }
+    }
+  };
 
+  // Helper to restore camera view after unselecting relation edge
+  const restoreCameraView = () => {
+    if (openCategoryHistory.length > 0) {
+      const lastOpenCatId = openCategoryHistory[openCategoryHistory.length - 1];
+      focusOnCategoryCluster(lastOpenCatId, 750);
+    } else if (areCategoriesVisible) {
+      const visibleCatNodes = positionedNodes.filter((n: any) => n.id === "root" || n.type === "bottom" || n.type === "category");
+      fitView({ nodes: visibleCatNodes, padding: 0.35, duration: 750 });
+    } else {
+      setCenter(0, 0, { zoom: 1.1, duration: 700 });
+    }
+  };
+
+  // Helper to select a relation edge and isolate connected nodes & branch path
+  const handleSelectRelation = (edgeId: string) => {
+    if (selectedRelationEdgeId === edgeId) {
+      setSelectedRelationEdgeId(null);
+      restoreCameraView();
+    } else {
+      setSelectedRelationEdgeId(edgeId);
+      playPopSfx(0, "node");
+
+      const relEdge = deduplicatedEdges.find((e: any) => e.id === edgeId);
+      if (relEdge) {
+        const sNode = positionedNodes.find((n: any) => n.id === relEdge.source);
+        const tNode = positionedNodes.find((n: any) => n.id === relEdge.target);
+
+        if (sNode && tNode) {
+          const branchIds = new Set<string>([sNode.id, tNode.id]);
+          [sNode, tNode].forEach((node) => {
+            let curr = node;
+            while (curr) {
+              const parentId = curr.parentPill || curr.categoryId;
+              if (!parentId || branchIds.has(parentId)) break;
+              branchIds.add(parentId);
+              curr = positionedNodes.find((n: any) => n.id === parentId);
+            }
+          });
+
+          const rootObj = positionedNodes.find((n: any) => n.type === "root" || n.isRoot);
+          if (rootObj) branchIds.add(rootObj.id);
+
+          const branchNodes = positionedNodes.filter((n: any) => branchIds.has(n.id));
+          if (branchNodes.length > 0) {
+            const xs = branchNodes.map((n: any) => n.x);
+            const ys = branchNodes.map((n: any) => n.y);
+            const minX = Math.min(...xs) - 250;
+            const maxX = Math.max(...xs) + 250;
+            const minY = Math.min(...ys) - 200;
+            const maxY = Math.max(...ys) + 200;
+            const width = Math.max(maxX - minX, 600);
+            const height = Math.max(maxY - minY, 400);
+
+            fitBounds({ x: minX, y: minY, width, height }, { padding: 0.25, duration: 800 });
+          }
+        }
+      }
+    }
+  };
+
+  // Initial Camera Focus centered on Root Node at startup
+  const initialFocusedRef = useRef(false);
+  useEffect(() => {
+    if (positionedNodes.length > 0 && !initialFocusedRef.current) {
+      initialFocusedRef.current = true;
+      setTimeout(() => {
+        setCenter(0, 0, { zoom: 1.1, duration: 600 });
+      }, 150);
+    }
+  }, [positionedNodes, setCenter]);
+
+  // Compute set of all node IDs connected in the branch path of the selected relation edge
+  const selectedRelationConnectedIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!selectedRelationEdgeId) return ids;
+
+    const selectedEdge = deduplicatedEdges.find((e: any) => e.id === selectedRelationEdgeId);
+    if (!selectedEdge) return ids;
+
+    const sNode = positionedNodes.find((n: any) => n.id === selectedEdge.source);
+    const tNode = positionedNodes.find((n: any) => n.id === selectedEdge.target);
+
+    if (sNode) ids.add(sNode.id);
+    if (tNode) ids.add(tNode.id);
+
+    // Walk UP parent hierarchy only (parentPill / categoryId), strictly ignoring cross links
+    [sNode, tNode].forEach((node) => {
+      let curr = node;
+      while (curr) {
+        const parentId = curr.parentPill || curr.categoryId;
+        if (!parentId || ids.has(parentId)) break;
+        ids.add(parentId);
+        curr = positionedNodes.find((n: any) => n.id === parentId);
+      }
+    });
+
+    const rootObj = positionedNodes.find((n: any) => n.type === "root" || n.isRoot);
+    if (rootObj) {
+      ids.add(rootObj.id);
+    }
+
+    return ids;
+  }, [selectedRelationEdgeId, deduplicatedEdges, positionedNodes]);
+
+  // Progressive Interactive Node State with Animated Visibility Flag & Relation Isolation
+  const nodes = useMemo(() => {
+    const selectedEdge = selectedRelationEdgeId
+      ? deduplicatedEdges.find((e: any) => e.id === selectedRelationEdgeId)
+      : null;
+
+    let relSrcNodeId = selectedEdge?.source;
+    let relTgtNodeId = selectedEdge?.target;
+
+    if (selectedEdge) {
+      const sNode = positionedNodes.find((n: any) => n.id === selectedEdge.source);
+      const tNode = positionedNodes.find((n: any) => n.id === selectedEdge.target);
+
+      if (sNode) relSrcNodeId = sNode.id;
+      if (tNode) relTgtNodeId = tNode.id;
+    }
+
+    return positionedNodes.map((node: any) => {
+      const isCategory = node.type === "bottom" || node.type === "category";
+      const isRootNode = node.type === "root" || node.isRoot;
+      const parentCatId = node.parentPill || node.categoryId;
       const nodeWord = (node.kanji || node.character || node.word || node.label || "").trim();
 
+      let isVisible = false;
       let isActiveStep = false;
-      if (isStepActiveAndShowing && currentStep) {
-        if (isRelationStep) {
-          // Highlight ONLY the 2 Jukugo nodes participating in relation (strictly exclude root & categories)
-          const isRootOrCat = node.type === "root" || node.isRoot || node.type === "category" || node.meaning === "Kategori";
-          if (!isRootOrCat) {
-            isActiveStep = node.id === currentStep.sourceNodeId ||
-                           node.id === currentStep.targetNodeId ||
-                           nodeWord === currentStep.sourceWord ||
-                           nodeWord === currentStep.targetWord;
-          }
-        } else if (currentStep.nodeId) {
-          isActiveStep = node.id === currentStep.nodeId || nodeWord === currentStep.word;
-        }
-      } else if (activeNodeId) {
-        isActiveStep = node.id === activeNodeId;
-      } else if (activeJukugoWord) {
-        isActiveStep = nodeWord === activeJukugoWord;
-      }
 
-      const isDimmed = isStepActiveAndShowing && !isActiveStep;
+      if (selectedEdge) {
+        // IF A RELATION EDGE IS CLICKED/SELECTED:
+        // Keep ONLY exact endpoints and their parent branch path visible, hide all rest!
+        const isDirectEndpoint = node.id === relSrcNodeId || node.id === relTgtNodeId;
+        const isInConnectedPath = selectedRelationConnectedIds.has(node.id) || isDirectEndpoint;
+
+        if (isInConnectedPath) {
+          isVisible = true;
+          isActiveStep = isDirectEndpoint; // Highlight ring ONLY on exact direct endpoints!
+        } else {
+          isVisible = false; // Hide all rest!
+        }
+      } else {
+        // NORMAL HIERARCHY VISIBILITY:
+        if (isRootNode) {
+          isVisible = true;
+        } else if (isCategory) {
+          isVisible = areCategoriesVisible;
+        } else if (areCategoriesVisible) {
+          if (parentCatId) {
+            isVisible = expandedCategoryIds.has(parentCatId);
+          } else {
+            isVisible = Array.from(expandedCategoryIds).some((catId) => node.id.includes(catId));
+          }
+        }
+
+        if (activeNodeId) {
+          isActiveStep = node.id === activeNodeId;
+        } else if (activeJukugoWord) {
+          isActiveStep = nodeWord === activeJukugoWord;
+        }
+      }
 
       return {
         id: node.id,
@@ -841,36 +909,26 @@ function KanjiAtlasFlowInner({
         position: { x: node.x, y: node.y },
         data: { 
           ...node,
-          isExpanded,
-          hasChildren,
+          isExpanded: isCategory ? (parentCatId ? expandedCategoryIds.has(parentCatId) : false) : true,
+          hasChildren: isCategory,
           isActiveStep,
-          isDimmed,
+          isDimmed: false,
+          isVisible,
+          animDelayMs: selectedEdge ? 0 : node.animDelayMs,
         },
       };
     });
-
-    const rootNodeObj = initialRawNodes.find((n: any) => n.type === "root" || n.isRoot);
-    const rootExpanded = rootNodeObj ? expandedNodes.has(rootNodeObj.id) : true;
-
-    return formattedNodes.filter((node: any) => {
-      if (node.data.isRoot || node.data.type === "root") return true;
-      if (node.data.type === "bottom" || node.data.type === "category") return rootExpanded;
-      if (node.data.type === "sub-bottom" || node.data.type === "sub") {
-        const parentId = node.data.parentPill || node.data.categoryId;
-        return rootExpanded && (parentId ? expandedNodes.has(parentId) : true);
-      }
-      if (node.data.type === "leafKanji") return rootExpanded;
-      return true;
-    });
-  }, [positionedNodes, expandedNodes, activeJukugoWord, activeNodeId, questMode, isQuestMinimized, currentStepIndex, questSteps, initialRawNodes]);
+  }, [positionedNodes, areCategoriesVisible, expandedCategoryIds, selectedRelationEdgeId, selectedRelationConnectedIds, activeJukugoWord, activeNodeId, deduplicatedEdges]);
 
   const edges = useMemo(() => {
-    const isStepActiveAndShowing = questMode && !isQuestMinimized && questSteps.length > 0;
-    const currentStep = isStepActiveAndShowing ? questSteps[currentStepIndex] : null;
-    const isRelationStep = currentStep?.type === "relation";
+    const nodeVisibilityMap = new Map<string, boolean>();
+    nodes.forEach((n: any) => {
+      nodeVisibilityMap.set(n.id, Boolean(n.data?.isVisible));
+    });
 
     const formattedEdges = deduplicatedEdges.map((edge: any) => {
-      const strokeColor = edge.color || catColorMap.get(edge.source) || catColorMap.get(edge.target) || "#64748b";
+      const isSelectedRelation = selectedRelationEdgeId === edge.id;
+      const strokeColor = isSelectedRelation ? "#f59e0b" : (edge.color || catColorMap.get(edge.source) || catColorMap.get(edge.target) || "#64748b");
       const srcPos = nodePosMap.get(edge.source);
       const tgtPos = nodePosMap.get(edge.target);
 
@@ -897,15 +955,20 @@ function KanjiAtlasFlowInner({
         }
       }
 
-      let isEdgeConnectedToActive = false;
-      if (isStepActiveAndShowing && currentStep) {
-        if (isRelationStep) {
-          isEdgeConnectedToActive = (edge.source === currentStep.sourceNodeId && edge.target === currentStep.targetNodeId) ||
-                                    (edge.source === currentStep.targetNodeId && edge.target === currentStep.sourceNodeId);
-        } else if (currentStep.nodeId) {
-          isEdgeConnectedToActive = edge.source === currentStep.nodeId || edge.target === currentStep.nodeId;
-        }
+      const isSrcVisible = nodeVisibilityMap.get(edge.source) ?? false;
+      const isTgtVisible = nodeVisibilityMap.get(edge.target) ?? false;
+      
+      // When a relation edge is selected, show selected relation edge AND connected branch edges!
+      let isEdgeVisible = false;
+      if (selectedRelationEdgeId) {
+        const isSrcInPath = selectedRelationConnectedIds.has(edge.source);
+        const isTgtInPath = selectedRelationConnectedIds.has(edge.target);
+        isEdgeVisible = isSelectedRelation || (isSrcInPath && isTgtInPath);
+      } else {
+        isEdgeVisible = isSrcVisible && isTgtVisible;
       }
+
+      const edgeAnimDelay = selectedRelationEdgeId ? 0 : (tgtNodeObj?.animDelayMs || 300);
 
       return {
         ...edge,
@@ -913,278 +976,141 @@ function KanjiAtlasFlowInner({
         sourceHandle: edge.sourceHandle || sourceHandle,
         targetHandle: edge.targetHandle || targetHandle,
         label: edgeLabel,
+        data: {
+          ...edge.data,
+          isSelected: isSelectedRelation,
+          onSelectRelation: handleSelectRelation,
+        },
         labelBgPadding: edgeLabel ? [8, 4] : undefined,
         labelBgBorderRadius: edgeLabel ? 8 : undefined,
-        labelBgStyle: edgeLabel ? { fill: "#ffffff", color: "#1e293b", stroke: isEdgeConnectedToActive ? "#f59e0b" : strokeColor, strokeWidth: 1.5 } : undefined,
-        labelStyle: edgeLabel ? { fill: "#1e293b", fontWeight: 800, fontSize: 10 } : undefined,
+        labelBgStyle: edgeLabel ? { fill: "#ffffff", color: "#1e293b", stroke: strokeColor, strokeWidth: isSelectedRelation ? 2.5 : 1.5, opacity: isEdgeVisible ? 1 : 0 } : undefined,
+        labelStyle: edgeLabel ? { fill: "#1e293b", fontWeight: 800, fontSize: 10, opacity: isEdgeVisible ? 1 : 0 } : undefined,
         animated: true,
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 14,
           height: 14,
-          color: isEdgeConnectedToActive ? "#f59e0b" : strokeColor,
+          color: strokeColor,
         },
         style: { 
-          stroke: isEdgeConnectedToActive ? "#f59e0b" : strokeColor, 
-          strokeWidth: isEdgeConnectedToActive ? 4.5 : (edge.style?.strokeWidth || 2.2),
+          stroke: strokeColor, 
+          strokeWidth: isSelectedRelation ? 4.5 : (edge.style?.strokeWidth || 2.2),
           strokeDasharray: edge.style?.strokeDasharray || undefined,
-          opacity: isStepActiveAndShowing ? (isEdgeConnectedToActive ? 1 : 0.4) : 0.95,
+          opacity: isEdgeVisible ? 1 : 0,
+          pointerEvents: isEdgeVisible ? "all" : "none",
+          transition: "opacity 0.5s ease-out, stroke 0.5s ease-out, stroke-width 0.3s ease",
+          transitionDelay: isEdgeVisible ? `${edgeAnimDelay}ms` : "0ms",
           ...edge.style,
         },
       };
     });
 
-    const visibleEdgeSet = new Set(nodes.map((n: any) => n.id));
-    return formattedEdges.filter(
-      (e: any) => visibleEdgeSet.has(e.source) && visibleEdgeSet.has(e.target)
-    );
-  }, [positionedNodes, deduplicatedEdges, nodePosMap, catColorMap, nodes, questMode, isQuestMinimized, currentStepIndex, questSteps]);
+    return formattedEdges;
+  }, [positionedNodes, deduplicatedEdges, nodePosMap, catColorMap, nodes, selectedRelationEdgeId, selectedRelationConnectedIds]);
 
-  // Synchronous Event-Driven Step Navigator
-  const gotoStep = (stepIdx: number) => {
-    if (questSteps.length === 0) return;
-    const validIdx = Math.max(0, Math.min(stepIdx, questSteps.length - 1));
-    setCurrentStepIndex(validIdx);
-
-    const targetStep = questSteps[validIdx];
-    if (targetStep) {
-      if (targetStep.type === "relation") {
-        if (targetStep.bounds) {
-          fitBounds(targetStep.bounds, { padding: 0.35, duration: 800 });
-        }
-        onSelectJukugoRef.current?.(null, null);
-      } else {
-        setCenter(targetStep.x, targetStep.y, { zoom: 1.2, duration: 800 });
-        if (targetStep.word && !targetStep.word.includes("↔")) {
-          onSelectJukugoRef.current?.(targetStep.word, targetStep.nodeId);
-        }
-      }
-    }
-  };
-
-  // Synchronize Quest Step Index when activeJukugoWord or activeNodeId is set externally
-  useEffect(() => {
-    if (activeJukugoWord && questSteps.length > 0) {
-      const currentStep = questSteps[currentStepIndex];
-      if (currentStep?.type === "relation") return;
-      if (currentStep?.word === activeJukugoWord || currentStep?.nodeId === activeNodeId) return;
-
-      const matchingIdx = questSteps.findIndex(
-        (s) => s.type !== "relation" && (s.word === activeJukugoWord || s.nodeId === activeNodeId)
-      );
-      if (matchingIdx !== -1 && matchingIdx !== currentStepIndex) {
-        setCurrentStepIndex(matchingIdx);
-        const targetStep = questSteps[matchingIdx];
-        if (targetStep) {
-          setCenter(targetStep.x, targetStep.y, { zoom: 1.2, duration: 800 });
-        }
-      }
-    }
-  }, [activeJukugoWord, activeNodeId, questSteps, currentStepIndex]);
-
-  // Keyboard Step Controls (Left / Right / Space)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!questMode || isQuestMinimized || questSteps.length === 0) return;
-
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        gotoStep(currentStepIndex + 1);
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        gotoStep(currentStepIndex - 1);
-      } else if (e.key === " " && questSteps[currentStepIndex]) {
-        e.preventDefault();
-        const activeStep = questSteps[currentStepIndex];
-        if (activeStep.type === "relation" && activeStep.sourceWord && activeStep.targetWord) {
-          setIsPlayingAudio(true);
-          tts.speak(`${activeStep.sourceWord}。 ${activeStep.targetWord}`, () => setIsPlayingAudio(false));
-        } else if (activeStep.word) {
-          setIsPlayingAudio(true);
-          tts.speak(activeStep.word, () => setIsPlayingAudio(false));
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [questMode, isQuestMinimized, currentStepIndex, questSteps]);
-
-  // Close Quest HUD, reset step counter to 0 (Start 1), and return entire graph to normal view
-  const handleCloseQuestHUD = () => {
-    setIsQuestMinimized(true);
-    setCurrentStepIndex(0);
-    onSelectJukugoRef.current?.(null, null);
-    fitView({ padding: 0.35, duration: 700 });
-  };
-
-  // Re-open Quest HUD from FAB Play Button or Root Kanji node click
-  const handleStartQuest = (stepIdx: number = 0) => {
-    setQuestMode(true);
-    setIsQuestMinimized(false);
-    gotoStep(stepIdx);
-  };
-
-  // Click node handler
+  // Click node handler - Progressive Sequenced Hierarchy Reveal, History Redirection & SFX Focus
   const onNodeClick = (_: any, node: any) => {
+    // If a relation edge is currently isolated, un-isolate first
+    if (selectedRelationEdgeId) {
+      setSelectedRelationEdgeId(null);
+    }
+
     const isRootNode = node.data.isRoot || node.data.type === "root";
+    const isCategoryNode = node.data.type === "bottom" || node.data.type === "category";
     const word = (node.data.kanji || node.data.character || node.data.word || "").trim();
 
+    // 1. Click ROOT Node: Zoom out camera first, then reveal category nodes with staggered SFX
     if (isRootNode) {
-      handleStartQuest(0);
+      if (!areCategoriesVisible) {
+        // Zoom out camera first towards categories orbit
+        const visibleCatNodes = positionedNodes.filter((n: any) => n.id === node.id || n.type === "bottom" || n.type === "category");
+        fitView({ nodes: visibleCatNodes, padding: 0.35, duration: 750 });
+
+        // Reveal categories animation after camera starts zooming out & play pop SFX
+        setTimeout(() => {
+          setAreCategoriesVisible(true);
+          const catCount = positionedNodes.filter((n: any) => n.type === "bottom" || n.type === "category").length;
+          for (let i = 0; i < catCount; i++) {
+            setTimeout(() => {
+              playPopSfx(i, "category");
+            }, 150 + i * 150);
+          }
+        }, 250);
+      } else {
+        // Collapse: Fade out categories first, reset history, then zoom in back to root node
+        setAreCategoriesVisible(false);
+        setExpandedCategoryIds(new Set());
+        setOpenCategoryHistory([]);
+        setTimeout(() => {
+          setCenter(0, 0, { zoom: 1.1, duration: 700 });
+        }, 300);
+      }
       return;
     }
 
-    const matchingStepIdx = questSteps.findIndex(
-      (s) => s.nodeId === node.id || s.word === word || s.sourceNodeId === node.id || s.targetNodeId === node.id
-    );
-    if (matchingStepIdx !== -1) {
-      handleStartQuest(matchingStepIdx);
-    } else {
-      onSelectJukugoRef.current?.(word, node.id);
-    }
-  };
+    // 2. Click CATEGORY Node: "Kalau pop redirect ke last open category, kalau tak ada baru zoom out"
+    if (isCategoryNode) {
+      const catId = node.id;
+      const isCurrentlyExpanded = expandedCategoryIds.has(catId);
 
-  const activeStep = questSteps[currentStepIndex];
+      if (isCurrentlyExpanded) {
+        // COLLAPSE (Pop category from open history):
+        const nextHistory = openCategoryHistory.filter((id) => id !== catId);
+        const nextExpanded = new Set(nextHistory);
 
-  const handlePlayAudio = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (activeStep) {
-      if (activeStep.type === "relation" && activeStep.sourceWord && activeStep.targetWord) {
-        setIsPlayingAudio(true);
-        tts.speak(`${activeStep.sourceWord}。 ${activeStep.targetWord}`, () => setIsPlayingAudio(false));
-      } else if (activeStep.word) {
-        setIsPlayingAudio(true);
-        tts.speak(activeStep.word, () => setIsPlayingAudio(false));
+        setOpenCategoryHistory(nextHistory);
+        setExpandedCategoryIds(nextExpanded);
+
+        // Smart Camera Redirection:
+        setTimeout(() => {
+          if (nextHistory.length > 0) {
+            // Redirect back to the last open category that remains open!
+            const lastOpenCatId = nextHistory[nextHistory.length - 1];
+            focusOnCategoryCluster(lastOpenCatId, 750);
+          } else {
+            // No categories are open anymore -> Zoom out to show all categories!
+            const visibleCatNodes = nodes.filter((n: any) => {
+              if (n.data.isRoot || n.data.type === "root") return true;
+              if (n.data.type === "bottom" || n.data.type === "category") return true;
+              return false;
+            });
+            fitView({ nodes: visibleCatNodes, padding: 0.35, duration: 750 });
+          }
+        }, 300);
+      } else {
+        // EXPAND (Push category to open history):
+        const nextHistory = [...openCategoryHistory.filter((id) => id !== catId), catId];
+        setOpenCategoryHistory(nextHistory);
+
+        // 1. FIRST: Camera smoothly zooms in & focuses on target category cluster position!
+        focusOnCategoryCluster(catId, 800);
+
+        // 2. AFTER camera zooms in, trigger staggered node wave animations & play SFX!
+        setTimeout(() => {
+          setExpandedCategoryIds(new Set(nextHistory));
+
+          const mainJks = positionedNodes.filter(
+            (n: any) => (n.type === "sub-bottom" || n.type === "sub") && (n.parentPill === catId || n.categoryId === catId)
+          );
+
+          mainJks.forEach((_, jkIdx) => {
+            setTimeout(() => {
+              playPopSfx(jkIdx, "node");
+            }, 300 + jkIdx * 200);
+          });
+        }, 300);
       }
+      return;
     }
+
+    // 3. Click JUKUGO / LEAF / SUB-JUKUGO Node: Focus camera, play select SFX & select jukugo
+    playPopSfx(0, "node");
+    setCenter(node.position.x, node.position.y, { zoom: 1.2, duration: 800 });
+    onSelectJukugoRef.current?.(word, node.id);
   };
 
   return (
     <div className="w-full h-full bg-slate-50 flex flex-col font-sans select-none relative overflow-hidden">
-      {/* Top Floating Mode Switch Toolbar - Clean Solid Color Theme (No Gradients) */}
-      <div className="absolute top-4 left-4 z-40 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => {
-            if (questMode && !isQuestMinimized) {
-              handleCloseQuestHUD();
-            } else {
-              handleStartQuest(currentStepIndex);
-            }
-          }}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl font-black text-[11px] sm:text-xs shadow-lg border-2 transition-all duration-300 backdrop-blur-md cursor-pointer ${
-            questMode && !isQuestMinimized
-              ? "bg-rose-600 text-white border-rose-400 shadow-rose-500/20 hover:bg-rose-700 hover:scale-105"
-              : "bg-white/95 text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-white"
-          }`}
-        >
-          {questMode && !isQuestMinimized ? (
-            <>
-              <Gamepad2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-200 animate-pulse" />
-              <span>Mode Belajar</span>
-            </>
-          ) : (
-            <>
-              <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500" />
-              <span>Mode Normal</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Gambar 2 + Gambar 3: Integrated Mobile-Responsive Quest Control Card attached above React Flow Controls */}
-      {questMode && !isQuestMinimized && activeStep && (
-        <div className="absolute bottom-16 sm:bottom-20 left-2 sm:left-4 z-40 flex flex-col items-center gap-1.5 sm:gap-2.5 bg-slate-900/95 text-white p-2 sm:p-3.5 rounded-2xl sm:rounded-3xl shadow-[0_15px_40px_rgba(0,0,0,0.5)] border-2 border-white/20 backdrop-blur-xl transition-all duration-300 w-40 sm:w-48 md:w-52">
-          {/* Header Step Counter Badge - Solid Color Theme (No Gradients) */}
-          <div className="w-full flex flex-col items-center text-center">
-            <span className="bg-rose-600 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 sm:px-3 py-0.5 rounded-full flex items-center gap-1 shadow-sm border border-rose-400">
-              <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-300 text-amber-300" />
-              LANGKAH {currentStepIndex + 1} / {questSteps.length}
-            </span>
-
-            {/* Custom Label: "jokugo" when highlighting a Jukugo vs "relasi hubungan kanji" when highlighting a Relation */}
-            <span className="text-[10px] sm:text-[11px] font-extrabold text-amber-300 mt-1 truncate max-w-[130px] sm:max-w-[170px] uppercase tracking-wider">
-              {activeStep.type === "relation" ? "relasi hubungan kanji" : "jokugo"}
-            </span>
-          </div>
-
-          <div className="w-full h-px bg-white/10 my-0.5" />
-
-          {/* Step Navigation Controls: Prev & Next/Done - Solid Color Theme (No Gradients) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 w-full justify-between">
-            <button
-              type="button"
-              disabled={currentStepIndex === 0}
-              onClick={() => gotoStep(currentStepIndex - 1)}
-              className="flex-1 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none text-white text-xs font-bold flex items-center justify-center border border-white/15 transition-all cursor-pointer"
-              title="Langkah Sebelumnya (Kembali)"
-            >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (currentStepIndex === questSteps.length - 1) {
-                  handleCloseQuestHUD();
-                } else {
-                  gotoStep(currentStepIndex + 1);
-                }
-              }}
-              className={`flex-1 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-white text-xs font-black flex items-center justify-center border border-white/30 shadow-md transition-all cursor-pointer ${
-                currentStepIndex === questSteps.length - 1
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-rose-600 hover:bg-rose-700 active:scale-95 border-rose-500"
-              }`}
-              title={currentStepIndex === questSteps.length - 1 ? "Selesai Quest & Reset ke Langkah 1" : "Langkah Selanjutnya"}
-            >
-              {currentStepIndex === questSteps.length - 1 ? (
-                <Check className="w-4 h-4 sm:w-5 sm:h-5" />
-              ) : (
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-              )}
-            </button>
-          </div>
-
-          {/* Utility Row: TTS Audio Suara & Close X */}
-          <div className="flex items-center gap-1.5 sm:gap-2 w-full pt-1 border-t border-white/10">
-            <button
-              type="button"
-              onClick={handlePlayAudio}
-              className={`flex-1 py-1.5 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
-                isPlayingAudio
-                  ? "bg-amber-400 text-slate-950 border-amber-300 animate-pulse"
-                  : "bg-white/10 hover:bg-white/20 text-white border-white/20"
-              }`}
-              title="Dengarkan Suara Audio (Spasi)"
-            >
-              <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCloseQuestHUD}
-              className="p-1.5 rounded-lg sm:rounded-xl bg-white/10 hover:bg-rose-600 text-white/80 hover:text-white border border-white/20 transition-all cursor-pointer"
-              title="Tutup Mode Langkah (Reset ke Langkah 1)"
-            >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-          </div>
-
-          {/* Gambar 2: Integrated Keyboard Shortcut Helper Badge - ONLY VISIBLE ON DESKTOP (md:block) */}
-          <div className="w-full pt-1.5 border-t border-white/10 hidden md:block">
-            <div className="bg-white/10 text-slate-200 text-[9px] font-bold px-2 py-1 rounded-lg border border-white/15 flex items-center justify-center gap-1">
-              <span className="bg-white/20 text-white px-1 rounded text-[8px]">Panah ⬅➡</span>
-              <span>Navigasi</span>
-              <span className="text-white/40">•</span>
-              <span className="bg-white/20 text-white px-1 rounded text-[8px]">Spasi</span>
-              <span>Suara</span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* React Flow Canvas */}
       <ReactFlow
         nodes={nodes}
@@ -1192,6 +1118,17 @@ function KanjiAtlasFlowInner({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeClick={onNodeClick}
+        onEdgeClick={(_e, edge) => {
+          if (edge.isCrossLink || edge.predicate || edge.label) {
+            handleSelectRelation(edge.id);
+          }
+        }}
+        onPaneClick={() => {
+          if (selectedRelationEdgeId) {
+            setSelectedRelationEdgeId(null);
+            restoreCameraView();
+          }
+        }}
         fitView
         fitViewOptions={{ padding: 0.35 }}
         minZoom={0.12}
@@ -1203,18 +1140,6 @@ function KanjiAtlasFlowInner({
         {/* Integrated React Flow Controls at bottom-left position */}
         <Controls position="bottom-left" className="bg-white/95 backdrop-blur-sm border-2 border-slate-200 rounded-xl sm:rounded-2xl shadow-lg text-slate-700 overflow-hidden" />
       </ReactFlow>
-
-      {/* Floating Action Button (FAB Play) when Minimized - Solid Color Theme (No Gradients) */}
-      {isQuestMinimized && questSteps.length > 0 && (
-        <button
-          type="button"
-          onClick={() => handleStartQuest(currentStepIndex)}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-6 py-3.5 rounded-full shadow-[0_12px_35px_rgba(225,29,72,0.5)] border-2 border-white flex items-center gap-2.5 animate-bounce hover:scale-105 transition-all cursor-pointer"
-        >
-          <Play className="w-4 h-4 fill-white" />
-          <span>Mulai Belajar</span>
-        </button>
-      )}
     </div>
   );
 }

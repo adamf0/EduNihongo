@@ -238,6 +238,21 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       };
     });
 
+    const QUIZ_TYPE_ORDER: Record<string, number> = {
+      unscramble: 1,
+      grouping: 2,
+      multiple: 3,
+      fill: 4,
+      essay: 5,
+      matching: 6,
+    };
+
+    formattedQuizzes.sort((a, b) => {
+      const orderA = QUIZ_TYPE_ORDER[a.type] || 99;
+      const orderB = QUIZ_TYPE_ORDER[b.type] || 99;
+      return orderA - orderB;
+    });
+
     res.json({
       id: kanji.id,
       kanji: kanji.character,

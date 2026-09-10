@@ -1797,6 +1797,21 @@ export const LatihanPage: React.FC = () => {
         quizQuestions = getQuizQuestions(kanji, jukugos, examples);
     }
 
+    const QUIZ_TYPE_ORDER: Record<string, number> = {
+        unscramble: 1,
+        grouping: 2,
+        multiple: 3,
+        fill: 4,
+        essay: 5,
+        matching: 6,
+    };
+
+    quizQuestions.sort((a, b) => {
+        const orderA = QUIZ_TYPE_ORDER[a.type] || 99;
+        const orderB = QUIZ_TYPE_ORDER[b.type] || 99;
+        return orderA - orderB;
+    });
+
     return (
         <Layout>
             <div className="w-full mx-auto px-4 md:px-8 py-8 flex flex-col gap-6 select-none relative z-10">
