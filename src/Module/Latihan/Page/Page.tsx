@@ -24,6 +24,7 @@ import {
     Sparkles,
     Check,
     ArrowRight,
+    ArrowLeft,
     MessageSquare,
     FileText,
     Calendar,
@@ -331,6 +332,11 @@ export const LatihanPage: React.FC = () => {
     const [quizScore, setQuizScore] = useState(0);
     const [quizFeedback, setQuizFeedback] = useState<any[]>([]);
     const [savingQuiz, setSavingQuiz] = useState(false);
+    const [isQuizTransitioning, setIsQuizTransitioning] = useState(false);
+    const [userAnswersMap, setUserAnswersMap] = useState<Record<number, any>>({});
+    const [unscrambleWrongOrder, setUnscrambleWrongOrder] = useState(false);
+    const quizTransitionTimerRef = React.useRef<any>(null);
+    const QUIZ_TRANSITION_DELAY_MS = 1400;
 
     // Refleksi states
     const [refleksiAnswers, setRefleksiAnswers] = useState<
@@ -401,9 +407,6 @@ export const LatihanPage: React.FC = () => {
     const [groupingWrong, setGroupingWrong] = useState<Record<string, boolean>>(
         {},
     );
-    const [unscrambleWrongWord, setUnscrambleWrongWord] = useState<
-        string | null
-    >(null);
     const [essayStatus, setEssayStatus] = useState<
         "neutral" | "correct" | "wrong"
     >("neutral");
@@ -1002,26 +1005,96 @@ export const LatihanPage: React.FC = () => {
         return String(rawCorr);
     };
 
+    const restoreQuestionState = (targetIdx: number, mapData?: Record<number, any>) => {
+        const sourceMap = mapData || userAnswersMap;
+        const saved = sourceMap[targetIdx];
+        if (saved) {
+            setSelectedAnswer(saved.selectedAnswer ?? null);
+            setCorrectAnswerClicked(saved.correctAnswerClicked ?? null);
+            setWrongAnswers(saved.wrongAnswers ?? []);
+            setUnscrambleSelected(saved.unscrambleSelected ?? []);
+            setUnscrambleWrongOrder(saved.unscrambleWrongOrder ?? false);
+            setMatchingAnswers(saved.matchingAnswers ?? {});
+            setMatchingCorrect(saved.matchingCorrect ?? {});
+            setMatchingWrong(saved.matchingWrong ?? {});
+            setGroupingAnswers(saved.groupingAnswers ?? {});
+            setGroupingCorrect(saved.groupingCorrect ?? {});
+            setGroupingWrong(saved.groupingWrong ?? {});
+            setEssayAnswer(saved.essayAnswer ?? "");
+            setEssayStatus(saved.essayStatus ?? "neutral");
+            setHasQuestionMistake(saved.hasQuestionMistake ?? false);
+        } else {
+            setSelectedAnswer(null);
+            setCorrectAnswerClicked(null);
+            setWrongAnswers([]);
+            setUnscrambleSelected([]);
+            setUnscrambleWrongOrder(false);
+            setMatchingAnswers({});
+            setMatchingCorrect({});
+            setMatchingWrong({});
+            setGroupingAnswers({});
+            setGroupingCorrect({});
+            setGroupingWrong({});
+            setEssayAnswer("");
+            setEssayStatus("neutral");
+            setHasQuestionMistake(false);
+        }
+    };
+
+    const handlePrevQuizQuestion = () => {
+        if (currentQuestionIdx > 0) {
+            if (quizTransitionTimerRef.current) {
+                clearTimeout(quizTransitionTimerRef.current);
+                quizTransitionTimerRef.current = null;
+            }
+            setIsQuizTransitioning(false);
+            setQuizFeedback((prev) => prev.slice(0, -1));
+
+            const prevIdx = currentQuestionIdx - 1;
+            setCurrentQuestionIdx(prevIdx);
+            restoreQuestionState(prevIdx);
+        }
+    };
+
     const handleMultipleChoiceClick = (
         opt: string,
         currentQ: QuizQuestion,
         questions: QuizQuestion[],
     ) => {
-        if (correctAnswerClicked || wrongAnswers.includes(opt)) return;
+        if (isQuizTransitioning || correctAnswerClicked || wrongAnswers.includes(opt)) return;
 
         const correctText = getCorrectAnswerText(currentQ);
+        const isOptCorrect = opt === correctText;
+        const nextCorrectClicked = isOptCorrect ? opt : correctText;
+        const nextWrongAnswers = isOptCorrect ? [] : [opt];
 
-        if (opt === correctText) {
+        setIsQuizTransitioning(true);
+
+        if (isOptCorrect) {
             playTingTing();
             setCorrectAnswerClicked(opt);
-            setTimeout(() => {
-                handleNextQuizQuestion(questions, opt);
-            }, 1000);
         } else {
             playTungTung();
             setHasQuestionMistake(true);
-            setWrongAnswers((prev) => [...prev, opt]);
+            setWrongAnswers([opt]);
+            setCorrectAnswerClicked(correctText);
         }
+
+        setUserAnswersMap((prev) => ({
+            ...prev,
+            [currentQuestionIdx]: {
+                selectedAnswer: opt,
+                correctAnswerClicked: nextCorrectClicked,
+                wrongAnswers: nextWrongAnswers,
+                hasQuestionMistake: !isOptCorrect || hasQuestionMistake,
+            },
+        }));
+
+        if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
+        quizTransitionTimerRef.current = setTimeout(() => {
+            setIsQuizTransitioning(false);
+            handleNextQuizQuestion(questions, opt);
+        }, QUIZ_TRANSITION_DELAY_MS);
     };
 
     const handleMatchingSelect = (
@@ -1030,38 +1103,65 @@ export const LatihanPage: React.FC = () => {
         currentQ: QuizQuestion,
         questions: QuizQuestion[],
     ) => {
-        if (matchingCorrect[leftItem]) return;
+        if (isQuizTransitioning || matchingCorrect[leftItem]) return;
 
-        const pair = (currentQ.pairs || []).find((p) => p.left === leftItem);
-        if (!pair) return;
+        const nextAnswers = { ...matchingAnswers, [leftItem]: matchedVal };
+        setMatchingAnswers(nextAnswers);
 
-        if (matchedVal === pair.right) {
-            playTingTing();
-            setMatchingCorrect((prev) => {
-                const next = { ...prev, [leftItem]: true };
+        const pairs = currentQ.pairs || [];
+        const isAllFilled = pairs.length > 0 && pairs.every((p) => !!nextAnswers[p.left] && nextAnswers[p.left] !== "");
 
-                // Check if all matched correctly
-                const totalPairs = (currentQ.pairs || []).length;
-                const correctCount = Object.keys(next).length;
-                if (correctCount === totalPairs) {
-                    setTimeout(() => {
-                        handleNextQuizQuestion(questions);
-                    }, 1000);
-                }
-                return next;
-            });
-            setMatchingWrong((prev) => {
-                const next = { ...prev };
-                delete next[leftItem];
-                return next;
-            });
-            setMatchingAnswers((prev) => ({ ...prev, [leftItem]: matchedVal }));
-        } else {
-            playTungTung();
-            setHasQuestionMistake(true);
-            setMatchingWrong((prev) => ({ ...prev, [leftItem]: true }));
-            setMatchingAnswers((prev) => ({ ...prev, [leftItem]: matchedVal }));
+        if (!isAllFilled) {
+            setUserAnswersMap((prev) => ({
+                ...prev,
+                [currentQuestionIdx]: {
+                    ...(prev[currentQuestionIdx] || {}),
+                    matchingAnswers: nextAnswers,
+                },
+            }));
+            return;
         }
+
+        let hasError = false;
+        const newCorrect: Record<string, boolean> = {};
+        const newWrong: Record<string, boolean> = {};
+
+        pairs.forEach((p) => {
+            const studentVal = nextAnswers[p.left];
+            if (studentVal === p.right) {
+                newCorrect[p.left] = true;
+            } else {
+                newWrong[p.left] = true;
+                hasError = true;
+            }
+        });
+
+        setMatchingCorrect(newCorrect);
+        setMatchingWrong(newWrong);
+
+        if (hasError) {
+            setHasQuestionMistake(true);
+            playTungTung();
+        } else {
+            playTingTing();
+        }
+
+        setUserAnswersMap((prev) => ({
+            ...prev,
+            [currentQuestionIdx]: {
+                matchingAnswers: nextAnswers,
+                matchingCorrect: newCorrect,
+                matchingWrong: newWrong,
+                hasQuestionMistake: hasError || hasQuestionMistake,
+            },
+        }));
+
+        setIsQuizTransitioning(true);
+        if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
+        quizTransitionTimerRef.current = setTimeout(() => {
+            setIsQuizTransitioning(false);
+            handleNextQuizQuestion(questions);
+        }, QUIZ_TRANSITION_DELAY_MS);
     };
 
     const handleGroupingSelect = (
@@ -1070,67 +1170,112 @@ export const LatihanPage: React.FC = () => {
         currentQ: QuizQuestion,
         questions: QuizQuestion[],
     ) => {
-        if (groupingCorrect[word]) return;
+        if (isQuizTransitioning || groupingCorrect[word]) return;
+
+        const nextAnswers = { ...groupingAnswers, [word]: groupName };
+        setGroupingAnswers(nextAnswers);
 
         const groups = normalizeGroups(currentQ.groups);
-
-        let correctGroupName = "";
-
-        if (Array.isArray(groups) && groups.length > 0) {
-            const correctGroup = groups.find((g: any) => {
-                if (typeof g === "string") return false;
-                const wordsInG = Array.isArray(g.correctWords)
-                    ? g.correctWords
-                    : Array.isArray(g.items)
-                      ? g.items
-                      : [];
-                return wordsInG.includes(word);
-            });
-            if (correctGroup) {
-                correctGroupName =
-                    correctGroup.name ||
-                    correctGroup.category ||
-                    correctGroup.title ||
-                    "";
+        let rawWords = parseJsonDeep(currentQ.words);
+        if (!Array.isArray(rawWords) || rawWords.length === 0) {
+            if (Array.isArray(groups) && groups.length > 0) {
+                rawWords = groups.flatMap((g: any) =>
+                    typeof g === "object" && g
+                        ? g.correctWords || g.items || []
+                        : [],
+                );
             }
         }
+        const wordsList = Array.from(new Set(rawWords || [])) as string[];
+        const isAllFilled = wordsList.length > 0 && wordsList.every((w) => !!nextAnswers[w] && nextAnswers[w] !== "");
 
-        if (groupName === correctGroupName) {
-            playTingTing();
-            setGroupingCorrect((prev) => {
-                const next = { ...prev, [word]: true };
-
-                let rawWords: any = parseJsonDeep(currentQ.words);
-                if (!Array.isArray(rawWords) || rawWords.length === 0) {
-                    if (Array.isArray(groups) && groups.length > 0) {
-                        rawWords = groups.flatMap((g: any) =>
-                            typeof g === "object" && g
-                                ? g.correctWords || g.items || []
-                                : [],
-                        );
-                    }
-                }
-                const totalWords = Array.from(new Set(rawWords || [])).length;
-                const correctCount = Object.keys(next).length;
-                if (correctCount === totalWords) {
-                    setTimeout(() => {
-                        handleNextQuizQuestion(questions);
-                    }, 1000);
-                }
-                return next;
-            });
-            setGroupingWrong((prev) => {
-                const next = { ...prev };
-                delete next[word];
-                return next;
-            });
-            setGroupingAnswers((prev) => ({ ...prev, [word]: groupName }));
-        } else {
-            playTungTung();
-            setHasQuestionMistake(true);
-            setGroupingWrong((prev) => ({ ...prev, [word]: true }));
-            setGroupingAnswers((prev) => ({ ...prev, [word]: groupName }));
+        if (!isAllFilled) {
+            setUserAnswersMap((prev) => ({
+                ...prev,
+                [currentQuestionIdx]: {
+                    ...(prev[currentQuestionIdx] || {}),
+                    groupingAnswers: nextAnswers,
+                },
+            }));
+            return;
         }
+
+        let hasError = false;
+        const newCorrect: Record<string, boolean> = {};
+        const newWrong: Record<string, boolean> = {};
+
+        wordsList.forEach((w) => {
+            let correctGroupName = "";
+            if (Array.isArray(groups) && groups.length > 0) {
+                const correctGroup = groups.find((g: any) => {
+                    if (typeof g === "string") return false;
+                    const wordsInG = Array.isArray(g.correctWords)
+                        ? g.correctWords
+                        : Array.isArray(g.items)
+                          ? g.items
+                          : [];
+                    return wordsInG.includes(w);
+                });
+                if (correctGroup) {
+                    correctGroupName =
+                        correctGroup.name ||
+                        correctGroup.category ||
+                        correctGroup.title ||
+                        "";
+                }
+            }
+
+            if (nextAnswers[w] === correctGroupName) {
+                newCorrect[w] = true;
+            } else {
+                newWrong[w] = true;
+                hasError = true;
+            }
+        });
+
+        setGroupingCorrect(newCorrect);
+        setGroupingWrong(newWrong);
+
+        if (hasError) {
+            setHasQuestionMistake(true);
+            playTungTung();
+        } else {
+            playTingTing();
+        }
+
+        setUserAnswersMap((prev) => ({
+            ...prev,
+            [currentQuestionIdx]: {
+                groupingAnswers: nextAnswers,
+                groupingCorrect: newCorrect,
+                groupingWrong: newWrong,
+                hasQuestionMistake: hasError || hasQuestionMistake,
+            },
+        }));
+
+        setIsQuizTransitioning(true);
+        if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
+        quizTransitionTimerRef.current = setTimeout(() => {
+            setIsQuizTransitioning(false);
+            handleNextQuizQuestion(questions);
+        }, QUIZ_TRANSITION_DELAY_MS);
+    };
+
+    const handleRemoveUnscrambleWord = (wordIdx: number) => {
+        if (isQuizTransitioning || correctAnswerClicked) return;
+
+        const nextSelected = unscrambleSelected.filter((_, idx) => idx !== wordIdx);
+        setUnscrambleSelected(nextSelected);
+        setUnscrambleWrongOrder(false);
+
+        setUserAnswersMap((prev) => ({
+            ...prev,
+            [currentQuestionIdx]: {
+                ...(prev[currentQuestionIdx] || {}),
+                unscrambleSelected: nextSelected,
+                unscrambleWrongOrder: false,
+            },
+        }));
     };
 
     const handleUnscrambleWordClick = (
@@ -1138,59 +1283,95 @@ export const LatihanPage: React.FC = () => {
         currentQ: QuizQuestion,
         questions: QuizQuestion[],
     ) => {
-        if (unscrambleSelected.includes(word)) return;
+        if (isQuizTransitioning || unscrambleSelected.includes(word)) return;
 
-        const nextIdx = unscrambleSelected.length;
+        const nextSelected = [...unscrambleSelected, word];
+        setUnscrambleSelected(nextSelected);
+
+        const totalWords = (currentQ.words || []).length || (currentQ.correctOrder || []).length;
+        if (nextSelected.length < totalWords) {
+            setUserAnswersMap((prev) => ({
+                ...prev,
+                [currentQuestionIdx]: {
+                    ...(prev[currentQuestionIdx] || {}),
+                    unscrambleSelected: nextSelected,
+                },
+            }));
+            return;
+        }
+
         const correctOrder = currentQ.correctOrder || [];
         const cleanWord = (w: string) => {
             let str = (w || "").replace(/[。,.、\s]/g, "").trim();
             if (str === "きのう" || str === "昨日") return "昨日";
             return str;
         };
-        const targetWord = correctOrder[nextIdx] || "";
 
-        if (cleanWord(word) === cleanWord(targetWord)) {
+        const isOrderCorrect = nextSelected.every(
+            (w, idx) => cleanWord(w) === cleanWord(correctOrder[idx] || "")
+        );
+
+        if (isOrderCorrect) {
             playTingTing();
-            const nextSelected = [...unscrambleSelected, word];
-            setUnscrambleSelected(nextSelected);
-
-            if (nextSelected.length === correctOrder.length) {
-                setTimeout(() => {
-                    handleNextQuizQuestion(questions);
-                }, 1000);
-            }
+            setUnscrambleWrongOrder(false);
         } else {
             playTungTung();
             setHasQuestionMistake(true);
-            setUnscrambleWrongWord(word);
-            setTimeout(() => {
-                setUnscrambleWrongWord(null);
-            }, 600);
+            setUnscrambleWrongOrder(true);
         }
+
+        setUserAnswersMap((prev) => ({
+            ...prev,
+            [currentQuestionIdx]: {
+                unscrambleSelected: nextSelected,
+                unscrambleWrongOrder: !isOrderCorrect,
+                hasQuestionMistake: !isOrderCorrect || hasQuestionMistake,
+            },
+        }));
+
+        setIsQuizTransitioning(true);
+        if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
+        quizTransitionTimerRef.current = setTimeout(() => {
+            setIsQuizTransitioning(false);
+            handleNextQuizQuestion(questions);
+        }, QUIZ_TRANSITION_DELAY_MS);
     };
 
     const handleEssayCheck = (
         currentQ: QuizQuestion,
         questions: QuizQuestion[],
     ) => {
-        if (essayStatus === "correct") return;
+        if (isQuizTransitioning || essayStatus === "correct") return;
 
         const targetWord = currentQ.targetWord || "";
         const isCorrect = targetWord
             ? essayAnswer.includes(targetWord)
             : essayAnswer.trim().length > 0;
 
+        setIsQuizTransitioning(true);
         if (isCorrect) {
             playTingTing();
             setEssayStatus("correct");
-            setTimeout(() => {
-                handleNextQuizQuestion(questions);
-            }, 1000);
         } else {
             playTungTung();
             setHasQuestionMistake(true);
             setEssayStatus("wrong");
         }
+
+        setUserAnswersMap((prev) => ({
+            ...prev,
+            [currentQuestionIdx]: {
+                essayAnswer,
+                essayStatus: isCorrect ? "correct" : "wrong",
+                hasQuestionMistake: !isCorrect || hasQuestionMistake,
+            },
+        }));
+
+        if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
+        quizTransitionTimerRef.current = setTimeout(() => {
+            setIsQuizTransitioning(false);
+            handleNextQuizQuestion(questions);
+        }, QUIZ_TRANSITION_DELAY_MS);
     };
 
     const triggerSuccessNotification = (score: number, text: string) => {
@@ -1577,6 +1758,63 @@ export const LatihanPage: React.FC = () => {
         }
     };
 
+    const checkIsQuestionAnswered = React.useCallback((questions: QuizQuestion[]) => {
+        const currQ = questions[currentQuestionIdx];
+        if (!currQ) return false;
+
+        if (currQ.type === "multiple" || currQ.type === "fill") {
+            return !!correctAnswerClicked || wrongAnswers.length > 0;
+        }
+        if (currQ.type === "unscramble") {
+            const totalWords = (currQ.words || []).length || (currQ.correctOrder || []).length;
+            return (
+                (unscrambleSelected.length > 0 && unscrambleSelected.length === totalWords) ||
+                unscrambleWrongOrder
+            );
+        }
+        if (currQ.type === "matching") {
+            const pairs = currQ.pairs || [];
+            return pairs.length > 0 && pairs.every((p) => !!matchingAnswers[p.left] && matchingAnswers[p.left] !== "");
+        }
+        if (currQ.type === "grouping") {
+            const groups = normalizeGroups(currQ.groups);
+            let rawWords = parseJsonDeep(currQ.words);
+            if (!Array.isArray(rawWords) || rawWords.length === 0) {
+                if (Array.isArray(groups) && groups.length > 0) {
+                    rawWords = groups.flatMap((g: any) =>
+                        typeof g === "object" && g
+                            ? g.correctWords || g.items || []
+                            : [],
+                    );
+                }
+            }
+            const wordsList = Array.from(new Set(rawWords || [])) as string[];
+            return wordsList.length > 0 && wordsList.every((w) => !!groupingAnswers[w] && groupingAnswers[w] !== "");
+        }
+        if (currQ.type === "essay") {
+            return essayStatus !== "neutral";
+        }
+        return false;
+    }, [
+        currentQuestionIdx,
+        correctAnswerClicked,
+        wrongAnswers,
+        unscrambleSelected,
+        unscrambleWrongOrder,
+        matchingAnswers,
+        groupingAnswers,
+        essayStatus,
+    ]);
+
+    const handleManualNextQuizQuestion = () => {
+        if (quizTransitionTimerRef.current) {
+            clearTimeout(quizTransitionTimerRef.current);
+            quizTransitionTimerRef.current = null;
+        }
+        setIsQuizTransitioning(false);
+        handleNextQuizQuestion(quizQuestions);
+    };
+
     const playAudio = (text: string) => {
         tts.speak(text);
     };
@@ -1629,49 +1867,34 @@ export const LatihanPage: React.FC = () => {
         // scoring is correct only if student made no mistake on this question
         isCorrect = !hasQuestionMistake;
 
-        setQuizFeedback((prev) => [
-            ...prev,
-            {
+        setQuizFeedback((prev) => {
+            const next = [...prev];
+            next[currentQuestionIdx] = {
                 question: currentQ.question,
                 type: currentQ.type,
                 studentAnswer: studentAnswerString,
                 correctAnswer: correctAnswerString,
                 isCorrect,
-            },
-        ]);
-
-        // Reset temporary question selections
-        setSelectedAnswer(null);
-        setCorrectAnswerClicked(null);
-        setWrongAnswers([]);
-        setMatchingCorrect({});
-        setMatchingWrong({});
-        setGroupingCorrect({});
-        setGroupingWrong({});
-        setUnscrambleWrongWord(null);
-        setEssayStatus("neutral");
-        setHasQuestionMistake(false);
-        setUnscrambleSelected([]);
-        setEssayAnswer("");
-        setGroupingAnswers({});
-        setMatchingAnswers({});
+            };
+            return next;
+        });
 
         if (currentQuestionIdx < questions.length - 1) {
-            setCurrentQuestionIdx((prev) => prev + 1);
+            const nextIdx = currentQuestionIdx + 1;
+            setCurrentQuestionIdx(nextIdx);
+            restoreQuestionState(nextIdx);
         } else {
             // Evaluate final score
-            const finalFeedback = [
-                ...quizFeedback,
-                {
-                    question: currentQ.question,
-                    type: currentQ.type,
-                    studentAnswer: studentAnswerString,
-                    correctAnswer: correctAnswerString,
-                    isCorrect,
-                },
-            ];
+            const finalFeedback = [...quizFeedback];
+            finalFeedback[currentQuestionIdx] = {
+                question: currentQ.question,
+                type: currentQ.type,
+                studentAnswer: studentAnswerString,
+                correctAnswer: correctAnswerString,
+                isCorrect,
+            };
             const correctCount = finalFeedback.filter(
-                (f) => f.isCorrect,
+                (f) => f && f.isCorrect,
             ).length;
             const score = Math.round((correctCount / questions.length) * 100);
 
@@ -1707,21 +1930,14 @@ export const LatihanPage: React.FC = () => {
     };
 
     const handleResetQuiz = () => {
+        if (quizTransitionTimerRef.current) {
+            clearTimeout(quizTransitionTimerRef.current);
+            quizTransitionTimerRef.current = null;
+        }
+        setIsQuizTransitioning(false);
+        setUserAnswersMap({});
         setCurrentQuestionIdx(0);
-        setSelectedAnswer(null);
-        setCorrectAnswerClicked(null);
-        setWrongAnswers([]);
-        setMatchingCorrect({});
-        setMatchingWrong({});
-        setGroupingCorrect({});
-        setGroupingWrong({});
-        setUnscrambleWrongWord(null);
-        setEssayStatus("neutral");
-        setHasQuestionMistake(false);
-        setMatchingAnswers({});
-        setUnscrambleSelected([]);
-        setEssayAnswer("");
-        setGroupingAnswers({});
+        restoreQuestionState(0, {});
         setQuizFinished(false);
         setQuizScore(0);
         setQuizFeedback([]);
@@ -4046,24 +4262,55 @@ export const LatihanPage: React.FC = () => {
                                         "unscramble" && (
                                         <div className="space-y-6 mt-4">
                                             {/* Selection visual board area */}
-                                            <div className="min-h-[70px] p-4 bg-slate-50 border border-dashed border-slate-200 rounded-2xl flex flex-wrap gap-2 items-center">
-                                                {unscrambleSelected.map(
-                                                    (word, wIdx) => (
-                                                        <div
+                                            <div
+                                                className={`min-h-[70px] p-4 border rounded-2xl flex flex-wrap gap-2 items-center transition-all ${
+                                                    unscrambleWrongOrder
+                                                        ? "bg-red-50 border-red-400"
+                                                        : unscrambleSelected.length > 0 &&
+                                                          unscrambleSelected.length ===
+                                                              ((quizQuestions[currentQuestionIdx].words || []).length ||
+                                                               (quizQuestions[currentQuestionIdx].correctOrder || []).length)
+                                                        ? "bg-emerald-50 border-emerald-500"
+                                                        : "bg-slate-50 border-dashed border-slate-200"
+                                                }`}
+                                            >
+                                                {unscrambleSelected.map((word, wIdx) => {
+                                                    const correctOrder = quizQuestions[currentQuestionIdx].correctOrder || [];
+                                                    const totalReq = (quizQuestions[currentQuestionIdx].words || []).length || correctOrder.length;
+                                                    const isFull = unscrambleSelected.length === totalReq;
+
+                                                    const cleanWord = (w: string) => {
+                                                        let str = (w || "").replace(/[。,.、\s]/g, "").trim();
+                                                        if (str === "きのう" || str === "昨日") return "昨日";
+                                                        return str;
+                                                    };
+
+                                                    const isWordPosCorrect = isFull && cleanWord(word) === cleanWord(correctOrder[wIdx] || "");
+                                                    const isWordPosWrong = isFull && !isWordPosCorrect;
+
+                                                    return (
+                                                        <button
                                                             key={wIdx}
-                                                            className="bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center gap-1"
+                                                            type="button"
+                                                            onClick={() => handleRemoveUnscrambleWord(wIdx)}
+                                                            disabled={isQuizTransitioning}
+                                                            className={`px-4 py-2.5 rounded-xl font-bold text-sm shadow-xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                                                                isWordPosCorrect
+                                                                    ? "bg-emerald-500 border border-emerald-500 text-white"
+                                                                    : isWordPosWrong
+                                                                      ? "bg-red-500 border border-red-500 text-white"
+                                                                      : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                                                            }`}
+                                                            title="Klik untuk menghapus kata"
                                                         >
-                                                            {word}
-                                                            <Check className="w-3.5 h-3.5 stroke-[3px]" />
-                                                        </div>
-                                                    ),
-                                                )}
-                                                {unscrambleSelected.length ===
-                                                    0 && (
+                                                            <span>{word}</span>
+                                                            <X className={`w-3.5 h-3.5 stroke-[3px] ${isWordPosCorrect || isWordPosWrong ? "opacity-80 text-white" : "text-slate-400"}`} />
+                                                        </button>
+                                                    );
+                                                })}
+                                                {unscrambleSelected.length === 0 && (
                                                     <span className="text-slate-400 font-medium text-sm italic">
-                                                        Klik tombol kata di
-                                                        bawah untuk menyusun
-                                                        kalimat...
+                                                        Klik tombol kata di bawah untuk menyusun kalimat...
                                                     </span>
                                                 )}
                                             </div>
@@ -4079,9 +4326,6 @@ export const LatihanPage: React.FC = () => {
                                                         unscrambleSelected.includes(
                                                             word,
                                                         );
-                                                    const isWrongWord =
-                                                        unscrambleWrongWord ===
-                                                        word;
                                                     return (
                                                         <button
                                                             key={wIdx}
@@ -4094,13 +4338,11 @@ export const LatihanPage: React.FC = () => {
                                                                     quizQuestions,
                                                                 )
                                                             }
-                                                            disabled={isUsed}
+                                                            disabled={isUsed || isQuizTransitioning}
                                                             className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all border cursor-pointer select-none active:scale-95 ${
                                                                 isUsed
-                                                                    ? "bg-emerald-50 border-emerald-200 text-emerald-500 cursor-not-allowed"
-                                                                    : isWrongWord
-                                                                      ? "bg-red-50 border-red-500 text-red-600 animate-pulse"
-                                                                      : "bg-white border-slate-200 text-slate-700 hover:border-[#8f0020]/30 hover:bg-slate-50"
+                                                                    ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50"
+                                                                    : "bg-white border-slate-200 text-slate-700 hover:border-[#8f0020]/30 hover:bg-slate-50"
                                                             }`}
                                                         >
                                                             {word}
@@ -4390,26 +4632,51 @@ export const LatihanPage: React.FC = () => {
                                 </div>
 
                                 {/* Bottom Step Controller action buttons */}
-                                <div className="border-t border-slate-100 pt-6 flex justify-end">
-                                    {quizQuestions[currentQuestionIdx].type ===
-                                        "essay" &&
-                                        essayStatus !== "correct" && (
+                                <div className="border-t border-slate-100 pt-6 flex justify-between items-center">
+                                    <button
+                                        onClick={handlePrevQuizQuestion}
+                                        disabled={currentQuestionIdx === 0 || isQuizTransitioning}
+                                        className="px-5 py-2.5 rounded-full font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <ArrowLeft className="w-4 h-4" />
+                                        <span>Sebelumnya</span>
+                                    </button>
+
+                                    <div className="flex items-center gap-2">
+                                        {quizQuestions[currentQuestionIdx].type ===
+                                            "essay" &&
+                                            essayStatus === "neutral" && (
+                                                <button
+                                                    onClick={() =>
+                                                        handleEssayCheck(
+                                                            quizQuestions[
+                                                                currentQuestionIdx
+                                                            ],
+                                                            quizQuestions,
+                                                        )
+                                                    }
+                                                    disabled={!essayAnswer.trim() || isQuizTransitioning}
+                                                    className="bg-[#8f0020] text-white px-8 py-3 rounded-full font-bold shadow-md hover:brightness-110 active:scale-95 transition-all border-none flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                                >
+                                                    <span>Periksa</span>
+                                                    <ArrowRight className="w-4 h-4" />
+                                                </button>
+                                            )}
+
+                                        {checkIsQuestionAnswered(quizQuestions) && (
                                             <button
-                                                onClick={() =>
-                                                    handleEssayCheck(
-                                                        quizQuestions[
-                                                            currentQuestionIdx
-                                                        ],
-                                                        quizQuestions,
-                                                    )
-                                                }
-                                                disabled={!essayAnswer.trim()}
-                                                className="bg-[#8f0020] text-white px-8 py-3 rounded-full font-bold shadow-md hover:brightness-110 active:scale-95 transition-all border-none flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                                onClick={handleManualNextQuizQuestion}
+                                                className="bg-[#8f0020] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
                                             >
-                                                <span>Periksa</span>
+                                                <span>
+                                                    {currentQuestionIdx === quizQuestions.length - 1
+                                                        ? "Selesai Kuis"
+                                                        : "Selanjutnya"}
+                                                </span>
                                                 <ArrowRight className="w-4 h-4" />
                                             </button>
                                         )}
+                                    </div>
                                 </div>
                             </div>
                         )}
