@@ -46,12 +46,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { icon: "draw", label: "Kelola Kanji", route: "/admin/kanji" },
         { icon: "menu_book", label: "Kelola Jukugo", route: "/admin/jukugo" },
         { icon: "category", label: "Kategori Kanji", route: "/admin/categories" },
+        { icon: "info", label: "Tentang Aplikasi", route: "/about" },
       ]
     : [
         { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
         { icon: "layers", label: "Module", route: "/module" },
         { icon: "trending_up", label: "Progress Belajar", route: "/progress" },
         { icon: "person", label: "Profile", route: "/profile" },
+        { icon: "info", label: "Tentang Aplikasi", route: "/about" },
       ];
 
   return (

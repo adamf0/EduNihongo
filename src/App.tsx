@@ -15,11 +15,14 @@ import KanjiListPage from "./Module/Admin/Page/KanjiListPage";
 import CategoryListPage from "./Module/Admin/Page/CategoryListPage";
 import SemanticControlPage from "./Module/Admin/Page/SemanticControlPage";
 
+import AboutPage from "./Module/About/Page/Page";
+
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />

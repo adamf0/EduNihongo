@@ -63,9 +63,9 @@ export const JukugoFormModal: React.FC<JukugoFormModalProps> = React.memo(
 
     return (
       <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        <div className="bg-white border border-outline-variant/30 rounded-3xl w-full sm:w-[560px] md:w-[640px] max-w-2xl shrink-0 shadow-2xl overflow-hidden animate-scale-up flex flex-col">
+        <div className="bg-white border border-outline-variant/30 rounded-3xl w-full sm:w-[560px] md:w-[640px] max-w-2xl shrink-0 shadow-2xl relative animate-scale-up flex flex-col">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-slate-50 shrink-0">
+          <div className="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-slate-50 shrink-0 rounded-t-3xl">
             <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
               <Icon
                 name={editingJukugo ? "edit" : "add"}
@@ -83,7 +83,7 @@ export const JukugoFormModal: React.FC<JukugoFormModalProps> = React.memo(
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4 rounded-b-3xl">
             {modalError && (
               <div className="bg-error-container text-on-error-container border border-error/20 text-xs p-3 rounded-xl font-bold">
                 {modalError}
@@ -175,64 +175,71 @@ export const JukugoFormModal: React.FC<JukugoFormModalProps> = React.memo(
                   </span>
                   <Icon
                     name="arrow_drop_down"
-                    className="text-xl text-slate-500"
+                    className={`text-xl text-slate-500 transition-transform duration-200 ${isCatDropdownOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
                 {isCatDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-outline-variant/30 rounded-2xl shadow-xl z-50 p-2 max-h-56 overflow-y-auto">
-                    <div className="relative mb-2">
-                      <Icon
-                        name="search"
-                        className="text-slate-400 text-sm absolute left-2.5 top-1/2 -translate-y-1/2"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Cari kategori..."
-                        value={catSearch}
-                        onChange={(e) => setCatSearch(e.target.value)}
-                        className="w-full bg-slate-50 border border-outline-variant/20 rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary"
-                      />
+                  <>
+                    <div
+                      className="fixed inset-0 z-[60]"
+                      onClick={() => setIsCatDropdownOpen(false)}
+                    />
+                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-outline-variant/30 rounded-2xl shadow-2xl z-[70] p-2 max-h-56 overflow-y-auto sidebar-scroll">
+                      <div className="relative mb-2">
+                        <Icon
+                          name="search"
+                          className="text-slate-400 text-sm absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Cari kategori..."
+                          value={catSearch}
+                          onChange={(e) => setCatSearch(e.target.value)}
+                          className="w-full bg-slate-50 border border-outline-variant/20 rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary font-medium"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        {availableCategories
+                          .filter((c) =>
+                            c.name
+                              .toLowerCase()
+                              .includes(catSearch.toLowerCase())
+                          )
+                          .map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                setFormCategories(cat.name);
+                                setIsCatDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-3 py-2 text-xs rounded-lg font-medium transition-colors border-none cursor-pointer flex items-center justify-between ${
+                                formCategories === cat.name
+                                  ? "bg-indigo-50 text-indigo-700 font-bold"
+                                  : "hover:bg-slate-50 text-slate-700"
+                              }`}
+                            >
+                              <span>{cat.name}</span>
+                              {formCategories === cat.name && (
+                                <Icon
+                                  name="check"
+                                  className="text-indigo-600 text-sm"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        {availableCategories.filter((c) =>
+                          c.name.toLowerCase().includes(catSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div className="text-xs text-slate-400 p-2 text-center italic">
+                            Kategori tidak ditemukan.
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      {availableCategories
-                        .filter((c) =>
-                          c.name
-                            .toLowerCase()
-                            .includes(catSearch.toLowerCase())
-                        )
-                        .map((cat) => (
-                          <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => {
-                              setFormCategories(cat.name);
-                              setIsCatDropdownOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 text-xs rounded-lg font-medium transition-colors border-none cursor-pointer flex items-center justify-between ${
-                              formCategories === cat.name
-                                ? "bg-indigo-50 text-indigo-700 font-bold"
-                                : "hover:bg-slate-50 text-slate-700"
-                            }`}
-                          >
-                            <span>{cat.name}</span>
-                            {formCategories === cat.name && (
-                              <Icon
-                                name="check"
-                                className="text-indigo-600 text-sm"
-                              />
-                            )}
-                          </button>
-                        ))}
-                      {availableCategories.filter((c) =>
-                        c.name.toLowerCase().includes(catSearch.toLowerCase())
-                      ).length === 0 && (
-                        <div className="text-xs text-slate-400 p-2 text-center italic">
-                          Kategori tidak ditemukan.
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>

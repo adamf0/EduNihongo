@@ -39,8 +39,8 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = React.memo(
 
     return (
       <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        <div className="bg-white border border-outline-variant/30 rounded-3xl w-full sm:w-[560px] md:w-[640px] max-w-2xl shrink-0 shadow-2xl overflow-hidden animate-scale-up flex flex-col">
-          <div className="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-slate-50 shrink-0">
+        <div className="bg-white border border-outline-variant/30 rounded-3xl w-full sm:w-[560px] md:w-[640px] max-w-2xl shrink-0 shadow-2xl relative animate-scale-up flex flex-col">
+          <div className="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-slate-50 shrink-0 rounded-t-3xl">
             <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
               <Icon
                 name={editingCategory ? "edit" : "add"}
@@ -57,7 +57,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = React.memo(
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4 rounded-b-3xl">
             {modalError && (
               <div className="bg-error-container text-on-error-container border border-error/20 text-xs p-3 rounded-xl font-bold">
                 {modalError}

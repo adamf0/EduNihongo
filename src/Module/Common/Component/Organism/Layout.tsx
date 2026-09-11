@@ -90,7 +90,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <p className="text-body-md text-on-surface-variant">© 2024 KanGraph. Connect the Dots of Japanese Mastery.</p>
           </div>
           <div className="flex flex-wrap gap-md">
-            <span onClick={() => navigate("/")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Tentang Kami</span>
+            <span onClick={() => navigate("/about")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Tentang Kami</span>
             <span onClick={() => navigate("/module")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Dokumentasi</span>
             <span onClick={() => navigate("/")} className="text-label-md text-on-surface-variant hover:text-primary hover:translate-x-1 transition-all cursor-pointer">Kebijakan Privasi</span>
           </div>
