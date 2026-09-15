@@ -113,7 +113,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
       border: "border-l-4 border-primary",
       categories: [
         {
-          name: "Pengalaman / Proses",
+          name: "1. Pengalaman / Perjalanan Waktu",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan sesuatu yang dialami atau dilalui dalam suatu proses maupun perjalanan kehidupan.",
           color: "border-green-500",
           jukugos: [
@@ -141,7 +141,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Jalur / Cara Melalui",
+          name: "2. Jalur / Cara Melalui",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan jalur, perantara, atau cara sesuatu dilakukan atau disampaikan.",
           color: "border-blue-500",
           jukugos: [
@@ -162,7 +162,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Pengelolaan / Ekonomi",
+          name: "3. Ekonomi / Pengelolaan",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan pengelolaan, penyelenggaraan, dan penggunaan sumber daya dalam kegiatan ekonomi.",
           color: "border-orange-500",
           jukugos: [
@@ -279,11 +279,11 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           question: "Kelompokkan jukugo kanji 経 berikut ini kedalam semantic graph yang tepat.",
           words: ["経営", "経験", "経費", "経口", "経常", "経歴", "経済", "経由", "経理", "経過"],
           groups: [
-            { "Pengalaman / Perjalanan Waktu": ["経験", "経過", "経歴"] },
+            { "Pengalaman / Proses": ["経験", "経過", "経歴"] },
             { "Jalur / Cara Melalui": ["経由", "経口"] },
-            { "Ekonomi / Pengelolaan": ["経済", "経営", "経費", "経理", "経常"] }
+            { "Pengelolaan / Ekonomi": ["経済", "経営", "経費", "経理", "経常"] }
           ],
-          explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 経."
+          explanation: "Pengelompokan jukugo berdasarkan hubungan makna kanji 経 dengan kanji pasangannya."
         },
         {
           type: "multiple",
@@ -377,7 +377,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
       border: "border-l-4 border-secondary",
       categories: [
         {
-          name: "Awal Waktu",
+          name: "1. AWAL WAKTU",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan awal suatu rentang waktu.",
           color: "border-green-500",
           jukugos: [
@@ -391,7 +391,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Mulai / Mengawali",
+          name: "2. MULAI",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan dimulainya suatu kegiatan, pekerjaan, atau gerakan.",
           color: "border-blue-500",
           jukugos: [
@@ -419,7 +419,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Awal dan Akhir",
+          name: "3. AWAL-AKHIR",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan keseluruhan rentang suatu keadaan dari awal hingga akhir.",
           color: "border-orange-500",
           jukugos: [
@@ -440,7 +440,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Penyelesaian",
+          name: "4. PENYELESAIAN",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan penanganan suatu urusan sampai pada bagian akhirnya.",
           color: "border-purple-500",
           jukugos: [
@@ -529,9 +529,9 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           question: "Kelompokkan jukugo kanji 始 berikut ini kedalam semantic graph yang tepat.",
           words: ["始動", "年始", "始末", "終始", "開始", "始終", "始業"],
           groups: [
-            { "Awal": ["年始"] },
-            { "Mulai": ["開始", "始業", "始動"] },
-            { "Awal-Akhir": ["終始", "始終"] },
+            { "Awal Waktu": ["年始"] },
+            { "Mulai / Mengawali": ["開始", "始業", "始動"] },
+            { "Awal dan Akhir": ["終始", "始終"] },
             { "Penyelesaian": ["始末"] }
           ],
           explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 始."
@@ -626,7 +626,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
       border: "border-l-4 border-tertiary",
       categories: [
         {
-          name: "Riwayat Pendidikan / Pekerjaan",
+          name: "1. RIWAYAT",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan riwayat atau perjalanan seseorang dalam pendidikan dan pekerjaan.",
           color: "border-purple-500",
           jukugos: [
@@ -654,7 +654,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Riwayat Kehidupan",
+          name: "2. KEHIDUPAN",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan catatan atau perjalanan suatu keadaan yang telah terjadi sebelumnya.",
           color: "border-green-500",
           jukugos: [
@@ -682,7 +682,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Sejarah / Perjalanan Waktu",
+          name: "3. SEJARAH",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan perjalanan suatu masa dan peristiwa yang telah berlangsung dari waktu ke waktu.",
           color: "border-blue-500",
           jukugos: [
@@ -695,7 +695,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
             },
             {
               word: "歴代",
-              reading: "れくだい",
+              reading: "れきだい",
               meaning: "dari generasi ke generasi",
               explanation: "Hubungan makna antara kanji 歴 dan 代 menjadi 歴代, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pergantian atau keberlangsungan dari satu generasi atau masa ke generasi berikutnya.”",
               charRoles: { "歴": "melewati masa", "代": "generasi, masa" }
@@ -785,9 +785,9 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           question: "Kelompokkan jukugo berikut ini ke dalam semantic graph yang sesuai.",
           words: ["歴代", "病歴", "学歴", "来歴", "歴史", "職歴", "歴年", "前歴", "経歴"],
           groups: [
-            { "Riwayat pendidikan / pekerjaan / karier": ["学歴", "職歴", "経歴"] },
-            { "Riwayat kehidupan / latar belakang": ["病歴", "前歴", "来歴"] },
-            { "Sejarah / perjalanan waktu": ["歴史", "歴代", "歴年"] }
+            { "Sejarah / Perjalanan Waktu": ["歴史", "歴代", "歴年"] },
+            { "Riwayat Pendidikan / Pekerjaan": ["学歴", "経歴", "職歴"] },
+            { "Riwayat Kehidupan": ["前歴", "病歴", "来歴"] }
           ],
           explanation: "Pengelompokan jukugo berdasarkan hubungan makna kanji 歴 dengan kanji pasangannya."
         },
@@ -881,7 +881,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
       border: "border-l-4 border-primary",
       categories: [
         {
-          name: "Masa / Sejarah",
+          name: "1. SEJARAH",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan sejarah dan masa yang mendahului atau menjadi bagian dari sejarah.",
           color: "border-blue-500",
           jukugos: [
@@ -909,8 +909,8 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Fakta / Sumber Sejarah",
-          description: "Kelompok ini menunjukkan makna yang berkaitan dengan fakta dan bahan yang digunakan untuk mengetahui atau mempelajari sejarah.",
+          name: "2. FAKTA",
+          description: "Kelompok ini menunjukkan makna yang berkaitan dengan fakta sejarah.",
           color: "border-green-500",
           jukugos: [
             {
@@ -919,7 +919,14 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
               meaning: "fakta sejarah",
               explanation: "Hubungan makna antara kanji 史 dan 実 menjadi 史実, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “fakta atau kenyataan yang benar-benar terjadi dalam sejarah.”",
               charRoles: { "史": "sejarah", "実": "kenyataan, fakta" }
-            },
+            }
+          ]
+        },
+        {
+          name: "3. SUMBER",
+          description: "Kelompok ini menunjukkan makna yang berkaitan dengan bahan atau sumber sejarah.",
+          color: "border-purple-500",
+          jukugos: [
             {
               word: "史料",
               reading: "しりょう",
@@ -930,7 +937,7 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Jenis / Sifat Sejarah",
+          name: "4. JENIS SEJARAH",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan sifat atau jenis catatan sejarah.",
           color: "border-orange-500",
           jukugos: [
@@ -951,9 +958,9 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           ]
         },
         {
-          name: "Dalam Sejarah",
+          name: "5. DALAM SEJARAH",
           description: "Kelompok ini menunjukkan makna yang berkaitan dengan sesuatu yang terjadi atau dikenal dalam perjalanan sejarah.",
-          color: "border-purple-500",
+          color: "border-pink-500",
           jukugos: [
             {
               word: "史上",
@@ -1040,10 +1047,9 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           question: "Kelompokkan jukugo berikut ini kedalam semantic graph yang sesuai.",
           words: ["秘史", "史上", "歴史", "史料", "前史", "正史", "先史", "史実"],
           groups: [
-            { "Sejarah": ["歴史"] },
-            { "Fakta": ["史実"] },
-            { "Sumber": ["史料"] },
-            { "Jenis Sejarah": ["正史", "前史", "先史", "秘史"] },
+            { "Masa / Sejarah": ["歴史", "先史", "前史"] },
+            { "Fakta / Sumber Sejarah": ["史料", "史実"] },
+            { "Jenis / Sifat Sejarah": ["正史", "秘史"] },
             { "Dalam Sejarah": ["史上"] }
           ],
           explanation: "Pengelompokan jukugo berdasarkan hubungan makna kanji 史."
@@ -1395,10 +1401,10 @@ Menggunakan jukugo yang berkaitan dengan waktu, pengalaman, dan kehidupan dalam 
           question: "Kelompokkan jukugo berikut ini kedalam semantic graph yang sesuai.",
           words: ["時期", "期間", "長期", "定期", "初期", "前期", "後期", "期限", "期日", "満期", "期待", "予期"],
           groups: [
-            { "Waktu / Periode": ["時期", "期間", "長期", "定期"] },
-            { "Tahap waktu": ["初期", "前期", "後期"] },
-            { "Batas Waktu": ["期限", "期日", "満期"] },
-            { "Harapan/perkiraan": ["期待", "予期"] }
+            { "Waktu / Periode": ["期間", "学期", "定期", "時期", "長期", "短期", "周期", "会期"] },
+            { "Harapan / Perkiraan": ["期待", "予期"] },
+            { "Tahap Waktu": ["初期", "前期", "後期", "早期", "期首", "期末", "末期"] },
+            { "Batas Waktu": ["期限", "期日", "納期", "延期", "満期"] }
           ],
           explanation: "Pengelompokan jukugo berdasarkan hubungan makna kanji 期."
         },

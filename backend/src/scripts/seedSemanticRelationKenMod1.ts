@@ -3,32 +3,41 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const KEN_MOD1_SEMANTIC_DATA = [
-  // 1) Pengujian
+  // 1) Pengujian / Pembuktian
   {
     kanji: "試験",
-    arti: "Ujian",
-    penjelasan: 'Hubungan makna antar kanji 試 dan 験, menunjukan bahwa gabungan kedua kanji itu mengandung makna "menguji kemampuan untuk membuktikan penguasan seseorang".',
+    arti: "ujian / pengujian",
+    penjelasan: "Hubungan makna antara kanji 試 dan 験 menjadi 試験, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “suatu kegiatan pengujian yang dilakukan untuk mengetahui atau mengukur pengetahuan, kemampuan, maupun hasil seseorang atau sesuatu”, sehingga mengandung makna ujian atau pengujian.",
     nodes: [
-      { jokugo: "試", arti: "Menguji" },
-      { jokugo: "験", arti: "Membuktikan hasil" }
+      { jokugo: "試", arti: "mencoba, menguji" },
+      { jokugo: "験", arti: "menguji, memverifikasi hasil" }
     ]
   },
   {
     kanji: "受験",
-    arti: "Mengikuti ujian",
-    penjelasan: 'Hubungan makna antar kanji 受 dan 験, menunjukan bahwa gabungan kedua kanji itu mengandung makna "seseorang mengikuti proses ujian".',
+    arti: "mengikuti ujian",
+    penjelasan: "Hubungan makna antara kanji 受 dan 験 menjadi 受験, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “tindakan menerima atau menjalani suatu proses pengujian”, sehingga bermakna mengikuti ujian.",
     nodes: [
-      { jokugo: "受", arti: "Menerima" },
-      { jokugo: "験", arti: "Ujian/verifikasi" }
+      { jokugo: "受", arti: "menerima, menjalani" },
+      { jokugo: "験", arti: "ujian, pengujian" }
     ]
   },
   {
-    kanji: "資格試験",
-    arti: "ujian sertifikasi",
-    penjelasan: 'Hubungan makna dari kanji 資格, menunjukan bahwa gabungan kedua kanji itu mengandung makna "ujian fungsinya untuk membuktikan kompetesnsi tertentu."',
+    kanji: "実験",
+    arti: "eksperimen / percobaan",
+    penjelasan: "Hubungan makna antara kanji 実 dan 験 menjadi 実験, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “kegiatan melakukan pengujian secara nyata atau praktis untuk membuktikan kebenaran suatu teori, hipotesis, atau fenomena.”",
     nodes: [
-      { jokugo: "資格", arti: "kualifikasi" },
-      { jokugo: "試験", arti: "ujian" }
+      { jokugo: "実", arti: "nyata, sungguh-sungguh, fakta" },
+      { jokugo: "験", arti: "menguji, membuktikan" }
+    ]
+  },
+  {
+    kanji: "治験",
+    arti: "uji klinis",
+    penjelasan: "Hubungan makna antara kanji 治 dan 験 menjadi 治験, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pengujian yang dilakukan untuk mengobati atau menyembuhkan, khususnya dalam konteks uji klinis obat atau metode pengobatan baru.”",
+    nodes: [
+      { jokugo: "治", arti: "menyembuhkan, mengobati, mengatur" },
+      { jokugo: "験", arti: "menguji, membuktikan" }
     ]
   },
 
@@ -36,96 +45,41 @@ export const KEN_MOD1_SEMANTIC_DATA = [
   {
     kanji: "経験",
     arti: "pengalaman",
-    penjelasan: 'Hubungan makna antar kanji 経 dan 験, menunjukan bahwa gabungan kedua kanji itu mengandung makna" sesuatu yang telah dialami secara langsung".',
+    penjelasan: "Hubungan makna antara kanji 経 dan 験 menjadi 経験, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “proses melewati berbagai peristiwa atau keadaan yang kemudian diuji dan diverifikasi secara langsung melalui kehidupan nyata”, sehingga bermakna pengalaman.",
     nodes: [
-      { jokugo: "経", arti: "Melewati" },
-      { jokugo: "験", arti: "Mengalami" }
+      { jokugo: "経", arti: "melewati, melalui, mengalami" },
+      { jokugo: "験", arti: "pengujian, verifikasi hasil, pengalaman" }
     ]
   },
   {
     kanji: "体験",
-    arti: "pengalaman langsung",
-    penjelasan: 'Hubungan makna antar 体 dan 験 , menunjukan bahwa gabungan kedua kanji itu mengandung makna "pengalaman yang dirasakan sendiri secara nyata".',
+    arti: "pengalaman pribadi / pengalaman langsung",
+    penjelasan: "Hubungan makna antara kanji 体 dan 験 menjadi 体験, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pengalaman yang dirasakan atau dialami secara langsung oleh tubuh dan diri sendiri.”",
     nodes: [
-      { jokugo: "体", arti: "badan" },
-      { jokugo: "験", arti: "mengalami" }
-    ]
-  },
-  {
-    kanji: "経験者",
-    arti: "orang yang berepangalam",
-    penjelasan: 'Hubungan makna antar kanji体 dan 験, menunjukan bahwa gabungan kedua kanji itu mengandung makna " orang yang telah memiliki pengalaman."',
-    nodes: [
-      { jokugo: "経験", arti: "Pengalaman" },
-      { jokugo: "者", arti: "Orang" }
+      { jokugo: "体", arti: "tubuh, diri sendiri" },
+      { jokugo: "験", arti: "pengalaman, pengujian langsung" }
     ]
   },
 
-  // 3) Penelitian
+  // 3) Verifikasi / Pemeriksaan
   {
-    kanji: "実験",
-    arti: "eksperimen",
-    penjelasan: 'Hubungan makna dari kanji 実 dan 験, menunjukan bahwa gabungan kedua kanji itu mengandung makna "pembuktian suatu teori melalui percobaan".',
+    kanji: "験算",
+    arti: "penghitungan ulang / verifikasi hitungan",
+    penjelasan: "Hubungan makna antara kanji 験 dan 算 menjadi 験算, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “kegiatan memeriksa atau memverifikasi kembali hasil perhitungan untuk memastikan kebenarannya.”",
     nodes: [
-      { jokugo: "実", arti: "nyata" },
-      { jokugo: "験", arti: "pembuktian" }
-    ]
-  },
-  {
-    kanji: "実験室",
-    arti: "laboratorium",
-    penjelasan: 'Hubungan makna antar kanji 実験 dan 室, menunjukan bahwa gabungan kedua kanji itu mengandung makna "tempat melakukan eksperimen"',
-    nodes: [
-      { jokugo: "実験", arti: "percobaan" },
-      { jokugo: "室", arti: "ruangan" }
-    ]
-  },
-  {
-    kanji: "被験者",
-    arti: "subjek penelitian",
-    penjelasan: 'Hubungan makna antar kanji dari 被, 験 dan 者, menunjukan bahwa gabungan ketiga kanji itu mengandung makna "orang yang menjadi objek eksperimen atau penelitian".',
-    nodes: [
-      { jokugo: "被", arti: "yang dikenai" },
-      { jokugo: "験", arti: "menguji" },
-      { jokugo: "者", arti: "orang" }
+      { jokugo: "験", arti: "memverifikasi, menguji" },
+      { jokugo: "算", arti: "menghitung, perhitungan" }
     ]
   },
 
-  // 4) Sertifikasi
+  // 4) Hasil / Efek / Bukti
   {
-    kanji: "受験生",
-    arti: "peserta ujian",
-    penjelasan: 'Hubungan makna antar kanji 受験 dan 生, menunjukan bahwa gabungan kedua kanji itu mengandung makna "seseorang sedang mengikuti ujian".',
+    kanji: "効験",
+    arti: "khasiat / efektivitas / bukti hasil",
+    penjelasan: "Hubungan makna antara kanji 効 dan 験 menjadi 効験, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “bukti nyata dari adanya khasiat, kemanjuran, atau efektivitas dari suatu usaha, obat, maupun tindakan.”",
     nodes: [
-      { jokugo: "受験", arti: "mengikuti ujian" },
-      { jokugo: "生", arti: "siswa/pelajar" }
-    ]
-  },
-  {
-    kanji: "検定試験",
-    arti: "ujian sertifikasi",
-    penjelasan: 'Hubungan makna dari kanji検 dan 定, menunjukan bahwa gabungan kedua kanji itu mengandung makna" proses pemeriksaan untuk menetapkan kemampuan seseorang".',
-    nodes: [
-      { jokugo: "検定", arti: "pemeriksaan standar" },
-      { jokugo: "試験", arti: "ujian" }
-    ]
-  },
-  {
-    kanji: "試験",
-    arti: "ujian",
-    penjelasan: 'Hubungan makna dari kanji試 dan験, menunjukan bahwa gabungan kedua kanji itu mengandung makna "menguji kemampuan seseorang".',
-    nodes: [
-      { jokugo: "試", arti: "menguji" },
-      { jokugo: "験", arti: "ujian" }
-    ]
-  },
-  {
-    kanji: "受験番号",
-    arti: "nomor peserta ujian",
-    penjelasan: 'Hubungan makna antar kanji 受験 dan 番号 saat disatukan menjadi 受験番号, menunjukan bahwa gabungan kedua kosakata kanji tersebut, mengandung makna "nomor identitas khusus yang diberikan kepada peserta ujian untuk memastikan pengenalan dan verifikasi data diri selama seluruh rangkain ujian berlangsung".',
-    nodes: [
-      { jokugo: "受験", arti: "mengikuti ujian" },
-      { jokugo: "番号", arti: "nomor identitas" }
+      { jokugo: "効", arti: "berkhasiat, efektif, hasil" },
+      { jokugo: "験", arti: "bukti, verifikasi hasil" }
     ]
   }
 ];

@@ -12,9 +12,9 @@ export const radicalItems: ModuleItem[] = [
     isLocked: false,
   },
   {
-    text: "Mnemonik Visual (Terkunci)",
+    text: "Mnemonik Visual",
     isCompleted: false,
-    isLocked: true,
+    isLocked: false,
   },
 ];
 
@@ -40,11 +40,11 @@ export const vocabItems: ModuleItem[] = [
   {
     text: "Kata Kerja Majemuk",
     isCompleted: false,
-    isLocked: true,
+    isLocked: false,
   },
   {
     text: "Konsep Abstrak dalam Teks",
     isCompleted: false,
-    isLocked: true,
+    isLocked: false,
   },
 ];

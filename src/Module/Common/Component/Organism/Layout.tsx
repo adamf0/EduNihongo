@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../Sidebar";
 import Icon from "../Icon";
 import MusubiLogo from "../MusubiLogo";
 import { useNavigate, useLocation } from "react-router-dom";
+import { api } from "../../Utility/api";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,17 +21,44 @@ export const Layout: React.FC<LayoutProps> = ({
   fabIcon = "edit_square",
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
 
-  const mobileBottomNavItems = [
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await api.profile.get();
+        setProfile(data);
+      } catch (err) {
+        console.error("Failed to load layout profile:", err);
+      }
+    };
+    if (api.auth.isAuthenticated()) {
+      fetchProfile();
+    }
+  }, [currentPath]);
+
+  const role = profile?.role || api.auth.getRole();
+
+  const adminBottomNavItems = [
+    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+    { icon: "layers", label: "Modul", route: "/admin" },
+    { icon: "draw", label: "Kanji", route: "/admin/kanji" },
+    { icon: "menu_book", label: "Jukugo", route: "/admin/jukugo" },
+    { icon: "category", label: "Kategori", route: "/admin/categories" },
+  ];
+
+  const userBottomNavItems = [
     { icon: "home", label: "Beranda", route: "/dashboard" },
     { icon: "menu_book", label: "Kanji", route: "/module" },
     { icon: "school", label: "Belajar", route: "/latihan" },
     { icon: "analytics", label: "Stat", route: "/progress" },
     { icon: "person", label: "Profil", route: "/profile" },
   ];
+
+  const mobileBottomNavItems = role === "ADMIN" ? adminBottomNavItems : userBottomNavItems;
 
   return (
     <div className="min-h-screen bg-background text-on-surface flex flex-col overflow-x-hidden">
@@ -75,7 +103,7 @@ export const Layout: React.FC<LayoutProps> = ({
               onClick={() => navigate("/profile")}
               alt="Avatar Pengguna"
               className="w-8 h-8 rounded-full lg:hidden border-2 border-primary/10 cursor-pointer object-cover"
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150"
+              src={profile?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150"}
             />
           </div>
         </header>
@@ -98,14 +126,20 @@ export const Layout: React.FC<LayoutProps> = ({
       </div>
 
       {/* Bottom Navigation Bar (Mobile Only) */}
-      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-4 pt-2 bg-surface dark:bg-surface-dim border-t border-outline-variant/20 z-50 lg:hidden shadow-lg rounded-t-xl">
+      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-1 sm:px-3 pb-3 pt-1.5 bg-surface dark:bg-surface-dim border-t border-outline-variant/20 z-50 lg:hidden shadow-lg rounded-t-2xl">
         {mobileBottomNavItems.map((item) => {
-          const isActive = currentPath === item.route;
+          const isActive =
+            currentPath === item.route ||
+            (item.route === "/admin" && currentPath === "/admin") ||
+            (item.route === "/admin/kanji" && (currentPath.startsWith("/admin/kanji") || currentPath.startsWith("/admin/kanji-form"))) ||
+            (item.route === "/admin/jukugo" && currentPath.startsWith("/admin/jukugo")) ||
+            (item.route === "/admin/categories" && currentPath.startsWith("/admin/categories"));
+
           return (
             <button
               key={item.route}
               onClick={() => navigate(item.route)}
-              className={`flex flex-col items-center justify-center px-4 py-1 active:scale-95 transition-all rounded-full cursor-pointer ${
+              className={`flex flex-col items-center justify-center px-1 sm:px-2.5 py-1 active:scale-95 transition-all rounded-xl cursor-pointer min-w-0 flex-1 ${
                 isActive
                   ? "bg-secondary-container text-on-secondary-container font-bold"
                   : "text-on-surface-variant hover:bg-surface-container-high"
@@ -113,10 +147,12 @@ export const Layout: React.FC<LayoutProps> = ({
             >
               <Icon
                 name={item.icon}
-                className="text-2xl block"
+                className="text-xl sm:text-2xl block"
                 style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
               />
-              <span className="text-caption">{item.label}</span>
+              <span className="text-[10px] leading-tight tracking-tight truncate max-w-[56px] sm:max-w-none text-center">
+                {item.label}
+              </span>
             </button>
           );
         })}

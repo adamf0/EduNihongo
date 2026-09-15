@@ -79,6 +79,14 @@ export async function buildDynamicKanjiGraph(kanjiId: number) {
   }
 
   const categoryList = Array.from(categoryMap.entries());
+  categoryList.sort(([nameA], [nameB]) => {
+    const matchA = nameA.match(/^(\d+)\./);
+    const matchB = nameB.match(/^(\d+)\./);
+    if (matchA && matchB) {
+      return parseInt(matchA[1], 10) - parseInt(matchB[1], 10);
+    }
+    return 0;
+  });
   const wordToSubNodeIdMap = new Map<string, string>();
   const nodeIdSet = new Set<string>([rootId]);
 
@@ -131,6 +139,7 @@ export async function buildDynamicKanjiGraph(kanjiId: number) {
         type: "sub-bottom",
         parentPill: catId,
         categoryId: catId,
+        categoryName: catName,
         semanticNodes: semanticNodes
       });
       nodeIdSet.add(subId);
@@ -152,8 +161,12 @@ export async function buildDynamicKanjiGraph(kanjiId: number) {
     const isCross = Boolean(
       edge.predicate &&
       edge.predicate !== "kategori" &&
-      edge.predicate !== "mencakup"
+      edge.predicate !== "mencakup" &&
+      edge.predicate !== "penyusun"
     );
+
+    // Only include cross-links from DB; hierarchy edges are already generated dynamically above
+    if (!isCross) continue;
 
     edges.push({
       id: edge.id,
@@ -161,9 +174,23 @@ export async function buildDynamicKanjiGraph(kanjiId: number) {
       target: edge.target.trim(),
       predicate: edge.predicate || undefined,
       label: edge.predicate || undefined,
-      isCrossLink: isCross
+      isCrossLink: true
     });
   }
 
-  return { nodes, edges };
+  // Strict deduplication: guarantee no two edges connect the same pair of nodes
+  const edgeDedupeMap = new Map<string, any>();
+  for (const e of edges) {
+    const pairKey = [e.source, e.target].sort().join("<->");
+    if (!edgeDedupeMap.has(pairKey)) {
+      edgeDedupeMap.set(pairKey, e);
+    } else {
+      const existing = edgeDedupeMap.get(pairKey);
+      if (!existing.predicate && e.predicate) {
+        edgeDedupeMap.set(pairKey, e);
+      }
+    }
+  }
+
+  return { nodes, edges: Array.from(edgeDedupeMap.values()) };
 }

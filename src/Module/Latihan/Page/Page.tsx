@@ -33,7 +33,7 @@ import {
     Paperclip,
     GitGraph,
 } from "lucide-react";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const worker = await createWorker("jpn");
@@ -137,7 +137,38 @@ const normalizeGroups = (rawGroups: any): any[] => {
     return [];
 };
 
+const cleanQuizWord = (w: string) => {
+    let str = (w || "").replace(/[。,.、\s！!？?]/g, "").trim();
+    if (str === "きのう" || str === "昨日") return "昨日";
+    return str;
+};
+
+const wordsQuizMatch = (w1: string, w2: string) => {
+    const c1 = cleanQuizWord(w1);
+    const c2 = cleanQuizWord(w2);
+    if (c1 === c2) return true;
+    if ((c1 === "問題" && c2 === "質問") || (c1 === "質問" && c2 === "問題")) return true;
+    if ((c1 === "の" && c2 === "は") || (c1 === "は" && c2 === "の")) return true;
+    if ((c1 === "物が" && c2 === "建物が") || (c1 === "建物が" && c2 === "物が")) return true;
+    if ((c1 === "つけば" && c2 === "ついたら") || (c1 === "ついたら" && c2 === "つけば")) return true;
+    if ((c1 === "安くなるでしょう" && c2 === "はやくなるでしょう") || (c1 === "はやくなるでしょう" && c2 === "安くなるでしょう")) return true;
+    if ((c1 === "つくえの" && c2 === "つくえ") || (c1 === "つくえ" && c2 === "つくえの")) return true;
+    if ((c1 === "した" && c2 === "準備した") || (c1 === "準備した" && c2 === "した")) return true;
+    if ((c1 === "ほうがいいです" && c2 === "ほうが") || (c1 === "ほうが" && c2 === "ほうがいいです")) return true;
+    if ((c1 === "ほうがいいです" && c2 === "いいです") || (c1 === "いいです" && c2 === "ほうがいいです")) return true;
+    if ((c1 === "しく" && c2 === "詳しく") || (c1 === "詳しく" && c2 === "しく")) return true;
+    if ((c1 === "口論しない" && c2 === "口論した") || (c1 === "口論した" && c2 === "口論しない")) return true;
+    if ((c1 === "友達" && c2 === "友達と") || (c1 === "友達と" && c2 === "友達")) return true;
+    if ((c1 === "ほうが" && c2 === "方が") || (c1 === "方が" && c2 === "ほうが")) return true;
+    if ((c1 === "が始まるかもしれません" && c2 === "始まるかもしれません") || (c1 === "始まるかもしれません" && c2 === "が始まるかもしれません")) return true;
+    if ((c1 === "検討会" && c2 === "検討会が") || (c1 === "検討会が" && c2 === "検討会")) return true;
+    if ((c1 === "発表されました" && c2 === "されました") || (c1 === "されました" && c2 === "発表されました")) return true;
+    if ((c1 === "経口で" && c2 === "口で") || (c1 === "口で" && c2 === "経口で")) return true;
+    return false;
+};
+
 interface QuizQuestion {
+    id?: number;
     type:
         | "unscramble"
         | "fill"
@@ -263,6 +294,61 @@ const diffCharacters = (target: string, spoken: string): DiffPart[] => {
     return result;
 };
 
+const JukugoCard = React.memo<{
+    jukugo: any;
+    isActiveCard: boolean;
+    onSelect: (word: string) => void;
+    onPlayAudio: (word: string) => void;
+}>(({ jukugo, isActiveCard, onSelect, onPlayAudio }) => {
+    const wordStr = (jukugo.word || "").trim();
+    return (
+        <div
+            id={jukugo.nodeId ? `jukugo-list-card-${jukugo.nodeId}` : `jukugo-list-card-${wordStr}`}
+            data-word={wordStr}
+            onClick={() => onSelect(wordStr)}
+            className={`rounded-[24px] p-5 transition-all duration-300 flex items-center justify-between group cursor-pointer border ${
+                isActiveCard
+                    ? "bg-rose-50/50 border-2 border-rose-400 shadow-md ring-2 ring-rose-200/60 -translate-y-0.5"
+                    : "bg-white border-slate-200/80 hover:border-rose-300/80 hover:bg-rose-50/20 shadow-xs hover:shadow-md hover:-translate-y-0.5"
+            }`}
+        >
+            <div className="flex flex-col gap-1.5 text-left min-w-0 pr-3">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                    <span
+                        className={`font-serif text-3xl font-black tracking-wide ${
+                            isActiveCard
+                                ? "text-[#8f0020]"
+                                : "text-slate-900 group-hover:text-[#8f0020]"
+                        }`}
+                    >
+                        {jukugo.word}
+                    </span>
+                    {jukugo.reading && (
+                        <span className="text-sm font-bold text-slate-500">
+                            ({jukugo.reading})
+                        </span>
+                    )}
+                </div>
+                <span className="text-sm font-black text-[#8f0020] leading-snug line-clamp-2">
+                    {jukugo.meaning}
+                </span>
+            </div>
+
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onPlayAudio(jukugo.word);
+                }}
+                className="w-11 h-11 rounded-2xl bg-slate-100/90 hover:bg-[#8f0020] text-slate-600 hover:text-white border border-slate-200/80 flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0 active:scale-90"
+                title="Putar Suara"
+            >
+                <Volume2 className="w-5 h-5" />
+            </button>
+        </div>
+    );
+});
+
 export const LatihanPage: React.FC = () => {
     const navigate = useNavigate();
     const canvasRef = React.useRef<DrawingCanvasRef>(null);
@@ -324,12 +410,14 @@ export const LatihanPage: React.FC = () => {
         Record<string, string>
     >({});
     const [unscrambleSelected, setUnscrambleSelected] = useState<string[]>([]);
+    const [unscrambleSelectedIndices, setUnscrambleSelectedIndices] = useState<number[]>([]);
     const [essayAnswer, setEssayAnswer] = useState("");
     const [groupingAnswers, setGroupingAnswers] = useState<
         Record<string, string>
     >({});
     const [quizFinished, setQuizFinished] = useState(false);
     const [quizScore, setQuizScore] = useState(0);
+    const [quizAttemptResult, setQuizAttemptResult] = useState<any>(null);
     const [quizFeedback, setQuizFeedback] = useState<any[]>([]);
     const [savingQuiz, setSavingQuiz] = useState(false);
     const [isQuizTransitioning, setIsQuizTransitioning] = useState(false);
@@ -438,12 +526,133 @@ export const LatihanPage: React.FC = () => {
         null,
     );
     const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+    const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>("Semua");
     const [allKanjisMap, setAllKanjisMap] = useState<Map<string, any>>(
         new Map(),
     );
     const [allJukugosMap, setAllJukugosMap] = useState<Map<string, any>>(
         new Map(),
     );
+
+    // Extract categories from graph.nodes for Daftar Jukugo filter
+    const graphCategoryNodes = useMemo(() => {
+        if (!kanjiData?.graph || !kanjiData.graph.nodes) return [];
+        return kanjiData.graph.nodes.filter(
+            (n: any) => n.type === "bottom" || n.type === "category"
+        );
+    }, [kanjiData?.graph]);
+
+    // List of unique category tabs: ["Semua", ...categories]
+    const categoriesList = useMemo(() => {
+        const list: string[] = ["Semua"];
+        graphCategoryNodes.forEach((c: any) => {
+            const label = (c.label || c.name || c.kanji || "").replace(/^\d+\.\s*/, "").trim();
+            if (label && !list.includes(label)) list.push(label);
+        });
+        return list;
+    }, [graphCategoryNodes]);
+
+    // All Jukugo items for display: preserves all instances across categories without deduplication dropping valid entries
+    const allDisplayJukugosMemo = useMemo(() => {
+        const catIdToLabel = new Map<string, string>();
+        graphCategoryNodes.forEach((c: any) => {
+            const label = (c.label || c.name || c.kanji || "").replace(/^\d+\.\s*/, "").trim();
+            catIdToLabel.set(c.id, label);
+        });
+
+        // 1. Prioritize building from graph.nodes so every node in the atlas has a matching card
+        const subBottomNodes = (kanjiData?.graph?.nodes || []).filter(
+            (n: any) => n.type === "sub-bottom" || n.type === "sub"
+        );
+
+        if (subBottomNodes.length > 0) {
+            return subBottomNodes.map((n: any, idx: number) => {
+                const parentCatId = n.parentPill || n.categoryId;
+                const catLabel = catIdToLabel.get(parentCatId) || (n.categoryName || "").replace(/^\d+\.\s*/, "").trim();
+                const word = (n.kanji || n.word || n.label || "").trim();
+                const reading = (n.subLabel || "").replace(/[()]/g, "").trim() || n.reading || "";
+                const meaning = (n.description || n.meaning || "").replace(/^\([^)]+\)\s*/, "").trim();
+                return {
+                    id: n.jukugoId || idx + 1,
+                    nodeId: n.id,
+                    word,
+                    reading,
+                    meaning,
+                    category: catLabel,
+                    categoryId: parentCatId,
+                };
+            });
+        }
+
+        // 2. Fallback to kanjiData.jukugos
+        const jukugos = kanjiData?.jukugos || [];
+        return jukugos.map((j: any, idx: number) => ({
+            id: j.id || idx + 1,
+            nodeId: `jk-node-${j.id || idx + 1}`,
+            word: (j.word || "").trim(),
+            reading: (j.reading || "").trim(),
+            meaning: (j.meaning || "").trim(),
+            category: (j.category || "").replace(/^\d+\.\s*/, "").trim(),
+        }));
+    }, [kanjiData?.graph, kanjiData?.jukugos, graphCategoryNodes]);
+
+    // Filtered Jukugos based on selectedCategoryTab
+    const filteredJukugos = useMemo(() => {
+        if (selectedCategoryTab === "Semua") {
+            return allDisplayJukugosMemo;
+        }
+        return allDisplayJukugosMemo.filter((j: any) => {
+            return (j.category || "").trim() === selectedCategoryTab.trim();
+        });
+    }, [allDisplayJukugosMemo, selectedCategoryTab]);
+
+    const [visibleJukugoCount, setVisibleJukugoCount] = useState(30);
+
+    // Reset visible count when category filter changes
+    useEffect(() => {
+        setVisibleJukugoCount(30);
+    }, [selectedCategoryTab]);
+
+    // Auto-expand visible count if activeJukugoWord is beyond current limit
+    useEffect(() => {
+        if (!activeJukugoWord) return;
+        const idx = filteredJukugos.findIndex(
+            (j: any) => (j.word || "").trim() === activeJukugoWord.trim()
+        );
+        if (idx >= 0) {
+            setVisibleJukugoCount((prev) => Math.max(prev, idx + 10));
+        }
+    }, [activeJukugoWord, filteredJukugos]);
+
+    const displayedJukugos = useMemo(() => {
+        return filteredJukugos.slice(0, visibleJukugoCount);
+    }, [filteredJukugos, visibleJukugoCount]);
+
+    const handleJukugoListScroll = useCallback(
+        (e: React.UIEvent<HTMLDivElement>) => {
+            const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+            if (scrollTop + clientHeight >= scrollHeight - 150) {
+                setVisibleJukugoCount((prev) =>
+                    Math.min(prev + 30, filteredJukugos.length),
+                );
+            }
+        },
+        [filteredJukugos.length],
+    );
+
+    // Auto-scroll selected card ONLY within its own container without scrolling window page up
+    useEffect(() => {
+        if (!activeJukugoWord && !activeNodeId) return;
+        const containerEl = document.getElementById("jukugo-list-container");
+        const cardEl =
+            (activeNodeId ? document.getElementById(`jukugo-list-card-${activeNodeId}`) : null) ||
+            (activeJukugoWord ? document.getElementById(`jukugo-list-card-${activeJukugoWord.trim()}`) : null) ||
+            (activeJukugoWord ? (document.querySelector(`[data-word="${activeJukugoWord.trim()}"]`) as HTMLElement) : null);
+        if (containerEl && cardEl) {
+            const cardTop = cardEl.offsetTop - containerEl.offsetTop;
+            containerEl.scrollTo({ top: cardTop - 12, behavior: "smooth" });
+        }
+    }, [activeJukugoWord, activeNodeId, visibleJukugoCount]);
 
     const handleSelectJukugo = useCallback(
         (word: string | null, nodeId?: string | null) => {
@@ -1013,6 +1222,7 @@ export const LatihanPage: React.FC = () => {
             setCorrectAnswerClicked(saved.correctAnswerClicked ?? null);
             setWrongAnswers(saved.wrongAnswers ?? []);
             setUnscrambleSelected(saved.unscrambleSelected ?? []);
+            setUnscrambleSelectedIndices(saved.unscrambleSelectedIndices ?? []);
             setUnscrambleWrongOrder(saved.unscrambleWrongOrder ?? false);
             setMatchingAnswers(saved.matchingAnswers ?? {});
             setMatchingCorrect(saved.matchingCorrect ?? {});
@@ -1028,6 +1238,7 @@ export const LatihanPage: React.FC = () => {
             setCorrectAnswerClicked(null);
             setWrongAnswers([]);
             setUnscrambleSelected([]);
+            setUnscrambleSelectedIndices([]);
             setUnscrambleWrongOrder(false);
             setMatchingAnswers({});
             setMatchingCorrect({});
@@ -1205,27 +1416,25 @@ export const LatihanPage: React.FC = () => {
         const newWrong: Record<string, boolean> = {};
 
         wordsList.forEach((w) => {
-            let correctGroupName = "";
-            if (Array.isArray(groups) && groups.length > 0) {
-                const correctGroup = groups.find((g: any) => {
-                    if (typeof g === "string") return false;
-                    const wordsInG = Array.isArray(g.correctWords)
-                        ? g.correctWords
-                        : Array.isArray(g.items)
-                          ? g.items
-                          : [];
-                    return wordsInG.includes(w);
-                });
-                if (correctGroup) {
-                    correctGroupName =
-                        correctGroup.name ||
-                        correctGroup.category ||
-                        correctGroup.title ||
-                        "";
-                }
-            }
+            const studentChoice = (nextAnswers[w] || "").trim();
+            const matchingGroups = (Array.isArray(groups) ? groups : []).filter((g: any) => {
+                if (typeof g === "string") return false;
+                const wordsInG = Array.isArray(g.correctWords)
+                    ? g.correctWords
+                    : Array.isArray(g.items)
+                      ? g.items
+                      : [];
+                return wordsInG.includes(w);
+            });
 
-            if (nextAnswers[w] === correctGroupName) {
+            const isMatch = matchingGroups.some((g: any) => {
+                const groupName = (g.name || g.category || g.title || "").trim();
+                const cleanGroup = groupName.replace(/^\d+[\.\)]\s*/, "").trim().toLowerCase();
+                const cleanStudent = studentChoice.replace(/^\d+[\.\)]\s*/, "").trim().toLowerCase();
+                return groupName === studentChoice || (cleanGroup !== "" && cleanGroup === cleanStudent);
+            });
+
+            if (isMatch && studentChoice !== "") {
                 newCorrect[w] = true;
             } else {
                 newWrong[w] = true;
@@ -1265,7 +1474,9 @@ export const LatihanPage: React.FC = () => {
         if (isQuizTransitioning || correctAnswerClicked) return;
 
         const nextSelected = unscrambleSelected.filter((_, idx) => idx !== wordIdx);
+        const nextIndices = unscrambleSelectedIndices.filter((_, idx) => idx !== wordIdx);
         setUnscrambleSelected(nextSelected);
+        setUnscrambleSelectedIndices(nextIndices);
         setUnscrambleWrongOrder(false);
 
         setUserAnswersMap((prev) => ({
@@ -1273,6 +1484,7 @@ export const LatihanPage: React.FC = () => {
             [currentQuestionIdx]: {
                 ...(prev[currentQuestionIdx] || {}),
                 unscrambleSelected: nextSelected,
+                unscrambleSelectedIndices: nextIndices,
                 unscrambleWrongOrder: false,
             },
         }));
@@ -1280,36 +1492,36 @@ export const LatihanPage: React.FC = () => {
 
     const handleUnscrambleWordClick = (
         word: string,
+        poolIdx: number,
         currentQ: QuizQuestion,
         questions: QuizQuestion[],
     ) => {
-        if (isQuizTransitioning || unscrambleSelected.includes(word)) return;
+        const correctOrder = currentQ.correctOrder || [];
+        const targetWords = correctOrder.length || (currentQ.words || []).length;
+        if (isQuizTransitioning || unscrambleSelectedIndices.includes(poolIdx) || unscrambleSelected.length >= targetWords) return;
 
         const nextSelected = [...unscrambleSelected, word];
+        const nextIndices = [...unscrambleSelectedIndices, poolIdx];
         setUnscrambleSelected(nextSelected);
+        setUnscrambleSelectedIndices(nextIndices);
 
-        const totalWords = (currentQ.words || []).length || (currentQ.correctOrder || []).length;
-        if (nextSelected.length < totalWords) {
+        if (nextSelected.length < targetWords) {
             setUserAnswersMap((prev) => ({
                 ...prev,
                 [currentQuestionIdx]: {
                     ...(prev[currentQuestionIdx] || {}),
                     unscrambleSelected: nextSelected,
+                    unscrambleSelectedIndices: nextIndices,
                 },
             }));
             return;
         }
 
-        const correctOrder = currentQ.correctOrder || [];
-        const cleanWord = (w: string) => {
-            let str = (w || "").replace(/[。,.、\s]/g, "").trim();
-            if (str === "きのう" || str === "昨日") return "昨日";
-            return str;
-        };
-
-        const isOrderCorrect = nextSelected.every(
-            (w, idx) => cleanWord(w) === cleanWord(correctOrder[idx] || "")
-        );
+        const isOrderCorrect =
+            nextSelected.length === correctOrder.length &&
+            nextSelected.every(
+                (w, idx) => wordsQuizMatch(w, correctOrder[idx] || "")
+            );
 
         if (isOrderCorrect) {
             playTingTing();
@@ -1766,7 +1978,7 @@ export const LatihanPage: React.FC = () => {
             return !!correctAnswerClicked || wrongAnswers.length > 0;
         }
         if (currQ.type === "unscramble") {
-            const totalWords = (currQ.words || []).length || (currQ.correctOrder || []).length;
+            const totalWords = (currQ.correctOrder || []).length || (currQ.words || []).length;
             return (
                 (unscrambleSelected.length > 0 && unscrambleSelected.length === totalWords) ||
                 unscrambleWrongOrder
@@ -1827,55 +2039,144 @@ export const LatihanPage: React.FC = () => {
         let isCorrect = false;
         let studentAnswerString = "";
         let correctAnswerString = "";
+        let rubricScore = 0; // 0-4 scale for Model A
+        let groupingRatio = 0; // ratio 0-1 for Model B
+        let groupingRaw: number | undefined = undefined;
+        let groupingMax: number | undefined = undefined;
 
         const finalAnswer = passedSelectedAnswer || selectedAnswer;
+        const cleanStr = (s: string) => (s || "").replace(/[。,.、\s]/g, "").trim();
 
         if (currentQ.type === "multiple" || currentQ.type === "fill") {
             studentAnswerString = finalAnswer || "(Tidak ada jawaban)";
             correctAnswerString = getCorrectAnswerText(currentQ);
+            isCorrect = cleanStr(studentAnswerString) === cleanStr(correctAnswerString);
         } else if (currentQ.type === "unscramble") {
             studentAnswerString = unscrambleSelected.join("");
             correctAnswerString = (currentQ.correctOrder || []).join("");
+
+            const correctOrder = currentQ.correctOrder || [];
+            const isOrderCorrect =
+                unscrambleSelected.length === correctOrder.length &&
+                unscrambleSelected.length > 0 &&
+                unscrambleSelected.every((w, idx) => wordsQuizMatch(w, correctOrder[idx] || ""));
+
+            const savedMistake =
+                userAnswersMap[currentQuestionIdx]?.hasQuestionMistake ||
+                unscrambleWrongOrder ||
+                hasQuestionMistake;
+
+            if (isOrderCorrect && !savedMistake) {
+                rubricScore = 4;
+                isCorrect = true;
+            } else if (isOrderCorrect && savedMistake) {
+                rubricScore = 3;
+                isCorrect = true;
+            } else {
+                // Check how many words placed in correct position
+                const correctPosCount = unscrambleSelected.filter(
+                    (w, idx) => wordsQuizMatch(w, correctOrder[idx] || ""),
+                ).length;
+                if (correctPosCount >= Math.ceil(correctOrder.length / 2) && unscrambleSelected.length > 0) {
+                    rubricScore = 2;
+                } else if (unscrambleSelected.length > 0) {
+                    rubricScore = 1;
+                } else {
+                    rubricScore = 0;
+                }
+                isCorrect = false;
+            }
         } else if (currentQ.type === "matching") {
             const pairs = currentQ.pairs || [];
             const matchedDetails: string[] = [];
+            let allPairsCorrect = pairs.length > 0;
             pairs.forEach((p) => {
                 const studentMatch = matchingAnswers[p.left] || "";
                 matchedDetails.push(`${p.left} → ${studentMatch || "?"}`);
+                if (studentMatch !== p.right) {
+                    allPairsCorrect = false;
+                }
             });
             studentAnswerString = matchedDetails.join(", ");
             correctAnswerString = pairs
                 .map((p) => `${p.left} → ${p.right}`)
                 .join(", ");
+            isCorrect = allPairsCorrect;
         } else if (currentQ.type === "essay") {
             studentAnswerString = essayAnswer.trim();
             correctAnswerString = `(Kosakata wajib: ${currentQ.targetWord || ""})`;
+            const targetWord = currentQ.targetWord || "";
+            isCorrect =
+                essayStatus === "correct" ||
+                (targetWord ? studentAnswerString.includes(targetWord) : studentAnswerString.length > 0);
         } else if (currentQ.type === "grouping") {
-            const groups = currentQ.groups || [];
+            const groups = normalizeGroups(currentQ.groups);
+            let rawWords = parseJsonDeep(currentQ.words);
+            if (!Array.isArray(rawWords) || rawWords.length === 0) {
+                if (Array.isArray(groups) && groups.length > 0) {
+                    rawWords = groups.flatMap((g: any) =>
+                        typeof g === "object" && g
+                            ? g.correctWords || g.items || []
+                            : [],
+                    );
+                }
+            }
+            const wordsList = Array.from(new Set(rawWords || [])) as string[];
             const details: string[] = [];
-            const words = currentQ.words || [];
-            words.forEach((w) => {
-                const studentGroup = groupingAnswers[w] || "";
+            let correctJukugoCount = 0;
+
+            wordsList.forEach((w) => {
+                const studentGroup = (groupingAnswers[w] || "").trim();
                 details.push(`${w} → ${studentGroup || "?"}`);
+
+                const matchingGroups = (Array.isArray(groups) ? groups : []).filter((g: any) => {
+                    if (typeof g === "string") return false;
+                    const wordsInG = Array.isArray(g.correctWords)
+                        ? g.correctWords
+                        : Array.isArray(g.items)
+                          ? g.items
+                          : [];
+                    return wordsInG.includes(w);
+                });
+
+                const isMatch = matchingGroups.some((g: any) => {
+                    const groupName = (g.name || g.category || g.title || "").trim();
+                    const cleanGroup = groupName.replace(/^\d+[\.\)]\s*/, "").trim().toLowerCase();
+                    const cleanStudent = studentGroup.replace(/^\d+[\.\)]\s*/, "").trim().toLowerCase();
+                    return groupName === studentGroup || (cleanGroup !== "" && cleanGroup === cleanStudent);
+                });
+
+                if (isMatch && studentGroup !== "") {
+                    correctJukugoCount++;
+                }
             });
+
             studentAnswerString = details.join(", ");
             correctAnswerString = groups
-                .map((g) => `${g.name}: [${(g.correctWords || []).join(", ")}]`)
+                .map((g: any) => `${g.name || g.category || g.title || ""}: [${(g.correctWords || g.items || []).join(", ")}]`)
                 .join(" | ");
+
+            groupingRatio = wordsList.length > 0 ? correctJukugoCount / wordsList.length : 0;
+            isCorrect = wordsList.length > 0 && correctJukugoCount === wordsList.length;
+            groupingRaw = correctJukugoCount;
+            groupingMax = wordsList.length;
         }
 
-        // scoring is correct only if student made no mistake on this question
-        isCorrect = !hasQuestionMistake;
+        const questionFeedbackItem = {
+            question: currentQ.question,
+            type: currentQ.type,
+            studentAnswer: studentAnswerString,
+            correctAnswer: correctAnswerString,
+            isCorrect,
+            rubricScore,
+            groupingRatio,
+            groupingRaw,
+            groupingMax,
+        };
 
         setQuizFeedback((prev) => {
             const next = [...prev];
-            next[currentQuestionIdx] = {
-                question: currentQ.question,
-                type: currentQ.type,
-                studentAnswer: studentAnswerString,
-                correctAnswer: correctAnswerString,
-                isCorrect,
-            };
+            next[currentQuestionIdx] = questionFeedbackItem;
             return next;
         });
 
@@ -1884,33 +2185,111 @@ export const LatihanPage: React.FC = () => {
             setCurrentQuestionIdx(nextIdx);
             restoreQuestionState(nextIdx);
         } else {
-            // Evaluate final score
+            // Evaluate final score & Model A-D rubric scores
             const finalFeedback = [...quizFeedback];
-            finalFeedback[currentQuestionIdx] = {
-                question: currentQ.question,
-                type: currentQ.type,
-                studentAnswer: studentAnswerString,
-                correctAnswer: correctAnswerString,
-                isCorrect,
+            finalFeedback[currentQuestionIdx] = questionFeedbackItem;
+
+            // Overall Score calculation (0-100)
+            const totalPoints = finalFeedback.reduce((sum, f) => {
+                if (!f) return sum;
+                if (f.type === "unscramble") {
+                    return sum + (f.rubricScore / 4);
+                } else if (f.type === "grouping") {
+                    return sum + (f.groupingRatio ?? (f.isCorrect ? 1 : 0));
+                }
+                return sum + (f.isCorrect ? 1 : 0);
+            }, 0);
+
+            const score = Math.round((totalPoints / questions.length) * 100);
+
+            // Compute Model A-D scores according to Rubrik Kuis
+            const modelAItems = finalFeedback.filter((f) => f && f.type === "unscramble");
+            const modelBItems = finalFeedback.filter((f) => f && f.type === "grouping");
+            const modelCItems = finalFeedback.filter(
+                (f) => f && (f.type === "multiple" || f.type === "matching" || f.type === "essay"),
+            );
+            const modelDItems = finalFeedback.filter((f) => f && f.type === "fill");
+
+            const rawModelA =
+                modelAItems.length > 0
+                    ? modelAItems.reduce((sum, item) => sum + (item.rubricScore ?? (item.isCorrect ? 4 : 0)), 0)
+                    : null;
+            const maxModelA = modelAItems.length > 0 ? modelAItems.length * 4 : null;
+            const scoreModelA =
+                rawModelA !== null && maxModelA && maxModelA > 0
+                    ? Math.round((rawModelA / maxModelA) * 100)
+                    : null;
+
+            const rawModelB =
+                modelBItems.length > 0
+                    ? modelBItems.reduce(
+                          (sum, item) =>
+                              sum +
+                              (item.groupingRaw ??
+                                  (item.groupingRatio ? Math.round(item.groupingRatio * 10) : (item.isCorrect ? 1 : 0))),
+                          0,
+                      )
+                    : null;
+            const maxModelB =
+                modelBItems.length > 0
+                    ? modelBItems.reduce((sum, item) => sum + (item.groupingMax ?? 1), 0)
+                    : null;
+            const scoreModelB =
+                rawModelB !== null && maxModelB && maxModelB > 0
+                    ? Math.round((rawModelB / maxModelB) * 100)
+                    : null;
+
+            const rawModelC =
+                modelCItems.length > 0
+                    ? modelCItems.filter((i) => i.isCorrect).length
+                    : null;
+            const maxModelC = modelCItems.length > 0 ? modelCItems.length : null;
+            const scoreModelC =
+                rawModelC !== null && maxModelC && maxModelC > 0
+                    ? Math.round((rawModelC / maxModelC) * 100)
+                    : null;
+
+            const rawModelD =
+                modelDItems.length > 0
+                    ? modelDItems.filter((i) => i.isCorrect).length
+                    : null;
+            const maxModelD = modelDItems.length > 0 ? modelDItems.length : null;
+            const scoreModelD =
+                rawModelD !== null && maxModelD && maxModelD > 0
+                    ? Math.round((rawModelD / maxModelD) * 100)
+                    : null;
+
+            const modelScores = {
+                scoreModelA,
+                rawModelA,
+                maxModelA,
+                scoreModelB,
+                rawModelB,
+                maxModelB,
+                scoreModelC,
+                rawModelC,
+                maxModelC,
+                scoreModelD,
+                rawModelD,
+                maxModelD,
             };
-            const correctCount = finalFeedback.filter(
-                (f) => f && f.isCorrect,
-            ).length;
-            const score = Math.round((correctCount / questions.length) * 100);
 
             setQuizScore(score);
             setQuizFinished(true);
-            submitQuizScore(score);
+            submitQuizScore(score, modelScores, finalFeedback);
         }
     };
 
-    const submitQuizScore = async (score: number) => {
+    const submitQuizScore = async (score: number, modelScores?: any, details?: any) => {
         setSavingQuiz(true);
         try {
             const response = await api.latihan.verifyQuiz(
                 kanjiData.kanji,
                 score,
+                modelScores,
+                details,
             );
+            setQuizAttemptResult(response);
             const updatedData = await api.latihan.get(kanjiData.kanji);
             setKanjiData(updatedData);
 
@@ -1940,6 +2319,7 @@ export const LatihanPage: React.FC = () => {
         restoreQuestionState(0, {});
         setQuizFinished(false);
         setQuizScore(0);
+        setQuizAttemptResult(null);
         setQuizFeedback([]);
     };
 
@@ -1986,21 +2366,7 @@ export const LatihanPage: React.FC = () => {
         graph,
     } = kanjiData;
 
-    const allDisplayJukugos = (() => {
-        const map = new Map<string, any>();
-        (jukugos || []).forEach((j: any) => {
-            const w = (j.word || "").trim();
-            if (w) map.set(w, j);
-        });
-
-        allJukugosMap.forEach((j: any, w: string) => {
-            if (!map.has(w)) {
-                map.set(w, j);
-            }
-        });
-
-        return Array.from(map.values());
-    })();
+    const allDisplayJukugos = allDisplayJukugosMemo;
 
     let quizQuestions: QuizQuestion[] = [];
     if (kanjiData.quizData) {
@@ -2151,50 +2517,50 @@ export const LatihanPage: React.FC = () => {
                 </div>
 
                 {/* Tab Navigation Menu */}
-                <div className="flex border-b border-slate-200/80 mb-2 bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-xs gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 sm:gap-2 mb-2 bg-white/70 backdrop-blur-md p-1.5 rounded-2xl shadow-xs border border-slate-200/80 w-full overflow-hidden">
                     <button
                         onClick={() => handleTabChange("detail")}
-                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+                        className={`flex items-center justify-center gap-1.5 sm:gap-2.5 py-2.5 sm:py-3.5 px-2.5 sm:px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all border-none cursor-pointer select-none text-center ${
                             activeTab === "detail"
                                 ? "bg-[#8f0020] text-white shadow-md"
                                 : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                     >
-                        <PenTool className="w-4 h-4" />
-                        Menulis & Detail
+                        <PenTool className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">Menulis & Detail</span>
                     </button>
                     <button
                         onClick={() => handleTabChange("reading")}
-                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+                        className={`flex items-center justify-center gap-1.5 sm:gap-2.5 py-2.5 sm:py-3.5 px-2.5 sm:px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all border-none cursor-pointer select-none text-center ${
                             activeTab === "reading"
                                 ? "bg-[#8f0020] text-white shadow-md"
                                 : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                     >
-                        <BookOpen className="w-4 h-4" />
-                        Latihan Membaca
+                        <BookOpen className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">Latihan Membaca</span>
                     </button>
                     <button
                         onClick={() => handleTabChange("quiz")}
-                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+                        className={`flex items-center justify-center gap-1.5 sm:gap-2.5 py-2.5 sm:py-3.5 px-2.5 sm:px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all border-none cursor-pointer select-none text-center ${
                             activeTab === "quiz"
                                 ? "bg-[#8f0020] text-white shadow-md"
                                 : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                     >
-                        <HelpCircle className="w-4 h-4" />
-                        Kuis Evaluasi
+                        <HelpCircle className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">Kuis Evaluasi</span>
                     </button>
                     <button
                         onClick={() => handleTabChange("lms")}
-                        className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all border-none cursor-pointer select-none ${
+                        className={`flex items-center justify-center gap-1.5 sm:gap-2.5 py-2.5 sm:py-3.5 px-2.5 sm:px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all border-none cursor-pointer select-none text-center ${
                             activeTab === "lms"
                                 ? "bg-[#8f0020] text-white shadow-md"
                                 : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                     >
-                        <MessageSquare className="w-4 h-4" />
-                        Tugas & Diskusi
+                        <MessageSquare className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">Tugas & Diskusi</span>
                     </button>
                 </div>
 
@@ -2276,6 +2642,74 @@ export const LatihanPage: React.FC = () => {
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                        {/* ================= SECTION: DAFTAR JUKUGO ================= */}
+                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xs animate-zoom-in space-y-5">
+                            {/* Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-3">
+                                <div className="flex items-center gap-2.5">
+                                    <BookOpen className="text-[#8f0020] w-6 h-6 shrink-0" />
+                                    <h4 className="font-extrabold text-xl text-slate-900">
+                                        Daftar Jukugo
+                                    </h4>
+                                </div>
+                                <span className="text-xs font-extrabold text-[#8f0020] bg-rose-50 border border-rose-200/60 px-3.5 py-1.5 rounded-full w-fit">
+                                    {filteredJukugos.length} Kosakata
+                                </span>
+                            </div>
+
+                            {/* Tab Filter Kategori */}
+                            {categoriesList.length > 1 && (
+                                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x">
+                                    {categoriesList.map((catName) => {
+                                        const isActiveTab = selectedCategoryTab === catName;
+                                        return (
+                                            <button
+                                                key={catName}
+                                                type="button"
+                                                onClick={() => setSelectedCategoryTab(catName)}
+                                                className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all border cursor-pointer whitespace-nowrap snap-start ${
+                                                    isActiveTab
+                                                        ? "bg-[#8f0020] text-white border-[#8f0020] shadow-md shadow-rose-900/20 scale-102"
+                                                        : "bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100 hover:text-slate-900"
+                                                }`}
+                                            >
+                                                {catName}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* List Card Jukugo (Gambar 2 Style) */}
+                            <div
+                                id="jukugo-list-container"
+                                onScroll={handleJukugoListScroll}
+                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[480px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200"
+                            >
+                                {displayedJukugos.map((j: any, idx: number) => {
+                                    const wordStr = (j.word || "").trim();
+                                    const isActiveCard =
+                                        activeNodeId && j.nodeId
+                                            ? activeNodeId === j.nodeId
+                                            : activeJukugoWord === wordStr;
+                                    return (
+                                        <JukugoCard
+                                            key={j.nodeId || (j.id ? `jk-${j.id}` : `${wordStr}-${idx}`)}
+                                            jukugo={j}
+                                            isActiveCard={isActiveCard}
+                                            onSelect={(w) =>
+                                                handleSelectJukugo(
+                                                    activeJukugoWord === w && (!activeNodeId || activeNodeId === j.nodeId) ? null : w,
+                                                    j.nodeId || null,
+                                                )
+                                            }
+                                            onPlayAudio={playAudio}
+                                        />
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -2406,78 +2840,6 @@ export const LatihanPage: React.FC = () => {
                                             onSelectJukugo={handleSelectJukugo}
                                         />
                                     )}
-                            </div>
-
-                            <div className="flex gap-4 overflow-x-auto pb-4 pt-3 mt-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
-                                {allDisplayJukugos.map(
-                                    (j: any, idx: number) => {
-                                        const wordStr = (j.word || "").trim();
-                                        const isActive =
-                                            activeJukugoWord === wordStr;
-                                        return (
-                                            <div
-                                                key={idx}
-                                                id={`jukugo-card-${wordStr}`}
-                                                onClick={() =>
-                                                    setActiveJukugoWord(
-                                                        isActive
-                                                            ? null
-                                                            : wordStr,
-                                                    )
-                                                }
-                                                className={`animate-jukugo-card min-w-[240px] max-w-[280px] shrink-0 snap-start rounded-[28px] p-4.5 transition-all duration-300 flex items-center justify-between group cursor-pointer border ${
-                                                    isActive
-                                                        ? "bg-rose-50/40 text-slate-800 border-2 border-rose-300 shadow-md shadow-rose-100/60 -translate-y-1"
-                                                        : "bg-white text-slate-800 border-slate-200/70 hover:border-rose-300/60 hover:bg-rose-50/20 shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                                                }`}
-                                                style={{
-                                                    animationDelay: `${idx * 60}ms`,
-                                                }}
-                                            >
-                                                <div className="flex flex-col gap-1 text-left min-w-0 pr-2">
-                                                    <div className="flex items-baseline gap-1.5 flex-wrap">
-                                                        <span
-                                                            className={`font-serif text-2xl font-black tracking-wide select-all ${
-                                                                isActive ? "text-[#8f0020]" : "text-slate-900 group-hover:text-[#8f0020]"
-                                                            }`}
-                                                        >
-                                                            {j.word}
-                                                        </span>
-                                                        <span
-                                                            className={`text-xs font-bold shrink-0 ${
-                                                                isActive ? "text-slate-500" : "text-slate-400"
-                                                            }`}
-                                                        >
-                                                            ({j.reading})
-                                                        </span>
-                                                    </div>
-                                                    <span
-                                                        className={`text-xs font-extrabold leading-snug truncate ${
-                                                            isActive ? "text-[#8f0020]" : "text-rose-800"
-                                                        }`}
-                                                    >
-                                                        {j.meaning}
-                                                    </span>
-                                                </div>
-
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        playAudio(j.word);
-                                                    }}
-                                                    className={`w-10 h-10 rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 shrink-0 ${
-                                                        isActive
-                                                            ? "bg-[#edf2f7] hover:bg-rose-600 text-slate-600 hover:text-white border-slate-200/80"
-                                                            : "bg-slate-100 hover:bg-rose-600 text-slate-500 hover:text-white border-slate-200/70"
-                                                    }`}
-                                                    title="Putar Suara"
-                                                >
-                                                    <Volume2 className="w-4.5 h-4.5" />
-                                                </button>
-                                            </div>
-                                        );
-                                    },
-                                )}
                             </div>
 
                             {/* Active Jukugo Node Information Detail Panel */}
@@ -3333,7 +3695,7 @@ export const LatihanPage: React.FC = () => {
                                                                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-amber-200/80 pb-3 gap-2">
                                                                                     <div className="flex items-center gap-3">
                                                                                         <span className="text-xs font-black uppercase tracking-wider text-amber-900 bg-amber-200/80 px-3 py-1 rounded-xl">
-                                                                                            SUB-JUKUGO{" "}
+                                                                                            JUKUGO{" "}
                                                                                             {tree.breakdownType ===
                                                                                             "DUAL_SUB_JUKUGO"
                                                                                                 ? idx +
@@ -3643,145 +4005,6 @@ export const LatihanPage: React.FC = () => {
 
                         {/* Stroke-by-Stroke guides */}
                         <StrokeByStroke kanji={kanji.charAt(0)} />
-
-                        {/* Hubungan Makna antar kanji */}
-                        {kanjiData?.semanticRelations &&
-                            kanjiData.semanticRelations.length > 0 && (
-                                <div className="space-y-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-xs select-none">
-                                    <h4 className="font-extrabold text-lg text-slate-800 border-b border-slate-50 pb-3 flex items-center gap-2">
-                                        <Sparkles className="text-[#8f0020] w-5 h-5" />
-                                        Hubungan Makna Antar Kanji
-                                    </h4>
-                                    <div className="space-y-3">
-                                        {kanjiData.semanticRelations.map(
-                                            (sr: any, idx: number) => (
-                                                <div
-                                                    key={idx}
-                                                    className="bg-slate-50/60 p-4 rounded-2xl border border-slate-100 flex flex-col gap-2 text-left"
-                                                >
-                                                    <div className="flex items-center gap-2 border-b border-slate-200/50 pb-2">
-                                                        <span className="font-serif text-lg font-bold text-slate-800">
-                                                            {sr.kanji}
-                                                        </span>
-                                                        {sr.arti && (
-                                                            <span className="text-xs font-bold text-[#8f0020] ml-auto">
-                                                                {sr.arti}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {((sr.nodes &&
-                                                        sr.nodes.length > 0) ||
-                                                        sr.jukugo_1) && (
-                                                        <div className="text-xs text-slate-700 font-medium flex flex-wrap gap-2 bg-white/70 p-2.5 rounded-xl border border-slate-100">
-                                                            {sr.nodes &&
-                                                            sr.nodes.length >
-                                                                0 ? (
-                                                                sr.nodes.map(
-                                                                    (
-                                                                        node: any,
-                                                                        nIdx: number,
-                                                                    ) => (
-                                                                        <div
-                                                                            key={
-                                                                                nIdx
-                                                                            }
-                                                                            className="bg-slate-100/70 px-2.5 py-1 rounded-lg border border-slate-200/60 flex items-center gap-1.5"
-                                                                        >
-                                                                            <strong className="text-slate-900 font-bold">
-                                                                                Unsur{" "}
-                                                                                {nIdx +
-                                                                                    1}
-
-                                                                                :
-                                                                            </strong>
-                                                                            <span className="font-serif font-bold text-slate-800 text-sm">
-                                                                                {node.jokugo ||
-                                                                                    node.jukugo}
-                                                                            </span>
-                                                                            {node.arti && (
-                                                                                <span className="text-slate-600 text-[11px]">
-                                                                                    (
-                                                                                    {
-                                                                                        node.arti
-                                                                                    }
-
-                                                                                    )
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    ),
-                                                                )
-                                                            ) : (
-                                                                <>
-                                                                    {sr.jukugo_1 && (
-                                                                        <div className="bg-slate-100/70 px-2.5 py-1 rounded-lg border border-slate-200/60 flex items-center gap-1.5">
-                                                                            <strong className="text-slate-900 font-bold">
-                                                                                Kata
-                                                                                Kanji
-                                                                                1:
-                                                                            </strong>
-                                                                            <span className="font-serif font-bold text-slate-800 text-sm">
-                                                                                {
-                                                                                    sr.jukugo_1
-                                                                                }
-                                                                            </span>
-                                                                            {sr.jukugo_1_arti && (
-                                                                                <span className="text-slate-600 text-[11px]">
-                                                                                    (
-                                                                                    {
-                                                                                        sr.jukugo_1_arti
-                                                                                    }
-
-                                                                                    )
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                    {sr.jukugo_2 && (
-                                                                        <div className="bg-slate-100/70 px-2.5 py-1 rounded-lg border border-slate-200/60 flex items-center gap-1.5">
-                                                                            <strong className="text-slate-900 font-bold">
-                                                                                Kata
-                                                                                Kanji
-                                                                                2:
-                                                                            </strong>
-                                                                            <span className="font-serif font-bold text-slate-800 text-sm">
-                                                                                {
-                                                                                    sr.jukugo_2
-                                                                                }
-                                                                            </span>
-                                                                            {sr.jukugo_2_arti && (
-                                                                                <span className="text-slate-600 text-[11px]">
-                                                                                    (
-                                                                                    {
-                                                                                        sr.jukugo_2_arti
-                                                                                    }
-
-                                                                                    )
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    {sr.penjelasan && (
-                                                        <div className="text-xs text-slate-700 leading-relaxed font-medium mt-1">
-                                                            <strong className="text-slate-900 font-bold">
-                                                                Penjelasan
-                                                                Hubungan
-                                                                Makna:{" "}
-                                                            </strong>
-                                                            {sr.penjelasan}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ),
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
                         {/* Refleksi Card with Interactive Inputs */}
                         {(() => {
                             const masterList: any[] =
@@ -4268,24 +4491,18 @@ export const LatihanPage: React.FC = () => {
                                                         ? "bg-red-50 border-red-400"
                                                         : unscrambleSelected.length > 0 &&
                                                           unscrambleSelected.length ===
-                                                              ((quizQuestions[currentQuestionIdx].words || []).length ||
-                                                               (quizQuestions[currentQuestionIdx].correctOrder || []).length)
+                                                              ((quizQuestions[currentQuestionIdx].correctOrder || []).length ||
+                                                               (quizQuestions[currentQuestionIdx].words || []).length)
                                                         ? "bg-emerald-50 border-emerald-500"
                                                         : "bg-slate-50 border-dashed border-slate-200"
                                                 }`}
                                             >
                                                 {unscrambleSelected.map((word, wIdx) => {
                                                     const correctOrder = quizQuestions[currentQuestionIdx].correctOrder || [];
-                                                    const totalReq = (quizQuestions[currentQuestionIdx].words || []).length || correctOrder.length;
+                                                    const totalReq = correctOrder.length || (quizQuestions[currentQuestionIdx].words || []).length;
                                                     const isFull = unscrambleSelected.length === totalReq;
 
-                                                    const cleanWord = (w: string) => {
-                                                        let str = (w || "").replace(/[。,.、\s]/g, "").trim();
-                                                        if (str === "きのう" || str === "昨日") return "昨日";
-                                                        return str;
-                                                    };
-
-                                                    const isWordPosCorrect = isFull && cleanWord(word) === cleanWord(correctOrder[wIdx] || "");
+                                                    const isWordPosCorrect = isFull && wordsQuizMatch(word, correctOrder[wIdx] || "");
                                                     const isWordPosWrong = isFull && !isWordPosCorrect;
 
                                                     return (
@@ -4323,24 +4540,30 @@ export const LatihanPage: React.FC = () => {
                                                     ].words || []
                                                 ).map((word, wIdx) => {
                                                     const isUsed =
-                                                        unscrambleSelected.includes(
-                                                            word,
+                                                        unscrambleSelectedIndices.includes(
+                                                            wIdx,
                                                         );
+                                                    const targetWords =
+                                                        (quizQuestions[currentQuestionIdx].correctOrder || []).length ||
+                                                        (quizQuestions[currentQuestionIdx].words || []).length;
+                                                    const isSelectionFull = unscrambleSelected.length >= targetWords;
+
                                                     return (
                                                         <button
                                                             key={wIdx}
                                                             onClick={() =>
                                                                 handleUnscrambleWordClick(
                                                                     word,
+                                                                    wIdx,
                                                                     quizQuestions[
                                                                         currentQuestionIdx
                                                                     ],
                                                                     quizQuestions,
                                                                 )
                                                             }
-                                                            disabled={isUsed || isQuizTransitioning}
+                                                            disabled={isUsed || isQuizTransitioning || (!isUsed && isSelectionFull)}
                                                             className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all border cursor-pointer select-none active:scale-95 ${
-                                                                isUsed
+                                                                isUsed || (!isUsed && isSelectionFull)
                                                                     ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50"
                                                                     : "bg-white border-slate-200 text-slate-700 hover:border-[#8f0020]/30 hover:bg-slate-50"
                                                             }`}
@@ -4382,9 +4605,14 @@ export const LatihanPage: React.FC = () => {
                                                                   : "bg-slate-50/50 border-slate-100 text-slate-700"
                                                         }`}
                                                     >
-                                                        <span className="font-serif text-lg font-bold px-2 shrink-0 select-none">
-                                                            {pair.left}
-                                                        </span>
+                                                        <div className="flex items-center gap-2.5">
+                                                            <span className="font-sans text-xs font-bold text-slate-400 select-none min-w-[20px]">
+                                                                {pIdx + 1}.
+                                                            </span>
+                                                            <span className="font-serif text-lg font-bold px-2 shrink-0 select-none">
+                                                                {pair.left}
+                                                            </span>
+                                                        </div>
 
                                                         <select
                                                             value={
@@ -4489,7 +4717,7 @@ export const LatihanPage: React.FC = () => {
                                                 tepat untuk masing-masing
                                                 kosakata di bawah ini:
                                             </p>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1 sidebar-scroll">
+                                            <div className="grid grid-cols-1 gap-3 max-h-[360px] overflow-y-auto pr-1 sidebar-scroll">
                                                 {(() => {
                                                     const currQ =
                                                         quizQuestions[
@@ -4519,10 +4747,30 @@ export const LatihanPage: React.FC = () => {
                                                             );
                                                     }
 
-                                                    const wordsList =
-                                                        Array.from(
-                                                            new Set(rawWords),
-                                                        ) as string[];
+                                                     const rawWordsList =
+                                                         Array.from(
+                                                             new Set(rawWords),
+                                                         ) as string[];
+
+                                                     const shuffleWords = (arr: string[], seedStr: string) => {
+                                                         const list = [...arr];
+                                                         let seed = 0;
+                                                         for (let i = 0; i < seedStr.length; i++) {
+                                                             seed = (seed << 5) - seed + seedStr.charCodeAt(i);
+                                                             seed |= 0;
+                                                         }
+                                                         const random = () => {
+                                                             const x = Math.sin(seed++) * 10000;
+                                                             return x - Math.floor(x);
+                                                         };
+                                                         for (let i = list.length - 1; i > 0; i--) {
+                                                             const j = Math.floor(random() * (i + 1));
+                                                             [list[i], list[j]] = [list[j], list[i]];
+                                                         }
+                                                         return list;
+                                                     };
+
+                                                     const wordsList = shuffleWords(rawWordsList, `${currQ.id || currentQuestionIdx}_${rawWordsList.length}`);
                                                     const groupOptions =
                                                         Array.from(
                                                             new Set(
@@ -4560,9 +4808,14 @@ export const LatihanPage: React.FC = () => {
                                                                               : "bg-slate-50/50 border-slate-100 text-slate-700"
                                                                     }`}
                                                                 >
-                                                                    <span className="font-serif text-sm font-bold select-none">
-                                                                        {word}
-                                                                    </span>
+                                                                    <div className="flex items-center gap-2.5">
+                                                                        <span className="font-sans text-xs font-bold text-slate-400 select-none min-w-[20px]">
+                                                                            {wIdx + 1}.
+                                                                        </span>
+                                                                        <span className="font-serif text-sm font-bold select-none">
+                                                                            {word}
+                                                                        </span>
+                                                                    </div>
                                                                     <select
                                                                         value={
                                                                             groupingAnswers[
@@ -4682,102 +4935,284 @@ export const LatihanPage: React.FC = () => {
                         )}
 
                         {/* Finished/Completed Quiz View */}
-                        {quizFinished && (
-                            <div className="flex-1 flex flex-col gap-6 text-center select-text">
-                                <div className="space-y-3">
-                                    <div className="w-20 h-20 bg-[#8f0020]/5 text-[#8f0020] rounded-full flex items-center justify-center mx-auto border border-[#8f0020]/10 shadow-sm">
-                                        <Award className="w-10 h-10 animate-pulse" />
-                                    </div>
-                                    <h3 className="text-2xl font-black text-slate-800">
-                                        Kuis Selesai!
-                                    </h3>
-                                    <p className="text-sm font-bold text-slate-400">
-                                        Nilai akhir Anda:
-                                    </p>
-                                    <div className="text-5xl font-black text-[#8f0020] tracking-tight">
-                                        {quizScore}%
-                                    </div>
-                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 rounded-full px-4 py-1.5 w-fit mx-auto">
-                                        {quizScore >= 75
-                                            ? "LUAR BIASA! KUIS SELESAI"
-                                            : "TETAP SEMANGAT, COBA LAGI!"}
-                                    </p>
-                                </div>
+                        {quizFinished && (() => {
+                            const modelAItems = quizFeedback.filter((f) => f && f.type === "unscramble");
+                            const modelBItems = quizFeedback.filter((f) => f && f.type === "grouping");
+                            const modelCItems = quizFeedback.filter(
+                                (f) => f && (f.type === "multiple" || f.type === "matching" || f.type === "essay"),
+                            );
+                            const modelDItems = quizFeedback.filter((f) => f && f.type === "fill");
 
-                                {/* Answers audit breakdown check */}
-                                <div className="space-y-4 text-left border border-slate-100 bg-slate-50/20 p-5 rounded-3xl">
-                                    <h4 className="font-extrabold text-sm text-slate-700 uppercase tracking-wide">
-                                        Tinjauan Jawaban:
-                                    </h4>
-                                    <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
-                                        {quizFeedback.map((fb, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="p-3 border border-slate-50 bg-white rounded-xl shadow-xs leading-relaxed flex items-start gap-3"
+                            const rawA = modelAItems.reduce(
+                                (sum, item) => sum + (item.rubricScore ?? (item.isCorrect ? 4 : 0)),
+                                0,
+                            );
+                            const maxA = modelAItems.length * 4;
+                            const scoreA = maxA > 0 ? Math.round((rawA / maxA) * 100) : null;
+
+                            const rawB = modelBItems.reduce(
+                                (sum, item) =>
+                                    sum +
+                                    (item.groupingRaw ??
+                                        (item.groupingRatio
+                                            ? Math.round(item.groupingRatio * 10)
+                                            : item.isCorrect
+                                              ? 1
+                                              : 0)),
+                                0,
+                            );
+                            const maxB = modelBItems.reduce(
+                                (sum, item) => sum + (item.groupingMax ?? 1),
+                                0,
+                            );
+                            const scoreB = maxB > 0 ? Math.round((rawB / maxB) * 100) : null;
+
+                            const rawC = modelCItems.filter((i) => i.isCorrect).length;
+                            const maxC = modelCItems.length;
+                            const scoreC = maxC > 0 ? Math.round((rawC / maxC) * 100) : null;
+
+                            const rawD = modelDItems.filter((i) => i.isCorrect).length;
+                            const maxD = modelDItems.length;
+                            const scoreD = maxD > 0 ? Math.round((rawD / maxD) * 100) : null;
+
+                            const interp =
+                                quizAttemptResult?.interpretation ||
+                                (quizScore >= 86
+                                    ? "Sangat Baik"
+                                    : quizScore >= 76
+                                      ? "Baik"
+                                      : quizScore >= 66
+                                        ? "Cukup"
+                                        : "Perlu Penguatan");
+
+                            return (
+                                <div className="flex-1 flex flex-col gap-6 text-center select-text">
+                                    <div className="space-y-3">
+                                        <div className="w-20 h-20 bg-[#8f0020]/5 text-[#8f0020] rounded-full flex items-center justify-center mx-auto border border-[#8f0020]/10 shadow-sm">
+                                            <Award className="w-10 h-10 animate-pulse" />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-slate-800">
+                                            Kuis Selesai!{" "}
+                                            {quizAttemptResult?.attemptNumber && (
+                                                <span className="text-sm font-bold text-slate-400 block sm:inline">
+                                                    (Percobaan #{quizAttemptResult.attemptNumber})
+                                                </span>
+                                            )}
+                                        </h3>
+                                        <p className="text-sm font-bold text-slate-400">
+                                            Nilai sesi kuis ini:
+                                        </p>
+                                        <div className="text-5xl font-black text-[#8f0020] tracking-tight">
+                                            {quizScore}%
+                                        </div>
+
+                                        {/* Status Interpretasi Rubrik (Bagian I) */}
+                                        <div className="flex flex-col flex-wrap items-center justify-center gap-2 pt-1">
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-xs font-black border uppercase tracking-wider ${
+                                                    interp === "Sangat Baik"
+                                                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                                        : interp === "Baik"
+                                                          ? "bg-blue-100 text-blue-800 border-blue-300"
+                                                          : interp === "Cukup"
+                                                            ? "bg-amber-100 text-amber-800 border-amber-300"
+                                                            : "bg-rose-100 text-rose-800 border-rose-300"
+                                                }`}
                                             >
-                                                <div
-                                                    className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-bold mt-0.5 ${
-                                                        fb.isCorrect
-                                                            ? "bg-emerald-500"
-                                                            : "bg-rose-500"
-                                                    }`}
-                                                >
-                                                    {fb.isCorrect ? "✓" : "✗"}
-                                                </div>
-                                                <div className="flex-1 text-sm font-medium">
-                                                    <p className="font-bold text-slate-800 leading-snug">
-                                                        {fb.question}
-                                                    </p>
-                                                    <p className="text-slate-500 text-xs mt-1">
-                                                        Jawaban Anda:{" "}
-                                                        <span
-                                                            className={
-                                                                fb.isCorrect
-                                                                    ? "text-emerald-700 font-bold"
-                                                                    : "text-rose-700 font-bold"
-                                                            }
-                                                        >
-                                                            {fb.studentAnswer}
+                                                Kategori: {interp}
+                                            </span>
+                                            <span className="text-xs font-semibold text-slate-500">
+                                                {interp === "Sangat Baik" && "Pemahaman struktur & makna sangat optimal"}
+                                                {interp === "Baik" && "Memahami konsep dan pembentukan jukugo"}
+                                                {interp === "Cukup" && "Memenuhi kriteria tuntas minimal"}
+                                                {interp === "Perlu Penguatan" && "Disarankan mengulang latihan"}
+                                            </span>
+                                        </div>
+
+                                        {/* Best Score Banner Notification */}
+                                        {quizAttemptResult && (
+                                            <div className="w-full mx-auto mt-2">
+                                                {quizAttemptResult.isNewBest ? (
+                                                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center justify-center gap-2">
+                                                        <span>🎉</span>
+                                                        <span>
+                                                            Skor Terbaik Baru! Progres penguasaan kanji diperbarui ke{" "}
+                                                            <strong>{quizAttemptResult.bestScore}%</strong>.
                                                         </span>
-                                                    </p>
-                                                    {!fb.isCorrect && (
-                                                        <p className="text-slate-500 text-xs">
-                                                            Jawaban Benar:{" "}
-                                                            <span className="text-emerald-700 font-bold">
-                                                                {
-                                                                    fb.correctAnswer
-                                                                }
-                                                            </span>
-                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-2xl text-xs font-bold flex items-center justify-center gap-2">
+                                                        <span>ℹ️</span>
+                                                        <span>
+                                                            Skor resmi yang diakui adalah nilai terbaik Anda:{" "}
+                                                            <strong>{quizAttemptResult.bestScore}%</strong>. Riwayat percobaan ini tetap tersimpan.
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 4-Model Rubric Breakdown Cards */}
+                                    <div className="border border-slate-100 bg-slate-50/40 p-4 rounded-3xl text-left">
+                                        <h4 className="font-extrabold text-xs text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                            <span>📊</span> Penilaian Capaian Berdasarkan Model Kuis (Rubrik A - D)
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                            {/* Model A */}
+                                            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                                                <p className="text-[11px] font-bold text-slate-700 leading-tight">
+                                                    Model A: Susun Kalimat
+                                                </p>
+                                                <p className="text-[10px] text-slate-400">Rubrik analitik 0–4</p>
+                                                <div className="mt-2 flex items-baseline justify-between">
+                                                    <span className="text-xl font-black text-slate-800">
+                                                        {scoreA !== null ? `${scoreA}%` : "-"}
+                                                    </span>
+                                                    {rawA !== null && maxA > 0 && (
+                                                        <span className="text-[10px] font-bold text-slate-500">
+                                                            {rawA}/{maxA} pt
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
-                                        ))}
+
+                                            {/* Model B */}
+                                            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                                                <p className="text-[11px] font-bold text-slate-700 leading-tight">
+                                                    Model B: Semantic Graph
+                                                </p>
+                                                <p className="text-[10px] text-slate-400">Grouping per jukugo</p>
+                                                <div className="mt-2 flex items-baseline justify-between">
+                                                    <span className="text-xl font-black text-slate-800">
+                                                        {scoreB !== null ? `${scoreB}%` : "-"}
+                                                    </span>
+                                                    {rawB !== null && maxB > 0 && (
+                                                        <span className="text-[10px] font-bold text-slate-500">
+                                                            {rawB}/{maxB} kata
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Model C */}
+                                            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                                                <p className="text-[11px] font-bold text-slate-700 leading-tight">
+                                                    Model C: Deskripsi Makna
+                                                </p>
+                                                <p className="text-[10px] text-slate-400">Pilihan ganda / arti</p>
+                                                <div className="mt-2 flex items-baseline justify-between">
+                                                    <span className="text-xl font-black text-slate-800">
+                                                        {scoreC !== null ? `${scoreC}%` : "-"}
+                                                    </span>
+                                                    {rawC !== null && maxC > 0 && (
+                                                        <span className="text-[10px] font-bold text-slate-500">
+                                                            {rawC}/{maxC} butir
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Model D */}
+                                            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                                                <p className="text-[11px] font-bold text-slate-700 leading-tight">
+                                                    Model D: Konteks Kalimat
+                                                </p>
+                                                <p className="text-[10px] text-slate-400">Melengkapi kalimat</p>
+                                                <div className="mt-2 flex items-baseline justify-between">
+                                                    <span className="text-xl font-black text-slate-800">
+                                                        {scoreD !== null ? `${scoreD}%` : "-"}
+                                                    </span>
+                                                    {rawD !== null && maxD > 0 && (
+                                                        <span className="text-[10px] font-bold text-slate-500">
+                                                            {rawD}/{maxD} butir
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Answers audit breakdown check */}
+                                    <div className="space-y-4 text-left border border-slate-100 bg-slate-50/20 p-5 rounded-3xl">
+                                        <h4 className="font-extrabold text-sm text-slate-700 uppercase tracking-wide">
+                                            Tinjauan Jawaban:
+                                        </h4>
+                                        <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
+                                            {quizFeedback.map((fb, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="p-3 border border-slate-50 bg-white rounded-xl shadow-xs leading-relaxed flex items-start gap-3"
+                                                >
+                                                    <div
+                                                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-bold mt-0.5 ${
+                                                            fb.isCorrect
+                                                                ? "bg-emerald-500"
+                                                                : "bg-rose-500"
+                                                        }`}
+                                                    >
+                                                        {fb.isCorrect ? "✓" : "✗"}
+                                                    </div>
+                                                    <div className="flex-1 text-sm font-medium">
+                                                        <p className="font-bold text-slate-800 leading-snug">
+                                                            {fb.question}
+                                                        </p>
+                                                        <p className="text-slate-500 text-xs mt-1">
+                                                            Jawaban Anda:{" "}
+                                                            <span
+                                                                className={
+                                                                    fb.isCorrect
+                                                                        ? "text-emerald-700 font-bold"
+                                                                        : "text-rose-700 font-bold"
+                                                                }
+                                                            >
+                                                                {fb.studentAnswer}
+                                                            </span>
+                                                        </p>
+                                                        {!fb.isCorrect && (
+                                                            <p className="text-slate-500 text-xs">
+                                                                Jawaban Benar:{" "}
+                                                                <span className="text-emerald-700 font-bold">
+                                                                    {
+                                                                        fb.correctAnswer
+                                                                    }
+                                                                </span>
+                                                            </p>
+                                                        )}
+                                                        {fb.rubricScore !== undefined && (
+                                                            <p className="text-[11px] text-amber-700 font-semibold mt-1">
+                                                                Skor Rubrik Analitik: {fb.rubricScore} / 4
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-center gap-4">
+                                        <button
+                                            onClick={handleResetQuiz}
+                                            disabled={savingQuiz}
+                                            className="px-6 py-3 bg-[#8f0020] text-white rounded-full font-bold shadow-md hover:brightness-110 active:scale-95 transition-all border-none cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                                        >
+                                            <RotateCcw className="w-4 h-4" />
+                                            {savingQuiz
+                                                ? "Menyimpan Nilai..."
+                                                : "Ulangi Kuis"}
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                handleTabChange("detail")
+                                            }
+                                            className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-full font-bold shadow-xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                                        >
+                                            Kembali Ke Detail
+                                        </button>
                                     </div>
                                 </div>
-
-                                <div className="flex justify-center gap-4">
-                                    <button
-                                        onClick={handleResetQuiz}
-                                        disabled={savingQuiz}
-                                        className="px-6 py-3 bg-[#8f0020] text-white rounded-full font-bold shadow-md hover:brightness-110 active:scale-95 transition-all border-none cursor-pointer flex items-center gap-2 disabled:opacity-50"
-                                    >
-                                        <RotateCcw className="w-4 h-4" />
-                                        {savingQuiz
-                                            ? "Menyimpan Nilai..."
-                                            : "Ulangi Kuis"}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleTabChange("detail")
-                                        }
-                                        className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-full font-bold shadow-xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
-                                    >
-                                        Kembali Ke Detail
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {quizQuestions.length === 0 && (
                             <div className="flex-1 flex flex-col items-center justify-center text-center">

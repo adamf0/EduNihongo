@@ -26,10 +26,19 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         examples: true,
         graphEdges: true,
         module: true,
-        jukugos: true,
+        jukugos: {
+          include: {
+            kategoriKanji: {
+              include: {
+                category: true,
+              },
+            },
+          },
+        },
         semanticRelations: {
           include: {
             nodes: true,
+            jukugo: true,
           },
         },
         masterRefleksi: true,
@@ -282,9 +291,11 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         isReading: ex.isReading !== undefined ? ex.isReading : true,
       })),
       jukugos: kanji.jukugos.map((j) => ({
+        id: j.id,
         word: j.word,
         reading: j.reading,
         meaning: j.meaning,
+        category: (j as any).kategoriKanji?.[0]?.category?.name || "",
       })),
       graph: {
         nodes,
@@ -297,6 +308,16 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       refleksiData: await prisma.refleksiData.findMany({
         where: { userId, kanjiId: kanji.id },
       }),
+      semanticRelations: kanji.semanticRelations.map((sr) => ({
+        id: sr.id,
+        kanji: sr.jukugo?.word || "",
+        arti: sr.jukugo?.meaning || "",
+        penjelasan: sr.penjelasan || "",
+        nodes: sr.nodes.map((n) => ({
+          jokugo: n.jokugo,
+          arti: n.arti,
+        })),
+      })),
       researchDetails: await (async () => {
         const allKanji = await prisma.kanji.findMany();
         const kanjiMap: Record<string, any> = {};
@@ -304,20 +325,46 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
           kanjiMap[k.character] = k;
         });
 
-        const allJukugos = await prisma.jukugo.findMany({
+        const otherJukugos = await prisma.jukugo.findMany({
+          where: { kanjiId: { not: kanji.id } },
           include: {
             kategoriKanji: {
               include: { category: true }
+            },
+            semanticRelations: {
+              include: { nodes: true }
+            }
+          }
+        });
+
+        const currentJukugos = await prisma.jukugo.findMany({
+          where: { kanjiId: kanji.id },
+          include: {
+            kategoriKanji: {
+              include: { category: true }
+            },
+            semanticRelations: {
+              include: { nodes: true }
             }
           }
         });
 
         const resObj: Record<string, { explanation: string; charRoles: Record<string, string>; category: string }> = {};
-        for (const jk of allJukugos) {
+        
+        const processJk = (jk: typeof otherJukugos[0]) => {
           const charRoles: Record<string, string> = {};
           for (const char of jk.word) {
             if (kanjiMap[char]) {
               charRoles[char] = kanjiMap[char].meaning;
+            }
+          }
+          if (jk.semanticRelations && jk.semanticRelations.length > 0) {
+            for (const sr of jk.semanticRelations) {
+              if (sr.nodes) {
+                for (const n of sr.nodes) {
+                  charRoles[n.jokugo.trim()] = n.arti;
+                }
+              }
             }
           }
           const catName = jk.kategoriKanji[0]?.category?.name || "Kombinasi Utama";
@@ -326,7 +373,10 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
             charRoles,
             category: catName
           };
-        }
+        };
+
+        otherJukugos.forEach(processJk);
+        currentJukugos.forEach(processJk); // Current kanji strictly overrides and takes precedence!
         return resObj;
       })(),
       constituentKanjiData: await (async () => {
@@ -348,6 +398,7 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       crossLinkTriples: await (async () => {
         const edges = await prisma.kanjiGraphEdge.findMany({
           where: {
+            kanjiId: kanji.id,
             predicate: {
               notIn: ["kategori", "mencakup"]
             }
@@ -386,9 +437,51 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
 
         const allJukugos = await prisma.jukugo.findMany();
         const jukugoMap = new Map<string, { word: string; reading: string; meaning: string }>();
-        allJukugos.forEach(j => {
+        allJukugos.filter(j => j.kanjiId !== kanji.id).forEach(j => {
           jukugoMap.set(j.word.trim(), { word: j.word.trim(), reading: j.reading, meaning: j.meaning });
         });
+        allJukugos.filter(j => j.kanjiId === kanji.id).forEach(j => {
+          jukugoMap.set(j.word.trim(), { word: j.word.trim(), reading: j.reading, meaning: j.meaning });
+        });
+
+        const allSemanticRelations = await prisma.semanticRelation.findMany({
+          include: {
+            nodes: true,
+            jukugo: true
+          }
+        });
+        const semMap = new Map<string, any>();
+        allSemanticRelations.filter(s => s.kanjiId !== kanji.id).forEach(s => {
+          if (s.jukugo?.word) {
+            semMap.set(s.jukugo.word.trim(), s);
+          }
+        });
+        allSemanticRelations.filter(s => s.kanjiId === kanji.id).forEach(s => {
+          if (s.jukugo?.word) {
+            semMap.set(s.jukugo.word.trim(), s);
+          }
+        });
+
+        const SUB_JUKUGO_READING_MAP: Record<string, string> = {
+          "調味": "ちょうみ",
+          "原因": "げんいん",
+          "究明": "きゅうめい",
+          "真相": "しんそう",
+          "本質": "ほんしつ",
+          "結論": "けつろん",
+          "事実": "じじつ",
+          "問題": "もんだい",
+          "学術": "がくじゅつ",
+          "市場": "しじょう",
+          "統計": "とうけい",
+          "現地": "げんち",
+          "報告": "ほうこく",
+          "報告書": "ほうこくしょ",
+          "旅行": "りょこう",
+          "制度": "せいど",
+          "方法": "ほうほう",
+          "分野": "ぶんや"
+        };
 
         const isHiragana = (ch: string) => /^[\u3040-\u309F]$/.test(ch);
 
@@ -403,7 +496,7 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         const getSubObj = (w: string) => {
           const j = jukugoMap.get(w);
           const meaning = j?.meaning || w;
-          const reading = j?.reading || "";
+          const reading = j?.reading || SUB_JUKUGO_READING_MAP[w] || "";
           const nestedKanjis = Array.from(w).map(c => {
             const k = kanjiMap.get(c);
             if (k) return k;
@@ -428,12 +521,73 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
         };
 
         const trees: Record<string, any> = {};
+        const uniqueWords = Array.from(new Set(allJukugos.map(j => j.word.trim())));
 
-        for (const j of allJukugos) {
-          const word = j.word.trim();
-          const dbJukugo = jukugoMap.get(word) || j;
-          const wordMeaning = dbJukugo.meaning || word;
-          const wordReading = dbJukugo.reading || "";
+        for (const word of uniqueWords) {
+          const dbJukugo = jukugoMap.get(word);
+          const wordMeaning = dbJukugo?.meaning || word;
+          const wordReading = dbJukugo?.reading || "";
+
+          // Priority 0: Explicit DB SemanticRelation with Nodes
+          const semRel = semMap.get(word);
+          if (semRel && semRel.nodes && semRel.nodes.length >= 2) {
+            const explanationItems: any[] = [];
+            const formulaElements: any[] = [];
+            const breakdownItems: any[] = [];
+
+            for (const n of semRel.nodes) {
+              const nodeWord = n.jokugo.trim();
+              const nodeArti = n.arti;
+
+              explanationItems.push({ word: nodeWord, meaning: nodeArti });
+
+              if (nodeWord.length >= 2) {
+                const subObj = getSubObj(nodeWord);
+                formulaElements.push({
+                  word: nodeWord,
+                  reading: subObj.reading || "",
+                  meaning: nodeArti
+                });
+                breakdownItems.push({
+                  type: "SUB_JUKUGO",
+                  word: nodeWord,
+                  reading: subObj.reading || "",
+                  meaning: nodeArti,
+                  nestedKanjis: subObj.nestedKanjis
+                });
+              } else {
+                const kCard = getSubObj(nodeWord).nestedKanjis[0];
+                formulaElements.push({
+                  word: nodeWord,
+                  reading: kCard.romaji !== "-" ? kCard.romaji : "",
+                  meaning: nodeArti
+                });
+                breakdownItems.push({
+                  type: "KANJI",
+                  word: nodeWord,
+                  meaning: nodeArti,
+                  kanjiDetail: kCard
+                });
+              }
+            }
+
+            const allSub = semRel.nodes.every((n: any) => n.jokugo.trim().length >= 2);
+            const breakdownType = allSub
+              ? "DUAL_SUB_JUKUGO"
+              : (word.length === 2 ? "STANDARD_2KANJI" : "ROOT_KANJI_COMPOUND");
+
+            trees[word] = {
+              word,
+              reading: wordReading,
+              meaning: wordMeaning,
+              breakdownType,
+              explanationItems,
+              relationshipExplanation: semRel.penjelasan || `Hubungan makna antar unsur menjadi ${word}, membentuk makna "${wordMeaning}".`,
+              formulaElements,
+              breakdownItems
+            };
+            continue;
+          }
 
           // 1. DUAL_SUB_JUKUGO: Any compound word where both split halves exist in DB Jukugo table
           let sub1Obj: any = null;
@@ -856,7 +1010,7 @@ export const verifyReading = async (req: AuthenticatedRequest, res: Response) =>
 // Verify quiz progress
 export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { character, quizPercent } = req.body;
+    const { character, quizPercent, modelScores, details } = req.body;
     
     if (!character) {
       return res.status(400).json({ error: "Karakter target wajib ditentukan." });
@@ -876,6 +1030,76 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ error: `Kanji ${character} tidak ditemukan.` });
     }
 
+    const score = typeof quizPercent === "number" ? Math.min(100, Math.max(0, quizPercent)) : 100;
+
+    const scoreModelA = modelScores?.scoreModelA ?? modelScores?.modelA;
+    const rawModelA = modelScores?.rawModelA ?? null;
+    const maxModelA = modelScores?.maxModelA ?? null;
+
+    const scoreModelB = modelScores?.scoreModelB ?? modelScores?.modelB;
+    const rawModelB = modelScores?.rawModelB ?? null;
+    const maxModelB = modelScores?.maxModelB ?? null;
+
+    const scoreModelC = modelScores?.scoreModelC ?? modelScores?.modelC;
+    const rawModelC = modelScores?.rawModelC ?? null;
+    const maxModelC = modelScores?.maxModelC ?? null;
+
+    const scoreModelD = modelScores?.scoreModelD ?? modelScores?.modelD;
+    const rawModelD = modelScores?.rawModelD ?? null;
+    const maxModelD = modelScores?.maxModelD ?? null;
+
+    // Determine rubric interpretation according to Section I of penilaian.md
+    let interpretation = "Perlu Penguatan";
+    if (score >= 86) interpretation = "Sangat Baik";
+    else if (score >= 76) interpretation = "Baik";
+    else if (score >= 66) interpretation = "Cukup";
+
+    // Attempt counting & best score tracking
+    const previousAttempts = await prisma.quizAttempt.findMany({
+      where: { userId, kanjiId: kanji.id },
+      select: { id: true, totalScore: true },
+    });
+    const attemptNumber = previousAttempts.length + 1;
+    const previousBestScore = previousAttempts.length > 0 
+      ? Math.max(...previousAttempts.map((a) => a.totalScore)) 
+      : -1;
+
+    const isNewBest = score >= previousBestScore;
+
+    // If new score is the best so far, reset isBestAttempt on older attempts
+    if (isNewBest && previousAttempts.length > 0) {
+      await prisma.quizAttempt.updateMany({
+        where: { userId, kanjiId: kanji.id, isBestAttempt: true },
+        data: { isBestAttempt: false },
+      });
+    }
+
+    // 1. Create QuizAttempt record to store performance per attempt (history always preserved)
+    const quizAttempt = await prisma.quizAttempt.create({
+      data: {
+        userId,
+        kanjiId: kanji.id,
+        attemptNumber,
+        scoreModelA: typeof scoreModelA === "number" ? Math.min(100, Math.max(0, scoreModelA)) : null,
+        rawModelA: typeof rawModelA === "number" ? rawModelA : null,
+        maxModelA: typeof maxModelA === "number" ? maxModelA : null,
+        scoreModelB: typeof scoreModelB === "number" ? Math.min(100, Math.max(0, scoreModelB)) : null,
+        rawModelB: typeof rawModelB === "number" ? rawModelB : null,
+        maxModelB: typeof maxModelB === "number" ? maxModelB : null,
+        scoreModelC: typeof scoreModelC === "number" ? Math.min(100, Math.max(0, scoreModelC)) : null,
+        rawModelC: typeof rawModelC === "number" ? rawModelC : null,
+        maxModelC: typeof maxModelC === "number" ? maxModelC : null,
+        scoreModelD: typeof scoreModelD === "number" ? Math.min(100, Math.max(0, scoreModelD)) : null,
+        rawModelD: typeof rawModelD === "number" ? rawModelD : null,
+        maxModelD: typeof maxModelD === "number" ? maxModelD : null,
+        totalScore: score,
+        interpretation,
+        isBestAttempt: isNewBest,
+        details: details ? (typeof details === "string" ? details : JSON.stringify(details)) : null,
+        createdAt: new Date(),
+      },
+    });
+
     const existingProgress = await prisma.userKanjiProgress.findUnique({
       where: {
         userId_kanjiId: {
@@ -889,8 +1113,8 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
     const prevReading = existingProgress?.readingPercent || 0;
     const prevQuiz = existingProgress?.quizPercent || 0;
 
-    const score = typeof quizPercent === "number" ? Math.min(100, Math.max(0, quizPercent)) : 100;
-    const finalQuizScore = Math.max(prevQuiz, score);
+    // Highest score rule: retain the highest score for student progress and mastery calculation
+    const finalQuizScore = Math.max(prevQuiz, score, previousBestScore);
 
     const finalMasteryScore = Math.round(prevWriting * 0.4 + prevReading * 0.3 + finalQuizScore * 0.3);
     const isMastered = finalMasteryScore >= 75;
@@ -976,7 +1200,7 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
         vocabCount: 1,
         xpEarned: xpEarnedQuiz,
         activityType: "REVIEW",
-        description: `Mengerjakan Kuis: Menyelesaikan kuis latihan Kanji ${character} dengan nilai ${score}%`,
+        description: `Mengerjakan Kuis: Menyelesaikan kuis latihan Kanji ${character} (Percobaan #${attemptNumber}) dengan nilai ${score}%`,
       },
     });
 
@@ -984,6 +1208,16 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
       success: true,
       accuracy: finalMasteryScore,
       xpEarned: xpEarnedQuiz,
+      attemptId: quizAttempt.id,
+      attemptNumber,
+      currentScore: score,
+      bestScore: finalQuizScore,
+      isNewBest,
+      interpretation,
+      scoreModelA,
+      scoreModelB,
+      scoreModelC,
+      scoreModelD,
       message: "Hasil kuis berhasil disimpan!",
     });
   } catch (error) {

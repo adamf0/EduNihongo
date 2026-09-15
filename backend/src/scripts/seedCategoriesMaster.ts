@@ -7,38 +7,39 @@ export async function seedCategoriesMaster() {
 
   const categoryMapping: Record<string, Record<string, string[]>> = {
     "試": {
-      "Aktivitas Pengujian": ["試験", "入試", "試問"],
+      "Aktivitas Pengujian": ["試験", "入試", "追試", "試問"],
       "Penggunaan": ["試着", "試用", "試乗"],
-      "Konsumsi": ["試食", "試飲", "試薬"],
-      "Produksi dan Pengembangan": ["試作", "試作品", "試製"],
-      "Kompetisi dan Media": ["試合", "試技", "試聴", "試写", "試読"]
+      "Konsumsi": ["試食", "試飲"],
+      "Bahan Pengujian": ["試薬"],
+      "Produksi dan Pengembangan": ["試作", "試製"],
+      "Kompetisi dan Keterampilan": ["試合", "試技", "試射", "試練"],
+      "Media": ["試写", "試聴", "試読"]
     },
     "験": {
-      "Pengujian": ["試験", "受験", "資格試験"],
-      "Pengalaman": ["経験", "体験", "経験者"],
-      "Penelitian": ["実験", "実験室", "被験者"],
-      "Sertifikasi": ["受験生", "検定試験", "受験番号"]
+      "Pengujian / Pembuktian": ["試験", "受験", "実験", "治験"],
+      "Pengalaman": ["経験", "体験"],
+      "Verifikasi / Pemeriksaan": ["験算"],
+      "Hasil / Efek / Bukti": ["効験"]
     },
     "問": {
-      "Pertanyaan dan Ujian": ["問題", "質問", "問答"],
-      "Investigasi dan Penyelidikan": ["問診", "尋問", "訪問調査"],
-      "Permasalahan Sosial": ["問題点", "社会問題", "環境問題"],
-      "Pendidikan dan Evaluasi": ["設問", "問題集", "問 1", "問一"],
-      "Komunikasi dan Konsultasi": ["問い合わせ", "問う", "問屋"]
+      "Bertanya / Mengajukan Pertanyaan": ["質問", "自問", "発問", "反問"],
+      "Tanya Jawab": ["問答"],
+      "Soal / Pertanyaan": ["問題", "設問", "試問", "難問"],
+      "Pemeriksaan dengan Pertanyaan": ["問診", "検問"],
+      "Mempertanyakan / Meminta Pertanggungjawaban": ["問責", "不問"],
+      "Mengunjungi (Makna Perluasan)": ["訪問"]
     },
     "題": {
-      "Pendidikan dan Evaluasi": ["問題", "課題", "宿題"],
-      "Judul dan Tema": ["題名", "表題", "主題"],
-      "Akademik dan Penelitian": ["研究課題", "論題", "出題"],
-      "Diskusi dan Pemikiran": ["話題", "時事問題", "問題意識"],
-      "Media dan Publikasi": ["題材", "題字", "演題"]
+      "Soal / Tugas / Masalah": ["問題", "課題", "宿題", "出題", "例題", "難題"],
+      "Tema / Topik": ["主題", "話題", "論題", "議題"],
+      "Judul": ["題名", "表題", "副題", "演題", "題字"],
+      "Bahan / Tema Karya": ["題材"]
     },
     "答": {
-      "Pertanyaan dan Jawaban": ["回答", "解答", "応答"],
-      "Pendidikan dan Evaluasi": ["答案", "正答", "解答用紙"],
-      "Komunikasi dan Diskusi": ["返答", "口答", "答弁"],
-      "Akademik dan Penelitian": ["問答", "一問一答", "答申"],
-      "Teknologi dan Layanan": ["自動応答", "応答時間", "応答率"]
+      "Jawaban / Tanggapan": ["回答", "応答", "返答", "問答", "自答", "答弁"],
+      "Hasil Jawaban": ["解答", "答案", "正答", "確答"],
+      "Cara Menjawab": ["口答", "直答", "筆答"],
+      "Balasan": ["答辞", "答礼"]
     },
     "点": {
       "Penilaian dan Nilai": ["採点", "得点", "減点"],
@@ -48,10 +49,9 @@ export async function seedCategoriesMaster() {
       "Pemeriksaan dan Data": ["点検", "点灯", "点数"]
     },
     "研": {
-      "Kegiatan Penelitian": ["研究", "研究室", "研究者", "研究会"],
-      "Pelatihan dan Pengembangan": ["研修", "研修生", "研修旅行"],
-      "Ilmu Pengetahuan dan Akademik": ["研究科", "研究書", "研究分野", "研究方法"],
-      "Proses Mengasah dan Memperhalus": ["研磨", "研削"]
+      "1. Meneliti / Mendalami": ["研究", "研学", "研精"],
+      "2. Belajar / Mengasah Kemampuan": ["研修", "研習", "研鑽"],
+      "3. Mengasah / Menghaluskan": ["研磨", "研削"]
     },
     "究": {
       "Penelitian dan Penyelidikan": ["究明", "究査", "究問", "究理"],

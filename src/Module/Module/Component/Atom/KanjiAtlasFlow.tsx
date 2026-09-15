@@ -215,6 +215,7 @@ const CustomHierarchyEdge = ({
   style = {},
   markerEnd,
   label,
+  data,
 }: EdgeProps) => {
   const [edgePath, _lx, ly] = getBezierPath({
     sourceX,
@@ -232,12 +233,18 @@ const CustomHierarchyEdge = ({
 
   const labelText = typeof label === "string" ? label.replace(/_/g, " ") : label;
   const isVisible = style.opacity === undefined || (typeof style.opacity === "number" && style.opacity > 0);
+  const isSelected = Boolean((data as any)?.isSelected);
 
   return (
     <>
       <path
         id={id}
-        style={style}
+        style={{
+          ...style,
+          stroke: isSelected ? "#f59e0b" : (style.stroke || "#64748b"),
+          strokeWidth: isSelected ? 4 : (style.strokeWidth || 2),
+          transition: "opacity 0.5s ease-out, stroke 0.5s ease-out, stroke-width 0.3s ease",
+        }}
         className="react-flow__edge-path"
         d={edgePath}
         markerEnd={markerEnd}
@@ -253,8 +260,16 @@ const CustomHierarchyEdge = ({
               opacity: isVisible ? (style.opacity ?? 1) : 0,
             }}
             className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              (data as any)?.onSelectRelation?.(id);
+            }}
           >
-            <div className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/95 text-slate-700 border border-slate-300 shadow-xs whitespace-nowrap backdrop-blur-xs">
+            <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-black shadow-xs whitespace-nowrap backdrop-blur-xs cursor-pointer transition-all duration-300 ${
+              isSelected
+                ? "bg-amber-400 text-slate-950 border-2 border-amber-300 ring-4 ring-amber-400/50 scale-110 z-50"
+                : "bg-white/95 text-slate-700 border border-slate-300 hover:bg-slate-900 hover:text-white hover:scale-105"
+            }`}>
               {labelText}
             </div>
           </div>
@@ -363,6 +378,13 @@ function KanjiAtlasFlowInner({
     };
 
     categoryNodes.sort((a, b) => {
+      const labelA = a.label || a.kanji || a.name || "";
+      const labelB = b.label || b.kanji || b.name || "";
+      const matchA = labelA.match(/^(\d+)\./);
+      const matchB = labelB.match(/^(\d+)\./);
+      if (matchA && matchB) {
+        return parseInt(matchA[1], 10) - parseInt(matchB[1], 10);
+      }
       const colorA = (a.color || a.borderColor?.split("-")[1] || "").toLowerCase();
       const colorB = (b.color || b.borderColor?.split("-")[1] || "").toLowerCase();
       const orderA = categoryOrderMap[colorA] ?? 99;
@@ -372,7 +394,7 @@ function KanjiAtlasFlowInner({
 
     const positionedNodes: any[] = [];
     const nodePosMap = new Map<string, { x: number; y: number }>();
-    const generatedEdges: any[] = [...initialRawEdges];
+    const generatedEdges: any[] = [];
     const catColorMap = new Map<string, string>();
 
     // Central Root Node at origin (0, 0)
@@ -772,12 +794,15 @@ function KanjiAtlasFlowInner({
 
     const uniqueEdgesMap = new Map<string, any>();
     baseEdges.forEach((edge: any) => {
-      const pairKey = `${edge.source}->${edge.target}`;
+      // Always use undirected pair key to strictly prevent duplicate lines between any pair of nodes
+      const pairKey = [edge.source, edge.target].sort().join("<->");
+
       if (!uniqueEdgesMap.has(pairKey)) {
         uniqueEdgesMap.set(pairKey, edge);
       } else {
         const existing = uniqueEdgesMap.get(pairKey);
-        if (!existing.label && edge.label) {
+        // Prefer edge that has explicit handles and label/styling
+        if ((!existing.sourceHandle && edge.sourceHandle) || (!existing.label && edge.label)) {
           uniqueEdgesMap.set(pairKey, edge);
         }
       }
@@ -896,6 +921,37 @@ function KanjiAtlasFlowInner({
     }
   }, [positionedNodes, setCenter]);
 
+  // Auto-expand root & parent category when activeJukugoWord or activeNodeId is set externally
+  useEffect(() => {
+    if (!activeJukugoWord && !activeNodeId) return;
+
+    const targetNode = positionedNodes.find((n: any) => {
+      if (activeNodeId && n.id === activeNodeId) return true;
+      const w = (n.kanji || n.character || n.word || n.label || "").trim();
+      return Boolean(w) && w === activeJukugoWord;
+    });
+
+    if (targetNode) {
+      const parentCatId = targetNode.parentPill || targetNode.categoryId;
+
+      // 1. Reveal categories if hidden
+      if (!areCategoriesVisible) {
+        setAreCategoriesVisible(true);
+      }
+
+      // 2. Expand parent category if not expanded
+      if (parentCatId && !expandedCategoryIds.has(parentCatId)) {
+        setExpandedCategoryIds((prev) => new Set([...Array.from(prev), parentCatId]));
+        setOpenCategoryHistory((prev) => (prev.includes(parentCatId) ? prev : [...prev, parentCatId]));
+      }
+
+      // 3. Smoothly center camera on target node
+      if (targetNode.x !== undefined && targetNode.y !== undefined) {
+        setCenter(targetNode.x, targetNode.y, { zoom: 1.2, duration: 750 });
+      }
+    }
+  }, [activeJukugoWord, activeNodeId, positionedNodes]);
+
   // Compute set of all node IDs connected in the branch path of the selected relation edge
   const selectedRelationConnectedIds = useMemo(() => {
     const ids = new Set<string>();
@@ -928,6 +984,75 @@ function KanjiAtlasFlowInner({
 
     return ids;
   }, [selectedRelationEdgeId, deduplicatedEdges, positionedNodes]);
+
+  // Compute set of all node IDs connected to active selected node (root, parent category, cross links, constituent nodes)
+  const activeNodeConnectedIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!activeJukugoWord && !activeNodeId) return ids;
+
+    const targetNodes = positionedNodes.filter((n: any) => {
+      if (activeNodeId && n.id === activeNodeId) return true;
+      const w = (n.kanji || n.character || n.word || n.label || "").trim();
+      return Boolean(w) && w === activeJukugoWord;
+    });
+
+    if (targetNodes.length === 0) return ids;
+
+    targetNodes.forEach((n: any) => ids.add(n.id));
+
+    const rootObj = positionedNodes.find((n: any) => n.type === "root" || n.isRoot);
+    if (rootObj) ids.add(rootObj.id);
+
+    targetNodes.forEach((targetNode: any) => {
+      const parentCatId = targetNode.parentPill || targetNode.categoryId;
+      if (parentCatId) ids.add(parentCatId);
+
+      const isCat = targetNode.type === "bottom" || targetNode.type === "category";
+      if (isCat) {
+        positionedNodes.forEach((n: any) => {
+          if (n.parentPill === targetNode.id || n.categoryId === targetNode.id || n.id.includes(targetNode.id)) {
+            ids.add(n.id);
+          }
+        });
+      }
+
+      deduplicatedEdges.forEach((edge: any) => {
+        const isConnected = edge.source === targetNode.id || edge.target === targetNode.id;
+        if (isConnected) {
+          ids.add(edge.source);
+          ids.add(edge.target);
+
+          const sNode = positionedNodes.find((n: any) => n.id === edge.source);
+          const tNode = positionedNodes.find((n: any) => n.id === edge.target);
+          if (sNode?.parentPill) ids.add(sNode.parentPill);
+          if (sNode?.categoryId) ids.add(sNode.categoryId);
+          if (tNode?.parentPill) ids.add(tNode.parentPill);
+          if (tNode?.categoryId) ids.add(tNode.categoryId);
+        }
+      });
+
+      const targetWord = (targetNode.kanji || targetNode.character || targetNode.word || targetNode.label || "").trim();
+      if (targetWord) {
+        initialRawEdges.forEach((rawEdge: any) => {
+          const srcW = (rawEdge.source || "").trim();
+          const tgtW = (rawEdge.target || "").trim();
+          if (srcW === targetWord || tgtW === targetWord) {
+            const otherW = srcW === targetWord ? tgtW : srcW;
+            positionedNodes.forEach((n: any) => {
+              const nW = (n.kanji || n.character || n.word || n.label || "").trim();
+              if (nW === otherW) {
+                ids.add(n.id);
+                if (n.parentPill) ids.add(n.parentPill);
+                if (n.categoryId) ids.add(n.categoryId);
+              }
+            });
+          }
+        });
+      }
+    });
+
+    return ids;
+  }, [activeJukugoWord, activeNodeId, positionedNodes, deduplicatedEdges, initialRawEdges]);
 
   // Progressive Interactive Node State with Animated Visibility Flag & Relation Isolation
   const nodes = useMemo(() => {
@@ -967,6 +1092,20 @@ function KanjiAtlasFlowInner({
         } else {
           isVisible = false; // Hide all rest!
         }
+      } else if (activeJukugoWord || activeNodeId) {
+        // IF A NODE IS SELECTED:
+        // Keep ONLY exact connected subnet visible, hide all unrelated nodes!
+        if (activeNodeConnectedIds.has(node.id)) {
+          isVisible = true;
+        } else {
+          isVisible = false;
+        }
+
+        if (activeNodeId) {
+          isActiveStep = node.id === activeNodeId;
+        } else if (activeJukugoWord) {
+          isActiveStep = nodeWord === activeJukugoWord;
+        }
       } else {
         // NORMAL HIERARCHY VISIBILITY:
         if (isRootNode) {
@@ -1003,7 +1142,7 @@ function KanjiAtlasFlowInner({
         },
       };
     });
-  }, [positionedNodes, areCategoriesVisible, expandedCategoryIds, selectedRelationEdgeId, selectedRelationConnectedIds, activeJukugoWord, activeNodeId, deduplicatedEdges]);
+  }, [positionedNodes, areCategoriesVisible, expandedCategoryIds, selectedRelationEdgeId, selectedRelationConnectedIds, activeJukugoWord, activeNodeId, deduplicatedEdges, activeNodeConnectedIds]);
 
   const edges = useMemo(() => {
     const nodeVisibilityMap = new Map<string, boolean>();
@@ -1049,6 +1188,10 @@ function KanjiAtlasFlowInner({
         const isSrcInPath = selectedRelationConnectedIds.has(edge.source);
         const isTgtInPath = selectedRelationConnectedIds.has(edge.target);
         isEdgeVisible = isSelectedRelation || (isSrcInPath && isTgtInPath);
+      } else if (activeJukugoWord || activeNodeId) {
+        const isSrcInPath = activeNodeConnectedIds.has(edge.source);
+        const isTgtInPath = activeNodeConnectedIds.has(edge.target);
+        isEdgeVisible = isSrcInPath && isTgtInPath;
       } else {
         isEdgeVisible = isSrcVisible && isTgtVisible;
       }
@@ -1091,7 +1234,7 @@ function KanjiAtlasFlowInner({
     });
 
     return formattedEdges;
-  }, [positionedNodes, deduplicatedEdges, nodePosMap, catColorMap, nodes, selectedRelationEdgeId, selectedRelationConnectedIds]);
+  }, [positionedNodes, deduplicatedEdges, nodePosMap, catColorMap, nodes, selectedRelationEdgeId, selectedRelationConnectedIds, activeJukugoWord, activeNodeId, activeNodeConnectedIds]);
 
   // Click node handler - Progressive Sequenced Hierarchy Reveal, History Redirection & SFX Focus
   const onNodeClick = (_: any, node: any) => {

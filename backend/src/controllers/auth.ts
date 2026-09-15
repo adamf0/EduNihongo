@@ -46,7 +46,7 @@ export const register = async (req: Request, res: Response) => {
           userId: user.id,
           moduleId: mod.id,
           isCompleted: false,
-          isLocked: mod.title !== "Module 1" && mod.title !== "Module 2", // unlock only first two modules by default
+          isLocked: false,
           progressPercent: 0,
         },
       });

@@ -50,18 +50,14 @@ export const QUIZ_ITEMS_KYUU = [
     type: "grouping",
     question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
     words: JSON.stringify([
-      "究明", "究査", "究問",
-      "原因究明", "真相究明", "事実究明", "問題究明",
-      "研究科", "研究室", "研究書", "研究方法",
-      "探究心", "学究心", "深く究める",
-      "究理", "本質究明", "結論究明", "究極"
+      "究明", "究理",
+      "研究", "探究", "追究",
+      "考究", "討究", "論究", "講究"
     ]),
     groups: JSON.stringify([
-      { "Penelitian dan Penyelidikan": ["究明", "究査", "究問"] },
-      { "Pencarian Penyebab": ["原因究明", "真相究明", "事実究明", "問題究明"] },
-      { "Akademik dan Ilmiah": ["研究科", "研究室", "研究書", "研究方法"] },
-      { "Pendalaman Ilmu": ["探究心", "学究心", "深く究める"] },
-      { "Hasil dan Pemahaman": ["究理", "本質究明", "結論究明", "究極"] }
+      { "Mendalami / Mengungkap": ["究明", "究理"] },
+      { "Meneliti / Menyelidiki": ["研究", "探究", "追究"] },
+      { "Mengkaji / Membahas": ["考究", "討究", "論究", "講究"] }
     ]),
     explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 究."
   },

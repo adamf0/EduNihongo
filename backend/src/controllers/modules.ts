@@ -41,14 +41,8 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
         };
       });
 
-      // Calculate dynamic locks:
-      // First module is always unlocked.
-      // Subsequent modules are locked if the previous module is not 100% completed.
-      let isLocked = false;
-      if (index > 0) {
-        const prev = userProgress[index - 1];
-        isLocked = prev.progressPercent < 100 && !prev.isCompleted;
-      }
+      // All modules are unlocked
+      const isLocked = false;
 
       return {
         id: up.module.id,

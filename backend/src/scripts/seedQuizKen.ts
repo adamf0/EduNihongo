@@ -45,16 +45,14 @@ const QUIZ_ITEMS_KEN = [
     type: "grouping",
     question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
     words: JSON.stringify([
-      "研究", "研究室", "研究会", "研究者",
-      "研修", "研修生", "研修旅行",
-      "研究科", "研究書", "研究分野", "研究方法",
-      "研ぐ", "研石", "研削", "研磨"
+      "研究", "研学", "研精",
+      "研修", "研習", "研鑽",
+      "研磨", "研削"
     ]),
     groups: JSON.stringify([
-      { "Kegiatan Penelitian": ["研究", "研究室", "研究会", "研究者"] },
-      { "Pelatihan dan Pengembangan": ["研修", "研修生", "研修旅行"] },
-      { "Ilmu Pengetahuan dan Akademik": ["研究科", "研究書", "研究分野", "研究方法"] },
-      { "Proses Mengasah dan Memperhalus": ["研磨", "研ぐ", "研石", "研削"] }
+      { "Meneliti / Mendalami": ["研究", "研学", "研精"] },
+      { "Belajar / Mengasah Kemampuan": ["研修", "研習", "研鑽"] },
+      { "Mengasah / Menghaluskan": ["研磨", "研削"] }
     ]),
     explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 研.",
   },

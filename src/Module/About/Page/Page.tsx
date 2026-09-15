@@ -173,13 +173,12 @@ export const AboutPage: React.FC = () => {
 
             {/* Title */}
             <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight">
-              Tentang <span className="text-[#0D47A1]">EduNihongo</span>{" "}
-              <span className="text-[#EC6C9A] font-serif font-normal">(KanGraph)</span>
+              Tentang <span className="text-[#0D47A1]">KanGraph</span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-base md:text-lg text-slate-600 font-medium leading-relaxed">
-              Solusi pembelajaran Kanji & Jukugo Bahasa Jepang tingkat **JLPT N4** dengan pendekatan **Graf Semantik Interaktif**, visualisasi pembongkaran kata, serta integrasi penugasan LMS terpadu.
+              Solusi pembelajaran Kanji & Jukugo Bahasa Jepang tingkat <b>JLPT N4</b> dengan pendekatan <b>Graf Semantik Interaktif</b>, visualisasi pembongkaran kata, serta integrasi penugasan LMS terpadu.
             </p>
 
             {/* Action Buttons */}
@@ -215,10 +214,10 @@ export const AboutPage: React.FC = () => {
                 Menghubungkan Titik-Titik Kemahiran Kanji Jepang
               </h2>
               <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-                Selama ini, banyak pembelajar menghadapi kendala besar dalam menghafal kanji secara terpisah tanpa memahami relasi makna antar-karakter. **EduNihongo (KanGraph)** hadir untuk mengubah metode hafalan mati menjadi **pemahaman visual konseptual**.
+                Selama ini, banyak pembelajar menghadapi kendala besar dalam menghafal kanji secara terpisah tanpa memahami relasi makna antar-karakter. <b>KanGraph</b> hadir untuk mengubah metode hafalan mati menjadi <b>pemahaman visual konseptual</b>.
               </p>
               <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-                Dengan menghubungkan Kanji tunggal ke dalam **Jukugo (kata majemuk)** dan mengelompokkannya secara semantik, aplikasi ini membantu pembelajar memahami alasan logis di balik pembentukan setiap kata dalam Bahasa Jepang.
+                Dengan menghubungkan Kanji tunggal ke dalam <b>Jukugo (kata majemuk)</b> dan mengelompokkannya secara semantik, aplikasi ini membantu pembelajar memahami alasan logis di balik pembentukan setiap kata dalam Bahasa Jepang.
               </p>
               
               <div className="grid grid-cols-2 gap-4 pt-2">
@@ -291,7 +290,7 @@ export const AboutPage: React.FC = () => {
               <span>Arah & Tujuan Kami</span>
             </div>
             <h2 className="text-2xl md:text-4xl font-extrabold text-slate-900">
-              Visi & Misi EduNihongo
+              Visi & Misi KanGraph
             </h2>
             <p className="text-slate-600 text-sm md:text-base">
               Berkomitmen menghadirkan ekosistem pembelajaran bahasa Jepang yang terstruktur dan bermakna.
@@ -347,7 +346,7 @@ export const AboutPage: React.FC = () => {
               Untuk Siapa Platform Ini Dirancang?
             </h2>
             <p className="text-slate-600 text-sm md:text-base">
-              EduNihongo dirancang untuk memenuhi kebutuhan berbagai tipe pengakses pembelajaran Bahasa Jepang.
+              KanGraph dirancang untuk memenuhi kebutuhan berbagai tipe pengakses pembelajaran Bahasa Jepang.
             </p>
           </div>
 
@@ -501,7 +500,7 @@ export const AboutPage: React.FC = () => {
             "Belajar kanji bukan hanya mengingat urutan goresan, melainkan memahami jaringan makna yang saling terhubung."
           </p>
           <div className="text-xs font-bold text-[#0D47A1] uppercase tracking-wider">
-            — Tim Pengembangan EduNihongo (KanGraph)
+            — Tim Pengembangan KanGraph
           </div>
         </div>
       </section>
@@ -513,7 +512,7 @@ export const AboutPage: React.FC = () => {
             <MusubiLogo size={36} showText textColor="text-white" />
           </div>
           <p className="text-xs text-slate-400">
-            © 2026 EduNihongo (KanGraph). All rights reserved. JLPT N4 Japanese Learning Platform.
+            © 2026 KanGraph. All rights reserved. JLPT N4 Japanese Learning Platform.
           </p>
           <div className="flex items-center gap-4 text-xs text-slate-300">
             <button onClick={() => navigate("/")} className="hover:text-[#EC6C9A] transition-all">

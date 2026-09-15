@@ -5,6 +5,7 @@ import Icon from "../../Common/Component/Icon";
 import DailyInsight from "../Component/Molecules/DailyInsight";
 import WeeklyActivity from "../Component/Organism/WeeklyActivity";
 import ContinueLearning from "../Component/Organism/ContinueLearning";
+import AdminQuizRubricReport from "../Component/AdminQuizRubricReport";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../Common/Utility/api";
 
@@ -13,6 +14,9 @@ export const DashboardPage: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const role = api.auth.getRole();
+  const isAdmin = role === "ADMIN";
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -68,9 +72,17 @@ export const DashboardPage: React.FC = () => {
     <Layout>
       <main className="flex-1 w-full px-4 md:px-6 max-w-[1200px] mx-auto py-6">
         <div className="flex flex-col gap-md py-md select-none">
-          <h2 className="font-headline-lg text-headline-lg text-secondary font-bold">
-            Ringkasan Dasbor
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/20 pb-4">
+            <h2 className="font-headline-lg text-headline-lg text-secondary font-bold flex items-center gap-2">
+              <Icon name="space_dashboard" className="text-primary text-3xl" />
+              {isAdmin ? "Pelaporan Analytics & Rubrik Kuis Admin" : "Ringkasan Dasbor"}
+            </h2>
+          </div>
+
+          {isAdmin ? (
+            <AdminQuizRubricReport />
+          ) : (
+            <>
 
           {/* Stat Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-base">
@@ -199,6 +211,8 @@ export const DashboardPage: React.FC = () => {
               />
             </div>
           </div>
+          </>
+          )}
         </div>
       </main>
     </Layout>

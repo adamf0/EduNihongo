@@ -9,7 +9,9 @@ import {
   getKanjis,
   createKanji,
   updateKanji,
-  deleteKanji
+  deleteKanji,
+  getQuizRubricReport,
+  getLearningAnalytics
 } from "../controllers/admin";
 import {
   getJukugos,
@@ -45,6 +47,9 @@ router.get("/kanjis", getKanjis);
 router.post("/kanjis", createKanji);
 router.put("/kanjis/:id", updateKanji);
 router.delete("/kanjis/:id", deleteKanji);
+
+router.get("/quiz-rubric-report", getQuizRubricReport);
+router.get("/learning-analytics", getLearningAnalytics);
 
 router.get("/jukugos", getJukugos);
 router.post("/jukugos", createJukugo);

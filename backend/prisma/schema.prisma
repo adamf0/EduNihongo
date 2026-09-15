@@ -27,6 +27,7 @@ model User {
   kanjiProgress     UserKanjiProgress[]
   moduleProgress    UserModuleProgress[]
   refleksiData      RefleksiData[]
+  quizAttempts      QuizAttempt[]
 }
 
 model MasterRefleksi {
@@ -115,6 +116,7 @@ model Kanji {
   userProgress   UserKanjiProgress[]
   masterRefleksi MasterRefleksi[]
   refleksiData   RefleksiData[]
+  quizAttempts   QuizAttempt[]
 
   @@index([moduleId], map: "Kanji_moduleId_fkey")
 }
@@ -310,4 +312,36 @@ model Quiz {
 
   @@index([kanjiId], map: "Quiz_kanjiId_fkey")
 }
+
+model QuizAttempt {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  kanjiId        Int
+  attemptNumber  Int      @default(1)
+  scoreModelA    Float?
+  rawModelA      Float?
+  maxModelA      Float?
+  scoreModelB    Float?
+  rawModelB      Float?
+  maxModelB      Float?
+  scoreModelC    Float?
+  rawModelC      Float?
+  maxModelC      Float?
+  scoreModelD    Float?
+  rawModelD      Float?
+  maxModelD      Float?
+  totalScore     Float
+  interpretation String?
+  isBestAttempt  Boolean  @default(false)
+  details        String?  @db.Text
+  createdAt      DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kanji Kanji @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "QuizAttempt_userId_fkey")
+  @@index([kanjiId], map: "QuizAttempt_kanjiId_fkey")
+  @@index([createdAt], map: "QuizAttempt_createdAt_fkey")
+}
+
 

@@ -274,9 +274,9 @@ Menggunakan jukugo dalam konteks pekerjaan dan perdagangan.`;
           words: ["職業", "職人", "職員", "職場", "求職", "有職", "転職", "退職", "無職"],
           groups: [
             { "Profesi / Pekerjaan": ["職業", "職人"] },
-            { "Orang / tempat kerja": ["職員", "職場"] },
-            { "Mencari / memiliki pekerjaan": ["求職", "有職"] },
-            { "Perubahan / status pekerjaan": ["転職", "退職", "無職"] }
+            { "Orang / Tempat Kerja": ["職員", "職場"] },
+            { "Mencari / Memiliki Pekerjaan": ["求職", "有職"] },
+            { "Perubahan / Status Pekerjaan": ["退職", "転職", "無職"] }
           ],
           explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 職."
         },
@@ -897,10 +897,10 @@ Menggunakan jukugo dalam konteks pekerjaan dan perdagangan.`;
           question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph kanji 商 yang tepat.",
           words: ["商店", "商店街", "商品", "商売", "商業", "商取引", "商人", "商社"],
           groups: [
-            { "Tempat": ["商店", "商店街"] },
-            { "Produk": ["商品"] },
-            { "Kegiatan": ["商売", "商業", "商取引"] },
-            { "Pelaku": ["商人"] },
+            { "Tempat Perdagangan": ["商店", "商店街"] },
+            { "Produk / Barang Dagangan": ["商品"] },
+            { "Kegiatan Perdagangan": ["商売", "商業", "商取引"] },
+            { "Pelaku Perdagangan": ["商人"] },
             { "Jenis Usaha": ["商社"] }
           ],
           explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 商."

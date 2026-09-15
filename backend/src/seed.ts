@@ -69,13 +69,15 @@ const kanjiInfo: Record<string, {
       {
         type: "grouping",
         question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
-        words: ["試験", "入試", "試問", "試着", "試用", "試乗", "試食", "試飲", "試薬", "試作", "試作品", "試製", "試合", "試技", "試聴", "試写", "試読"],
+        words: ["試験", "入試", "追試", "試問", "試着", "試用", "試乗", "試食", "試飲", "試薬", "試作", "試製", "試合", "試技", "試射", "試練", "試写", "試聴", "試読"],
         groups: [
-          { "Aktivitas Pengujian": ["試験", "入試", "試問"] },
+          { "Aktivitas Pengujian": ["試験", "入試", "追試", "試問"] },
           { "Penggunaan": ["試着", "試用", "試乗"] },
-          { "Konsumsi": ["試食", "試飲", "試薬"] },
-          { "Produksi dan Pengembangan": ["試作", "試作品", "試製"] },
-          { "Kompetisi dan Media": ["試合", "試技", "試聴", "試写", "試読"] }
+          { "Konsumsi": ["試食", "試飲"] },
+          { "Bahan Pengujian": ["試薬"] },
+          { "Produksi dan Pengembangan": ["試作", "試製"] },
+          { "Kompetisi dan Keterampilan": ["試合", "試技", "試射", "試練"] },
+          { "Media": ["試写", "試聴", "試読"] }
         ],
         explanation: "Pengelompokan jukugo berdasarkan cabang semantic graph kanji 試."
       },
@@ -151,23 +153,25 @@ const kanjiInfo: Record<string, {
       }
     ]),
     jukugos: [
-      { word: "試験", reading: "しけん", meaning: "UJian", kanjiBreakdown: "試 : Menguji | 験 : Memverifikasi  hasil dan", explanation: "Hubungan makna antara kanji試dan 験menjadi試験 menunjukan gabungan kedua kanji tersebut membentuk sebuah makna \"suatu kegiatan untuk mengukur pengetahuan atau kemampuan seseorang, maka ketika digabungkan mengandung makna ujian\"." },
-      { word: "入試", reading: "にゅうし", meaning: "ujian masuk", kanjiBreakdown: "入 : masuk | 試 : ujian", explanation: "Hubungan makna  antara kanji 入 dan 試 menjadi 入試 , menunjukan gabungan kedua kanji tersebut membentuk sebuah makna “untuk masuk sekolah atau pun  perguruan “tinggi harus melalui ujian’." },
-      { word: "試問", reading: "しつもん", meaning: "ujian lisan", kanjiBreakdown: "試 : menguji | 問 : bertanya", explanation: "Hubungan makna antar kanji 試 dan 問 menjadi 試問, menunjukan gabungan kedua kanji tersebut membentuk sebuah makna \" ujian dilakukan dengan tanya jawab secara langsung\"." },
-      { word: "試着", reading: "しちゃく", meaning: "mencoba pakaian", kanjiBreakdown: "試 : Mencoba | 着 : Memakai", explanation: "Hubungan makna antar kanji 試  dan 着 menjadi 試着, menunjukan gabungan kedua kanji tersebut membentuk  sebuah makna  \"mencoba pakaian sebelum memutuskan untuk memberlinya\"." },
-      { word: "試用", reading: "しよう", meaning: "Uji Coba", kanjiBreakdown: "試 : Mencoba | 用 : Menggunakan", explanation: "Hubungan makna antar kanji 試 dan 用 menunjukan gabungan kedua kanji tersebut　membentuk sebuah makna \"bahwa untuk mengetahui manfaat  atau kualitasnya harus menggunakan sesuatu\"" },
-      { word: "試乗", reading: "しじょう", meaning: "Test Drive", kanjiBreakdown: "試 : Mencoba | 乗 : Menaiki", explanation: "Hubungan makna antar kanji 試 dan 乗 menunjukan bahwa sebelum membeli atau menggunakan kendaraan harus mencoba kendaraan terlebih dahulu." },
-      { word: "試食", reading: "ししょく", meaning: "Uji rasa", kanjiBreakdown: "試 : Mencoba | 食 : Makan", explanation: "Hubungan mana antar kanji 試 dan食 menunjukan bahwa untuk menilai rasa sesuatu, terlebih dahulu harus mencoba makanannya terlebih dahulu." },
-      { word: "試飲", reading: "しいん", meaning: "Coba Minuman", kanjiBreakdown: "試 : Mencoba | 飲 : Minum", explanation: "Hubungan makna antar kanji 試 dan 飲 menjadi 試飲,  menunjukan bahwa　gabungan kedua kanji tersebut mengandung makna \"sebelum membeli   atau memilih produk minuman, terlebih dahulu mencoba minumannya.\"" },
-      { word: "試薬", reading: "しやく", meaning: "bahan uji", kanjiBreakdown: "試 : menguji | 薬 : zat kimia", explanation: "Hubungan makna antar kanji 試 dan 薬 menjadi 試薬, menujukan bahwa gabunagn keua kanji itu mengandung makna \"zat yang digunakan untuk melakukan pengujian atau eksperimen\"." },
-      { word: "試作", reading: "しさく", meaning: "Prototipe", kanjiBreakdown: "試 : Percobaan | 作 : Membuat", explanation: "Hubungan makna antar kanji 試 dan 作 menjadi 試作, menunjukan bahwa gabungan kedua kanji tersebut mengandung makna \"sebelum memperoduksi sesuatu secara massal, terlebih dahulu membuat produk percobaan terlebih dahulu\"." },
-      { word: "試作品", reading: "しさくひん", meaning: "produk uji", kanjiBreakdown: "試作 : Prototipe | 品 : Produk/barang", explanation: "Hubungan makna antar kanji 試作 dan 品 menjadi 試作品, menunjukan bahwa gabungan kedua kanji tersebut mengandung makan \"produk hasil percobaan  yang masih dalam tahap pengembangan\"" },
-      { word: "試製", reading: "しせい", meaning: "Uji Produksi", kanjiBreakdown: "試 : Percobaan | 製 : Memproduksi", explanation: "Hubungan makna antar kanji 試 dan 製,  menunjukan bahwa gabungan kedua kanji itu mengandung makna \"mengevaluasi kualitas produk, terlebih dahulu memproduksi sesuatu dalam skala percobaan\"." },
-      { word: "試合", reading: "しあい", meaning: "Pertandingan", kanjiBreakdown: "試 : Menguji | 合 : Bertanding", explanation: "Hubungan makna antar kanji 試 dan 合, menunjukan bahwa gabungan kedua kanji itu mengandung makna \"ajang untuk menguji kemampuan peserta atau pun tim\"." },
-      { word: "試技", reading: "しぎ", meaning: "Uji keterampilan", kanjiBreakdown: "試 : Menguji | 技 : Keterampilan", explanation: "Hubungan makna antar kanji 試 dan技, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"demontrasi atau penilaian kemampuan teknis seseorang\"." },
-      { word: "試聴", reading: "しちょう", meaning: "uji dengar", kanjiBreakdown: "試 : Mencoba | 聴 : Mendengar", explanation: "Hubungan makna antar kanji 試 dan 聴, menunjukan bahwa gabungan kedua kanji itu  mengandung makna  \"sebelum memilih sesuatu, terlebih dahulu mendengarkan contoh audionya\"." },
-      { word: "試写", reading: "ししゃ", meaning: "pratinjau film", kanjiBreakdown: "試 : mencoba | 写 : menayangkan", explanation: "Hubungan makna antar kanji 試 dan 写, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"sebelum mempublikasikan film secara resmi, terlebih dahulu filmnya dipertontonkan dulu\"." },
-      { word: "試読", reading: "しどく", meaning: "pratinjau", kanjiBreakdown: "試 : mencoba | 読 : membaca", explanation: "Hubungan makna antar kanji, dari kanji 試 dan 読, menunjukan bahwa gabungan kedua kanji itu  mengandung makna \"sebelum memutuskan membelinya, terlebih dahulu membaca isi buku atau tulisannya\"." }
+      { word: "試験", reading: "しけん", meaning: "ujian", kanjiBreakdown: "試 : mencoba, menguji | 験 : menguji, membuktikan melalui pengalaman atau pengujian", explanation: "Hubungan makna antara kanji 試 dan 験 menjadi 試験, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “kegiatan menguji untuk mengetahui atau membuktikan kemampuan, pengetahuan, atau hasil tertentu.”" },
+      { word: "入試", reading: "にゅうし", meaning: "ujian masuk", kanjiBreakdown: "入 : masuk, memasuki | 試 : mencoba, menguji", explanation: "Hubungan makna antara kanji 入 dan 試 menjadi 入試, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “ujian yang dilakukan untuk menentukan apakah seseorang dapat masuk ke sekolah, universitas, atau lembaga tertentu.”" },
+      { word: "追試", reading: "ついし", meaning: "ujian susulan", kanjiBreakdown: "追 : mengikuti, menyusul, menambahkan | 試 : ujian, pengujian", explanation: "Hubungan makna antara kanji 追 dan 試 menjadi 追試, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “ujian tambahan atau ujian susulan yang dilakukan setelah ujian utama.”" },
+      { word: "試問", reading: "しもん", meaning: "ujian lisan / pengujian melalui pertanyaan", kanjiBreakdown: "試 : mencoba, menguji | 問 : bertanya, pertanyaan", explanation: "Hubungan makna antara kanji 試 dan 問 menjadi 試問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pengujian yang dilakukan dengan memberikan pertanyaan untuk mengetahui kemampuan atau pengetahuan seseorang.”" },
+      { word: "試着", reading: "しちゃく", meaning: "coba pakaian", kanjiBreakdown: "試 : mencoba, menguji | 着 : memakai, mengenakan", explanation: "Hubungan makna antara kanji 試 dan 着 menjadi 試着, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mencoba mengenakan pakaian untuk mengetahui ukuran, penampilan, atau kecocokannya.”" },
+      { word: "試用", reading: "しよう", meaning: "uji coba", kanjiBreakdown: "試 : mencoba, menguji | 用 : menggunakan, memakai", explanation: "Hubungan makna antara kanji 試 dan 用 menjadi 試用, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mencoba menggunakan sesuatu untuk mengetahui fungsi, kualitas, atau kesesuaiannya.”" },
+      { word: "試乗", reading: "しじょう", meaning: "test drive / coba kendaraan", kanjiBreakdown: "試 : mencoba, menguji | 乗 : menaiki, mengendarai", explanation: "Hubungan makna antara kanji 試 dan 乗 menjadi 試乗, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mencoba menaiki atau mengendarai kendaraan untuk mengetahui kondisi, kenyamanan, atau performanya.”" },
+      { word: "試食", reading: "ししょく", meaning: "uji rasa / mencicipi makanan", kanjiBreakdown: "試 : mencoba, menguji | 食 : makan, makanan", explanation: "Hubungan makna antara kanji 試 dan 食 menjadi 試食, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mencoba atau mencicipi makanan untuk mengetahui rasa atau kualitasnya.”" },
+      { word: "試飲", reading: "しいん", meaning: "coba minuman", kanjiBreakdown: "試 : mencoba, menguji | 飲 : minum", explanation: "Hubungan makna antara kanji 試 dan 飲 menjadi 試飲, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mencoba atau mencicipi minuman untuk mengetahui rasa atau kualitasnya.”" },
+      { word: "試薬", reading: "しやく", meaning: "reagen uji / bahan uji", kanjiBreakdown: "試 : mencoba, menguji | 薬 : obat, bahan kimia", explanation: "Hubungan makna antara kanji 試 dan 薬 menjadi 試薬, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “bahan kimia atau reagen yang digunakan untuk melakukan suatu pengujian.”" },
+      { word: "試作", reading: "しさく", meaning: "prototipe / pembuatan percobaan", kanjiBreakdown: "試 : mencoba, menguji | 作 : membuat, menghasilkan", explanation: "Hubungan makna antara kanji 試 dan 作 menjadi 試作, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mencoba membuat suatu benda atau produk sebagai percobaan untuk menilai bentuk, fungsi, atau kualitasnya.”" },
+      { word: "試製", reading: "しせい", meaning: "produksi uji / pembuatan percobaan", kanjiBreakdown: "試 : mencoba, menguji | 製 : membuat, memproduksi", explanation: "Hubungan makna antara kanji 試 dan 製 menjadi 試製, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “membuat atau memproduksi sesuatu secara percobaan untuk menguji hasilnya sebelum produksi sebenarnya.”" },
+      { word: "試合", reading: "しあい", meaning: "pertandingan", kanjiBreakdown: "試 : mencoba, menguji | 合 : bertemu, berhadapan", explanation: "Hubungan makna antara kanji 試 dan 合 menjadi 試合, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “kegiatan mempertemukan dua pihak untuk menguji atau membandingkan kemampuan dalam suatu pertandingan.”" },
+      { word: "試技", reading: "しぎ", meaning: "uji keterampilan", kanjiBreakdown: "試 : mencoba, menguji | 技 : keterampilan, teknik", explanation: "Hubungan makna antara kanji 試 dan 技 menjadi 試技, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pelaksanaan atau percobaan suatu teknik untuk menunjukkan atau menguji keterampilan.”" },
+      { word: "試射", reading: "ししゃ", meaning: "uji tembak", kanjiBreakdown: "試 : mencoba, menguji | 射 : menembak", explanation: "Hubungan makna antara kanji 試 dan 射 menjadi 試射, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “percobaan menembak untuk menguji senjata atau ketepatan sasaran.”" },
+      { word: "試練", reading: "しれん", meaning: "latihan / ujian berat", kanjiBreakdown: "試 : mencoba, menguji | 練 : melatih", explanation: "Hubungan makna antara kanji 試 dan 練 menjadi 試練, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “ujian atau cobaan berat untuk menggembleng dan menguji ketahanan seseorang.”" },
+      { word: "試写", reading: "ししゃ", meaning: "pratinjau film / pemutaran uji", kanjiBreakdown: "試 : mencoba, menguji | 写 : memotret, menyalin, menayangkan gambar", explanation: "Hubungan makna antara kanji 試 dan 写 menjadi 試写, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “menayangkan atau melihat film sebagai percobaan sebelum ditampilkan secara umum.”" },
+      { word: "試聴", reading: "しちょう", meaning: "mendengar contoh / mencoba mendengarkan", kanjiBreakdown: "試 : mencoba, menguji | 聴 : mendengarkan", explanation: "Hubungan makna antara kanji 試 dan 聴 menjadi 試聴, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mencoba mendengarkan musik, rekaman, atau media suara untuk mengetahui isi atau kualitasnya.”" },
+      { word: "試読", reading: "しどく", meaning: "membaca contoh / mencoba membaca", kanjiBreakdown: "試 : mencoba, menguji | 読 : membaca", explanation: "Hubungan makna antara kanji 試 dan 読 menjadi 試読, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mencoba membaca suatu tulisan atau karya untuk mengetahui isi atau kualitasnya sebelum membaca lebih lanjut.”" }
     ],
     examples: [
       {
@@ -1505,8 +1509,26 @@ async function main() {
   console.log("User seeded: ", user.name);
 
   const adminPasswordHash = await bcrypt.hash("admin123", 10);
-  const admin = await prisma.user.create({
-    data: {
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@kanjigraph.com" },
+    update: { password: adminPasswordHash, role: "ADMIN" },
+    create: {
+      email: "admin@kanjigraph.com",
+      password: adminPasswordHash,
+      name: "Admin KanjiGraph",
+      role: "ADMIN",
+      streak: 0,
+      totalXp: 0,
+      masteryWriting: 0,
+      masteryVocabulary: 0,
+      dailyTargetKanji: 5,
+      joinedAt: new Date("2023-10-01T00:00:00Z"),
+    },
+  });
+  await prisma.user.upsert({
+    where: { email: "admin@musubi.com" },
+    update: { password: adminPasswordHash, role: "ADMIN" },
+    create: {
       email: "admin@musubi.com",
       password: adminPasswordHash,
       name: "Admin Sensei",
@@ -1519,7 +1541,7 @@ async function main() {
       joinedAt: new Date("2023-10-01T00:00:00Z"),
     },
   });
-  console.log("Admin seeded: ", admin.name);
+  console.log("Admins seeded: admin@kanjigraph.com & admin@musubi.com");
 
   // 2. Create User Activity Logs
   const activitiesData: any[] = [];
@@ -1595,7 +1617,7 @@ async function main() {
         userId: user.id,
         moduleId: module.id,
         isCompleted: false,
-        isLocked: i > 0, // Unlock only Module 1 initially
+        isLocked: false,
         progressPercent: 0,
       },
     });
@@ -1785,47 +1807,61 @@ async function main() {
               title: "Aktivitas Pengujian",
               color: "border-green-500",
               jukugos: [
-                { word: "試験", reading: "しけん", meaning: "Ujian" },
-                { word: "入試", reading: "にゅうし", meaning: "Ujian Masuk" },
-                { word: "試問", reading: "しもん", meaning: "Ujian Lisan" }
+                { word: "試験", reading: "しけん", meaning: "ujian" },
+                { word: "入試", reading: "にゅうし", meaning: "ujian masuk" },
+                { word: "追試", reading: "ついし", meaning: "ujian susulan" },
+                { word: "試問", reading: "しもん", meaning: "ujian lisan" }
               ]
             },
             {
               title: "Penggunaan",
               color: "border-orange-500",
               jukugos: [
-                { word: "試着", reading: "しちゃく", meaning: "Coba Pakaian" },
-                { word: "試用", reading: "しよう", meaning: "Uji Coba" },
-                { word: "試乗", reading: "しじょう", meaning: "Test Drive" }
+                { word: "試着", reading: "しちゃく", meaning: "coba pakaian" },
+                { word: "試用", reading: "しよう", meaning: "uji coba" },
+                { word: "試乗", reading: "しじょう", meaning: "test drive" }
               ]
             },
             {
               title: "Konsumsi",
               color: "border-blue-500",
               jukugos: [
-                { word: "試食", reading: "ししょく", meaning: "Uji Rasa" },
-                { word: "試飲", reading: "しいん", meaning: "Coba Minuman" },
-                { word: "試薬", reading: "しやく", meaning: "Reagen Uji" }
+                { word: "試食", reading: "ししょく", meaning: "uji rasa" },
+                { word: "試飲", reading: "しいん", meaning: "coba minuman" }
+              ]
+            },
+            {
+              title: "Bahan Pengujian",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "試薬", reading: "しやく", meaning: "reagen uji" }
               ]
             },
             {
               title: "Produksi dan Pengembangan",
-              color: "border-purple-500",
+              color: "border-yellow-500",
               jukugos: [
-                { word: "試作", reading: "しさく", meaning: "Prototipe" },
-                { word: "試作品", reading: "しさくひん", meaning: "Produk Uji" },
-                { word: "試製", reading: "しせい", meaning: "Produksi Uji" }
+                { word: "試作", reading: "しさく", meaning: "prototipe" },
+                { word: "試製", reading: "しせい", meaning: "produksi uji" }
               ]
             },
             {
-              title: "Kompetisi dan Media",
-              color: "border-yellow-500",
+              title: "Kompetisi dan Keterampilan",
+              color: "border-cyan-500",
               jukugos: [
-                { word: "試合", reading: "しあい", meaning: "Pertandingan" },
-                { word: "試技", reading: "しぎ", meaning: "Uji Keterampilan" },
-                { word: "試聴", reading: "しちょう", meaning: "Uji Dengar" },
-                { word: "試写", reading: "ししゃ", meaning: "Pratinjau Film" },
-                { word: "試読", reading: "しどく", meaning: "Membaca Contoh" }
+                { word: "試合", reading: "しあい", meaning: "pertandingan" },
+                { word: "試技", reading: "しぎ", meaning: "uji keterampilan" },
+                { word: "試射", reading: "ししゃ", meaning: "uji tembak" },
+                { word: "試練", reading: "しれん", meaning: "latihan / ujian berat" }
+              ]
+            },
+            {
+              title: "Media",
+              color: "border-pink-500",
+              jukugos: [
+                { word: "試写", reading: "ししゃ", meaning: "pratinjau film" },
+                { word: "試聴", reading: "しちょう", meaning: "mendengar contoh" },
+                { word: "試読", reading: "しどく", meaning: "membaca contoh" }
               ]
             }
           ]
@@ -1833,39 +1869,35 @@ async function main() {
         "験": {
           categories: [
             {
-              title: "Pengujian",
-              color: "border-green-500",
+              title: "Pengujian / Pembuktian",
+              color: "border-blue-500",
               jukugos: [
-                { word: "試験", reading: "しけん", meaning: "Ujian" },
-                { word: "受験", reading: "じゅけん", meaning: "Mengikuti Ujian" },
-                { word: "資格試験", reading: "しかくしけん", meaning: "Ujian Sertifikasi" }
+                { word: "試験", reading: "しけん", meaning: "ujian / pengujian" },
+                { word: "受験", reading: "じゅけん", meaning: "mengikuti ujian" },
+                { word: "実験", reading: "じっけん", meaning: "eksperimen / percobaan" },
+                { word: "治験", reading: "ちけん", meaning: "uji klinis" }
               ]
             },
             {
               title: "Pengalaman",
+              color: "border-green-500",
+              jukugos: [
+                { word: "経験", reading: "けいけん", meaning: "pengalaman" },
+                { word: "体験", reading: "たいけん", meaning: "pengalaman langsung" }
+              ]
+            },
+            {
+              title: "Verifikasi / Pemeriksaan",
               color: "border-orange-500",
               jukugos: [
-                { word: "経験", reading: "けいけん", meaning: "Pengalaman" },
-                { word: "体験", reading: "たいけん", meaning: "Pengalaman Langsung" },
-                { word: "経験者", reading: "けいけんしゃ", meaning: "Orang Berpengalaman" }
+                { word: "験算", reading: "けんざん", meaning: "pemeriksaan ulang perhitungan" }
               ]
             },
             {
-              title: "Penelitian",
-              color: "border-blue-500",
+              title: "Hasil / Efek / Bukti",
+              color: "border-pink-500",
               jukugos: [
-                { word: "実験", reading: "じっけん", meaning: "Eksperimen" },
-                { word: "実験室", reading: "じっけんしつ", meaning: "Laboratorium" },
-                { word: "被験者", reading: "ひけんしゃ", meaning: "Subjek Penelitian" }
-              ]
-            },
-            {
-              title: "Sertifikasi",
-              color: "border-purple-500",
-              jukugos: [
-                { word: "受験生", reading: "じゅけんせい", meaning: "Peserta Ujian" },
-                { word: "検定試験", reading: "けんていしけん", meaning: "Ujian Kompetensi" },
-                { word: "受験番号", reading: "じゅけんばんごう", meaning: "Nomor Peserta" }
+                { word: "効験", reading: "こうけん", meaning: "efek / khasiat" }
               ]
             }
           ]
@@ -1873,48 +1905,53 @@ async function main() {
         "問": {
           categories: [
             {
-              title: "Pertanyaan dan Ujian",
-              color: "border-green-500",
-              jukugos: [
-                { word: "問題", reading: "もんだい", meaning: "Soal / Masalah" },
-                { word: "質問", reading: "しつもん", meaning: "Pertanyaan" },
-                { word: "問答", reading: "もんどう", meaning: "Tanya Jawab" }
-              ]
-            },
-            {
-              title: "Investigasi dan Penyelidikan",
-              color: "border-orange-500",
-              jukugos: [
-                { word: "問診", reading: "もんしん", meaning: "Wawancara Medis" },
-                { word: "尋問", reading: "じんもん", meaning: "Interogasi" },
-                { word: "訪問調査", reading: "ほうもんちょうさ", meaning: "Survei Lapangan" }
-              ]
-            },
-            {
-              title: "Permasalahan Sosial",
+              title: "BERTANYA / MENGAJUKAN PERTANYAAN",
               color: "border-blue-500",
               jukugos: [
-                { word: "問題点", reading: "もんだいてん", meaning: "Titik Masalah" },
-                { word: "社会問題", reading: "しゃかいもんだい", meaning: "Masalah Sosial" },
-                { word: "環境問題", reading: "かんきょうもんだい", meaning: "Masalah Lingkungan" }
+                { word: "質問", reading: "しつもん", meaning: "pertanyaan" },
+                { word: "自問", reading: "じもん", meaning: "bertanya pada diri sendiri" },
+                { word: "発問", reading: "はつもん", meaning: "mengajukan pertanyaan" },
+                { word: "反問", reading: "はんもん", meaning: "pertanyaan balik" }
               ]
             },
             {
-              title: "Pendidikan dan Evaluasi",
+              title: "TANYA JAWAB",
+              color: "border-pink-500",
+              jukugos: [
+                { word: "問答", reading: "もんどう", meaning: "tanya jawab" }
+              ]
+            },
+            {
+              title: "SOAL / PERTANYAAN",
+              color: "border-green-500",
+              jukugos: [
+                { word: "問題", reading: "もんだい", meaning: "masalah" },
+                { word: "設問", reading: "せつもん", meaning: "pertanyaan" },
+                { word: "試問", reading: "しもん", meaning: "ujian lisan" },
+                { word: "難問", reading: "なんもん", meaning: "pertanyaan sulit" }
+              ]
+            },
+            {
+              title: "PEMERIKSAAN DENGAN PERTANYAAN",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "問診", reading: "もんしん", meaning: "wawancara medis" },
+                { word: "検問", reading: "けんもん", meaning: "pemeriksaan" }
+              ]
+            },
+            {
+              title: "MEMPERTANYAKAN / MEMINTA PERTANGGUNGJAWABAN",
               color: "border-purple-500",
               jukugos: [
-                { word: "設問", reading: "せつもん", meaning: "Butir Pertanyaan" },
-                { word: "問題集", reading: "もんだいしゅう", meaning: "Kumpulan Soal" },
-                { word: "問一", reading: "もんいち", meaning: "Soal Nomor 1" }
+                { word: "問責", reading: "もんせき", meaning: "meminta pertanggungjawaban" },
+                { word: "不問", reading: "ふもん", meaning: "tidak dipermasalahkan" }
               ]
             },
             {
-              title: "Komunikasi dan Konsultasi",
+              title: "MENGUNJUNGI (MAKNA PERLUASAN)",
               color: "border-yellow-500",
               jukugos: [
-                { word: "問い合わせ", reading: "といあわせ", meaning: "Inquiry / Pertanyaan" },
-                { word: "問う", reading: "とう", meaning: "Menanyakan" },
-                { word: "問屋", reading: "とんや", meaning: "Pedagang Besar" }
+                { word: "訪問", reading: "ほうもん", meaning: "kunjungan" }
               ]
             }
           ]
@@ -1922,48 +1959,43 @@ async function main() {
         "題": {
           categories: [
             {
-              title: "Pendidikan dan Evaluasi",
+              title: "Soal / Tugas / Masalah",
               color: "border-green-500",
               jukugos: [
-                { word: "問題", reading: "もんだい", meaning: "Soal / Masalah" },
-                { word: "課題", reading: "かだい", meaning: "Tugas" },
-                { word: "宿題", reading: "しゅくだい", meaning: "Pekerjaan Rumah" }
+                { word: "問題", reading: "もんだい", meaning: "masalah / soal" },
+                { word: "課題", reading: "かだい", meaning: "tugas / persoalan" },
+                { word: "宿題", reading: "しゅくだい", meaning: "pekerjaan rumah" },
+                { word: "出題", reading: "しゅつだい", meaning: "pemberian soal / membuat soal" },
+                { word: "例題", reading: "れいだい", meaning: "contoh soal" },
+                { word: "難題", reading: "なんだい", meaning: "masalah sulit" }
               ]
             },
             {
-              title: "Judul dan Tema",
-              color: "border-orange-500",
-              jukugos: [
-                { word: "題名", reading: "だいめい", meaning: "Judul" },
-                { word: "表題", reading: "ひょうだい", meaning: "Judul Utama" },
-                { word: "主題", reading: "しゅだい", meaning: "Tema Utama" }
-              ]
-            },
-            {
-              title: "Akademik dan Penelitian",
+              title: "Tema / Topik",
               color: "border-blue-500",
               jukugos: [
-                { word: "研究課題", reading: "けんきゅうかだい", meaning: "Topik Penelitian" },
-                { word: "論題", reading: "ろんだい", meaning: "Tema Kajian" },
-                { word: "出題", reading: "しゅつだい", meaning: "Pembuatan Soal" } // Wait, let's look at OCR for 出題 reading. OCR says "Pembuatan Soal", reading is "しゅつだい". Let's write "しゅつだい".
+                { word: "主題", reading: "しゅだい", meaning: "tema utama" },
+                { word: "話題", reading: "わだい", meaning: "topik pembicaraan" },
+                { word: "論題", reading: "ろんだい", meaning: "topik pembahasan / perdebatan" },
+                { word: "議題", reading: "ぎだい", meaning: "agenda / topik pembahasan" }
               ]
             },
             {
-              title: "Diskusi dan Pemikiran",
+              title: "Judul",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "題名", reading: "だいめい", meaning: "judul" },
+                { word: "表題", reading: "ひょうだい", meaning: "judul" },
+                { word: "副題", reading: "ふくだい", meaning: "subjudul" },
+                { word: "演題", reading: "えんだい", meaning: "judul / topik presentasi" },
+                { word: "題字", reading: "だいじ", meaning: "tulisan judul" }
+              ]
+            },
+            {
+              title: "Bahan / Tema Karya",
               color: "border-purple-500",
               jukugos: [
-                { word: "話題", reading: "わだい", meaning: "Topik Pembicaraan" },
-                { word: "時事問題", reading: "じじもんだい", meaning: "Isu Aktual" },
-                { word: "問題意識", reading: "もんだいいしき", meaning: "Kesadaran Masalah" }
-              ]
-            },
-            {
-              title: "Media dan Publikasi",
-              color: "border-yellow-500",
-              jukugos: [
-                { word: "題材", reading: "だいざい", meaning: "Bahan Cerita" },
-                { word: "題字", reading: "だいじ", meaning: "Tulisan Judul" },
-                { word: "演題", reading: "えんだい", meaning: "Judul Presentasi" }
+                { word: "題材", reading: "だいざい", meaning: "bahan / tema karya" }
               ]
             }
           ]
@@ -1971,48 +2003,42 @@ async function main() {
         "答": {
           categories: [
             {
-              title: "Pertanyaan dan Jawaban",
-              color: "border-green-500",
-              jukugos: [
-                { word: "回答", reading: "かいとう", meaning: "Jawaban" },
-                { word: "解答", reading: "かいとう", meaning: "Jawaban Soal" },
-                { word: "応答", reading: "おうとう", meaning: "Respons" }
-              ]
-            },
-            {
-              title: "Pendidikan dan Evaluasi",
-              color: "border-orange-500",
-              jukugos: [
-                { word: "答案", reading: "とうan", meaning: "Lembar Jawaban" }, // Let's correct reading to "とうあん"
-                { word: "正答", reading: "せいとう", meaning: "Jawaban Benar" },
-                { word: "解答用紙", reading: "かいとうようし", meaning: "Lembar Jawaban Soal" }
-              ]
-            },
-            {
-              title: "Komunikasi dan Diskusi",
+              title: "Jawaban / Tanggapan",
               color: "border-blue-500",
               jukugos: [
-                { word: "返答", reading: "へんとう", meaning: "Balasan" },
-                { word: "口答", reading: "こうとう", meaning: "Jawaban Lisan" },
-                { word: "答弁", reading: "とうべん", meaning: "Penjelasan Resmi" }
+                { word: "回答", reading: "かいとう", meaning: "jawaban" },
+                { word: "応答", reading: "おうとう", meaning: "tanggapan, respons" },
+                { word: "返答", reading: "へんとう", meaning: "jawaban, balasan" },
+                { word: "問答", reading: "もんどう", meaning: "tanya jawab" },
+                { word: "自答", reading: "じとう", meaning: "menjawab sendiri" },
+                { word: "答弁", reading: "とうべん", meaning: "jawaban, penjelasan resmi" }
               ]
             },
             {
-              title: "Akademik dan Penelitian",
-              color: "border-purple-500",
+              title: "Hasil Jawaban",
+              color: "border-green-500",
               jukugos: [
-                { word: "問答", reading: "もんどう", meaning: "Tanya Jawab" },
-                { word: "一問一答", reading: "いちもんいっとう", meaning: "Satu Tanya Satu Jawab" },
-                { word: "答申", reading: "とうしん", meaning: "Rekomendasi Resmi" }
+                { word: "解答", reading: "かいとう", meaning: "jawaban, penyelesaian" },
+                { word: "答案", reading: "とうあん", meaning: "jawaban, lembar jawaban" },
+                { word: "正答", reading: "せいとう", meaning: "jawaban benar" },
+                { word: "確答", reading: "かくとう", meaning: "jawaban yang pasti" }
               ]
             },
             {
-              title: "Teknologi dan Layanan",
+              title: "Cara Menjawab",
               color: "border-yellow-500",
               jukugos: [
-                { word: "自動応答", reading: "じどうおうとう", meaning: "Jawaban Otomatis" },
-                { word: "応答時間", reading: "おうとうじかん", meaning: "Waktu Respons" },
-                { word: "応答率", reading: "おうとうりつ", meaning: "Tingkat Respons" }
+                { word: "口答", reading: "こうとう", meaning: "jawaban lisan" },
+                { word: "直答", reading: "ちょくとう", meaning: "jawaban langsung" },
+                { word: "筆答", reading: "ひっとう", meaning: "jawaban tertulis" }
+              ]
+            },
+            {
+              title: "Balasan",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "答辞", reading: "とうじ", meaning: "ucapan, pidato balasan" },
+                { word: "答礼", reading: "とうれい", meaning: "membalas penghormatan" }
               ]
             }
           ]
@@ -2062,6 +2088,679 @@ async function main() {
                 { word: "点検", reading: "てんけん", meaning: "Pemeriksaan" },
                 { word: "点灯", reading: "てんとう", meaning: "Menyalakan Lampu" },
                 { word: "点数", reading: "てんすう", meaning: "Nilai" }
+              ]
+            }
+          ]
+        },
+        "研": {
+          categories: [
+            {
+              title: "Meneliti / Mendalami",
+              color: "border-green-500",
+              jukugos: [
+                { word: "研究", reading: "けんきゅう", meaning: "penelitian" },
+                { word: "研学", reading: "けんがく", meaning: "belajar" },
+                { word: "研精", reading: "けんせい", meaning: "meneliti" }
+              ]
+            },
+            {
+              title: "Belajar / Mengasah Kemampuan",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "研修", reading: "けんしゅう", meaning: "pelatihan" },
+                { word: "研習", reading: "けんしゅう", meaning: "mempelajari" },
+                { word: "研鑽", reading: "けんさん", meaning: "mengasah" }
+              ]
+            },
+            {
+              title: "Mengasah / Menghaluskan",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "研磨", reading: "けんま", meaning: "memoles" },
+                { word: "研削", reading: "けんさく", meaning: "menggerinda" }
+              ]
+            }
+          ]
+        },
+        "究": {
+          categories: [
+            {
+              title: "Meneliti / Menyelidiki",
+              color: "border-green-500",
+              jukugos: [
+                { word: "研究", reading: "けんきゅう", meaning: "penelitian" },
+                { word: "探究", reading: "たんきゅう", meaning: "penyelidikan" },
+                { word: "追究", reading: "ついきゅう", meaning: "penyelidikan / penelusuran" }
+              ]
+            },
+            {
+              title: "Mengkaji / Membahas",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "考究", reading: "こうきゅう", meaning: "mengkaji" },
+                { word: "討究", reading: "とうきゅう", meaning: "mengkaji" },
+                { word: "論究", reading: "ろんきゅう", meaning: "membahas secara mendalam" },
+                { word: "講究", reading: "こうきゅう", meaning: "mengkaji secara mendalam" }
+              ]
+            },
+            {
+              title: "Mendalami / Mengungkap",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "究理", reading: "きゅうり", meaning: "mendalami prinsip" },
+                { word: "究明", reading: "きゅうめい", meaning: "mengungkap / menjelaskan" }
+              ]
+            }
+          ]
+        },
+        "集": {
+          categories: [
+            {
+              title: "Berkumpul / Berkelompok",
+              color: "border-pink-500",
+              jukugos: [
+                { word: "集合", reading: "しゅうごう", meaning: "berkumpul" },
+                { word: "集会", reading: "しゅうかい", meaning: "pertemuan" },
+                { word: "集団", reading: "しゅうだん", meaning: "kelompok" },
+                { word: "密集", reading: "みっしゅう", meaning: "padat / berdesakan" },
+                { word: "集結", reading: "しゅうけつ", meaning: "berkumpul di satu tempat" },
+                { word: "結集", reading: "けっしゅう", meaning: "berhimpun / bersatu" }
+              ]
+            },
+            {
+              title: "Mengumpulkan / Menghimpun",
+              color: "border-green-500",
+              jukugos: [
+                { word: "収集", reading: "しゅうしゅう", meaning: "mengumpulkan" },
+                { word: "採集", reading: "さいしゅう", meaning: "mengumpulkan / mengambil" },
+                { word: "募集", reading: "ぼしゅう", meaning: "merekrut / menghimpun" },
+                { word: "招集", reading: "しょうしゅう", meaning: "memanggil untuk berkumpul" }
+              ]
+            },
+            {
+              title: "Memusatkan / Mengakumulasi",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "集中", reading: "しゅうちゅう", meaning: "berkonsentrasi / memusatkan" },
+                { word: "集積", reading: "しゅうせき", meaning: "mengumpulkan / menumpuk" },
+                { word: "集成", reading: "しゅうせい", meaning: "menghimpun menjadi satu" }
+              ]
+            },
+            {
+              title: "Kumpulan / Hasil yang Dihimpun",
+              color: "border-yellow-500",
+              jukugos: [
+                { word: "全集", reading: "ぜんしゅう", meaning: "kumpulan lengkap karya" },
+                { word: "選集", reading: "せんしゅう", meaning: "kumpulan karya pilihan" }
+              ]
+            }
+          ]
+        },
+        "調": {
+          categories: [
+            {
+              title: "Kondisi dan Keadaan",
+              color: "border-pink-500",
+              jukugos: [
+                { word: "体調", reading: "たいちょう", meaning: "Kondisi tubuh" },
+                { word: "好調", reading: "こうちょう", meaning: "Kondisi baik" },
+                { word: "不調", reading: "ふちょう", meaning: "Kondisi buruk" },
+                { word: "快調", reading: "かいちょう", meaning: "Sangat baik, segar" },
+                { word: "順調", reading: "じゅんちょう", meaning: "Berjalan lancar" },
+                { word: "高調", reading: "こうちょう", meaning: "Nada/keadaan tinggi, meningkat" },
+                { word: "低調", reading: "ていちょう", meaning: "Keadaan rendah, lesu" }
+              ]
+            },
+            {
+              title: "Cara Berbicara dan Bunyi",
+              color: "border-green-500",
+              jukugos: [
+                { word: "口調", reading: "くちょう", meaning: "Cara berbicara" },
+                { word: "語調", reading: "ごちょう", meaning: "Gaya bahasa" },
+                { word: "声調", reading: "せいちょう", meaning: "Intonasi" },
+                { word: "音調", reading: "おんちょう", meaning: "Nada suara" }
+              ]
+            },
+            {
+              title: "Pemeriksaan dan Administrasi",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "調査", reading: "ちょうさ", meaning: "Survei, penelitian" },
+                { word: "調書", reading: "ちょうしょ", meaning: "Dokumen pemeriksaan" },
+                { word: "調印", reading: "ちょういん", meaning: "Penandatanganan perjanjian" },
+                { word: "調達", reading: "ちょうたつ", meaning: "Pengadaan, memperoleh barang yang diperlukan" }
+              ]
+            },
+            {
+              title: "Pengaturan dan Penyesuaian",
+              color: "border-yellow-500",
+              jukugos: [
+                { word: "調理", reading: "ちょうり", meaning: "Memasak" },
+                { word: "調合", reading: "ちょうごう", meaning: "Mencampur" },
+                { word: "調製", reading: "ちょうせい", meaning: "Menyiapkan, membuat" },
+                { word: "調薬", reading: "ちょうやく", meaning: "Meracik obat" },
+                { word: "調律", reading: "ちょうりつ", meaning: "Menyetel nada alat musik" },
+                { word: "調味料", reading: "ちょうみりょう", meaning: "Bumbu" }
+              ]
+            },
+            {
+              title: "Penyelidikan dan Perubahan Keadaan",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "強調", reading: "きょうちょう", meaning: "Penekanan, menegaskan" },
+                { word: "歩調", reading: "ほちょう", meaning: "Langkah yang selaras, irama langkah" },
+                { word: "変調", reading: "へんちょう", meaning: "Perubahan nada/kondisi, tidak normal" },
+                { word: "移調", reading: "いちょう", meaning: "Mengubah nada (transportasi nada)" }
+              ]
+            }
+          ]
+        },
+        "査": {
+          categories: [
+            {
+              title: "Memeriksa",
+              color: "border-green-500",
+              jukugos: [
+                { word: "調査", reading: "ちょうさ", meaning: "survei" },
+                { word: "検査", reading: "けんさ", meaning: "pemeriksaan" },
+                { word: "実査", reading: "じっさ", meaning: "inspeksi" },
+                { word: "点査", reading: "てんさ", meaning: "pemeriksaan" },
+                { word: "簡査", reading: "かんさ", meaning: "pemeriksaan" }
+              ]
+            },
+            {
+              title: "Memeriksa dengan Teliti",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "精査", reading: "せいさ", meaning: "pemeriksaan teliti" },
+                { word: "細査", reading: "さいさ", meaning: "pemeriksaan rinci" }
+              ]
+            },
+            {
+              title: "Menilai",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "査定", reading: "さてい", meaning: "penilaian" },
+                { word: "考査", reading: "こうさ", meaning: "penilaian" }
+              ]
+            },
+            {
+              title: "Menyelidiki",
+              color: "border-pink-500",
+              jukugos: [
+                { word: "査問", reading: "さもん", meaning: "penyelidikan" },
+                { word: "内査", reading: "ないさ", meaning: "penyelidikan" }
+              ]
+            },
+            {
+              title: "Menguji",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "査験", reading: "さけん", meaning: "pengujian" }
+              ]
+            }
+          ]
+        },
+        "情": {
+          categories: [
+            {
+              title: "1. PERASAAN / EMOSI",
+              color: "border-pink-500",
+              jukugos: [
+                { word: "感情", reading: "かんじょう", meaning: "perasaan, emosi" },
+                { word: "表情", reading: "ひょうじょう", meaning: "ekspresi wajah" },
+                { word: "真情", reading: "しんじょう", meaning: "perasaan yang sebenarnya" },
+                { word: "心情", reading: "しんじょう", meaning: "perasaan hati, suasana batin" },
+                { word: "純情", reading: "じゅんじょう", meaning: "perasaan yang murni, tulus" }
+              ]
+            },
+            {
+              title: "2. KASIH SAYANG / HUBUNGAN ANTARMANUSIA",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "愛情", reading: "あいじょう", meaning: "kasih sayang, cinta" },
+                { word: "友情", reading: "ゆうじょう", meaning: "persahabatan, persahabatan tulus" },
+                { word: "同情", reading: "どうじょう", meaning: "simpati, empati" },
+                { word: "人情", reading: "にんじょう", meaning: "perasaan kemanusiaan" },
+                { word: "交情", reading: "こうじょう", meaning: "hubungan akrab, perasaan kedekatan" }
+              ]
+            },
+            {
+              title: "3. PERASAAN / SEMANGAT YANG KUAT",
+              color: "border-cyan-500",
+              jukugos: [
+                { word: "情熱", reading: "じょうねつ", meaning: "semangat, gairah, passion" },
+                { word: "熱情", reading: "ねつじょう", meaning: "perasaan, semangat yang kuat" }
+              ]
+            },
+            {
+              title: "4. KEADAAN / SITUASI",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "事情", reading: "じじょう", meaning: "keadaan, alasan, latar belakang" },
+                { word: "実情", reading: "じつじょう", meaning: "keadaan sebenarnya, realitas" },
+                { word: "内情", reading: "ないじょう", meaning: "keadaan internal, keadaan di dalam" },
+                { word: "情勢", reading: "じょうせい", meaning: "situasi, kondisi, keadaan terkini" },
+                { word: "情景", reading: "じょうけい", meaning: "pemandangan, adegan, suasana" }
+              ]
+            },
+            {
+              title: "5. KELUHAN / PERASAAN TIDAK PUAS",
+              color: "border-green-500",
+              jukugos: [
+                { word: "苦情", reading: "くじょう", meaning: "keluhan, komplain" }
+              ]
+            },
+            {
+              title: "6. INFORMASI / DATA",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "情報", reading: "じょうほう", meaning: "informasi, berita, data" }
+              ]
+            }
+          ]
+        },
+        "報": {
+          categories: [
+            {
+              title: "1. INFORMASI / PEMBERITAHUAN",
+              color: "border-red-500",
+              jukugos: [
+                { word: "情報", reading: "じょうほう", meaning: "informasi" },
+                { word: "予報", reading: "よほう", meaning: "prakiraan / ramalan" },
+                { word: "報知", reading: "ほうち", meaning: "pemberitahuan" },
+                { word: "通報", reading: "つうほう", meaning: "melaporkan / memberitahukan" },
+                { word: "報告", reading: "ほうこく", meaning: "laporan" }
+              ]
+            },
+            {
+              title: "2. BERITA / JENIS INFORMASI",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "速報", reading: "そくほう", meaning: "berita cepat / terkini" },
+                { word: "続報", reading: "ぞくほう", meaning: "berita lanjutan" },
+                { word: "特報", reading: "とくほう", meaning: "berita khusus" },
+                { word: "悲報", reading: "ひほう", meaning: "berita duka" },
+                { word: "勝報", reading: "しょうほう", meaning: "berita kemenangan" }
+              ]
+            },
+            {
+              title: "3. LAPORAN / PUBLIKASI / INFORMASI RESMI",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "日報", reading: "にっぽう", meaning: "laporan harian" },
+                { word: "広報", reading: "こうほう", meaning: "informasi / publikasi kepada masyarakat" },
+                { word: "公報", reading: "こうほう", meaning: "pengumuman / berita resmi" },
+                { word: "確報", reading: "かくほう", meaning: "laporan yang telah dipastikan" },
+                { word: "会報", reading: "かいほう", meaning: "buletin / laporan organisasi" },
+                { word: "時報", reading: "じほう", meaning: "informasi waktu yang diumumkan berkala" }
+              ]
+            },
+            {
+              title: "4. BALASAN / PEMBALASAN",
+              color: "border-green-500",
+              jukugos: [
+                { word: "返報", reading: "へんぽう", meaning: "balasan / pembalasan" },
+                { word: "報復", reading: "ほうふく", meaning: "pembalasan" }
+              ]
+            },
+            {
+              title: "5. MEDIA / CARA PENYAMPAIAN INFORMASI",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "電報", reading: "でんぽう", meaning: "telegram" },
+                { word: "外報", reading: "がいほう", meaning: "berita dari luar negeri" },
+                { word: "報道", reading: "ほうどう", meaning: "pemberitaan / media berita" }
+              ]
+            }
+          ]
+        },
+        "伝": {
+          categories: [
+            {
+              title: "1. PENYAMPAIAN PESAN DAN INFORMASI",
+              color: "border-red-500",
+              jukugos: [
+                { word: "伝言", reading: "でんごん", meaning: "pesan" },
+                { word: "伝達", reading: "でんたつ", meaning: "penyampaian" },
+                { word: "伝聞", reading: "でんぶん", meaning: "kabar" },
+                { word: "伝令", reading: "でんれい", meaning: "utusan" }
+              ]
+            },
+            {
+              title: "2. PENYAMPAIAN DAN PEWARISAN ILMU / AJARAN",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "伝授", reading: "でんじゅ", meaning: "mengajarkan" },
+                { word: "伝受", reading: "でんじゅ", meaning: "menerima" },
+                { word: "伝習", reading: "でんしゅう", meaning: "mempelajari" },
+                { word: "伝道", reading: "でんどう", meaning: "menyebarkan ajaran" }
+              ]
+            },
+            {
+              title: "3. PEWARISAN TRADISI DAN CERITA",
+              color: "border-teal-500",
+              jukugos: [
+                { word: "伝統", reading: "でんとう", meaning: "tradisi" },
+                { word: "伝説", reading: "でんせつ", meaning: "legenda" }
+              ]
+            },
+            {
+              title: "4. RIWAYAT DAN INFORMASI TERTULIS",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "伝記", reading: "でんき", meaning: "biografi" },
+                { word: "自伝", reading: "じでん", meaning: "autobiografi" },
+                { word: "伝書", reading: "でんしょ", meaning: "dokumen" },
+                { word: "伝写", reading: "でんしゃ", meaning: "menyalin" }
+              ]
+            },
+            {
+              title: "5. PENGIRIMAN DAN PENERUSAN",
+              color: "border-green-500",
+              jukugos: [
+                { word: "伝送", reading: "でんそう", meaning: "pengiriman" }
+              ]
+            }
+          ]
+        },
+        "信": {
+          categories: [
+            {
+              title: "1. PENYAMPAIAN PESAN DAN INFORMASI",
+              color: "border-red-500",
+              jukugos: [
+                { word: "信言", reading: "しんげん", meaning: "kata-kata / pernyataan yang dapat dipercaya" },
+                { word: "通信", reading: "つうしん", meaning: "komunikasi / pertukaran informasi" },
+                { word: "発信", reading: "はっしん", meaning: "mengirim / menyampaikan informasi" },
+                { word: "送信", reading: "そうしん", meaning: "mengirim / mentransmisikan informasi" },
+                { word: "返信", reading: "へんしん", meaning: "membalas pesan / surat" },
+                { word: "交信", reading: "こうしん", meaning: "saling berkomunikasi" },
+                { word: "信号", reading: "しんごう", meaning: "tanda / sinyal" }
+              ]
+            },
+            {
+              title: "2. PENYAMPAIAN DAN PEWARISAN ILMU / AJARAN",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "信念", reading: "しんねん", meaning: "keyakinan / prinsip yang diyakini" },
+                { word: "信者", reading: "しんじゃ", meaning: "orang yang percaya / penganut" },
+                { word: "信徒", reading: "しんと", meaning: "penganut agama" },
+                { word: "信頼", reading: "しんらい", meaning: "kepercayaan / dapat dipercaya" },
+                { word: "信用", reading: "しんよう", meaning: "kepercayaan / kredibilitas" },
+                { word: "信任", reading: "しんにん", meaning: "kepercayaan / mempercayakan" },
+                { word: "信義", reading: "しんぎ", meaning: "kepercayaan dan kesetiaan" }
+              ]
+            },
+            {
+              title: "3. KEYAKINAN DAN KEPERCAYAAN DIRI",
+              color: "border-green-500",
+              jukugos: [
+                { word: "確信", reading: "かくしん", meaning: "keyakinan kuat / kepastian" },
+                { word: "自信", reading: "じしん", meaning: "percaya diri / keyakinan terhadap diri sendiri" }
+              ]
+            },
+            {
+              title: "4. INFORMASI DAN DOKUMEN",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "信書", reading: "しんしょ", meaning: "surat / dokumen yang disampaikan" }
+              ]
+            }
+          ]
+        },
+        "送": {
+          categories: [
+            {
+              title: "1. PENGIRIMAN INFORMASI / PESAN",
+              color: "border-red-500",
+              jukugos: [
+                { word: "送信", reading: "そうしん", meaning: "mengirim pesan / mengirimkan (data/informasi)" },
+                { word: "電送", reading: "でんそう", meaning: "pengiriman melalui media elektronik / transmisi elektronik" },
+                { word: "伝送", reading: "でんそう", meaning: "meneruskan / mentransmisikan informasi, sinyal" },
+                { word: "放送", reading: "ほうそう", meaning: "siaran / menyebarkan informasi kepada banyak orang" }
+              ]
+            },
+            {
+              title: "2. PENGIRIMAN / PENGANTARAN BENDA / BARANG",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "発送", reading: "はっそう", meaning: "mengirim / mengeluarkan kiriman" },
+                { word: "直送", reading: "ちょくそう", meaning: "pengiriman langsung ke tujuan" },
+                { word: "送付", reading: "そうふ", meaning: "mengirimkan (barang, dokumen, surat, dll.)" },
+                { word: "郵送", reading: "ゆうそう", meaning: "mengirim melalui pos / surat" },
+                { word: "配送", reading: "はいそう", meaning: "pengiriman (barang, paket, pesanan)" },
+                { word: "輸送", reading: "ゆそう", meaning: "mengangkut / mengirim barang atau penumpang" },
+                { word: "移送", reading: "いそう", meaning: "memindahkan / mengirim ke tempat lain" },
+                { word: "回送", reading: "かいそう", meaning: "mengirim kembali / mengirim ke tempat asal atau tempat lain" },
+                { word: "転送", reading: "てんそう", meaning: "meneruskan / mengalihkan kiriman ke tujuan lain" },
+                { word: "押送", reading: "おうそう", meaning: "mengawal / mengantar seseorang dengan kendaraan resmi" }
+              ]
+            },
+            {
+              title: "3. PENYERAHAN / PENGIRIMAN KEPADA PIHAK BERWENANG",
+              color: "border-green-500",
+              jukugos: [
+                { word: "送検", reading: "そうけん", meaning: "mengirim tersangka / berkas perkara ke jaksa (untuk dituntut)" },
+                { word: "送信", reading: "そうしん", meaning: "menyerahkan / mengirim kepada pihak berwenang" },
+                { word: "護送", reading: "ごそう", meaning: "mengawal / mengantar terdakwa, tahanan, dsb." },
+                { word: "押送", reading: "おうそう", meaning: "mengawal / mengantar seseorang dengan kendaraan resmi" }
+              ]
+            },
+            {
+              title: "4. MENGIRIM / MELEPAS ORANG YANG PERGI",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "送別", reading: "そうべつ", meaning: "perpisahan / mengantar seseorang yang pergi" },
+                { word: "歓送", reading: "かんそう", meaning: "melepas / mengantar seseorang dengan ucapan selamat atau penghormatan" },
+                { word: "送辞", reading: "そうじ", meaning: "pidato perpisahan / ucapan saat mengantar pergi" },
+                { word: "押送", reading: "おうそう", meaning: "mengantar / melepas jenazah (dalam konteks pemakaman)" }
+              ]
+            },
+            {
+              title: "5. PENGIRIMAN MELALUI JALUR KHUSUS",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "陸送", reading: "りくそう", meaning: "pengiriman melalui jalur darat" },
+                { word: "電送", reading: "でんそう", meaning: "pengiriman melalui jalur listrik / transmisi elektronik" }
+              ]
+            }
+          ]
+        },
+        "職": {
+          categories: [
+            {
+              title: "1. PROFESI / PEKERJAAN",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "職業", reading: "しょくぎょう", meaning: "profesi / pekerjaan" },
+                { word: "職人", reading: "しょくにん", meaning: "pengrajin / pekerja terampil" }
+              ]
+            },
+            {
+              title: "2. ORANG / TEMPAT KERJA",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "職員", reading: "しょくいん", meaning: "staf / pegawai" },
+                { word: "職場", reading: "しょくば", meaning: "tempat kerja" }
+              ]
+            },
+            {
+              title: "3. MENCARI / MEMILIKI PEKERJAAN",
+              color: "border-green-500",
+              jukugos: [
+                { word: "求職", reading: "きゅうしょく", meaning: "mencari pekerjaan" },
+                { word: "有職", reading: "ゆうしょく", meaning: "memiliki pekerjaan" }
+              ]
+            },
+            {
+              title: "4. PERUBAHAN / STATUS PEKERJAAN",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "転職", reading: "てんしょく", meaning: "pindah pekerjaan" },
+                { word: "退職", reading: "たいしょく", meaning: "berhenti bekerja" },
+                { word: "無職", reading: "むしょく", meaning: "tidak bekerja / pengangguran" }
+              ]
+            }
+          ]
+        },
+        "業": {
+          categories: [
+            {
+              title: "1. PEKERJAAN / TUGAS",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "業務", reading: "ぎょうむ", meaning: "tugas / pekerjaan" },
+                { word: "作業", reading: "さぎょう", meaning: "pekerjaan / tugas" },
+                { word: "始業", reading: "しぎょう", meaning: "mulai kerja" },
+                { word: "残業", reading: "ざんぎょう", meaning: "kerja lembur" },
+                { word: "就業", reading: "しゅうぎょう", meaning: "bekerja / mulai bekerja" },
+                { word: "失業", reading: "しつぎょう", meaning: "kehilangan pekerjaan / pengangguran" }
+              ]
+            },
+            {
+              title: "2. USAHA / BISNIS / DUNIA KERJA",
+              color: "border-green-500",
+              jukugos: [
+                { word: "営業", reading: "えいぎょう", meaning: "usaha / bisnis / penjualan" },
+                { word: "業者", reading: "ぎょうしゃ", meaning: "pelaku usaha / pedagang" },
+                { word: "業界", reading: "ぎょうかい", meaning: "dunia usaha / industri" },
+                { word: "家業", reading: "かぎょう", meaning: "usaha keluarga" },
+                { word: "企業", reading: "きぎょう", meaning: "perusahaan / usaha" },
+                { word: "事業", reading: "じぎょう", meaning: "usaha / kegiatan bisnis" },
+                { word: "自営業", reading: "じえいぎょう", meaning: "usaha sendiri / wiraswasta" }
+              ]
+            },
+            {
+              title: "3. BIDANG INDUSTRI / PEKERJAAN",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "工業", reading: "こうぎょう", meaning: "industri" },
+                { word: "農業", reading: "のうぎょう", meaning: "pertanian" },
+                { word: "漁業", reading: "ぎょぎょう", meaning: "perikanan" },
+                { word: "産業", reading: "さんぎょう", meaning: "industri" },
+                { word: "商業", reading: "しょうぎょう", meaning: "perdagangan / bisnis" }
+              ]
+            },
+            {
+              title: "4. BENTUK / STATUS PEKERJAAN",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "本業", reading: "ほんぎょう", meaning: "pekerjaan utama" }
+              ]
+            }
+          ]
+        },
+        "商": {
+          categories: [
+            {
+              title: "1. TEMPAT",
+              color: "border-green-500",
+              jukugos: [
+                { word: "商店", reading: "しょうてん", meaning: "toko" },
+                { word: "商店街", reading: "しょうてんがい", meaning: "kawasan pertokoan" }
+              ]
+            },
+            {
+              title: "2. PRODUK",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "商品", reading: "しょうひん", meaning: "barang/produk" }
+              ]
+            },
+            {
+              title: "3. KEGIATAN",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "商売", reading: "しょうばい", meaning: "bisnis/perdagangan" },
+                { word: "商業", reading: "しょうぎょう", meaning: "perdagangan" },
+                { word: "商取引", reading: "しょうとりひき", meaning: "transaksi perdagangan" }
+              ]
+            },
+            {
+              title: "4. PELAKU",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "商人", reading: "しょうにん", meaning: "pedagang" }
+              ]
+            },
+            {
+              title: "5. JENIS USAHA",
+              color: "border-teal-500",
+              jukugos: [
+                { word: "商社", reading: "しょうしゃ", meaning: "perusahaan dagang" }
+              ]
+            }
+          ]
+        },
+        "務": {
+          categories: [
+            {
+              title: "1. PEKERJAAN / TUGAS",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "業務", reading: "ぎょうむ", meaning: "pekerjaan / tugas" },
+                { word: "職務", reading: "しょくむ", meaning: "tugas / pekerjaan jabatan" },
+                { word: "勤務", reading: "きんむ", meaning: "bekerja / bertugas" },
+                { word: "実務", reading: "じつむ", meaning: "pekerjaan praktis" },
+                { word: "事務", reading: "じむ", meaning: "urusan administrasi" }
+              ]
+            },
+            {
+              title: "2. TUGAS / KEWAJIBAN",
+              color: "border-green-500",
+              jukugos: [
+                { word: "任務", reading: "にんむ", meaning: "tugas / misi" },
+                { word: "義務", reading: "ぎむ", meaning: "kewajiban" },
+                { word: "公務", reading: "こうむ", meaning: "tugas resmi" }
+              ]
+            },
+            {
+              title: "3. URUSAN / PELAKSANAAN TUGAS",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "労務", reading: "ろうむ", meaning: "urusan tenaga kerja" },
+                { word: "服務", reading: "ふくむ", meaning: "menjalankan tugas" },
+                { word: "用務", reading: "ようむ", meaning: "urusan / keperluan" }
+              ]
+            },
+            {
+              title: "4. BIDANG / URUSAN TUGAS",
+              color: "border-purple-500",
+              jukugos: [
+                { word: "財務", reading: "ざいむ", meaning: "urusan keuangan" },
+                { word: "教務", reading: "きょうむ", meaning: "urusan pendidikan" },
+                { word: "法務", reading: "ほうむ", meaning: "urusan hukum" }
+              ]
+            }
+          ]
+        },
+        "術": {
+          categories: [
+            {
+              title: "1. TEKNIK / KETERAMPILAN",
+              color: "border-blue-500",
+              jukugos: [
+                { word: "技術", reading: "ぎじゅつ", meaning: "teknik / keterampilan" },
+                { word: "手術", reading: "しゅじゅつ", meaning: "operasi" },
+                { word: "話術", reading: "わじゅつ", meaning: "keterampilan berbicara" },
+                { word: "秘術", reading: "ひじゅつ", meaning: "teknik rahasia" }
+              ]
+            },
+            {
+              title: "2. ILMU / PENGETAHUAN",
+              color: "border-green-500",
+              jukugos: [
+                { word: "学術", reading: "がくじゅつ", meaning: "ilmu / akademik" },
+                { word: "算術", reading: "さんじゅつ", meaning: "ilmu hitung" }
+              ]
+            },
+            {
+              title: "3. SENI / KEAHLIAN SENI",
+              color: "border-orange-500",
+              jukugos: [
+                { word: "芸術", reading: "げいじゅつ", meaning: "seni" },
+                { word: "美術", reading: "びじゅつ", meaning: "seni rupa" }
               ]
             }
           ]

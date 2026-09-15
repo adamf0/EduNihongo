@@ -94,7 +94,7 @@ export const ModulePage: React.FC = () => {
             <div className="max-w-2xl">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[#191c1e] mb-3">Alur Belajar Anda</h2>
               <p className="text-base text-[#5c403f] leading-relaxed">
-                Pelajari karakter Kanji Jepang secara modular selangkah demi selangkah. Selesaikan latihan goresan untuk membuka modul berikutnya.
+                Pelajari karakter Kanji Jepang secara modular. Seluruh modul dapat diakses secara bebas untuk mendukung fleksibilitas belajar Anda.
               </p>
             </div>
             <div className="flex flex-col items-center shrink-0 self-start md:self-end">
@@ -114,6 +114,7 @@ export const ModulePage: React.FC = () => {
 
             {modules.map((mod: any, idx: number) => {
               const isEven = idx % 2 === 0;
+              const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
               
               // Determine layout alignment for desktop
               const leftSideClass = isEven 
@@ -145,13 +146,13 @@ export const ModulePage: React.FC = () => {
 
                   {/* Timeline Dot in the Center */}
                   <div className="absolute left-6 md:relative md:left-0 z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 bg-white shadow-md order-1 md:order-2 shrink-0 -translate-x-1/2 md:translate-x-0 transition-colors duration-300"
-                       style={{ borderColor: mod.isLocked ? '#e2e8f0' : (mod.isCompleted ? '#4F7942' : '#c8232a') }}>
+                       style={{ borderColor: mod.isLocked || !hasKanjis ? '#e2e8f0' : (mod.isCompleted ? '#4F7942' : '#c8232a') }}>
                     {mod.isLocked ? (
                       <Lock className="w-4 h-4 text-slate-400" />
-                    ) : mod.isCompleted ? (
+                    ) : mod.isCompleted && hasKanjis ? (
                       <CheckCircle2 className="w-6 h-6 fill-white text-[#4F7942] stroke-[#4F7942]" />
                     ) : (
-                      <span className="text-sm font-bold text-[#c8232a]">{idx + 1}</span>
+                      <span className={`text-sm font-bold ${!hasKanjis ? 'text-slate-400' : 'text-[#c8232a]'}`}>{idx + 1}</span>
                     )}
                   </div>
 
@@ -239,13 +240,15 @@ const ModuleCard = ({
   onShowInfo: (title: string, objectives: string) => void;
   onShowLms: (id: number, title: string) => void;
 }) => {
+  const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
+
   return (
-    <div className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${mod.isLocked ? 'border-l-slate-300' : (mod.isCompleted ? 'border-l-[#4F7942]' : 'border-l-[#c8232a]')}`}>
+    <div className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${mod.isLocked ? 'border-l-slate-300' : (!hasKanjis ? 'border-l-slate-300' : (mod.isCompleted ? 'border-l-[#4F7942]' : 'border-l-[#c8232a]'))}`}>
       
       {/* Title and Lock Status */}
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
         <div className="flex items-center gap-1.5">
-          <h3 className={`text-lg font-bold ${mod.isLocked ? 'text-slate-500' : 'text-slate-900'}`}>
+          <h3 className={`text-lg font-bold ${mod.isLocked || !hasKanjis ? 'text-slate-500' : 'text-slate-900'}`}>
             {mod.title}
           </h3>
           {!mod.isLocked && mod.tujuanPembelajaran && (
@@ -262,6 +265,10 @@ const ModuleCard = ({
           <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 select-none">
             <Lock className="w-3 h-3" /> Terkunci
           </span>
+        ) : !hasKanjis ? (
+          <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
+            Belum ada materi
+          </span>
         ) : mod.isCompleted ? (
           <span className="bg-[#e2f0d9] text-[#385723] px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
             Selesai
@@ -276,27 +283,33 @@ const ModuleCard = ({
       {/* Kanji Sub-Lessons Grid */}
       <div className="mb-4">
         <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-2">Materi Kanji</p>
-        <div className="flex flex-wrap gap-2">
-          {mod.kanjis.map((k: any) => {
-            const isKanjiCompleted = k.isCompleted;
-            const isLocked = mod.isLocked;
-            return (
-              <div 
-                key={k.character}
-                onClick={() => !isLocked && navigate(`/latihan?char=${k.character}`)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200 ${isLocked ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : (isKanjiCompleted ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800 hover:bg-emerald-50 cursor-pointer' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#8f0020] hover:text-[#8f0020] cursor-pointer')}`}
-                title={`${k.meaning} (${isKanjiCompleted ? 'Selesai' : 'Belum selesai'})`}
-              >
-                <span className="font-serif font-bold text-base">{k.character}</span>
-                {isKanjiCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-50" />}
-              </div>
-            );
-          })}
-        </div>
+        {hasKanjis ? (
+          <div className="flex flex-wrap gap-2">
+            {mod.kanjis.map((k: any) => {
+              const isKanjiCompleted = k.isCompleted;
+              const isLocked = mod.isLocked;
+              return (
+                <div 
+                  key={k.character}
+                  onClick={() => !isLocked && navigate(`/latihan?char=${k.character}`)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200 ${isLocked ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : (isKanjiCompleted ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800 hover:bg-emerald-50 cursor-pointer' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#8f0020] hover:text-[#8f0020] cursor-pointer')}`}
+                  title={`${k.meaning} (${isKanjiCompleted ? 'Selesai' : 'Belum selesai'})`}
+                >
+                  <span className="font-serif font-bold text-base">{k.character}</span>
+                  {isKanjiCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-50" />}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-2.5 px-3 text-xs italic text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center font-medium select-none">
+            Belum ada materi kanji
+          </div>
+        )}
       </div>
 
       {/* Module Progress Bar */}
-      {!mod.isLocked && (
+      {!mod.isLocked && hasKanjis && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1 mr-4">
             <div className="h-2 w-full bg-[#f1f5f9] rounded-full overflow-hidden">
@@ -319,12 +332,13 @@ const ModuleCard = ({
           </button>
           
           <button 
-            onClick={() => navigate(`/latihan?char=${targetKanji}`)} 
-            className={`flex-1 py-2.5 rounded-xl font-bold shadow-sm transition-all duration-200 active:scale-[0.98] border-none text-xs text-white flex items-center justify-center gap-1.5 cursor-pointer ${mod.isCompleted ? 'bg-[#4F7942] hover:brightness-105' : 'bg-[#8f0020] hover:brightness-105'}`}
+            onClick={() => hasKanjis && targetKanji && navigate(`/latihan?char=${targetKanji}`)}
+            disabled={!hasKanjis || !targetKanji}
+            className={`flex-1 py-2.5 rounded-xl font-bold shadow-sm transition-all duration-200 text-xs flex items-center justify-center gap-1.5 ${!hasKanjis || !targetKanji ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed' : (mod.isCompleted ? 'bg-[#4F7942] text-white hover:brightness-105 active:scale-[0.98] cursor-pointer' : 'bg-[#8f0020] text-white hover:brightness-105 active:scale-[0.98] cursor-pointer')}`}
           >
             <BookOpen className="w-4 h-4 shrink-0" />
-            {mod.isCompleted ? "Ulas Kembali" : "Mulai Belajar"}
-            <ChevronRight className="w-4 h-4 shrink-0" />
+            {!hasKanjis ? "Belum ada materi" : (mod.isCompleted ? "Ulas Kembali" : "Mulai Belajar")}
+            {hasKanjis && <ChevronRight className="w-4 h-4 shrink-0" />}
           </button>
         </div>
       )}

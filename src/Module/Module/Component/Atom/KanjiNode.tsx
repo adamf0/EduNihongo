@@ -107,7 +107,7 @@ const KanjiNode = ({ data }: { data: any }) => {
       return (
         <div 
           style={{ ...animStyle, backgroundColor: catBgColor }}
-          className={`${animClass} text-white rounded-2xl p-3 shadow-lg min-w-[115px] max-w-[135px] text-center border-2 border-white select-none cursor-default font-extrabold flex flex-col items-center justify-center relative ${
+          className={`${animClass} text-white rounded-2xl p-3 shadow-lg min-w-[115px] max-w-[135px] text-center border-2 border-white select-none cursor-pointer hover:scale-105 font-extrabold flex flex-col items-center justify-center relative ${
             isActive ? "ring-4 ring-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.8)] scale-110 z-30" : ""
           } ${activeGlowClass}`}
         >
@@ -138,7 +138,7 @@ const KanjiNode = ({ data }: { data: any }) => {
     return (
       <div 
         style={animStyle}
-        className={`${animClass} bg-white text-slate-800 rounded-2xl p-3 shadow-md min-w-[115px] max-w-[135px] text-center border-2 border-slate-700 select-none cursor-default font-extrabold flex flex-col items-center justify-center relative ${
+        className={`${animClass} bg-white text-slate-800 rounded-2xl p-3 shadow-md min-w-[115px] max-w-[135px] text-center border-2 border-slate-700 select-none cursor-pointer hover:scale-105 font-extrabold flex flex-col items-center justify-center relative ${
           isActive ? "ring-4 ring-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.8)] scale-110 z-30" : ""
         } ${activeGlowClass}`}
       >
@@ -172,7 +172,7 @@ const KanjiNode = ({ data }: { data: any }) => {
   return (
     <div
       style={{ ...animStyle, backgroundColor: customBg }}
-      className={`${animClass} text-white px-5 py-3.5 rounded-2xl border-2 border-white/50 shadow-lg text-center relative min-w-[150px] max-w-[190px] ${
+      className={`${animClass} text-white px-5 py-3.5 rounded-2xl border-2 border-white/50 shadow-lg text-center relative min-w-[150px] max-w-[190px] cursor-pointer hover:scale-105 ${
         isActive ? "ring-4 ring-amber-300 shadow-[0_0_35px_rgba(251,191,36,0.85)] scale-110 z-30" : ""
       } ${activeGlowClass}`}
     >
