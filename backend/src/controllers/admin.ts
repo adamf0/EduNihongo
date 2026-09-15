@@ -1023,15 +1023,26 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
       }
     }
 
-    // 1. Fetch attempts from QuizAttempt table
-    const attempts = await prisma.quizAttempt.findMany({
-      where: attemptWhere,
-      include: {
-        user: { select: { id: true, name: true, email: true, avatar: true } },
-        kanji: { select: { id: true, character: true, romaji: true, meaning: true, moduleId: true, module: { select: { id: true, title: true } } } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    // 1. Fetch attempts from QuizAttempt table (defensive fallback if not yet generated on server)
+    let attempts: any[] = [];
+    const prismaAny = prisma as any;
+    if (prismaAny.quizAttempt && typeof prismaAny.quizAttempt.findMany === "function") {
+      try {
+        attempts = await prismaAny.quizAttempt.findMany({
+          where: attemptWhere,
+          include: {
+            user: { select: { id: true, name: true, email: true, avatar: true } },
+            kanji: { select: { id: true, character: true, romaji: true, meaning: true, moduleId: true, module: { select: { id: true, title: true } } } },
+          },
+          orderBy: { createdAt: "desc" },
+        });
+      } catch (dbErr: any) {
+        console.warn("QuizAttempt findMany error, falling back to UserKanjiProgress:", dbErr?.message);
+        attempts = [];
+      }
+    } else {
+      console.warn("prisma.quizAttempt is undefined! Please run 'npx prisma generate' in /var/www/html/EduNihongo/backend on the server.");
+    }
 
     // 2. Fetch UserKanjiProgress as fallback/baseline if attempts table is new
     const progressList = await prisma.userKanjiProgress.findMany({
@@ -1160,8 +1171,8 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
       }
     }
 
-    // Fill in from UserKanjiProgress if no QuizAttempt entries exist for a student-kanji pair
-    if (!startDate && !endDate) {
+    // Fill in from UserKanjiProgress if no QuizAttempt entries exist for a student-kanji pair or attempts is empty
+    if (attempts.length === 0 || (!startDate && !endDate)) {
       for (const p of progressList) {
         if (p.quizPercent > 0) {
           const key = `${p.userId}_${p.kanjiId}`;
