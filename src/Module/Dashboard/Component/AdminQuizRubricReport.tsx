@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Icon from "../../Common/Component/Icon";
 import { api } from "../../Common/Utility/api";
-import RotationLearningChart, { type StudentRotationItem } from "./RotationLearningChart";
+import { type StudentRotationItem } from "./RotationLearningChart";
 
 interface QuizReportSummary {
   totalAttempts: number;
@@ -152,8 +152,8 @@ export const AdminQuizRubricReport: React.FC = () => {
   const [kanjiOptions, setKanjiOptions] = useState<Array<{ id: number; character: string; romaji: string; moduleId?: number; moduleTitle?: string }>>([]);
 
   // Analytics States
-  const [rotationItems, setRotationItems] = useState<StudentRotationItem[]>([]);
-  const [analyticsLoading, setAnalyticsLoading] = useState<boolean>(true);
+  const [_, setRotationItems] = useState<StudentRotationItem[]>([]);
+  const [__, setAnalyticsLoading] = useState<boolean>(true);
 
   // Modal State for Attempt History
   const [selectedRecapItem, setSelectedRecapItem] = useState<RecapItem | null>(null);
