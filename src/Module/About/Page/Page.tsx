@@ -173,7 +173,8 @@ export const AboutPage: React.FC = () => {
 
             {/* Title */}
             <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight">
-              Tentang <span className="text-[#0D47A1]">KanGraph</span>
+              Tentang <span className="text-[#0D47A1]">EduNihongo</span>{" "}
+              <span className="text-[#EC6C9A] font-serif font-normal">(KanGraph)</span>
             </h1>
 
             {/* Subtitle */}
@@ -500,7 +501,7 @@ export const AboutPage: React.FC = () => {
             "Belajar kanji bukan hanya mengingat urutan goresan, melainkan memahami jaringan makna yang saling terhubung."
           </p>
           <div className="text-xs font-bold text-[#0D47A1] uppercase tracking-wider">
-            — Tim Pengembangan KanGraph
+            — Tim Pengembangan EduNihongo (KanGraph)
           </div>
         </div>
       </section>

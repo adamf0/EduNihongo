@@ -1534,7 +1534,7 @@ export const KanjiFormPage: React.FC = () => {
                   color: "orange",
                   defaultItem: {
                     type: "unscramble",
-                    question: "",
+                    question: "Susunlah kata-kata berikut menjadi kalimat yang tepat.",
                     words: [],
                     correctOrder: [],
                   },
@@ -1618,12 +1618,37 @@ export const KanjiFormPage: React.FC = () => {
                         <div className="flex flex-wrap gap-2 flex-col gap-3">
                           {quizQuestions.map((q, idx) => {
                             if (q.type !== sectionType) return null;
+                            const sameTypeIndices = quizQuestions
+                              .map((item, i) => (item.type === sectionType ? i : -1))
+                              .filter((i) => i !== -1);
+                            const currentPosInType = sameTypeIndices.indexOf(idx);
+                            const isFirstOfType = currentPosInType === 0;
+                            const isLastOfType = currentPosInType === sameTypeIndices.length - 1;
+
+                            const handleMoveQuestion = (direction: -1 | 1) => {
+                              const targetPos = currentPosInType + direction;
+                              if (targetPos < 0 || targetPos >= sameTypeIndices.length) return;
+                              const targetIdx = sameTypeIndices[targetPos];
+                              setQuizQuestions((prev) => {
+                                const updated = [...prev];
+                                const temp = updated[idx];
+                                updated[idx] = updated[targetIdx];
+                                updated[targetIdx] = temp;
+                                return updated;
+                              });
+                            };
+
                             return (
                               <div
                                 key={idx}
                                 className="flex gap-4 items-start bg-surface-container-low/40 p-5 rounded-xl border border-outline-variant/20"
                               >
                                 <div className="flex-grow flex flex-col gap-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                      Soal #{currentPosInType + 1}
+                                    </span>
+                                  </div>
                                   <div className="grid grid-cols-1 gap-4">
                                     <div className="flex flex-col gap-1">
                                       <label className="text-[10px] uppercase font-bold text-slate-500">
@@ -1751,30 +1776,66 @@ export const KanjiFormPage: React.FC = () => {
                                       />
                                     </div>
                                   ) : q.type === "unscramble" ? (
-                                    <div className="flex flex-col gap-1">
-                                      <label className="text-[10px] uppercase font-bold text-slate-500">
-                                        Urutan Kalimat Benar (Pisahkan dengan
-                                        spasi)
-                                      </label>
-                                      <input
-                                        type="text"
-                                        value={
-                                          Array.isArray(q.correctOrder)
-                                            ? q.correctOrder.join(" ")
-                                            : ""
-                                        }
-                                        onChange={(e) => {
-                                          const newQ = [...quizQuestions];
-                                          const words = e.target.value
-                                            .split(/[\s,]+/g)
-                                            .filter(Boolean);
-                                          newQ[idx].words = words;
-                                          newQ[idx].correctOrder = words;
-                                          setQuizQuestions(newQ);
-                                        }}
-                                        className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
-                                        placeholder="きのう 試合 が ありました"
-                                      />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="flex flex-col gap-1">
+                                        <label className="text-[10px] uppercase font-bold text-slate-500">
+                                          Urutan Kata Pertanyaan (Pisahkan dengan spasi atau ・)
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={
+                                            q.rawWordsText !== undefined
+                                              ? q.rawWordsText
+                                              : Array.isArray(q.words) && q.words.length > 0
+                                              ? q.words.join(" ・ ")
+                                              : ""
+                                          }
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            const newQ = [...quizQuestions];
+                                            newQ[idx].rawWordsText = val;
+                                            const words = val
+                                              .split(/[\s,・]+/g)
+                                              .map((w) => w.trim())
+                                              .filter(Boolean);
+                                            newQ[idx].words = words;
+                                            setQuizQuestions(newQ);
+                                          }}
+                                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                          placeholder="Contoh: 方がいいですよ ・ ニュースの報道を ・ 見た ・ よく"
+                                        />
+                                      </div>
+                                      <div className="flex flex-col gap-1">
+                                        <label className="text-[10px] uppercase font-bold text-slate-500">
+                                          Urutan Kalimat Benar (Pisahkan dengan spasi)
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={
+                                            q.rawCorrectOrderText !== undefined
+                                              ? q.rawCorrectOrderText
+                                              : Array.isArray(q.correctOrder)
+                                              ? q.correctOrder.join(" ")
+                                              : ""
+                                          }
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            const newQ = [...quizQuestions];
+                                            newQ[idx].rawCorrectOrderText = val;
+                                            const words = val
+                                              .split(/[\s,・]+/g)
+                                              .map((w) => w.trim())
+                                              .filter(Boolean);
+                                            newQ[idx].correctOrder = words;
+                                            if (!newQ[idx].words || newQ[idx].words.length === 0) {
+                                              newQ[idx].words = words;
+                                            }
+                                            setQuizQuestions(newQ);
+                                          }}
+                                          className="bg-white border border-outline-variant/30 rounded-lg p-2.5 text-sm text-on-surface outline-none"
+                                          placeholder="Contoh: ニュースの報道を よく 見た 方がいいですよ"
+                                        />
+                                      </div>
                                     </div>
                                   ) : (
                                     /* multiple & fill */
@@ -1821,20 +1882,41 @@ export const KanjiFormPage: React.FC = () => {
                                     </div>
                                   )}
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setQuizQuestions((prev) =>
-                                      prev.filter((_, i) => i !== idx),
-                                    )
-                                  }
-                                  className="text-error bg-transparent hover:bg-error-container/20 p-2.5 rounded-lg cursor-pointer border-none disabled:opacity-30 self-center"
-                                >
-                                  <Icon
-                                    name="delete"
-                                    className="text-lg block"
-                                  />
-                                </button>
+                                <div className="flex flex-col items-center gap-1 self-center">
+                                  <button
+                                    type="button"
+                                    title="Pindahkan ke atas"
+                                    onClick={() => handleMoveQuestion(-1)}
+                                    disabled={isFirstOfType}
+                                    className="p-1 rounded text-slate-400 hover:text-primary hover:bg-primary/10 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed border-none bg-transparent transition-all"
+                                  >
+                                    <Icon name="arrow_upward" className="text-base block" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Pindahkan ke bawah"
+                                    onClick={() => handleMoveQuestion(1)}
+                                    disabled={isLastOfType}
+                                    className="p-1 rounded text-slate-400 hover:text-primary hover:bg-primary/10 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed border-none bg-transparent transition-all"
+                                  >
+                                    <Icon name="arrow_downward" className="text-base block" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Hapus soal"
+                                    onClick={() =>
+                                      setQuizQuestions((prev) =>
+                                        prev.filter((_, i) => i !== idx),
+                                      )
+                                    }
+                                    className="text-error bg-transparent hover:bg-error-container/20 p-1.5 rounded-lg cursor-pointer border-none disabled:opacity-30 transition-all"
+                                  >
+                                    <Icon
+                                      name="delete"
+                                      className="text-lg block"
+                                    />
+                                  </button>
+                                </div>
                               </div>
                             );
                           })}

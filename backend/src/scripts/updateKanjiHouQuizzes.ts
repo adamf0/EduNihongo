@@ -77,11 +77,11 @@ async function updateHouQuizzes() {
       type: 'unscramble',
       question: 'Susunlah kata-kata berikut menjadi kalimat yang tepat.',
       options: JSON.stringify([]),
-      // Scrambled pool from prompt: 苦情 ・ 部屋 ・ が ・ んです ・ に (with verb 来た)
-      words: JSON.stringify(['苦情', '部屋', 'が', '来た', 'んです', 'に']),
-      correctOrder: JSON.stringify(['部屋', 'に', '苦情', 'が', '来た', 'んです']),
+      // Scrambled pool from prompt: 方がいいですよ ・ ニュースの報道を ・ 見た ・ よく
+      words: JSON.stringify(['方がいいですよ', 'ニュースの報道を', '見た', 'よく']),
+      correctOrder: JSON.stringify(['ニュースの報道を', 'よく', '見た', '方がいいですよ']),
       correctAnswer: '0',
-      explanation: 'Jawaban: 部屋に苦情が来たんです。'
+      explanation: 'Jawaban: ニュースの報道を よく 見た 方がいいですよ'
     },
 
     // --- MULTIPLE CHOICE QUIZZES (5) ---

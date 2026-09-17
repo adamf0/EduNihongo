@@ -422,9 +422,24 @@ export const LatihanPage: React.FC = () => {
     const [savingQuiz, setSavingQuiz] = useState(false);
     const [isQuizTransitioning, setIsQuizTransitioning] = useState(false);
     const [userAnswersMap, setUserAnswersMap] = useState<Record<number, any>>({});
+    const userAnswersMapRef = React.useRef<Record<number, any>>({});
     const [unscrambleWrongOrder, setUnscrambleWrongOrder] = useState(false);
     const quizTransitionTimerRef = React.useRef<any>(null);
     const QUIZ_TRANSITION_DELAY_MS = 1400;
+
+    const saveUserAnswer = (idx: number, patch: any) => {
+        userAnswersMapRef.current[idx] = {
+            ...(userAnswersMapRef.current[idx] || {}),
+            ...patch,
+        };
+        setUserAnswersMap((prev) => ({
+            ...prev,
+            [idx]: {
+                ...(prev[idx] || {}),
+                ...patch,
+            },
+        }));
+    };
 
     // Refleksi states
     const [refleksiAnswers, setRefleksiAnswers] = useState<
@@ -1207,15 +1222,29 @@ export const LatihanPage: React.FC = () => {
             return options[idx];
         }
 
-        if (typeof rawCorr === "string" && options.includes(rawCorr)) {
-            return rawCorr;
+        if (typeof rawCorr === "string") {
+            const trimmed = rawCorr.trim();
+            if (options.includes(trimmed)) {
+                return trimmed;
+            }
+            const cleanTrimmed = trimmed.replace(/^[a-zA-Z0-9][\.\)]\s*/, "").trim();
+            const matchedOpt = options.find((opt) => {
+                const cleanOpt = opt.replace(/^[a-zA-Z0-9][\.\)]\s*/, "").trim();
+                return cleanOpt === cleanTrimmed;
+            });
+            if (matchedOpt) return matchedOpt;
+
+            const letterIdx = ({ a: 0, b: 1, c: 2, d: 3, e: 4 } as Record<string, number>)[trimmed.toLowerCase()];
+            if (letterIdx !== undefined && options[letterIdx] !== undefined) {
+                return options[letterIdx];
+            }
         }
 
         return String(rawCorr);
     };
 
     const restoreQuestionState = (targetIdx: number, mapData?: Record<number, any>) => {
-        const sourceMap = mapData || userAnswersMap;
+        const sourceMap = mapData || userAnswersMapRef.current || userAnswersMap;
         const saved = sourceMap[targetIdx];
         if (saved) {
             setSelectedAnswer(saved.selectedAnswer ?? null);
@@ -1275,11 +1304,17 @@ export const LatihanPage: React.FC = () => {
         if (isQuizTransitioning || correctAnswerClicked || wrongAnswers.includes(opt)) return;
 
         const correctText = getCorrectAnswerText(currentQ);
-        const isOptCorrect = opt === correctText;
+        const cleanStr = (s: string) => (s || "").replace(/[。,.、\s]/g, "").trim();
+        const stripPrefix = (str: string) => str.replace(/^[a-zA-Z0-9][\.\)]\s*/, "").trim();
+        const isOptCorrect =
+            cleanStr(opt) === cleanStr(correctText) ||
+            cleanStr(stripPrefix(opt)) === cleanStr(stripPrefix(correctText));
+
         const nextCorrectClicked = isOptCorrect ? opt : correctText;
         const nextWrongAnswers = isOptCorrect ? [] : [opt];
 
         setIsQuizTransitioning(true);
+        setSelectedAnswer(opt);
 
         if (isOptCorrect) {
             playTingTing();
@@ -1291,20 +1326,18 @@ export const LatihanPage: React.FC = () => {
             setCorrectAnswerClicked(correctText);
         }
 
-        setUserAnswersMap((prev) => ({
-            ...prev,
-            [currentQuestionIdx]: {
-                selectedAnswer: opt,
-                correctAnswerClicked: nextCorrectClicked,
-                wrongAnswers: nextWrongAnswers,
-                hasQuestionMistake: !isOptCorrect || hasQuestionMistake,
-            },
-        }));
+        const answerData = {
+            selectedAnswer: opt,
+            correctAnswerClicked: nextCorrectClicked,
+            wrongAnswers: nextWrongAnswers,
+            hasQuestionMistake: !isOptCorrect || hasQuestionMistake,
+        };
+        saveUserAnswer(currentQuestionIdx, answerData);
 
         if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
         quizTransitionTimerRef.current = setTimeout(() => {
             setIsQuizTransitioning(false);
-            handleNextQuizQuestion(questions, opt);
+            handleNextQuizQuestion(questions, answerData);
         }, QUIZ_TRANSITION_DELAY_MS);
     };
 
@@ -1323,13 +1356,9 @@ export const LatihanPage: React.FC = () => {
         const isAllFilled = pairs.length > 0 && pairs.every((p) => !!nextAnswers[p.left] && nextAnswers[p.left] !== "");
 
         if (!isAllFilled) {
-            setUserAnswersMap((prev) => ({
-                ...prev,
-                [currentQuestionIdx]: {
-                    ...(prev[currentQuestionIdx] || {}),
-                    matchingAnswers: nextAnswers,
-                },
-            }));
+            saveUserAnswer(currentQuestionIdx, {
+                matchingAnswers: nextAnswers,
+            });
             return;
         }
 
@@ -1357,21 +1386,19 @@ export const LatihanPage: React.FC = () => {
             playTingTing();
         }
 
-        setUserAnswersMap((prev) => ({
-            ...prev,
-            [currentQuestionIdx]: {
-                matchingAnswers: nextAnswers,
-                matchingCorrect: newCorrect,
-                matchingWrong: newWrong,
-                hasQuestionMistake: hasError || hasQuestionMistake,
-            },
-        }));
+        const answerData = {
+            matchingAnswers: nextAnswers,
+            matchingCorrect: newCorrect,
+            matchingWrong: newWrong,
+            hasQuestionMistake: hasError || hasQuestionMistake,
+        };
+        saveUserAnswer(currentQuestionIdx, answerData);
 
         setIsQuizTransitioning(true);
         if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
         quizTransitionTimerRef.current = setTimeout(() => {
             setIsQuizTransitioning(false);
-            handleNextQuizQuestion(questions);
+            handleNextQuizQuestion(questions, answerData);
         }, QUIZ_TRANSITION_DELAY_MS);
     };
 
@@ -1400,17 +1427,6 @@ export const LatihanPage: React.FC = () => {
         const wordsList = Array.from(new Set(rawWords || [])) as string[];
         const isAllFilled = wordsList.length > 0 && wordsList.every((w) => !!nextAnswers[w] && nextAnswers[w] !== "");
 
-        if (!isAllFilled) {
-            setUserAnswersMap((prev) => ({
-                ...prev,
-                [currentQuestionIdx]: {
-                    ...(prev[currentQuestionIdx] || {}),
-                    groupingAnswers: nextAnswers,
-                },
-            }));
-            return;
-        }
-
         let hasError = false;
         const newCorrect: Record<string, boolean> = {};
         const newWrong: Record<string, boolean> = {};
@@ -1424,23 +1440,37 @@ export const LatihanPage: React.FC = () => {
                     : Array.isArray(g.items)
                       ? g.items
                       : [];
-                return wordsInG.includes(w);
+                return wordsInG.some((kw: string) => wordsQuizMatch(kw, w));
             });
 
             const isMatch = matchingGroups.some((g: any) => {
-                const groupName = (g.name || g.category || g.title || "").trim();
-                const cleanGroup = groupName.replace(/^\d+[\.\)]\s*/, "").trim().toLowerCase();
+                const gName = (g.name || g.category || g.title || "").trim();
+                const cleanGroup = gName.replace(/^\d+[\.\)]\s*/, "").trim().toLowerCase();
                 const cleanStudent = studentChoice.replace(/^\d+[\.\)]\s*/, "").trim().toLowerCase();
-                return groupName === studentChoice || (cleanGroup !== "" && cleanGroup === cleanStudent);
+                return gName === studentChoice || (cleanGroup !== "" && cleanGroup === cleanStudent);
             });
 
-            if (isMatch && studentChoice !== "") {
-                newCorrect[w] = true;
-            } else {
-                newWrong[w] = true;
-                hasError = true;
+            if (studentChoice !== "") {
+                if (isMatch) {
+                    newCorrect[w] = true;
+                } else {
+                    newWrong[w] = true;
+                    hasError = true;
+                }
             }
         });
+
+        const answerData = {
+            groupingAnswers: nextAnswers,
+            groupingCorrect: newCorrect,
+            groupingWrong: newWrong,
+            hasQuestionMistake: hasError || hasQuestionMistake,
+        };
+        saveUserAnswer(currentQuestionIdx, answerData);
+
+        if (!isAllFilled) {
+            return;
+        }
 
         setGroupingCorrect(newCorrect);
         setGroupingWrong(newWrong);
@@ -1452,21 +1482,11 @@ export const LatihanPage: React.FC = () => {
             playTingTing();
         }
 
-        setUserAnswersMap((prev) => ({
-            ...prev,
-            [currentQuestionIdx]: {
-                groupingAnswers: nextAnswers,
-                groupingCorrect: newCorrect,
-                groupingWrong: newWrong,
-                hasQuestionMistake: hasError || hasQuestionMistake,
-            },
-        }));
-
         setIsQuizTransitioning(true);
         if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
         quizTransitionTimerRef.current = setTimeout(() => {
             setIsQuizTransitioning(false);
-            handleNextQuizQuestion(questions);
+            handleNextQuizQuestion(questions, answerData);
         }, QUIZ_TRANSITION_DELAY_MS);
     };
 
@@ -1479,15 +1499,11 @@ export const LatihanPage: React.FC = () => {
         setUnscrambleSelectedIndices(nextIndices);
         setUnscrambleWrongOrder(false);
 
-        setUserAnswersMap((prev) => ({
-            ...prev,
-            [currentQuestionIdx]: {
-                ...(prev[currentQuestionIdx] || {}),
-                unscrambleSelected: nextSelected,
-                unscrambleSelectedIndices: nextIndices,
-                unscrambleWrongOrder: false,
-            },
-        }));
+        saveUserAnswer(currentQuestionIdx, {
+            unscrambleSelected: nextSelected,
+            unscrambleSelectedIndices: nextIndices,
+            unscrambleWrongOrder: false,
+        });
     };
 
     const handleUnscrambleWordClick = (
@@ -1506,14 +1522,10 @@ export const LatihanPage: React.FC = () => {
         setUnscrambleSelectedIndices(nextIndices);
 
         if (nextSelected.length < targetWords) {
-            setUserAnswersMap((prev) => ({
-                ...prev,
-                [currentQuestionIdx]: {
-                    ...(prev[currentQuestionIdx] || {}),
-                    unscrambleSelected: nextSelected,
-                    unscrambleSelectedIndices: nextIndices,
-                },
-            }));
+            saveUserAnswer(currentQuestionIdx, {
+                unscrambleSelected: nextSelected,
+                unscrambleSelectedIndices: nextIndices,
+            });
             return;
         }
 
@@ -1522,6 +1534,8 @@ export const LatihanPage: React.FC = () => {
             nextSelected.every(
                 (w, idx) => wordsQuizMatch(w, correctOrder[idx] || "")
             );
+
+        const mistaken = !isOrderCorrect || hasQuestionMistake || !!userAnswersMapRef.current[currentQuestionIdx]?.hasQuestionMistake;
 
         if (isOrderCorrect) {
             playTingTing();
@@ -1532,20 +1546,19 @@ export const LatihanPage: React.FC = () => {
             setUnscrambleWrongOrder(true);
         }
 
-        setUserAnswersMap((prev) => ({
-            ...prev,
-            [currentQuestionIdx]: {
-                unscrambleSelected: nextSelected,
-                unscrambleWrongOrder: !isOrderCorrect,
-                hasQuestionMistake: !isOrderCorrect || hasQuestionMistake,
-            },
-        }));
+        const answerData = {
+            unscrambleSelected: nextSelected,
+            unscrambleSelectedIndices: nextIndices,
+            unscrambleWrongOrder: !isOrderCorrect,
+            hasQuestionMistake: mistaken,
+        };
+        saveUserAnswer(currentQuestionIdx, answerData);
 
         setIsQuizTransitioning(true);
         if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
         quizTransitionTimerRef.current = setTimeout(() => {
             setIsQuizTransitioning(false);
-            handleNextQuizQuestion(questions);
+            handleNextQuizQuestion(questions, answerData);
         }, QUIZ_TRANSITION_DELAY_MS);
     };
 
@@ -1570,19 +1583,17 @@ export const LatihanPage: React.FC = () => {
             setEssayStatus("wrong");
         }
 
-        setUserAnswersMap((prev) => ({
-            ...prev,
-            [currentQuestionIdx]: {
-                essayAnswer,
-                essayStatus: isCorrect ? "correct" : "wrong",
-                hasQuestionMistake: !isCorrect || hasQuestionMistake,
-            },
-        }));
+        const answerData = {
+            essayAnswer,
+            essayStatus: isCorrect ? "correct" : "wrong",
+            hasQuestionMistake: !isCorrect || hasQuestionMistake,
+        };
+        saveUserAnswer(currentQuestionIdx, answerData);
 
         if (quizTransitionTimerRef.current) clearTimeout(quizTransitionTimerRef.current);
         quizTransitionTimerRef.current = setTimeout(() => {
             setIsQuizTransitioning(false);
-            handleNextQuizQuestion(questions);
+            handleNextQuizQuestion(questions, answerData);
         }, QUIZ_TRANSITION_DELAY_MS);
     };
 
@@ -1974,19 +1985,24 @@ export const LatihanPage: React.FC = () => {
         const currQ = questions[currentQuestionIdx];
         if (!currQ) return false;
 
+        const ans = userAnswersMapRef.current[currentQuestionIdx] || userAnswersMap[currentQuestionIdx];
+
         if (currQ.type === "multiple" || currQ.type === "fill") {
-            return !!correctAnswerClicked || wrongAnswers.length > 0;
+            return !!ans?.selectedAnswer || !!selectedAnswer || !!correctAnswerClicked || wrongAnswers.length > 0;
         }
         if (currQ.type === "unscramble") {
             const totalWords = (currQ.correctOrder || []).length || (currQ.words || []).length;
+            const words = ans?.unscrambleSelected || unscrambleSelected;
             return (
-                (unscrambleSelected.length > 0 && unscrambleSelected.length === totalWords) ||
-                unscrambleWrongOrder
+                (words.length > 0 && words.length === totalWords) ||
+                unscrambleWrongOrder ||
+                !!ans?.unscrambleWrongOrder
             );
         }
         if (currQ.type === "matching") {
             const pairs = currQ.pairs || [];
-            return pairs.length > 0 && pairs.every((p) => !!matchingAnswers[p.left] && matchingAnswers[p.left] !== "");
+            const matchMap = ans?.matchingAnswers || matchingAnswers;
+            return pairs.length > 0 && pairs.every((p) => !!matchMap[p.left] && matchMap[p.left] !== "");
         }
         if (currQ.type === "grouping") {
             const groups = normalizeGroups(currQ.groups);
@@ -2001,14 +2017,17 @@ export const LatihanPage: React.FC = () => {
                 }
             }
             const wordsList = Array.from(new Set(rawWords || [])) as string[];
-            return wordsList.length > 0 && wordsList.every((w) => !!groupingAnswers[w] && groupingAnswers[w] !== "");
+            const gMap = ans?.groupingAnswers || groupingAnswers;
+            return wordsList.length > 0 && wordsList.every((w) => !!gMap[w] && gMap[w] !== "");
         }
         if (currQ.type === "essay") {
-            return essayStatus !== "neutral";
+            return (ans?.essayStatus || essayStatus) !== "neutral";
         }
         return false;
     }, [
         currentQuestionIdx,
+        userAnswersMap,
+        selectedAnswer,
         correctAnswerClicked,
         wrongAnswers,
         unscrambleSelected,
@@ -2018,53 +2037,44 @@ export const LatihanPage: React.FC = () => {
         essayStatus,
     ]);
 
-    const handleManualNextQuizQuestion = () => {
-        if (quizTransitionTimerRef.current) {
-            clearTimeout(quizTransitionTimerRef.current);
-            quizTransitionTimerRef.current = null;
-        }
-        setIsQuizTransitioning(false);
-        handleNextQuizQuestion(quizQuestions);
-    };
-
-    const playAudio = (text: string) => {
-        tts.speak(text);
-    };
-
-    const handleNextQuizQuestion = (
-        questions: QuizQuestion[],
-        passedSelectedAnswer?: string,
+    const evaluateQuestionAnswer = (
+        currentQ: QuizQuestion,
+        ansData?: any,
     ) => {
-        const currentQ = questions[currentQuestionIdx];
         let isCorrect = false;
         let studentAnswerString = "";
         let correctAnswerString = "";
-        let rubricScore = 0; // 0-4 scale for Model A
-        let groupingRatio = 0; // ratio 0-1 for Model B
-        let groupingRaw: number | undefined = undefined;
-        let groupingMax: number | undefined = undefined;
+        let rubricScore: number | undefined = undefined; // 0-4 for Model A
+        let groupingRatio: number | undefined = undefined; // ratio for Model B
+        let groupingRaw: number | undefined = undefined; // correct count for Model B
+        let groupingMax: number | undefined = undefined; // total words for Model B
 
-        const finalAnswer = passedSelectedAnswer || selectedAnswer;
         const cleanStr = (s: string) => (s || "").replace(/[。,.、\s]/g, "").trim();
 
         if (currentQ.type === "multiple" || currentQ.type === "fill") {
-            studentAnswerString = finalAnswer || "(Tidak ada jawaban)";
+            const rawStudent = ansData?.selectedAnswer || "";
+            studentAnswerString = rawStudent || "(Tidak ada jawaban)";
             correctAnswerString = getCorrectAnswerText(currentQ);
-            isCorrect = cleanStr(studentAnswerString) === cleanStr(correctAnswerString);
+
+            const cleanAns = cleanStr(studentAnswerString);
+            const cleanCorr = cleanStr(correctAnswerString);
+            const stripPrefix = (str: string) => str.replace(/^[a-zA-Z0-9][\.\)]\s*/, "").trim();
+
+            isCorrect =
+                !!rawStudent &&
+                (cleanAns === cleanCorr || cleanStr(stripPrefix(rawStudent)) === cleanStr(stripPrefix(correctAnswerString)));
         } else if (currentQ.type === "unscramble") {
-            studentAnswerString = unscrambleSelected.join("");
-            correctAnswerString = (currentQ.correctOrder || []).join("");
+            const studentWords: string[] = ansData?.unscrambleSelected || [];
+            studentAnswerString = studentWords.join("");
+            const correctOrder: string[] = currentQ.correctOrder || [];
+            correctAnswerString = correctOrder.join("");
 
-            const correctOrder = currentQ.correctOrder || [];
             const isOrderCorrect =
-                unscrambleSelected.length === correctOrder.length &&
-                unscrambleSelected.length > 0 &&
-                unscrambleSelected.every((w, idx) => wordsQuizMatch(w, correctOrder[idx] || ""));
+                studentWords.length === correctOrder.length &&
+                studentWords.length > 0 &&
+                studentWords.every((w, idx) => wordsQuizMatch(w, correctOrder[idx] || ""));
 
-            const savedMistake =
-                userAnswersMap[currentQuestionIdx]?.hasQuestionMistake ||
-                unscrambleWrongOrder ||
-                hasQuestionMistake;
+            const savedMistake = !!ansData?.hasQuestionMistake;
 
             if (isOrderCorrect && !savedMistake) {
                 rubricScore = 4;
@@ -2073,42 +2083,18 @@ export const LatihanPage: React.FC = () => {
                 rubricScore = 3;
                 isCorrect = true;
             } else {
-                // Check how many words placed in correct position
-                const correctPosCount = unscrambleSelected.filter(
+                const correctPosCount = studentWords.filter(
                     (w, idx) => wordsQuizMatch(w, correctOrder[idx] || ""),
                 ).length;
-                if (correctPosCount >= Math.ceil(correctOrder.length / 2) && unscrambleSelected.length > 0) {
+                if (correctPosCount >= Math.ceil(correctOrder.length / 2) && studentWords.length > 0) {
                     rubricScore = 2;
-                } else if (unscrambleSelected.length > 0) {
+                } else if (studentWords.length > 0) {
                     rubricScore = 1;
                 } else {
                     rubricScore = 0;
                 }
                 isCorrect = false;
             }
-        } else if (currentQ.type === "matching") {
-            const pairs = currentQ.pairs || [];
-            const matchedDetails: string[] = [];
-            let allPairsCorrect = pairs.length > 0;
-            pairs.forEach((p) => {
-                const studentMatch = matchingAnswers[p.left] || "";
-                matchedDetails.push(`${p.left} → ${studentMatch || "?"}`);
-                if (studentMatch !== p.right) {
-                    allPairsCorrect = false;
-                }
-            });
-            studentAnswerString = matchedDetails.join(", ");
-            correctAnswerString = pairs
-                .map((p) => `${p.left} → ${p.right}`)
-                .join(", ");
-            isCorrect = allPairsCorrect;
-        } else if (currentQ.type === "essay") {
-            studentAnswerString = essayAnswer.trim();
-            correctAnswerString = `(Kosakata wajib: ${currentQ.targetWord || ""})`;
-            const targetWord = currentQ.targetWord || "";
-            isCorrect =
-                essayStatus === "correct" ||
-                (targetWord ? studentAnswerString.includes(targetWord) : studentAnswerString.length > 0);
         } else if (currentQ.type === "grouping") {
             const groups = normalizeGroups(currentQ.groups);
             let rawWords = parseJsonDeep(currentQ.words);
@@ -2122,11 +2108,12 @@ export const LatihanPage: React.FC = () => {
                 }
             }
             const wordsList = Array.from(new Set(rawWords || [])) as string[];
+            const studentAnswersMap: Record<string, string> = ansData?.groupingAnswers || {};
             const details: string[] = [];
             let correctJukugoCount = 0;
 
             wordsList.forEach((w) => {
-                const studentGroup = (groupingAnswers[w] || "").trim();
+                const studentGroup = (studentAnswersMap[w] || "").trim();
                 details.push(`${w} → ${studentGroup || "?"}`);
 
                 const matchingGroups = (Array.isArray(groups) ? groups : []).filter((g: any) => {
@@ -2136,7 +2123,7 @@ export const LatihanPage: React.FC = () => {
                         : Array.isArray(g.items)
                           ? g.items
                           : [];
-                    return wordsInG.includes(w);
+                    return wordsInG.some((kw: string) => wordsQuizMatch(kw, w));
                 });
 
                 const isMatch = matchingGroups.some((g: any) => {
@@ -2156,13 +2143,37 @@ export const LatihanPage: React.FC = () => {
                 .map((g: any) => `${g.name || g.category || g.title || ""}: [${(g.correctWords || g.items || []).join(", ")}]`)
                 .join(" | ");
 
-            groupingRatio = wordsList.length > 0 ? correctJukugoCount / wordsList.length : 0;
-            isCorrect = wordsList.length > 0 && correctJukugoCount === wordsList.length;
             groupingRaw = correctJukugoCount;
             groupingMax = wordsList.length;
+            groupingRatio = groupingMax > 0 ? groupingRaw / groupingMax : 0;
+            isCorrect = groupingMax > 0 && groupingRaw === groupingMax;
+        } else if (currentQ.type === "matching") {
+            const pairs = currentQ.pairs || [];
+            const studentAnswersMap: Record<string, string> = ansData?.matchingAnswers || {};
+            const matchedDetails: string[] = [];
+            let allPairsCorrect = pairs.length > 0;
+            pairs.forEach((p) => {
+                const studentMatch = studentAnswersMap[p.left] || "";
+                matchedDetails.push(`${p.left} → ${studentMatch || "?"}`);
+                if (studentMatch !== p.right) {
+                    allPairsCorrect = false;
+                }
+            });
+            studentAnswerString = matchedDetails.join(", ");
+            correctAnswerString = pairs
+                .map((p) => `${p.left} → ${p.right}`)
+                .join(", ");
+            isCorrect = allPairsCorrect;
+        } else if (currentQ.type === "essay") {
+            studentAnswerString = (ansData?.essayAnswer || "").trim();
+            correctAnswerString = `(Kosakata wajib: ${currentQ.targetWord || ""})`;
+            const targetWord = currentQ.targetWord || "";
+            isCorrect =
+                ansData?.essayStatus === "correct" ||
+                (targetWord ? studentAnswerString.includes(targetWord) : studentAnswerString.length > 0);
         }
 
-        const questionFeedbackItem = {
+        return {
             question: currentQ.question,
             type: currentQ.type,
             studentAnswer: studentAnswerString,
@@ -2173,43 +2184,60 @@ export const LatihanPage: React.FC = () => {
             groupingRaw,
             groupingMax,
         };
+    };
 
-        setQuizFeedback((prev) => {
-            const next = [...prev];
-            next[currentQuestionIdx] = questionFeedbackItem;
-            return next;
-        });
+    const handleManualNextQuizQuestion = () => {
+        if (quizTransitionTimerRef.current) {
+            clearTimeout(quizTransitionTimerRef.current);
+            quizTransitionTimerRef.current = null;
+        }
+        setIsQuizTransitioning(false);
+        handleNextQuizQuestion(quizQuestions);
+    };
+
+    const playAudio = (text: string) => {
+        tts.speak(text);
+    };
+
+    const handleNextQuizQuestion = (
+        questions: QuizQuestion[],
+        passedAnswerData?: any,
+    ) => {
+        const currentQ = questions[currentQuestionIdx];
+        const ansData = passedAnswerData || userAnswersMapRef.current[currentQuestionIdx] || userAnswersMap[currentQuestionIdx];
+        const questionFeedbackItem = evaluateQuestionAnswer(currentQ, ansData);
+
+        const nextFeedback = [...quizFeedback];
+        nextFeedback[currentQuestionIdx] = questionFeedbackItem;
+        setQuizFeedback(nextFeedback);
 
         if (currentQuestionIdx < questions.length - 1) {
             const nextIdx = currentQuestionIdx + 1;
             setCurrentQuestionIdx(nextIdx);
             restoreQuestionState(nextIdx);
         } else {
-            // Evaluate final score & Model A-D rubric scores
-            const finalFeedback = [...quizFeedback];
-            finalFeedback[currentQuestionIdx] = questionFeedbackItem;
-
-            // Overall Score calculation (0-100)
-            const totalPoints = finalFeedback.reduce((sum, f) => {
-                if (!f) return sum;
-                if (f.type === "unscramble") {
-                    return sum + (f.rubricScore / 4);
-                } else if (f.type === "grouping") {
-                    return sum + (f.groupingRatio ?? (f.isCorrect ? 1 : 0));
+            // Re-evaluate full array of questions across the whole quiz (0 to questions.length - 1)
+            const fullFeedback: any[] = [];
+            for (let i = 0; i < questions.length; i++) {
+                if (i === currentQuestionIdx) {
+                    fullFeedback.push(questionFeedbackItem);
+                } else {
+                    const q = questions[i];
+                    const a = userAnswersMapRef.current[i] || userAnswersMap[i];
+                    fullFeedback.push(evaluateQuestionAnswer(q, a));
                 }
-                return sum + (f.isCorrect ? 1 : 0);
-            }, 0);
+            }
+            setQuizFeedback(fullFeedback);
 
-            const score = Math.round((totalPoints / questions.length) * 100);
-
-            // Compute Model A-D scores according to Rubrik Kuis
-            const modelAItems = finalFeedback.filter((f) => f && f.type === "unscramble");
-            const modelBItems = finalFeedback.filter((f) => f && f.type === "grouping");
-            const modelCItems = finalFeedback.filter(
+            // Compute Model A-D scores according to Rubrik Kuis (penilaian.md)
+            const modelAItems = fullFeedback.filter((f) => f && f.type === "unscramble");
+            const modelBItems = fullFeedback.filter((f) => f && f.type === "grouping");
+            const modelCItems = fullFeedback.filter(
                 (f) => f && (f.type === "multiple" || f.type === "matching" || f.type === "essay"),
             );
-            const modelDItems = finalFeedback.filter((f) => f && f.type === "fill");
+            const modelDItems = fullFeedback.filter((f) => f && f.type === "fill");
 
+            // Model A: Rubrik analitik 0-4 per butir
             const rawModelA =
                 modelAItems.length > 0
                     ? modelAItems.reduce((sum, item) => sum + (item.rubricScore ?? (item.isCorrect ? 4 : 0)), 0)
@@ -2220,15 +2248,10 @@ export const LatihanPage: React.FC = () => {
                     ? Math.round((rawModelA / maxModelA) * 100)
                     : null;
 
+            // Model B: 1 pt per jukugo benar
             const rawModelB =
                 modelBItems.length > 0
-                    ? modelBItems.reduce(
-                          (sum, item) =>
-                              sum +
-                              (item.groupingRaw ??
-                                  (item.groupingRatio ? Math.round(item.groupingRatio * 10) : (item.isCorrect ? 1 : 0))),
-                          0,
-                      )
+                    ? modelBItems.reduce((sum, item) => sum + (item.groupingRaw ?? 0), 0)
                     : null;
             const maxModelB =
                 modelBItems.length > 0
@@ -2239,6 +2262,7 @@ export const LatihanPage: React.FC = () => {
                     ? Math.round((rawModelB / maxModelB) * 100)
                     : null;
 
+            // Model C: 1 pt per butir benar
             const rawModelC =
                 modelCItems.length > 0
                     ? modelCItems.filter((i) => i.isCorrect).length
@@ -2249,6 +2273,7 @@ export const LatihanPage: React.FC = () => {
                     ? Math.round((rawModelC / maxModelC) * 100)
                     : null;
 
+            // Model D: 1 pt per butir benar
             const rawModelD =
                 modelDItems.length > 0
                     ? modelDItems.filter((i) => i.isCorrect).length
@@ -2258,6 +2283,14 @@ export const LatihanPage: React.FC = () => {
                 rawModelD !== null && maxModelD && maxModelD > 0
                     ? Math.round((rawModelD / maxModelD) * 100)
                     : null;
+
+            // Nilai Akhir Kuis: Rata-rata dari model-model kuis yang aktif pada skala 0-100
+            const activeModelScores = [scoreModelA, scoreModelB, scoreModelC, scoreModelD].filter(
+                (s): s is number => s !== null && s !== undefined
+            );
+            const score = activeModelScores.length > 0
+                ? Math.round(activeModelScores.reduce((sum, s) => sum + s, 0) / activeModelScores.length)
+                : 0;
 
             const modelScores = {
                 scoreModelA,
@@ -2276,7 +2309,7 @@ export const LatihanPage: React.FC = () => {
 
             setQuizScore(score);
             setQuizFinished(true);
-            submitQuizScore(score, modelScores, finalFeedback);
+            submitQuizScore(score, modelScores, fullFeedback);
         }
     };
 
@@ -2314,6 +2347,7 @@ export const LatihanPage: React.FC = () => {
             quizTransitionTimerRef.current = null;
         }
         setIsQuizTransitioning(false);
+        userAnswersMapRef.current = {};
         setUserAnswersMap({});
         setCurrentQuestionIdx(0);
         restoreQuestionState(0, {});
@@ -4951,14 +4985,7 @@ export const LatihanPage: React.FC = () => {
                             const scoreA = maxA > 0 ? Math.round((rawA / maxA) * 100) : null;
 
                             const rawB = modelBItems.reduce(
-                                (sum, item) =>
-                                    sum +
-                                    (item.groupingRaw ??
-                                        (item.groupingRatio
-                                            ? Math.round(item.groupingRatio * 10)
-                                            : item.isCorrect
-                                              ? 1
-                                              : 0)),
+                                (sum, item) => sum + (item.groupingRaw ?? 0),
                                 0,
                             );
                             const maxB = modelBItems.reduce(
@@ -5179,9 +5206,19 @@ export const LatihanPage: React.FC = () => {
                                                                 </span>
                                                             </p>
                                                         )}
-                                                        {fb.rubricScore !== undefined && (
+                                                        {fb.type === "unscramble" && fb.rubricScore !== undefined && (
                                                             <p className="text-[11px] text-amber-700 font-semibold mt-1">
                                                                 Skor Rubrik Analitik: {fb.rubricScore} / 4
+                                                            </p>
+                                                        )}
+                                                        {fb.type === "grouping" && fb.groupingRaw !== undefined && fb.groupingMax !== undefined && (
+                                                            <p className="text-[11px] text-indigo-700 font-semibold mt-1">
+                                                                Pengelompokan Benar: {fb.groupingRaw} / {fb.groupingMax} jukugo ({fb.groupingMax > 0 ? Math.round((fb.groupingRaw / fb.groupingMax) * 100) : 0}%)
+                                                            </p>
+                                                        )}
+                                                        {(fb.type === "multiple" || fb.type === "fill") && (
+                                                            <p className={`text-[11px] font-semibold mt-1 ${fb.isCorrect ? "text-emerald-700" : "text-rose-700"}`}>
+                                                                Poin: {fb.isCorrect ? "1 / 1 (Benar)" : "0 / 1 (Salah)"}
                                                             </p>
                                                         )}
                                                     </div>
