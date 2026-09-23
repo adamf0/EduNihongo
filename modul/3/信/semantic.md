@@ -1,4 +1,4 @@
-bentuk semantic /Users/adamf/Documents/design_web/EduNihongoAlt/modul/3/信/Tangkapan Layar 2026-09-14 pukul 19.09.52.png
+bentuk semantic /Users/adamf/Documents/design_web/EduNihongoAlt/modul/3/信/WhatsApp Image 2026-09-22 at 09.29.14.jpeg
 ada 17 node
 
 e. Analisis hubungan  makna 
@@ -94,3 +94,10 @@ Penjelasan:
 信：tanda / isyarat
 号：tanda / simbol / nomor
 Hubungan makna antar kanji 信 dan 号 menjadi 信号, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “tanda atau isyarat yang digunakan untuk menyampaikan informasi atau pesan tertentu.” 
+4) Informasi dan Dokumen
+Kanji 信 pada kelompok ini berkaitan dengan makna informasi atau pesan yang disampaikan dalam bentuk tertulis. Seperti terdapat pada jukugo berikut ini:
+信書（しんしょ） surat / dokumen yang disampaikan
+Penjelasan:
+信：surat / kabar
+書：tulisan / dokumen / surat
+Hubungan makna antar kanji 信 dan 書 menjadi 信書, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “surat atau dokumen tertulis yang digunakan untuk menyampaikan pesan dari seseorang kepada orang lain.”

@@ -118,7 +118,40 @@ async function run() {
     cat.jukugos.forEach(jk => validWords.add(jk.word));
   });
 
-  // 1. Clean obsolete Jukugo records for 術
+  // 1. Update Kanji record for 術
+  await prisma.kanji.update({
+    where: { id: kanji.id },
+    data: {
+      romaji: "JUTSU",
+      meaning: "teknik, keterampilan, metode",
+      baseMeaning: "teknik, keterampilan, atau metode untuk melakukan sesuatu."
+    }
+  });
+  console.log(`Updated kanji 術 baseMeaning and romaji`);
+
+  // Ensure constituent kanji base meanings match semantic analysis
+  const CONSTITUENTS = [
+    { char: "技", meaning: "keterampilan, teknik, keahlian", baseMeaning: "keterampilan, teknik, keahlian" },
+    { char: "手", meaning: "tangan", baseMeaning: "tangan" },
+    { char: "話", meaning: "berbicara, percakapan", baseMeaning: "berbicara, percakapan" },
+    { char: "秘", meaning: "rahasia, tersembunyi", baseMeaning: "rahasia, tersembunyi" },
+    { char: "学", meaning: "belajar, ilmu, pengetahuan", baseMeaning: "belajar, ilmu, pengetahuan" },
+    { char: "算", meaning: "menghitung, perhitungan", baseMeaning: "menghitung, perhitungan" },
+    { char: "芸", meaning: "seni, keterampilan, karya seni", baseMeaning: "seni, keterampilan, karya seni" },
+    { char: "美", meaning: "indah, keindahan", baseMeaning: "indah, keindahan" }
+  ];
+
+  for (const c of CONSTITUENTS) {
+    const existing = await prisma.kanji.findUnique({ where: { character: c.char } });
+    if (existing) {
+      await prisma.kanji.update({
+        where: { character: c.char },
+        data: { baseMeaning: c.baseMeaning }
+      });
+    }
+  }
+
+  // 2. Clean obsolete Jukugo records for 術
   const existingJukugos = await prisma.jukugo.findMany({
     where: { kanjiId: kanji.id }
   });
@@ -132,34 +165,26 @@ async function run() {
     }
   }
 
-  // 2. Delete existing KanjiGraphEdge for 術
+  // 3. Re-create KanjiGraphEdge with 5 valid cross-links
+  const JUTSU_CROSS_LINKS = [
+    { id: "cross-3235-1-技術-学術", source: "技術", target: "学術", predicate: "keahlian & ilmu akademis" },
+    { id: "cross-3235-2-美術-芸術", source: "美術", target: "芸術", predicate: "seni rupa & karya seni" },
+    { id: "cross-3235-3-手術-技術", source: "手術", target: "技術", predicate: "tindakan medis presisi" },
+    { id: "cross-3235-4-話術-秘術", source: "話術", target: "秘術", predicate: "seni bicara & rahasia" },
+    { id: "cross-3235-5-算術-技術", source: "算術", target: "技術", predicate: "berhitung & penerapan" }
+  ];
+
   await prisma.kanjiGraphEdge.deleteMany({ where: { kanjiId: kanji.id } });
-
-  // 3. Re-create KanjiGraphEdge
-  const graphEdges: any[] = [];
-  customGraphJutsu.categories.forEach((cat, catIdx) => {
-    const catId = `${char}-cat-${catIdx + 1}`;
-    graphEdges.push({
-      id: `${char}-e-root-cat${catIdx + 1}`,
+  await prisma.kanjiGraphEdge.createMany({
+    data: JUTSU_CROSS_LINKS.map(e => ({
+      id: e.id,
       kanjiId: kanji.id,
-      source: `${char}-root`,
-      target: catId,
-      predicate: null
-    });
-
-    cat.jukugos.forEach((jk, jkIdx) => {
-      const subId = `${char}-sub-${catIdx + 1}-${jkIdx + 1}`;
-      graphEdges.push({
-        id: `${char}-e-cat${catIdx + 1}-sub${jkIdx + 1}`,
-        kanjiId: kanji.id,
-        source: catId,
-        target: subId,
-        predicate: null
-      });
-    });
+      source: e.source,
+      target: e.target,
+      predicate: e.predicate
+    }))
   });
-
-  await prisma.kanjiGraphEdge.createMany({ data: graphEdges });
+  console.log(`Inserted 5 valid cross-link edges for 術`);
 
   // 4. Clear all old KategoriKanji mappings for this kanji's jukugos
   const currentJukugos = await prisma.jukugo.findMany({ where: { kanjiId: kanji.id } });
@@ -256,13 +281,21 @@ async function run() {
     where: { kanjiId: kanji.id, type: "grouping" }
   });
 
+  const formattedGroups = customGraphJutsu.categories.map(cat => ({
+    name: cat.title,
+    category: cat.title,
+    correctWords: cat.jukugos.map(j => j.word),
+    items: cat.jukugos.map(j => j.word),
+    [cat.title]: cat.jukugos.map(j => j.word)
+  }));
+
   await prisma.quiz.create({
     data: {
       kanjiId: kanji.id,
       type: "grouping",
-      question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+      question: "Kelompokkan jukugo berikut ke dalam kategori yang tepat!",
       words: JSON.stringify(allWords),
-      groups: JSON.stringify(groups),
+      groups: JSON.stringify(formattedGroups),
       explanation: `Pengelompokan jukugo berdasarkan cabang semantic graph kanji ${char}.`
     }
   });

@@ -1,5 +1,11 @@
-# React + TypeScript + Vite
+# EduNihongo - Platform Pembelajaran Kanji & Jukugo Interaktif
 
+> 📚 **Buku Panduan Pengguna Lengkap (Non-Teknis)**:
+> Silakan baca [Panduan Khusus Mahasiswa & Dosen](docs/PANDUAN_PENGGUNA_MAHASISWA_DAN_DOSEN.md) untuk petunjuk langkah-demi-langkah penggunaan aplikasi.
+
+---
+
+# React + TypeScript + Vite
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

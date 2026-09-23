@@ -260,7 +260,52 @@ async function run() {
     cat.jukugos.forEach(jk => validWords.add(jk.word));
   });
 
-  // 1. Clean obsolete Jukugo records for 議
+  // 1. Update Kanji record for 議
+  await prisma.kanji.update({
+    where: { id: kanji.id },
+    data: {
+      romaji: "GI",
+      meaning: "membahas, berunding, bertukar pendapat, atau mempertimbangkan suatu hal.",
+      baseMeaning: "membahas, berunding, bertukar pendapat, atau mempertimbangkan suatu hal."
+    }
+  });
+  console.log(`Updated kanji 議 baseMeaning and romaji`);
+
+  // Ensure constituent kanji base meanings match semantic analysis
+  const CONSTITUENTS = [
+    { char: "会", meaning: "bertemu, berkumpul", baseMeaning: "bertemu, berkumpul" },
+    { char: "論", meaning: "membahas, berargumentasi", baseMeaning: "membahas, berargumentasi" },
+    { char: "討", meaning: "membahas, menyelidiki, mengkaji", baseMeaning: "membahas, menyelidiki, mengkaji" },
+    { char: "協", meaning: "bekerja sama, bersepakat", baseMeaning: "bekerja sama, bersepakat" },
+    { char: "合", meaning: "bersama, menyatukan", baseMeaning: "bersama, menyatukan" },
+    { char: "談", meaning: "berbicara, membicarakan", baseMeaning: "berbicara, membicarakan" },
+    { char: "評", meaning: "menilai, mempertimbangkan", baseMeaning: "menilai, mempertimbangkan" },
+    { char: "決", meaning: "memutuskan, menentukan", baseMeaning: "memutuskan, menentukan" },
+    { char: "発", meaning: "mengajukan, memulai, mengeluarkan", baseMeaning: "mengajukan, memulai, mengeluarkan" },
+    { char: "建", meaning: "mengemukakan, mengusulkan", baseMeaning: "mengemukakan, mengusulkan" },
+    { char: "動", meaning: "menggerakkan, mengajukan tindakan", baseMeaning: "menggerakkan, mengajukan tindakan" },
+    { char: "案", meaning: "rancangan, usulan", baseMeaning: "rancangan, usulan" },
+    { char: "題", meaning: "topik, pokok persoalan", baseMeaning: "topik, pokok persoalan" },
+    { char: "異", meaning: "berbeda, tidak sama", baseMeaning: "berbeda, tidak sama" },
+    { char: "物", meaning: "hal, perkara", baseMeaning: "hal, perkara" },
+    { char: "争", meaning: "berselisih, memperdebatkan", baseMeaning: "berselisih, memperdebatkan" },
+    { char: "和", meaning: "damai, harmonis", baseMeaning: "damai, harmonis" },
+    { char: "員", meaning: "anggota, personel", baseMeaning: "anggota, personel" },
+    { char: "長", meaning: "pemimpin, ketua", baseMeaning: "pemimpin, ketua" },
+    { char: "事", meaning: "hal, perkara, urusan", baseMeaning: "hal, perkara, urusan" }
+  ];
+
+  for (const c of CONSTITUENTS) {
+    const existing = await prisma.kanji.findUnique({ where: { character: c.char } });
+    if (existing) {
+      await prisma.kanji.update({
+        where: { character: c.char },
+        data: { baseMeaning: c.baseMeaning }
+      });
+    }
+  }
+
+  // 2. Clean obsolete Jukugo records for 議
   const existingJukugos = await prisma.jukugo.findMany({
     where: { kanjiId: kanji.id }
   });
@@ -274,34 +319,34 @@ async function run() {
     }
   }
 
-  // 2. Delete existing KanjiGraphEdge for 議
+  // 3. Re-create KanjiGraphEdge with 13 valid cross-links
+  const GI_CROSS_LINKS = [
+    { id: "cross-3236-1-会議-議会", source: "会議", target: "議会", predicate: "rapat & parlemen dewan" },
+    { id: "cross-3236-2-議論-討議", source: "議論", target: "討議", predicate: "perdebatan & pembahasan" },
+    { id: "cross-3236-3-決議-議決", source: "決議", target: "議決", predicate: "penetapan keputusan" },
+    { id: "cross-3236-4-議案-議題", source: "議案", target: "議題", predicate: "draf usulan & agenda" },
+    { id: "cross-3236-5-発議-動議", source: "発議", target: "動議", predicate: "pengajuan usulan & mosi" },
+    { id: "cross-3236-6-建議-発議", source: "建議", target: "発議", predicate: "rekomendasi usulan formal" },
+    { id: "cross-3236-7-議員-議長", source: "議員", target: "議長", predicate: "anggota & ketua dewan" },
+    { id: "cross-3236-8-異議-物議", source: "異議", target: "物議", predicate: "keberatan & kontroversi" },
+    { id: "cross-3236-9-争議-和議", source: "争議", target: "和議", predicate: "perselisihan vs perdamaian" },
+    { id: "cross-3236-10-論議-議論", source: "論議", target: "議論", predicate: "diskusi pembahasan masalah" },
+    { id: "cross-3236-11-合議-評議", source: "合議", target: "評議", predicate: "musyawarah kesepakatan" },
+    { id: "cross-3236-12-談議-会議", source: "談議", target: "会議", predicate: "obrolan diskusi & rapat" },
+    { id: "cross-3236-13-議事-議案", source: "議事", target: "議案", predicate: "jalannya sidang & materi draf" }
+  ];
+
   await prisma.kanjiGraphEdge.deleteMany({ where: { kanjiId: kanji.id } });
-
-  // 3. Re-create KanjiGraphEdge
-  const graphEdges: any[] = [];
-  customGraphGi.categories.forEach((cat, catIdx) => {
-    const catId = `${char}-cat-${catIdx + 1}`;
-    graphEdges.push({
-      id: `${char}-e-root-cat${catIdx + 1}`,
+  await prisma.kanjiGraphEdge.createMany({
+    data: GI_CROSS_LINKS.map(e => ({
+      id: e.id,
       kanjiId: kanji.id,
-      source: `${char}-root`,
-      target: catId,
-      predicate: null
-    });
-
-    cat.jukugos.forEach((jk, jkIdx) => {
-      const subId = `${char}-sub-${catIdx + 1}-${jkIdx + 1}`;
-      graphEdges.push({
-        id: `${char}-e-cat${catIdx + 1}-sub${jkIdx + 1}`,
-        kanjiId: kanji.id,
-        source: catId,
-        target: subId,
-        predicate: null
-      });
-    });
+      source: e.source,
+      target: e.target,
+      predicate: e.predicate
+    }))
   });
-
-  await prisma.kanjiGraphEdge.createMany({ data: graphEdges });
+  console.log(`Inserted 13 valid cross-link edges for 議`);
 
   // 4. Clear all old KategoriKanji mappings for this kanji's jukugos
   const currentJukugos = await prisma.jukugo.findMany({ where: { kanjiId: kanji.id } });
@@ -398,13 +443,21 @@ async function run() {
     where: { kanjiId: kanji.id, type: "grouping" }
   });
 
+  const formattedGroups = customGraphGi.categories.map(cat => ({
+    name: cat.title,
+    category: cat.title,
+    correctWords: cat.jukugos.map(j => j.word),
+    items: cat.jukugos.map(j => j.word),
+    [cat.title]: cat.jukugos.map(j => j.word)
+  }));
+
   await prisma.quiz.create({
     data: {
       kanjiId: kanji.id,
       type: "grouping",
-      question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+      question: "Kelompokkan jukugo berikut ke dalam kategori yang tepat!",
       words: JSON.stringify(allWords),
-      groups: JSON.stringify(groups),
+      groups: JSON.stringify(formattedGroups),
       explanation: `Pengelompokan jukugo berdasarkan cabang semantic graph kanji ${char}.`
     }
   });

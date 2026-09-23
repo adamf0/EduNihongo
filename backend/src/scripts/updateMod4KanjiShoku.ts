@@ -135,7 +135,41 @@ async function run() {
     cat.jukugos.forEach(jk => validWords.add(jk.word));
   });
 
-  // 1. Clean obsolete Jukugo records for 職
+  // 1. Update Kanji record for 職
+  await prisma.kanji.update({
+    where: { id: kanji.id },
+    data: {
+      romaji: "SHOKU",
+      baseMeaning: "pekerjaan / jabatan / profesi",
+      meaning: "pekerjaan / jabatan / profesi"
+    }
+  });
+  console.log(`Updated kanji 職 baseMeaning and romaji`);
+
+  // Ensure constituent kanji base meanings match semantic analysis
+  const CONSTITUENTS = [
+    { char: "業", meaning: "pekerjaan, usaha, kegiatan", baseMeaning: "pekerjaan, usaha, kegiatan" },
+    { char: "人", meaning: "orang, manusia", baseMeaning: "orang, manusia" },
+    { char: "員", meaning: "anggota, staf", baseMeaning: "anggota, staf" },
+    { char: "場", meaning: "tempat", baseMeaning: "tempat" },
+    { char: "求", meaning: "mencari, meminta", baseMeaning: "mencari, meminta" },
+    { char: "有", meaning: "ada, memiliki", baseMeaning: "ada, memiliki" },
+    { char: "転", meaning: "berpindah, beralih", baseMeaning: "berpindah, beralih" },
+    { char: "退", meaning: "mundur, berhenti", baseMeaning: "mundur, berhenti" },
+    { char: "無", meaning: "tidak ada, tanpa", baseMeaning: "tidak ada, tanpa" }
+  ];
+
+  for (const c of CONSTITUENTS) {
+    const existing = await prisma.kanji.findUnique({ where: { character: c.char } });
+    if (existing) {
+      await prisma.kanji.update({
+        where: { character: c.char },
+        data: { baseMeaning: c.baseMeaning }
+      });
+    }
+  }
+
+  // 2. Clean obsolete Jukugo records for 職
   const existingJukugos = await prisma.jukugo.findMany({
     where: { kanjiId: kanji.id }
   });
@@ -149,34 +183,26 @@ async function run() {
     }
   }
 
-  // 2. Delete existing KanjiGraphEdge for 職
+  // 3. Re-create KanjiGraphEdge with 5 valid cross-links
+  const SHOKU_CROSS_LINKS = [
+    { id: "edge-shoku-1", source: "職業", target: "職人", predicate: "pekerjaan & ahli pengrajin" },
+    { id: "edge-shoku-2", source: "職場", target: "職員", predicate: "tempat kerja & pegawai" },
+    { id: "edge-shoku-3", source: "求職", target: "転職", predicate: "pencarian & pindah kerja" },
+    { id: "edge-shoku-4", source: "退職", target: "無職", predicate: "pensiun & belum bekerja" },
+    { id: "edge-shoku-5", source: "有職", target: "職業", predicate: "memiliki pekerjaan" }
+  ];
+
   await prisma.kanjiGraphEdge.deleteMany({ where: { kanjiId: kanji.id } });
-
-  // 3. Re-create KanjiGraphEdge
-  const graphEdges: any[] = [];
-  customGraphShoku.categories.forEach((cat, catIdx) => {
-    const catId = `${char}-cat-${catIdx + 1}`;
-    graphEdges.push({
-      id: `${char}-e-root-cat${catIdx + 1}`,
+  await prisma.kanjiGraphEdge.createMany({
+    data: SHOKU_CROSS_LINKS.map(e => ({
+      id: e.id,
       kanjiId: kanji.id,
-      source: `${char}-root`,
-      target: catId,
-      predicate: null
-    });
-
-    cat.jukugos.forEach((jk, jkIdx) => {
-      const subId = `${char}-sub-${catIdx + 1}-${jkIdx + 1}`;
-      graphEdges.push({
-        id: `${char}-e-cat${catIdx + 1}-sub${jkIdx + 1}`,
-        kanjiId: kanji.id,
-        source: catId,
-        target: subId,
-        predicate: null
-      });
-    });
+      source: e.source,
+      target: e.target,
+      predicate: e.predicate
+    }))
   });
-
-  await prisma.kanjiGraphEdge.createMany({ data: graphEdges });
+  console.log(`Inserted 5 valid cross-link edges for 職`);
 
   // 4. Clear all old KategoriKanji mappings for this kanji's jukugos
   const currentJukugos = await prisma.jukugo.findMany({ where: { kanjiId: kanji.id } });

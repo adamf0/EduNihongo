@@ -65,7 +65,7 @@ const KEI_SEMANTIC_DATA = [
   // 2) Jalur / Cara Melalui
   {
     word: "経由",
-    penjelasan: "Hubungan makna antara kanji 経 dan 由 menjadi 経由, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “melalui suatu tempat, jalur, atau perantara.”",
+    penjelasan: "Hubungan makna antara kanji 経 dan 由 menjadi 経由, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “melalui suatu tempat, jalur, atau perantar.”",
     nodes: [
       { jokugo: "経", arti: "melalui" },
       { jokugo: "由", arti: "asal, melalui" }
@@ -123,102 +123,233 @@ const KEI_SEMANTIC_DATA = [
   }
 ];
 
+const CONSTITUENT_KANJI_DATA = [
+  {
+    character: "験",
+    romaji: "KEN",
+    meaning: "Pengalaman, Ujian",
+    baseMeaning: "pengalaman atau ujian yang dijalani.",
+    bushuu: "馬",
+    kunyomi: "ため・す",
+    onyomi: "ケン"
+  },
+  {
+    character: "過",
+    romaji: "KA / Su",
+    meaning: "Melewati, Berlalu",
+    baseMeaning: "melewati atau berlalu melampaui batas.",
+    bushuu: "辶",
+    kunyomi: "す・ぎる、す・ごす",
+    onyomi: "カ"
+  },
+  {
+    character: "歴",
+    romaji: "REKI",
+    meaning: "Riwayat, Perjalanan yang dilalui",
+    baseMeaning: "riwayat atau urutan peristiwa yang dilalui.",
+    bushuu: "厂",
+    kunyomi: "-",
+    onyomi: "レキ"
+  },
+  {
+    character: "由",
+    romaji: "YUU / YUI",
+    meaning: "Asal, Melalui",
+    baseMeaning: "asal mula, alasan, atau jalur yang dilalui.",
+    bushuu: "田",
+    kunyomi: "よし",
+    onyomi: "ユウ、ユ"
+  },
+  {
+    character: "口",
+    romaji: "KOU / Kuchi",
+    meaning: "Mulut",
+    baseMeaning: "mulut atau pintu masuk.",
+    bushuu: "口",
+    kunyomi: "くち",
+    onyomi: "コウ、ク"
+  },
+  {
+    character: "済",
+    romaji: "SAI / SEI / Su",
+    meaning: "Menyelesaikan, Mengatur",
+    baseMeaning: "menyelesaikan, melunasi, atau menolong.",
+    bushuu: "氵",
+    kunyomi: "す・む、す・ます",
+    onyomi: "サイ、セイ"
+  },
+  {
+    character: "営",
+    romaji: "EI / Itona",
+    meaning: "Menjalankan, Mengusahakan",
+    baseMeaning: "mengelola atau menjalankan suatu usaha.",
+    bushuu: "口",
+    kunyomi: "いとな・む",
+    onyomi: "エイ"
+  },
+  {
+    character: "費",
+    romaji: "HI / Tsui",
+    meaning: "Biaya, Pengeluaran",
+    baseMeaning: "biaya atau pengeluaran yang dihabiskan.",
+    bushuu: "貝",
+    kunyomi: "つい・やす",
+    onyomi: "ヒ"
+  },
+  {
+    character: "理",
+    romaji: "RI",
+    meaning: "Mengatur, Menata",
+    baseMeaning: "mengatur, menata, atau prinsip logika.",
+    bushuu: "王",
+    kunyomi: "ことわり",
+    onyomi: "リ"
+  },
+  {
+    character: "常",
+    romaji: "JOU / Tsune",
+    meaning: "Selalu, Biasa",
+    baseMeaning: "berlangsung terus-menerus atau rutin seperti biasa.",
+    bushuu: "巾",
+    kunyomi: "つね、とこ",
+    onyomi: "ジョウ"
+  }
+];
+
+const CROSS_LINKS = [
+  { source: "経験", target: "経歴", predicate: "pengalaman & rekam jejak" },
+  { source: "経済", target: "経営", predicate: "perekonomian & pengelolaan" },
+  { source: "経過", target: "経由", predicate: "proses waktu & transit / jalur" },
+  { source: "経費", target: "経理", predicate: "biaya & akuntansi keuangan" },
+  { source: "経営", target: "経理", predicate: "manajemen usaha & akuntansi" },
+  { source: "経過", target: "経験", predicate: "proses berjalannya waktu & pengalaman" },
+  { source: "経由", target: "経口", predicate: "jalur perantara & jalur oral" },
+  { source: "経済", target: "経常", predicate: "ekonomi & kondisi rutin" }
+];
+
 async function run() {
   const char = "経";
-  const kanji = await prisma.kanji.findFirst({ where: { character: char } });
+  console.log(`Starting update for kanji ${char}...`);
+
+  // 1. Dapatkan atau verifikasi Kanji 経
+  const kanji = await prisma.kanji.findFirst({
+    where: { character: char },
+  });
+
   if (!kanji) {
-    console.error(`Kanji ${char} not found in DB`);
+    console.error(`Kanji ${char} not found in DB!`);
     return;
   }
 
-  const validWords = new Set<string>();
-  customGraphKei.categories.forEach(cat => {
-    cat.jukugos.forEach(jk => validWords.add(jk.word));
+  // Update atribut kanji 経 agar sesuai gambar referensi
+  await prisma.kanji.update({
+    where: { id: kanji.id },
+    data: {
+      meaning: "melalui, melewati, atau menjalani suatu proses",
+      baseMeaning: "melalui, melewati, atau menjalani suatu proses.",
+      romaji: "KEI",
+      bushuu: "糸",
+      onyomi: "ケイ",
+      kunyomi: "へ・る"
+    }
   });
+  console.log(`Updated root Kanji ${char} attributes.`);
 
-  // 1. Clean obsolete Jukugo records for 経
-  const existingJukugos = await prisma.jukugo.findMany({
+  // 2. Sinkronkan kanji-kanji penyusun tunggal
+  for (const cData of CONSTITUENT_KANJI_DATA) {
+    const existing = await prisma.kanji.findFirst({
+      where: { character: cData.character }
+    });
+    if (existing) {
+      await prisma.kanji.update({
+        where: { id: existing.id },
+        data: {
+          romaji: cData.romaji,
+          meaning: cData.meaning,
+          baseMeaning: cData.baseMeaning,
+          bushuu: cData.bushuu,
+          kunyomi: cData.kunyomi,
+          onyomi: cData.onyomi
+        }
+      });
+    } else {
+      await prisma.kanji.create({
+        data: {
+          character: cData.character,
+          romaji: cData.romaji,
+          meaning: cData.meaning,
+          baseMeaning: cData.baseMeaning,
+          bushuu: cData.bushuu,
+          kunyomi: cData.kunyomi,
+          onyomi: cData.onyomi,
+          moduleId: null
+        }
+      });
+    }
+  }
+  console.log(`Synchronized ${CONSTITUENT_KANJI_DATA.length} constituent kanji records.`);
+
+  // 3. Bersihkan KanjiGraphEdge lama (prefix liar & edge hirarki redundan)
+  await prisma.kanjiGraphEdge.deleteMany({
     where: { kanjiId: kanji.id }
   });
 
-  for (const j of existingJukugos) {
-    if (!validWords.has(j.word)) {
-      await prisma.kategoriKanji.deleteMany({ where: { jokugoId: j.id } });
-      await prisma.semanticRelation.deleteMany({ where: { jukugoId: j.id } });
-      await prisma.jukugo.delete({ where: { id: j.id } });
-      console.log(`Deleted obsolete jukugo for 経: ${j.word}`);
-    }
+  // 4. Masukkan cross-link bersih (source & target persis kata Jukugo)
+  for (let i = 0; i < CROSS_LINKS.length; i++) {
+    const link = CROSS_LINKS[i];
+    await prisma.kanjiGraphEdge.create({
+      data: {
+        id: `経-cross-${kanji.id}-${i + 1}-${link.source}-${link.target}`,
+        kanjiId: kanji.id,
+        source: link.source,
+        target: link.target,
+        predicate: link.predicate
+      }
+    });
+  }
+  console.log(`Inserted ${CROSS_LINKS.length} clean cross-link edges into KanjiGraphEdge.`);
+
+  // 5. Bersihkan relasi KategoriKanji lama untuk jukugo kanji 経
+  const existingJukugos = await prisma.jukugo.findMany({
+    where: { kanjiId: kanji.id }
+  });
+  const existingJukugoIds = existingJukugos.map(j => j.id);
+  if (existingJukugoIds.length > 0) {
+    await prisma.kategoriKanji.deleteMany({
+      where: { jokugoId: { in: existingJukugoIds } }
+    });
   }
 
-  // 2. Delete existing KanjiGraphEdge for 経
-  await prisma.kanjiGraphEdge.deleteMany({ where: { kanjiId: kanji.id } });
-
-  // 3. Re-create KanjiGraphEdge
-  const graphEdges: any[] = [];
-  customGraphKei.categories.forEach((cat, catIdx) => {
-    const catId = `${char}-cat-${catIdx + 1}`;
-    graphEdges.push({
-      id: `${char}-e-root-cat${catIdx + 1}`,
-      kanjiId: kanji.id,
-      source: `${char}-root`,
-      target: catId,
-      predicate: null
-    });
-
-    cat.jukugos.forEach((jk, jkIdx) => {
-      const subId = `${char}-sub-${catIdx + 1}-${jkIdx + 1}`;
-      graphEdges.push({
-        id: `${char}-e-cat${catIdx + 1}-sub${jkIdx + 1}`,
-        kanjiId: kanji.id,
-        source: catId,
-        target: subId,
-        predicate: null
-      });
-    });
-  });
-
-  await prisma.kanjiGraphEdge.createMany({ data: graphEdges });
-
-  // 4. Clear all old KategoriKanji mappings for this kanji's jukugos
-  const currentJukugos = await prisma.jukugo.findMany({ where: { kanjiId: kanji.id } });
-  const currentJukugoIds = currentJukugos.map(j => j.id);
-  await prisma.kategoriKanji.deleteMany({
-    where: { jokugoId: { in: currentJukugoIds } }
-  });
-
-  // 5. Update MasterCategory, Jukugo, KategoriKanji
+  // 6. Pastikan MasterCategory ada, Jukugo terupdate, dan KategoriKanji terisi
   const allWords: string[] = [];
-  const groups: Record<string, string[]>[] = [];
-
   for (const cat of customGraphKei.categories) {
-    let masterCat = await prisma.masterCategory.findFirst({
+    const masterCat = await prisma.masterCategory.upsert({
       where: { name: cat.title },
+      update: {
+        name: cat.title,
+        description: `Kategori ${cat.title} untuk kanji ${char}`
+      },
+      create: {
+        name: cat.title,
+        description: `Kategori ${cat.title} untuk kanji ${char}`
+      }
     });
-    if (!masterCat) {
-      masterCat = await prisma.masterCategory.create({
-        data: { name: cat.title },
-      });
-    }
-
-    const categoryWords: string[] = [];
 
     for (const jk of cat.jukugos) {
-      categoryWords.push(jk.word);
-      if (!allWords.includes(jk.word)) {
-        allWords.push(jk.word);
-      }
+      allWords.push(jk.word);
 
       let dbJukugo = await prisma.jukugo.findFirst({
-        where: { kanjiId: kanji.id, word: jk.word },
+        where: { kanjiId: kanji.id, word: jk.word }
       });
+
       if (!dbJukugo) {
         dbJukugo = await prisma.jukugo.create({
           data: {
             kanjiId: kanji.id,
             word: jk.word,
             reading: jk.reading,
-            meaning: jk.meaning,
-          },
+            meaning: jk.meaning
+          }
         });
       } else {
         await prisma.jukugo.update({
@@ -233,16 +364,27 @@ async function run() {
       await prisma.kategoriKanji.create({
         data: {
           jokugoId: dbJukugo.id,
-          categoryId: masterCat.id,
-        },
+          categoryId: masterCat.id
+        }
       });
     }
-
-    groups.push({ [cat.title]: categoryWords });
   }
+  console.log(`Populated KategoriKanji for all ${allWords.length} jukugos across ${customGraphKei.categories.length} categories.`);
 
-  // 6. Update SemanticRelation & SemanticRelationNode for kanji 経
-  await prisma.semanticRelation.deleteMany({ where: { kanjiId: kanji.id } });
+  // 7. Update SemanticRelation & SemanticRelationNode untuk kanji 経
+  const oldSRs = await prisma.semanticRelation.findMany({
+    where: { kanjiId: kanji.id },
+    select: { id: true }
+  });
+  const oldSRIds = oldSRs.map(sr => sr.id);
+  if (oldSRIds.length > 0) {
+    await prisma.semanticRelationNode.deleteMany({
+      where: { semanticId: { in: oldSRIds } }
+    });
+    await prisma.semanticRelation.deleteMany({
+      where: { id: { in: oldSRIds } }
+    });
+  }
 
   for (const semItem of KEI_SEMANTIC_DATA) {
     const targetWord = semItem.word;
@@ -254,7 +396,7 @@ async function run() {
       data: {
         kanjiId: kanji.id,
         jukugoId: matchedJukugo?.id || null,
-        penjelasan: semItem.penjelasan,
+        penjelasan: semItem.penjelasan
       }
     });
 
@@ -268,26 +410,41 @@ async function run() {
       });
     }
   }
+  console.log(`Updated ${KEI_SEMANTIC_DATA.length} SemanticRelation records and nodes.`);
 
-  // 7. Update Grouping Quiz for kanji 経
+  // 8. Update Grouping Quiz for kanji 経
   await prisma.quiz.deleteMany({
     where: { kanjiId: kanji.id, type: "grouping" }
   });
+
+  const formattedGroups = customGraphKei.categories.map(cat => ({
+    name: cat.title,
+    category: cat.title,
+    correctWords: cat.jukugos.map(j => j.word),
+    items: cat.jukugos.map(j => j.word),
+    [cat.title]: cat.jukugos.map(j => j.word)
+  }));
 
   await prisma.quiz.create({
     data: {
       kanjiId: kanji.id,
       type: "grouping",
-      question: "Kelompokkan jukugo berikut ini ke dalam cabang semantic graph yang tepat.",
+      question: "Kelompokkan jukugo berikut ke dalam kategori yang tepat!",
       words: JSON.stringify(allWords),
-      groups: JSON.stringify(groups),
+      groups: JSON.stringify(formattedGroups),
       explanation: `Pengelompokan jukugo berdasarkan cabang semantic graph kanji ${char}.`
     }
   });
+  console.log(`Updated grouping quiz for ${char}.`);
 
-  console.log(`Successfully updated graph, categories, semantic relations & grouping quiz for ${char}`);
+  console.log(`\n=== SUKSES MEMPERBARUI SEMANTIC DATA KANJI ${char} 100% ===`);
 }
 
 run()
-  .catch(e => console.error(e))
-  .finally(() => prisma.$disconnect());
+  .catch(e => {
+    console.error("Error updating kanji Kei:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

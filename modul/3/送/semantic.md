@@ -1,5 +1,5 @@
-bentuk semantic /Users/adamf/Documents/design_web/EduNihongoAlt/modul/3/送/Tangkapan Layar 2026-09-14 pukul 19.12.31.png
-ada 24 node
+bentuk semantic /Users/adamf/Documents/design_web/EduNihongoAlt/modul/3/送/Tangkapan Layar 2026-09-21 pukul 11.20.58.png
+ada 22 node
 
 e. Analisis  Hubungan Makna 
 Kanji 送 mempunyai makna dasar “mengirim, menyampaikan, mengantarkan, dan mengirimkan ke suatu tempat atau kepada seseorang .” Hubungan makna dari kanji 送 tersebut terbagi menjadi beberapa kelompok makna, seperti pada jukugo kanji berikut ini:
@@ -72,11 +72,6 @@ Penjelasan:
 転：berpindah, mengalihkan
 送：mengirim, meneruskan
 Hubungan makna antar kanji 転 dan 送 menjadi 転送, menunjukkan bahwa gabungan kedua kanji tersebut membentuk “meneruskan atau mengalihkan kiriman ke tujuan lain.”
-押送（おうそう）mengawal 
-Penjelasan:
-押：mengawal, membawa secara paksa
-送：mengantar, membawa
-Hubungan makna antar kanji 押 dan 送 menjadi 押送,  menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mengawal atau mengantar seseorang dengan kendaraan resmi.”
 3) Penyerahan / Pengiriman kepada Pihak Berwenang
 Kelompok ini berkaitan dengan pengiriman atau pengantarn seseorang atau berkas kepada pihak yang berwenang. Seperti terdapat pada jukugo berikut ini:
 送検（そうけん）mengirim tersangka
@@ -84,23 +79,23 @@ Kelompok ini berkaitan dengan pengiriman atau pengantarn seseorang atau berkas k
 送：mengirim, menyerahkan
 検：pemeriksaan, penyelidikan
 Hubungan makna antar kanji 送 dan 検 menjadi 送検, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna  “mengirim tersangka atau berkas perkara ke jaksa untuk dituntut.”
-送信（そうしん）menyerahkan 
+送致（そうち）menyerahkan/mengirim ke pihak berwenang
 Penjelasan:
-送：mengirim, menyampaikan
-信：pesan, informasi; kepercayaan
-Hubungan makna antar kanji 送 dan 信 menjadi 送信, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna  “mengirim pesan atau mengirimkan data/informasi.”
+送：mengirim, menyerahkan
+致：menyampaikan atau membawa sampai kepada tujuan
+Hubungan makna antar kanji 送 dan 致 menjadi 送致 menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mengirim atau menyerahkan seseorang maupun berkas perkara kepada pihak yang berwenang untuk diproses lebih lanjut.”
 護送（ごそう）mengawal 
 Penjelasan:
 護：melindungi, mengawal
 送：mengantar, membawa
 Hubungan makna antar kanji 護 dan 送 menjadi 護送, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mengawal atau mengantar terdakwa, tahanan, dan sebagainya.”
-押送（おうそう）mengawal 
+4)Pengiriman/Pengantaran orang
+Kelompok ini berkaitan dengan kegiatan mengantar atau melepas seseorang yang pergi, termasuk ungkapan atau kegiatan yang menyertai perpisahan. Seperti terdapat pada jukugo berikut ini:
+押送（おうそう）mengawal / mengantarkan orang dengan kendaraan secara resmi
 Penjelasan:
 押：mengawal, membawa secara paksa
 送：mengantar, membawa
 Hubungan makna antar kanji 押 dan 送 menjadi 押送, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mengawal atau mengantar seseorang dengan kendaraan resmi.”
-4)Mengirim / Melepas Orang yang Pergi
-Kelompok ini berkaitan dengan kegiatan mengantar atau melepas seseorang yang pergi, termasuk ungkapan atau kegiatan yang menyertai perpisahan. Seperti terdapat pada jukugi berikut ini:
 送別（そうべつ）perpisahan 
 Penjelasan:
 送：mengantar, melepas
@@ -116,11 +111,6 @@ Penjelasan:
 送：mengantar, melepas
 辞：kata-kata, ucapan
 Hubungan makna antar kanji 送 dan 辞 menjadi 送辞,  menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pidato perpisahan atau ucapan saat mengantar pergi.”
-押送（おうそう）mengantar 
-Penjelasan:
-押：mengawal, membawa secara paksa
-送：mengantar, membawa
-Hubungan makna antar kanji 押 dan 送 menjadi 押送,  menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mengawal atau mengantar seseorang dengan kendaraan resmi.”
 5) Pengiriman melalui Jalur Khusus
 Kelompok ini berkaitan dengan pengiriman berdasarkan jalur atau media tertentu. Seperti terdapat pada jukugo berikut ini:
 陸送（りくそう）pengiriman melalui jalur darat
@@ -128,8 +118,8 @@ Penjelasan:
 陸：darat
 送：mengirim, mengangkut
 Hubungan makna antar kanji 陸 dan 送 menjadi 陸送, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pengiriman melalui jalur darat.”
-電送（でんそう）pengiriman melalui jalur listrik / transmisi elektronik
+送電（そうでん）pengiriman melalui jalur listrik / transmisi elektronik
 Penjelasan:
-電：listrik, elektronik
-送：mengirim, mentransmisikan
-Hubungan makna antar kanji 電 dan 送 menjadi 電送“, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna pengiriman melalui media elektronik atau transmisi elektronik.”
+送：mengirim, menyalurkan
+電：listrik atau tenaga listrik
+Hubungan makna antar　kanji 送 dan 電 menjadi 送電,  menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna" kegiatan mengirim atau menyalurkan tenaga listrik dari pembangkit maupun gardu listrik menuju tempat penggunaan melalui jaringan listrik".

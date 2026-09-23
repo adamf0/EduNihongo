@@ -923,21 +923,20 @@ const MODUL_3_DATA: KanjiData[] = [
         question:
           "Susunlah  kata-kata berikut berikut menjadi kalimat yang tepat.",
         words: JSON.stringify([
-          "苦情",
-          "部屋",
-          "が",
-          "んです",
-          "に",
+          "方がいいですよ",
+          "ニュースの報道を",
+          "見た",
+          "よく",
         ]),
         correctOrder: JSON.stringify([
-          "部屋",
-          "に",
-          "苦情",
-          "が",
-          "んです",
+          "ニュースの報道を",
+          "よく",
+          "見た",
+          "方がいいですよ",
         ]),
         correctAnswer: "0",
-        explanation: "Jawaban: 部屋に苦情があるんです。",
+        explanation:
+          "Jawaban: ニュースの報道を よく 見た 方がいいですよ",
       },
       // c) Multiple Choice (Model C)
       {
