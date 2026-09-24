@@ -395,6 +395,9 @@ export const LatihanPage: React.FC = () => {
     const [activeRecordingIdx, setActiveRecordingIdx] = useState<number | null>(
         null,
     );
+    const [activePlayingAudioKey, setActivePlayingAudioKey] = useState<string | null>(
+        null,
+    );
     const [speechResults, setSpeechResults] = useState<
         Record<
             number,
@@ -2195,8 +2198,16 @@ export const LatihanPage: React.FC = () => {
         handleNextQuizQuestion(quizQuestions);
     };
 
-    const playAudio = (text: string) => {
-        tts.speak(text);
+    const playAudio = (text: string, romaji?: string) => {
+        if (activePlayingAudioKey === text) {
+            tts.stop();
+            setActivePlayingAudioKey(null);
+            return;
+        }
+        setActivePlayingAudioKey(text);
+        tts.speak(text, romaji, () => {
+            setActivePlayingAudioKey((prev) => (prev === text ? null : prev));
+        });
     };
 
     const handleNextQuizQuestion = (
@@ -4153,12 +4164,18 @@ export const LatihanPage: React.FC = () => {
                                     10,
                                 )}
                             </h2>
-                            <p className="text-sm text-slate-500 font-medium">
-                                Membaca nyaring contoh kalimat di bawah ini
-                                membantu menguasai konteks penggunaan Kanji
-                                serta memperkuat ingatan semantik Anda. Gunakan
-                                pemutaran suara untuk mencocokkan pelafalan.
-                            </p>
+                            <div className="flex flex-wrap items-center justify-between gap-3 mt-2">
+                                <p className="text-sm text-slate-500 font-medium flex-1 min-w-[280px]">
+                                    Membaca nyaring contoh kalimat di bawah ini
+                                    membantu menguasai konteks penggunaan Kanji
+                                    serta memperkuat ingatan semantik Anda. Gunakan
+                                    pemutaran suara untuk mencocokkan pelafalan.
+                                </p>
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-[#8f0020] border border-rose-200/70 rounded-full text-xs font-bold tracking-wide shrink-0 shadow-2xs">
+                                    <span className="w-2 h-2 rounded-full bg-[#8f0020] animate-pulse"></span>
+                                    Suara Native AI (Transformers.js)
+                                </span>
+                            </div>
                         </div>
 
                         {/* Reading list sentences */}
@@ -4336,12 +4353,32 @@ export const LatihanPage: React.FC = () => {
                                         <div className="flex flex-row sm:flex-col gap-2 items-center self-end sm:self-center shrink-0">
                                             <button
                                                 onClick={() =>
-                                                    playAudio(item.japanese)
+                                                    playAudio(
+                                                        item.japanese,
+                                                        item.romaji,
+                                                    )
                                                 }
-                                                className="w-10 h-10 rounded-full bg-white border border-slate-100 hover:bg-[#8f0020] hover:text-white text-slate-500 flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
-                                                title="Dengarkan Suara Pelafalan"
+                                                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 ${
+                                                    activePlayingAudioKey ===
+                                                    item.japanese
+                                                        ? "bg-[#8f0020] text-white border-[#8f0020] ring-4 ring-[#8f0020]/20 animate-pulse shadow-md"
+                                                        : "bg-white border-slate-100 hover:bg-[#8f0020] hover:text-white text-slate-500"
+                                                }`}
+                                                title={
+                                                    activePlayingAudioKey ===
+                                                    item.japanese
+                                                        ? "Hentikan Suara"
+                                                        : "Dengarkan Suara Pelafalan (Native AI)"
+                                                }
                                             >
-                                                <Volume2 className="w-4.5 h-4.5" />
+                                                <Volume2
+                                                    className={`w-4.5 h-4.5 ${
+                                                        activePlayingAudioKey ===
+                                                        item.japanese
+                                                            ? "animate-bounce"
+                                                            : ""
+                                                    }`}
+                                                />
                                             </button>
 
                                             {activeRecordingIdx === idx ? (
