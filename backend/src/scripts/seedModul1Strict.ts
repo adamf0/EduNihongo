@@ -633,7 +633,7 @@ async function main() {
     {
       id: 3213,
       character: "験",
-      romaji: "ken",
+      romaji: "Ken",
       meaning: "Mengalami, membuktikan, memverifikasi melalui pengujian",
       baseMeaning: "pengalaman, pengujian, atau verifikasi.",
       categories: [
@@ -988,14 +988,14 @@ async function main() {
     {
       id: 3214,
       character: "問",
-      romaji: "mon",
+      romaji: "もん / と(う)",
       meaning:
         "bertanya, menanyakan, mempertanyakan, mempermasalahkan, mengunjungi (menengok)",
       baseMeaning:
         "bertanya, menanyakan, mempertanyakan, atau mempermasalahkan sesuatu; dalam makna perluasannya juga dapat menunjukkan tindakan mengunjungi atau menengok.",
       categories: [
         {
-          name: "1. Bertanya / Mengajukan Pertanyaan",
+          name: "1. BERTANYA / MENGAJUKAN PERTANYAAN",
           jukugos: [
             {
               word: "質問",
@@ -1050,7 +1050,7 @@ async function main() {
           ],
         },
         {
-          name: "2. Tanya Jawab",
+          name: "2. TANYA JAWAB",
           jukugos: [
             {
               word: "問答",
@@ -1066,7 +1066,7 @@ async function main() {
           ],
         },
         {
-          name: "3. Soal / Pertanyaan",
+          name: "3. SOAL / PERTANYAAN",
           jukugos: [
             {
               word: "問題",
@@ -1115,7 +1115,7 @@ async function main() {
           ],
         },
         {
-          name: "4. Pemeriksaan dengan Pertanyaan",
+          name: "4. PEMERIKSAAN DENGAN PERTANYAAN",
           jukugos: [
             {
               word: "問診",
@@ -1145,7 +1145,7 @@ async function main() {
           ],
         },
         {
-          name: "5. Mempertanyakan / Meminta Pertanggungjawaban",
+          name: "5. MEMPERTANYAKAN / MEMINTA PERTANGGUNGJAWABAN",
           jukugos: [
             {
               word: "問責",
@@ -1181,7 +1181,7 @@ async function main() {
           ],
         },
         {
-          name: "6. Mengunjungi (Makna Perluasan)",
+          name: "6. MENGUNJUNGI (MAKNA PERLUASAN)",
           jukugos: [
             {
               word: "訪問",

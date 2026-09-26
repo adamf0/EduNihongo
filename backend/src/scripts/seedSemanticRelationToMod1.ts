@@ -3,119 +3,141 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const TO_MOD1_SEMANTIC_DATA = [
-  // 1) Pertanyaan dan ujian
-  {
-    kanji: "問題",
-    arti: "soal/masalah",
-    penjelasan: 'Hubungan makna antar kanji 問 dan 題 menjadi 問題, menunjukan bahwa gabungan kedua kanji itu mengandung makna "sebagai persoalan yang harus diselesaikan".',
-    nodes: [
-      { jokugo: "問", arti: "bertanya" },
-      { jokugo: "題", arti: "persoalan" }
-    ]
-  },
+  // 1) 1. BERTANYA / MENGAJUKAN PERTANYAAN
   {
     kanji: "質問",
     arti: "pertanyaan",
-    penjelasan: 'Hubungan makna antar kanji 質dan 問 menjadi 質問, menunjukan bahwa gabungan kedua kanji itu mengandung "pertanyaan yang dikemukakan agar memperoleh suatu informasi"',
+    penjelasan: "Hubungan makna antar kanji 質 dan 問 menjadi 質問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pertanyaan yang diajukan untuk memperoleh informasi atau penjelasan mengenai sesuatu.”",
     nodes: [
-      { jokugo: "質", arti: "kualitas/inti" },
-      { jokugo: "問", arti: "bertanya" }
+      { jokugo: "質", arti: "menanyakan, mencari kepastian" },
+      { jokugo: "問", arti: "bertanya, menanyakan" }
     ]
   },
+  {
+    kanji: "自問",
+    arti: "bertanya pada diri sendiri",
+    penjelasan: "Hubungan makna antar kanji 自 dan 問 menjadi 自問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “bertanya atau mempertanyakan sesuatu kepada diri sendiri.”",
+    nodes: [
+      { jokugo: "自", arti: "diri sendiri" },
+      { jokugo: "問", arti: "bertanya, menanyakan" }
+    ]
+  },
+  {
+    kanji: "発問",
+    arti: "mengajukan pertanyaan",
+    penjelasan: "Hubungan makna antar kanji 発 dan 問 menjadi 発問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mengemukakan atau mengajukan suatu pertanyaan kepada orang lain.”",
+    nodes: [
+      { jokugo: "発", arti: "mengeluarkan, mengemukakan" },
+      { jokugo: "問", arti: "bertanya, pertanyaan" }
+    ]
+  },
+  {
+    kanji: "反問",
+    arti: "pertanyaan balik",
+    penjelasan: "Hubungan makna antar kanji 反 dan 問 menjadi 反問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mengajukan pertanyaan kembali sebagai tanggapan terhadap pertanyaan yang diterima.”",
+    nodes: [
+      { jokugo: "反", arti: "berbalik, kembali" },
+      { jokugo: "問", arti: "bertanya, pertanyaan" }
+    ]
+  },
+
+  // 2) 2. TANYA JAWAB
   {
     kanji: "問答",
     arti: "tanya jawab",
-    penjelasan: 'Hubungan makna antar kanji 問dan 答 ketika digabungkan menjadi 問答, menunjukan bahwa gabungan kedua kanji itu mengandung makna " suatu kegiatan saling bertanya jawab antara pembicara dan lawan bicara".',
+    penjelasan: "Hubungan makna antar kanji 問 dan 答 menjadi 問答, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “kegiatan saling bertanya dan menjawab mengenai suatu hal.”",
     nodes: [
-      { jokugo: "問", arti: "bertanya" },
-      { jokugo: "答", arti: "menjawab" }
+      { jokugo: "問", arti: "bertanya, pertanyaan" },
+      { jokugo: "答", arti: "menjawab, jawaban" }
     ]
   },
 
-  // 2) Investigasi dan Penyelidikan
+  // 3) 3. SOAL / PERTANYAAN
   {
-    kanji: "問診",
-    arti: "wawasan medis",
-    penjelasan: 'Hubungan makna antar kanji 問 dan 診 ketika digabung menjadi 問診, menunjukan bahwa gabungan kanji tersebut mengandung makna "pemerikasaan pasein melalaui serangkaian pertanyaan".',
+    kanji: "問題",
+    arti: "masalah",
+    penjelasan: "Hubungan makna antar kanji 問 dan 題 menjadi 問題, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “suatu hal yang menjadi persoalan atau masalah yang perlu dipikirkan dan diselesaikan.”",
     nodes: [
-      { jokugo: "問", arti: "bertanya" },
-      { jokugo: "診", arti: "memeriksa" }
+      { jokugo: "問", arti: "pertanyaan, masalah" },
+      { jokugo: "題", arti: "topik, pokok persoalan" }
     ]
   },
-  {
-    kanji: "尋問",
-    arti: "introgasi",
-    penjelasan: 'Hubungan makna antar kanji 尋 dan問 ketika digabung menjadi 尋問, menunjukan bahwa gabungan kanji tersebut mengandung makna "proses pengajuan pertanyaan secara mendalam untuk memperoleh suatu keterangan informasi".',
-    nodes: [
-      { jokugo: "尋", arti: "menyelidiki" },
-      { jokugo: "問", arti: "bertanya" }
-    ]
-  },
-  {
-    kanji: "訪問調査",
-    arti: "survei lapangan",
-    penjelasan: 'Hubungan makna antar kanji 訪問 dan 調査, ketika digabung menjadi dua kosakata yaitu 訪問調査, menunjukan bahwa gabungan kedua kosakata kanji tersebut mengandung makna "pengumpulan data yang dilakukan melalui kunjungan langsung".',
-    nodes: [
-      { jokugo: "訪問", arti: "mengunjungi" },
-      { jokugo: "調査", arti: "penyelidikan" }
-    ]
-  },
-
-  // 3) Permasalahan sosial
-  {
-    kanji: "問題点",
-    arti: "titik masalah",
-    penjelasan: 'Hubungan makna antar kanji 問題 dan点, ketika digabungkan menjadi 問題点, menunjukan bahwa gabungan kedua kanji tersebut mengandung makna "bagian yang menjadi fokus masalah."',
-    nodes: [
-      { jokugo: "問題", arti: "masalah" },
-      { jokugo: "点", arti: "titik atau poin" }
-    ]
-  },
-  {
-    kanji: "社会問題",
-    arti: "masalah sosial",
-    penjelasan: 'Hubungan makna antar kanji 社会 dan 問題, ketika digabungkan menjadi 社会問題, menunjukan bahwa gabungan dua kosakata kanji tersebut, mengandung makna "masalah yang dihadapi dalam kehidupan masyarat".',
-    nodes: [
-      { jokugo: "社会", arti: "masyarakat" },
-      { jokugo: "問題", arti: "masalah" }
-    ]
-  },
-  {
-    kanji: "環境問題",
-    arti: "masalah lingkungan",
-    penjelasan: 'Hubungan makna antar kanji 環境 dan 問題 , ketika digabungkan menjadi 環境問題, menunjukan bahwa gabungan kanji tersebut mengandung makna "suatu persoalan yang berhubungan dengan lingkungan hidup".',
-    nodes: [
-      { jokugo: "環境", arti: "lingkungan" },
-      { jokugo: "問題", arti: "masalah" }
-    ]
-  },
-
-  // 4) Pendidikan dan Evaluasi
   {
     kanji: "設問",
-    arti: "butir pertanyaan",
-    penjelasan: 'Hubungan makna antar kanji 設 dan 問, ketika digabungan menjadi 設問, menunjukan bahwa gabungan kanji tersebut mengandung makna "pertanyaan yang disusun dalam test atau angket".',
+    arti: "pertanyaan",
+    penjelasan: "Hubungan makna antar kanji 設 dan 問 menjadi 設問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pertanyaan atau soal yang disusun dan diberikan untuk dijawab.”",
     nodes: [
-      { jokugo: "設", arti: "menyusun" },
-      { jokugo: "問", arti: "pertanyaan" }
+      { jokugo: "設", arti: "menyusun, menetapkan" },
+      { jokugo: "問", arti: "pertanyaan, soal" }
     ]
   },
   {
-    kanji: "問題集",
-    arti: "kumpulan soal",
-    penjelasan: 'Hubungan makna antar kanji 問題 dan集, ketika digabungkan menjadi 問題集, menunjukan bahwa gabungan kanji tersebut mengandung makna "buku yang berisi kumpulan berbagai latihan soal".',
+    kanji: "試問",
+    arti: "ujian lisan",
+    penjelasan: "Hubungan makna antar kanji 試 dan 問 menjadi 試問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pengujian yang dilakukan dengan memberikan pertanyaan kepada seseorang”, sehingga mengandung makna ujian lisan.",
     nodes: [
-      { jokugo: "問題", arti: "soal" },
-      { jokugo: "集", arti: "kumpulan" }
+      { jokugo: "試", arti: "mencoba, menguji" },
+      { jokugo: "問", arti: "bertanya, pertanyaan" }
     ]
   },
   {
-    kanji: "問一",
-    arti: "soal nomor satu",
-    penjelasan: 'Hubungan makna antar kanji 問 dan一, ketika digabung menjadi 問一、menunjukan bahwa gabungan kanji tersebut mengandung makna nomor "pertama dalam suatu latihan atau ujian".',
+    kanji: "難問",
+    arti: "pertanyaan sulit",
+    penjelasan: "Hubungan makna antar kanji 難 dan 問 menjadi 難問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pertanyaan atau soal yang sulit untuk dijawab atau diselesaikan.”",
     nodes: [
-      { jokugo: "問", arti: "soal" },
-      { jokugo: "一", arti: "satu" }
+      { jokugo: "難", arti: "sulit, kesulitan" },
+      { jokugo: "問", arti: "pertanyaan, soal" }
+    ]
+  },
+
+  // 4) 4. PEMERIKSAAN DENGAN PERTANYAAN
+  {
+    kanji: "問診",
+    arti: "wawancara medis",
+    penjelasan: "Hubungan makna antar kanji 問 dan 診 menjadi 問診, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “menanyakan kondisi atau gejala seseorang untuk keperluan pemeriksaan dan diagnosis medis.”",
+    nodes: [
+      { jokugo: "問", arti: "bertanya, menanyakan" },
+      { jokugo: "診", arti: "memeriksa, mendiagnosis" }
+    ]
+  },
+  {
+    kanji: "検問",
+    arti: "pemeriksaan",
+    penjelasan: "Hubungan makna antar kanji 検 dan 問 menjadi 検問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “melakukan pemeriksaan atau pengecekan terhadap seseorang atau sesuatu, termasuk dengan menanyakan keterangan.”",
+    nodes: [
+      { jokugo: "検", arti: "memeriksa, mengecek" },
+      { jokugo: "問", arti: "bertanya, menanyakan" }
+    ]
+  },
+
+  // 5) 5. MEMPERTANYAKAN / MEMINTA PERTANGGUNGJAWABAN
+  {
+    kanji: "問責",
+    arti: "meminta pertanggungjawaban",
+    penjelasan: "Hubungan makna antar kanji 問 dan 責 menjadi 問責, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “mempertanyakan dan meminta seseorang bertanggung jawab atas suatu tindakan atau keadaan.”",
+    nodes: [
+      { jokugo: "問", arti: "mempertanyakan, meminta penjelasan" },
+      { jokugo: "責", arti: "tanggung jawab, kewajiban" }
+    ]
+  },
+  {
+    kanji: "不問",
+    arti: "tidak dipermasalahkan",
+    penjelasan: "Hubungan makna antar kanji 不 dan 問 menjadi 不問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “tidak mempertanyakan atau tidak mempermasalahkan suatu hal.”",
+    nodes: [
+      { jokugo: "不", arti: "tidak" },
+      { jokugo: "問", arti: "mempertanyakan, mempermasalahkan" }
+    ]
+  },
+
+  // 6) 6. MENGUNJUNGI (MAKNA PERLUASAN)
+  {
+    kanji: "訪問",
+    arti: "kunjungan",
+    penjelasan: "Hubungan makna antar kanji 訪 dan 問 menjadi 訪問, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “tindakan mendatangi atau mengunjungi seseorang maupun suatu tempat.”",
+    nodes: [
+      { jokugo: "訪", arti: "mengunjungi, mendatangi" },
+      { jokugo: "問", arti: "mengunjungi, menengok" }
     ]
   }
 ];

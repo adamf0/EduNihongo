@@ -805,8 +805,9 @@ async function main() {
     {
       id: 3221,
       character: "調",
-      romaji: "chou",
-      meaning: "Mengatur, Menyesuaikan, Memeriksa, Menyelidiki",
+      romaji: "Chō / Shiraberu",
+      meaning:
+        "Mengatur, menyesuaikan, memeriksa, menyelidiki sehingga sesuatu menjadi sesuai atau seimbang.",
       baseMeaning:
         "mengatur, menyesuaikan, memeriksa, atau menyelidiki sehingga sesuatu menjadi sesuai atau seimbang.",
       categories: [

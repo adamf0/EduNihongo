@@ -29,3 +29,4 @@ backend/.env
 requirement
 backend/scripts
 .agents
+backend/uploads/tts_cache

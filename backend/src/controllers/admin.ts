@@ -787,18 +787,42 @@ export const updateKanji = async (req: Request, res: Response) => {
       }
     }
 
-    // Update Jukugos if provided
-    if (jukugos !== undefined) {
-      await prisma.jukugo.deleteMany({ where: { kanjiId } });
-      if (Array.isArray(jukugos) && jukugos.length > 0) {
-        await prisma.jukugo.createMany({
-          data: jukugos.map((j: any) => ({
-            kanjiId,
-            word: j.word || "",
-            reading: j.reading || "",
-            meaning: j.meaning || "",
-          })),
-        });
+    // Update Jukugos safely if provided (in-place update to preserve KategoriKanji and relations)
+    if (jukugos !== undefined && Array.isArray(jukugos)) {
+      const existingJukugos = await prisma.jukugo.findMany({
+        where: { kanjiId },
+        include: { kategoriKanji: true }
+      });
+
+      for (const j of jukugos) {
+        const cleanWord = (j.word || "").trim();
+        if (!cleanWord) continue;
+
+        const matched = existingJukugos.find(
+          (ej) => (j.id && ej.id === Number(j.id)) || (j.jukugoId && ej.id === Number(j.jukugoId)) || ej.word === cleanWord
+        );
+
+        if (matched) {
+          // Update basic fields in-place to preserve ID and all KategoriKanji associations!
+          await prisma.jukugo.update({
+            where: { id: matched.id },
+            data: {
+              word: cleanWord,
+              reading: j.reading !== undefined ? (j.reading || "").trim() : matched.reading,
+              meaning: j.meaning !== undefined ? (j.meaning || "").trim() : matched.meaning,
+            }
+          });
+        } else {
+          // Create new Jukugo if it doesn't already exist
+          await prisma.jukugo.create({
+            data: {
+              kanjiId,
+              word: cleanWord,
+              reading: (j.reading || "").trim(),
+              meaning: (j.meaning || "").trim(),
+            }
+          });
+        }
       }
     }
 
@@ -888,28 +912,39 @@ export const updateKanji = async (req: Request, res: Response) => {
       }
     }
 
-    // Update Graph Edges if provided
-    if (graphEdges !== undefined) {
-      const edgeIds = Array.isArray(graphEdges) ? graphEdges.map((e: any) => e.id).filter(Boolean) : [];
-      await prisma.kanjiGraphEdge.deleteMany({
-        where: {
-          OR: [
-            { kanjiId },
-            ...(edgeIds.length > 0 ? [{ id: { in: edgeIds } }] : []),
-          ],
-        },
+    // Update Graph Edges if provided: only save genuine cross-links, NEVER overwrite with dynamic hierarchy edges
+    if (graphEdges !== undefined && Array.isArray(graphEdges)) {
+      const crossLinksOnly = graphEdges.filter((e: any) => {
+        if (!e || !e.source || !e.target) return false;
+        const pred = (e.predicate || e.label || "").trim();
+        if (pred === "kategori" || pred === "mencakup" || pred === "penyusun") return false;
+        if (typeof e.id === "string" && (e.id.startsWith("e-") || e.id.includes("-root-") || (e.id.includes("-c") && e.id.includes("-s")))) return false;
+        if (typeof e.source === "string" && (e.source.includes("-root") || e.source.includes("-cat-"))) return false;
+        if (typeof e.target === "string" && (e.target.includes("-cat-") || e.target.includes("-sub-"))) return false;
+        return true;
       });
 
-      if (Array.isArray(graphEdges) && graphEdges.length > 0) {
-        await prisma.kanjiGraphEdge.createMany({
-          data: graphEdges.map((e: any) => ({
-            id: e.id,
-            kanjiId,
-            source: e.source || "",
-            target: e.target || "",
-            predicate: e.predicate || e.label || null,
-          })),
-        });
+      if (crossLinksOnly.length > 0) {
+        for (const cle of crossLinksOnly) {
+          const cleanSource = (cle.source || "").trim();
+          const cleanTarget = (cle.target || "").trim();
+          const edgeId = cle.id || `cross-${kanjiId}-${cleanSource}-${cleanTarget}`;
+          await prisma.kanjiGraphEdge.upsert({
+            where: { id: edgeId },
+            update: {
+              source: cleanSource,
+              target: cleanTarget,
+              predicate: cle.predicate || cle.label || null,
+            },
+            create: {
+              id: edgeId,
+              kanjiId,
+              source: cleanSource,
+              target: cleanTarget,
+              predicate: cle.predicate || cle.label || null,
+            }
+          });
+        }
       }
     }
 

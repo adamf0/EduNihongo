@@ -11,6 +11,7 @@ import progressRoutes from "./routes/progress";
 import profileRoutes from "./routes/profile";
 import adminRoutes from "./routes/admin";
 import lmsRoutes from "./routes/lms";
+import ttsRoutes from "./routes/tts";
 import { startQueueWorker } from "./utils/mailer";
 
 import { createYoga, createSchema } from "graphql-yoga";
@@ -91,6 +92,7 @@ app.use("/api/progress", progressRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/lms", lmsRoutes);
+app.use("/api/tts", ttsRoutes);
 
 // Serve Swagger Documentation
 app.get("/docs", (req, res) => {

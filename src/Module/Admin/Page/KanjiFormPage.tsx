@@ -741,41 +741,27 @@ export const KanjiFormPage: React.FC = () => {
       return;
     }
 
-    const formattedNodes = nodes.map((n) => {
-      const formattedId = n.id.startsWith(kanjiChar)
-        ? n.id
-        : `${kanjiChar}-${n.id}`;
-      return {
-        ...n,
-        id: formattedId,
-        parentPill:
-          n.parentPill && !n.parentPill.startsWith(kanjiChar)
-            ? `${kanjiChar}-${n.parentPill}`
-            : n.parentPill,
-      };
-    });
-
-    const formattedEdges = edges.map((eg) => ({
-      ...eg,
-      id: eg.id.startsWith(kanjiChar) ? eg.id : `${kanjiChar}-${eg.id}`,
-      source: eg.source.startsWith(kanjiChar)
-        ? eg.source
-        : `${kanjiChar}-${eg.source}`,
-      target: eg.target.startsWith(kanjiChar)
-        ? eg.target
-        : `${kanjiChar}-${eg.target}`,
-    }));
-
     const cleanExamples = examples
-      .filter((ex) => ex.japanese.trim() !== "")
+      .filter((ex) => ex.japanese && ex.japanese.trim() !== "")
       .map((ex) => ({
         japanese: ex.japanese,
-        romaji: ex.romaji,
-        translation: ex.translation,
+        romaji: ex.romaji || "",
+        translation: ex.translation || "",
         isReading: false,
       }));
 
-    const payload = {
+    const cleanSemanticRelations = semanticRelations
+      .filter((sr) => (sr.kanji && sr.kanji.trim() !== "") || (sr.penjelasan && sr.penjelasan.trim() !== ""))
+      .map((sr) => ({
+        jukugoId: sr.jukugoId || null,
+        kanji: sr.kanji,
+        arti: sr.arti || null,
+        penjelasan: sr.penjelasan || null,
+        nodes: (sr.nodes || []).filter((n) => n.jokugo && n.jokugo.trim() !== ""),
+      }));
+
+    // Base payload for Kanji data managed on this form
+    const payload: any = {
       character: kanjiChar,
       romaji: kanjiRomaji,
       meaning: kanjiMeaning,
@@ -783,29 +769,12 @@ export const KanjiFormPage: React.FC = () => {
       onyomi: kanjiOnyomi,
       kunyomi: kanjiKunyomi,
       baseMeaning: kanjiBaseMeaning,
-
-      isJukugo: kanjiChar.length > 1, // Automatically set based on character length
+      isJukugo: kanjiChar.length > 1,
       border: kanjiBorder || null,
       moduleId,
       examples: cleanExamples,
-      jukugos: jukugos
-        .filter((j) => j.word.trim() !== "")
-        .map((j) => ({
-          word: j.word,
-          reading: j.reading,
-          meaning: j.meaning,
-        })),
-      semanticRelations: semanticRelations
-        .filter((sr) => sr.kanji.trim() !== "" || sr.penjelasan.trim() !== "")
-        .map((sr) => ({
-          kanji: sr.kanji,
-          arti: sr.arti || null,
-          penjelasan: sr.penjelasan || null,
-          nodes: (sr.nodes || []).filter((n) => n.jokugo && n.jokugo.trim() !== ""),
-        })),
-      etymologies: etymologies.filter((et) => et.character.trim() !== ""),
-      graphNodes: formattedNodes,
-      graphEdges: formattedEdges,
+      semanticRelations: cleanSemanticRelations,
+      etymologies: etymologies.filter((et) => et.character && et.character.trim() !== ""),
       quizzes: quizQuestions.filter((q) => q.question && q.question.trim() !== ""),
       quizData:
         quizQuestions.length > 0
@@ -813,15 +782,37 @@ export const KanjiFormPage: React.FC = () => {
               quizQuestions.filter((q) => q.question && q.question.trim() !== ""),
             )
           : null,
-      masterRefleksi: reflectionQuestions.filter((r) => r.trim() !== ""),
+      masterRefleksi: reflectionQuestions.filter((r) => r && r.trim() !== ""),
     };
+
+    // When creating a brand-new Kanji, initialize empty placeholders only if provided
+    if (!kanjiId) {
+      const cleanJukugos = jukugos
+        .filter((j) => j.word && j.word.trim() !== "")
+        .map((j) => ({
+          word: j.word,
+          reading: j.reading,
+          meaning: j.meaning,
+        }));
+      if (cleanJukugos.length > 0) {
+        payload.jukugos = cleanJukugos;
+      }
+    }
+    // Note: In edit mode (kanjiId), jukugos, graphNodes, and graphEdges are deliberately NOT sent
+    // to preserve all existing KategoriKanji groupings and clean cross-link edges!
 
     try {
       setSubmitting(true);
       setActionError("");
       setActionSuccess("");
       if (kanjiId) {
-        await api.admin.kanjis.update(kanjiId, payload);
+        const updated = await api.admin.kanjis.update(kanjiId, payload);
+        if (updated?.graphNodes) {
+          setNodes(updated.graphNodes);
+        }
+        if (updated?.graphEdges) {
+          setEdges(updated.graphEdges);
+        }
         setActionSuccess(`Berhasil memperbarui data Kanji "${kanjiChar}"!`);
         setTimeout(() => {
           setActionSuccess("");

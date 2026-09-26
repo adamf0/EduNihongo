@@ -1905,7 +1905,7 @@ async function main() {
         "問": {
           categories: [
             {
-              title: "BERTANYA / MENGAJUKAN PERTANYAAN",
+              title: "1. BERTANYA / MENGAJUKAN PERTANYAAN",
               color: "border-blue-500",
               jukugos: [
                 { word: "質問", reading: "しつもん", meaning: "pertanyaan" },
@@ -1915,14 +1915,14 @@ async function main() {
               ]
             },
             {
-              title: "TANYA JAWAB",
+              title: "2. TANYA JAWAB",
               color: "border-pink-500",
               jukugos: [
                 { word: "問答", reading: "もんどう", meaning: "tanya jawab" }
               ]
             },
             {
-              title: "SOAL / PERTANYAAN",
+              title: "3. SOAL / PERTANYAAN",
               color: "border-green-500",
               jukugos: [
                 { word: "問題", reading: "もんだい", meaning: "masalah" },
@@ -1932,7 +1932,7 @@ async function main() {
               ]
             },
             {
-              title: "PEMERIKSAAN DENGAN PERTANYAAN",
+              title: "4. PEMERIKSAAN DENGAN PERTANYAAN",
               color: "border-orange-500",
               jukugos: [
                 { word: "問診", reading: "もんしん", meaning: "wawancara medis" },
@@ -1940,7 +1940,7 @@ async function main() {
               ]
             },
             {
-              title: "MEMPERTANYAKAN / MEMINTA PERTANGGUNGJAWABAN",
+              title: "5. MEMPERTANYAKAN / MEMINTA PERTANGGUNGJAWABAN",
               color: "border-purple-500",
               jukugos: [
                 { word: "問責", reading: "もんせき", meaning: "meminta pertanggungjawaban" },
@@ -1948,7 +1948,7 @@ async function main() {
               ]
             },
             {
-              title: "MENGUNJUNGI (MAKNA PERLUASAN)",
+              title: "6. MENGUNJUNGI (MAKNA PERLUASAN)",
               color: "border-yellow-500",
               jukugos: [
                 { word: "訪問", reading: "ほうもん", meaning: "kunjungan" }

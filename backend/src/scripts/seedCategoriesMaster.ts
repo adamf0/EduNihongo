@@ -22,12 +22,12 @@ export async function seedCategoriesMaster() {
       "Hasil / Efek / Bukti": ["効験"]
     },
     "問": {
-      "Bertanya / Mengajukan Pertanyaan": ["質問", "自問", "発問", "反問"],
-      "Tanya Jawab": ["問答"],
-      "Soal / Pertanyaan": ["問題", "設問", "試問", "難問"],
-      "Pemeriksaan dengan Pertanyaan": ["問診", "検問"],
-      "Mempertanyakan / Meminta Pertanggungjawaban": ["問責", "不問"],
-      "Mengunjungi (Makna Perluasan)": ["訪問"]
+      "1. BERTANYA / MENGAJUKAN PERTANYAAN": ["質問", "自問", "発問", "反問"],
+      "2. TANYA JAWAB": ["問答"],
+      "3. SOAL / PERTANYAAN": ["問題", "設問", "試問", "難問"],
+      "4. PEMERIKSAAN DENGAN PERTANYAAN": ["問診", "検問"],
+      "5. MEMPERTANYAKAN / MEMINTA PERTANGGUNGJAWABAN": ["問責", "不問"],
+      "6. MENGUNJUNGI (MAKNA PERLUASAN)": ["訪問"]
     },
     "題": {
       "Soal / Tugas / Masalah": ["問題", "課題", "宿題", "出題", "例題", "難題"],
@@ -68,11 +68,11 @@ export async function seedCategoriesMaster() {
       "Informasi dan Dokumentasi": ["記録集", "文書集", "報告集", "事例集"]
     },
     "調": {
-      "Kondisi dan Keadaan": ["体調", "好調", "不調", "快調", "順調", "高調", "低調"],
-      "Cara Berbicara dan Bunyi": ["口調", "語調", "声調", "音調"],
-      "Pemeriksaan dan Administrasi": ["調査", "調書", "調印", "調達"],
-      "Pengaturan dan Penyesuaian": ["調理", "調合", "調製", "調薬", "調律", "調味料"],
-      "Pengendalian dan Perubahan Keadaan": ["強調", "歩調", "変調", "移調"]
+      "1. Kondisi dan Keadaan": ["体調", "好調", "不調", "快調", "順調", "高調", "低調"],
+      "2. Cara Berbicara dan Bunyi": ["口調", "語調", "声調", "音調"],
+      "3. Pemeriksaan dan Administrasi": ["調査", "調書", "調印", "調達"],
+      "4. Pengaturan dan Penyesuaian": ["調理", "調合", "調製", "調薬", "調律", "調味料"],
+      "5. Penyelidikan dan Perubahan Keadaan": ["強調", "歩調", "変調", "移調"]
     },
     "査": {
       "Pemeriksaan dan Penyelidikan": ["調査", "検査", "審査", "査定"],
