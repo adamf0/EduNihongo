@@ -74,21 +74,22 @@ export async function preloadTexts(
     new Set(texts.map((t) => (t || "").trim()).filter((t) => t.length > 0))
   );
 
-  let currentIndex = 0;
+  const queue = [...uniqueTexts];
 
   const worker = async () => {
-    while (currentIndex < uniqueTexts.length) {
-      const idx = currentIndex++;
-      const text = uniqueTexts[idx];
-      const hash = crypto.createHash("md5").update(text).digest("hex");
-      const filePath = path.join(CACHE_DIR, `${hash}.mp3`);
-
-      if (!force && fs.existsSync(filePath)) {
-        alreadyCached++;
-        continue;
-      }
+    while (queue.length > 0) {
+      const text = queue.shift();
+      if (!text) break;
 
       try {
+        const hash = crypto.createHash("md5").update(text).digest("hex");
+        const filePath = path.join(CACHE_DIR, `${hash}.mp3`);
+
+        if (!force && fs.existsSync(filePath)) {
+          alreadyCached++;
+          continue;
+        }
+
         const audioBuffer = await fetchGoogleTts(text);
         const tempPath = path.join(CACHE_DIR, `${hash}.tmp_${Date.now()}`);
         fs.writeFileSync(tempPath, audioBuffer);
@@ -116,7 +117,7 @@ export async function preloadTexts(
 
 /**
  * GET /api/tts
- * Memutar audio teks kanji atau kalimat bahasa Jepang secara langsung
+ * Memutar audio teks kanji, jukugo.reading, atau kalimat bahasa Jepang secara langsung
  */
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -142,7 +143,7 @@ router.get("/", async (req: Request, res: Response) => {
       return res.sendFile(cachedFilePath);
     }
 
-    // 2. Fetch dari Google Translate TTS dengan teks asli (kanji / kalimat Jepang)
+    // 2. Fetch dari Google Translate TTS
     const audioBuffer = await fetchGoogleTts(targetText);
 
     // Simpan ke disk cache secara aman
@@ -165,8 +166,10 @@ router.get("/", async (req: Request, res: Response) => {
 
 /**
  * GET & POST /api/tts/preload
- * Endpoint untuk membuat dan mem-preload seluruh audio latihan membaca, jukugo, dan karakter kanji
- * (Murni membaca karakter Kanji asli, bukan bushu, onyomi, atau kunyomi)
+ * Endpoint untuk membuat dan mem-preload seluruh audio:
+ * - Latihan membaca (ExampleSentence.japanese)
+ * - Jukugo (jukugo.reading)
+ * - Karakter Kanji (kanji.character)
  */
 const handlePreload = async (req: Request, res: Response) => {
   try {
@@ -202,15 +205,16 @@ const handlePreload = async (req: Request, res: Response) => {
     const exampleTexts: string[] = [];
 
     kanjis.forEach((k) => {
-      // Kanji itu sendiri (bukan bushu, bukan onyomi, bukan kunyomi)
+      // Kanji itu sendiri (karakter kanji)
       if (k.character) kanjiTexts.push(k.character.trim());
 
-      // Seluruh kata jukugo
+      // Jukugo menggunakan jukugo.reading
       k.jukugos.forEach((j) => {
-        if (j.word) jukugoTexts.push(j.word.trim());
+        const text = (j.reading || j.word || "").trim();
+        if (text) jukugoTexts.push(text);
       });
 
-      // Seluruh kalimat latihan membaca (ExampleSentence)
+      // Latihan membaca menggunakan ExampleSentence.japanese
       k.examples.forEach((e) => {
         if (e.japanese) exampleTexts.push(e.japanese.trim());
       });
@@ -218,11 +222,12 @@ const handlePreload = async (req: Request, res: Response) => {
 
     // Jika scope "all" dan tidak ada filter tertentu, pastikan seluruh Jukugo dan ExampleSentence di DB ikut tercakup
     if (scopeParam === "all" && !moduleIdParam && !charParam) {
-      const allJukugos = await prisma.jukugo.findMany({ select: { word: true } });
+      const allJukugos = await prisma.jukugo.findMany({ select: { word: true, reading: true } });
       const allExamples = await prisma.exampleSentence.findMany({ select: { japanese: true } });
 
       allJukugos.forEach((j) => {
-        if (j.word) jukugoTexts.push(j.word.trim());
+        const text = (j.reading || j.word || "").trim();
+        if (text) jukugoTexts.push(text);
       });
       allExamples.forEach((e) => {
         if (e.japanese) exampleTexts.push(e.japanese.trim());

@@ -338,7 +338,7 @@ const JukugoCard = React.memo<{
                 type="button"
                 onClick={(e) => {
                     e.stopPropagation();
-                    onPlayAudio(jukugo.word);
+                    onPlayAudio(jukugo.reading);
                 }}
                 className="w-11 h-11 rounded-2xl bg-slate-100/90 hover:bg-[#8f0020] text-slate-600 hover:text-white border border-slate-200/80 flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0 active:scale-90"
                 title="Putar Suara"

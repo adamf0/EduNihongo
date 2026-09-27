@@ -4,8 +4,8 @@ import { preloadTexts } from "../routes/tts";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🚀 Memulai proses preload seluruh audio TTS (Latihan Membaca, Jukugo, dan Karakter Kanji)...");
-  console.log("ℹ️ Karakter yang dibaca adalah Kanji asli (bukan onyomi, bushu, ataupun kunyomi).");
+  console.log("🚀 Memulai proses preload seluruh audio TTS (Latihan Membaca, Jukugo reading, dan Karakter Kanji)...");
+  console.log("ℹ️ Jukugo dibaca menggunakan reading (hiragana), bukan bushu, onyomi, ataupun kunyomi.");
 
   const startTime = Date.now();
 
@@ -14,9 +14,9 @@ async function main() {
     select: { character: true },
   });
 
-  // 2. Ambil seluruh jukugo
+  // 2. Ambil seluruh jukugo (menggunakan jukugo.reading)
   const allJukugos = await prisma.jukugo.findMany({
-    select: { word: true },
+    select: { word: true, reading: true },
   });
 
   // 3. Ambil seluruh contoh kalimat latihan membaca
@@ -25,14 +25,14 @@ async function main() {
   });
 
   const kanjiTexts = allKanjis.map((k) => k.character?.trim()).filter(Boolean);
-  const jukugoTexts = allJukugos.map((j) => j.word?.trim()).filter(Boolean);
+  const jukugoTexts = allJukugos.map((j) => (j.reading || j.word || "").trim()).filter(Boolean);
   const exampleTexts = allExamples.map((e) => e.japanese?.trim()).filter(Boolean);
 
   const allTexts = [...kanjiTexts, ...jukugoTexts, ...exampleTexts];
 
   console.log(`📊 Statistik teks database:`);
   console.log(`   - Karakter Kanji unik: ${new Set(kanjiTexts).size}`);
-  console.log(`   - Kata Jukugo unik: ${new Set(jukugoTexts).size}`);
+  console.log(`   - Kata Jukugo (reading) unik: ${new Set(jukugoTexts).size}`);
   console.log(`   - Contoh Kalimat (Latihan Membaca) unik: ${new Set(exampleTexts).size}`);
   console.log(`   - Total Teks Unik untuk di-cache: ${new Set(allTexts).size}`);
 
