@@ -17,6 +17,35 @@ export const ModulePage: React.FC = () => {
   
   // LMS Modal state
   const [lmsModal, setLmsModal] = useState<{ isOpen: boolean; moduleId: number; moduleTitle: string } | null>(null);
+  const [lmsBadgeCounts, setLmsBadgeCounts] = useState<Record<number, number>>({});
+
+  const fetchLmsBadgeCounts = async (moduleList: any[]) => {
+    if (!moduleList || moduleList.length === 0) return;
+    try {
+      const counts: Record<number, number> = {};
+      await Promise.all(
+        moduleList.map(async (mod: any) => {
+          try {
+            const assigns = await api.lms.assignments.list({ moduleId: mod.id });
+            if (Array.isArray(assigns) && assigns.length > 0) {
+              const unsubmitted = assigns.filter(
+                (a: any) => !a.submissions || a.submissions.length === 0
+              );
+              counts[mod.id] = unsubmitted.length;
+            } else {
+              counts[mod.id] = 0;
+            }
+          } catch (e) {
+            console.error(`Gagal memuat tugas LMS untuk modul ${mod.id}:`, e);
+            counts[mod.id] = 0;
+          }
+        })
+      );
+      setLmsBadgeCounts(counts);
+    } catch (err) {
+      console.error("Gagal memuat badge LMS:", err);
+    }
+  };
 
   useEffect(() => {
     const fetchModules = async () => {
@@ -24,6 +53,9 @@ export const ModulePage: React.FC = () => {
         setLoading(true);
         const result = await api.modules.get();
         setData(result);
+        if (result?.modules) {
+          fetchLmsBadgeCounts(result.modules);
+        }
       } catch (err: any) {
         console.error(err);
         setError(err.message || "Gagal memuat modul belajar.");
@@ -140,6 +172,7 @@ export const ModulePage: React.FC = () => {
                         navigate={navigate} 
                         onShowInfo={showObjectives}
                         onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
+                        lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
                       />
                     )}
                   </div>
@@ -165,6 +198,7 @@ export const ModulePage: React.FC = () => {
                         navigate={navigate} 
                         onShowInfo={showObjectives}
                         onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
+                        lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
                       />
                     )}
                   </div>
@@ -219,7 +253,12 @@ export const ModulePage: React.FC = () => {
         <LmsModuleModal 
           moduleId={lmsModal.moduleId}
           moduleTitle={lmsModal.moduleTitle}
-          onClose={() => setLmsModal(null)}
+          onClose={() => {
+            setLmsModal(null);
+            if (data?.modules) {
+              fetchLmsBadgeCounts(data.modules);
+            }
+          }}
         />
       )}
     </Layout>
@@ -232,13 +271,15 @@ const ModuleCard = ({
   targetKanji, 
   navigate, 
   onShowInfo,
-  onShowLms
+  onShowLms,
+  lmsBadgeCount = 0
 }: { 
   mod: any; 
   targetKanji: string; 
   navigate: any; 
   onShowInfo: (title: string, objectives: string) => void;
   onShowLms: (id: number, title: string) => void;
+  lmsBadgeCount?: number;
 }) => {
   const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
 
@@ -325,10 +366,18 @@ const ModuleCard = ({
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
           <button 
             onClick={() => onShowLms(mod.id, mod.title)}
-            className="flex-1 py-2.5 rounded-xl font-bold border border-slate-200 hover:border-[#8f0020] hover:text-[#8f0020] text-slate-700 bg-white transition-all active:scale-[0.98] text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            className="relative flex-1 py-2.5 rounded-xl font-bold border border-slate-200 hover:border-[#8f0020] hover:text-[#8f0020] text-slate-700 bg-white transition-all active:scale-[0.98] text-xs flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <FileText className="w-4 h-4 shrink-0" />
             Tugas & Diskusi
+            {lmsBadgeCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center pointer-events-none z-10">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black shadow-md border-2 border-white leading-none">
+                  {lmsBadgeCount}
+                </span>
+              </span>
+            )}
           </button>
           
           <button 

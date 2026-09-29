@@ -2585,17 +2585,32 @@ export const LatihanPage: React.FC = () => {
                         <HelpCircle className="w-4 h-4 shrink-0" />
                         <span className="whitespace-nowrap">Kuis Evaluasi</span>
                     </button>
-                    <button
-                        onClick={() => handleTabChange("lms")}
-                        className={`flex items-center justify-center gap-1.5 sm:gap-2.5 py-2.5 sm:py-3.5 px-2.5 sm:px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all border-none cursor-pointer select-none text-center ${
-                            activeTab === "lms"
-                                ? "bg-[#8f0020] text-white shadow-md"
-                                : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                        }`}
-                    >
-                        <MessageSquare className="w-4 h-4 shrink-0" />
-                        <span className="whitespace-nowrap">Tugas & Diskusi</span>
-                    </button>
+                    {(() => {
+                        const unsubmittedCount = Array.isArray(lmsAssignments) 
+                            ? lmsAssignments.filter((a: any) => !a.submissions || a.submissions.length === 0).length 
+                            : 0;
+                        return (
+                            <button
+                                onClick={() => handleTabChange("lms")}
+                                className={`relative flex items-center justify-center gap-1.5 sm:gap-2.5 py-2.5 sm:py-3.5 px-2.5 sm:px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all border-none cursor-pointer select-none text-center ${
+                                    activeTab === "lms"
+                                        ? "bg-[#8f0020] text-white shadow-md"
+                                        : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                }`}
+                            >
+                                <MessageSquare className="w-4 h-4 shrink-0" />
+                                <span className="whitespace-nowrap">Tugas & Diskusi</span>
+                                {unsubmittedCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center pointer-events-none z-10">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span className="relative inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black shadow-md border-2 border-white leading-none">
+                                            {unsubmittedCount}
+                                        </span>
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })()}
                 </div>
 
                 {/* ================= TAB CONTENT: DETAIL & MENULIS ================= */}
