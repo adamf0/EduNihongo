@@ -589,7 +589,7 @@ export const SemanticControlPage: React.FC = () => {
         {/* Unlink Confirmation Modal */}
         {isUnlinkConfirmOpen && edgeToUnlink && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-            <div className="bg-white border border-outline-variant/30 rounded-3xl w-full sm:w-[480px] md:w-[520px] max-w-lg shrink-0 shadow-2xl overflow-hidden animate-scale-up flex flex-col p-6 space-y-4">
+            <div className="bg-white border border-outline-variant/30 rounded-3xl w-full shrink-0 shadow-2xl overflow-hidden animate-scale-up flex flex-col p-6 space-y-4">
               <div className="flex items-center gap-3 text-rose-600">
                 <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
                   <Icon name="link_off" className="text-xl" />
