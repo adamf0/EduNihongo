@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // true  = Fitur lock aktif (modul & kanji harus dibuka berurutan dengan threshold mastery > 60%)
 // false = Fitur lock dinonaktifkan (seluruh modul & kanji terbuka bebas)
 // ============================================================================
-export const ENABLE_LOCK_SYSTEM: boolean = false;
+export const ENABLE_LOCK_SYSTEM: boolean = true;
 
 export const getModulesData = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -52,8 +52,8 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
 
       // Sequential unlock for kanjis in this module:
       // First kanji is unlocked if module is unlocked.
-      // Subsequent kanji unlocks if the previous kanji has reached masteryPercent > 60.
-      let previousKanjiPassed = true;
+      // Subsequent kanji unlocks if the preceding kanji has progress (masteryPercent > 0).
+      let previousKanjiHasProgress = true;
       interface ModuleKanjiItem {
         id: number;
         character: string;
@@ -68,11 +68,13 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
         const masteryPercent: number = progress?.masteryPercent || 0;
         const isCompleted: boolean = masteryPercent > 60;
 
-        // Kanji is locked if lock system enabled AND (module is locked OR preceding kanji has not reached masteryPercent > 60)
+        // Kanji is locked if lock system enabled AND (module is locked OR preceding kanji has masteryPercent <= 0)
         const isKanjiLocked: boolean = ENABLE_LOCK_SYSTEM
-          ? (isModuleLocked || (kIdx === 0 ? false : !previousKanjiPassed))
+          ? (isModuleLocked || (kIdx === 0 ? false : !previousKanjiHasProgress))
           : false;
-        previousKanjiPassed = isCompleted;
+
+        // Next kanji in module unlocks if this kanji has masteryPercent > 0
+        previousKanjiHasProgress = masteryPercent > 0;
 
         return {
           id: k.id,

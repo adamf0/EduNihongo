@@ -10,7 +10,7 @@ import { LmsModuleModal } from "../Component/Molecules/LmsModuleModal";
 // true  = Fitur lock aktif (modul & kanji harus dibuka berurutan dengan threshold mastery > 60%)
 // false = Fitur lock dinonaktifkan (seluruh modul & kanji langsung terbuka bebas di UI)
 // ============================================================================
-export const ENABLE_LOCK_SYSTEM: boolean = false;
+export const ENABLE_LOCK_SYSTEM: boolean = true;
 
 export const ModulePage: React.FC = () => {
   const navigate = useNavigate();
@@ -355,7 +355,7 @@ const ModuleCard = ({
                   key={k.character}
                   onClick={() => !isLocked && navigate(`/latihan?char=${k.character}`)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200 select-none ${isLocked ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : (isKanjiCompleted ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800 hover:bg-emerald-50 cursor-pointer' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#8f0020] hover:text-[#8f0020] cursor-pointer')}`}
-                  title={`${k.meaning} (${isLocked ? 'Terkunci (Kuasai kanji sebelumnya minimal 60%)' : (isKanjiCompleted ? 'Selesai' : 'Belum selesai')})`}
+                  title={`${k.meaning} (${isLocked ? 'Terkunci (Pelajari materi kanji sebelumnya terlebih dahulu)' : (isKanjiCompleted ? 'Selesai (> 60%)' : 'Belum selesai')})`}
                 >
                   <span className="font-serif font-bold text-base">{k.character}</span>
                   {isLocked ? (
