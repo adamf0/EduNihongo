@@ -5,6 +5,13 @@ import { api } from "../../Common/Utility/api";
 import { CheckCircle2, Lock, BookOpen, ChevronRight, Info, X, FileText } from "lucide-react";
 import { LmsModuleModal } from "../Component/Molecules/LmsModuleModal";
 
+// ============================================================================
+// KONFIGURASI SISTEM PENGUNCIAN (LOCK) MODUL & KANJI
+// true  = Fitur lock aktif (modul & kanji harus dibuka berurutan dengan threshold mastery > 60%)
+// false = Fitur lock dinonaktifkan (seluruh modul & kanji langsung terbuka bebas di UI)
+// ============================================================================
+export const ENABLE_LOCK_SYSTEM: boolean = false;
+
 export const ModulePage: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
@@ -98,6 +105,7 @@ export const ModulePage: React.FC = () => {
   }
 
   const { overallProgress, modules } = data;
+  const isLockActive = ENABLE_LOCK_SYSTEM && (data?.isLockSystemEnabled !== false);
 
   const showObjectives = (title: string, objectives: string) => {
     setInfoModalContent({ title, objectives });
@@ -147,6 +155,7 @@ export const ModulePage: React.FC = () => {
             {modules.map((mod: any, idx: number) => {
               const isEven = idx % 2 === 0;
               const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
+              const isModLocked = isLockActive && Boolean(mod.isLocked);
               
               // Determine layout alignment for desktop
               const leftSideClass = isEven 
@@ -158,13 +167,17 @@ export const ModulePage: React.FC = () => {
                 : "w-full md:w-[46%] flex justify-start order-2 md:order-3 pl-12 md:pl-0";
 
               // Find first unlocked and incomplete kanji, or first unlocked, or fallback
-              const targetKanji = mod.kanjis.find((k: any) => !k.isLocked && !k.isCompleted)?.character 
-                || mod.kanjis.find((k: any) => !k.isLocked)?.character 
-                || mod.kanjis[0]?.character 
-                || "";
+              const targetKanji = isModLocked
+                ? (mod.kanjis.find((k: any) => !k.isLocked && !k.isCompleted)?.character 
+                    || mod.kanjis.find((k: any) => !k.isLocked)?.character 
+                    || mod.kanjis[0]?.character 
+                    || "")
+                : (mod.kanjis.find((k: any) => !k.isCompleted)?.character 
+                    || mod.kanjis[0]?.character 
+                    || "");
 
               return (
-                <div key={mod.id} className={`relative flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-0 justify-between group ${mod.isLocked ? 'opacity-65' : ''}`}>
+                <div key={mod.id} className={`relative flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-0 justify-between group ${isModLocked ? 'opacity-65' : ''}`}>
                   
                   {/* Left side card or placeholder */}
                   <div className={leftSideClass}>
@@ -176,14 +189,15 @@ export const ModulePage: React.FC = () => {
                         onShowInfo={showObjectives}
                         onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
                         lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
+                        isLockActive={isLockActive}
                       />
                     )}
                   </div>
 
                   {/* Timeline Dot in the Center */}
                   <div className="absolute left-6 md:relative md:left-0 z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 bg-white shadow-md order-1 md:order-2 shrink-0 -translate-x-1/2 md:translate-x-0 transition-colors duration-300"
-                       style={{ borderColor: mod.isLocked || !hasKanjis ? '#e2e8f0' : (mod.isCompleted ? '#4F7942' : '#c8232a') }}>
-                    {mod.isLocked ? (
+                       style={{ borderColor: isModLocked || !hasKanjis ? '#e2e8f0' : (mod.isCompleted ? '#4F7942' : '#c8232a') }}>
+                    {isModLocked ? (
                       <Lock className="w-4 h-4 text-slate-400" />
                     ) : mod.isCompleted && hasKanjis ? (
                       <CheckCircle2 className="w-6 h-6 fill-white text-[#4F7942] stroke-[#4F7942]" />
@@ -202,6 +216,7 @@ export const ModulePage: React.FC = () => {
                         onShowInfo={showObjectives}
                         onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
                         lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
+                        isLockActive={isLockActive}
                       />
                     )}
                   </div>
@@ -275,7 +290,8 @@ const ModuleCard = ({
   navigate, 
   onShowInfo,
   onShowLms,
-  lmsBadgeCount = 0
+  lmsBadgeCount = 0,
+  isLockActive = true
 }: { 
   mod: any; 
   targetKanji: string; 
@@ -283,19 +299,21 @@ const ModuleCard = ({
   onShowInfo: (title: string, objectives: string) => void;
   onShowLms: (id: number, title: string) => void;
   lmsBadgeCount?: number;
+  isLockActive?: boolean;
 }) => {
   const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
+  const isModLocked = isLockActive && Boolean(mod.isLocked);
 
   return (
-    <div className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${mod.isLocked ? 'border-l-slate-300' : (!hasKanjis ? 'border-l-slate-300' : (mod.isCompleted ? 'border-l-[#4F7942]' : 'border-l-[#c8232a]'))}`}>
+    <div className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${isModLocked ? 'border-l-slate-300' : (!hasKanjis ? 'border-l-slate-300' : (mod.isCompleted ? 'border-l-[#4F7942]' : 'border-l-[#c8232a]'))}`}>
       
       {/* Title and Lock Status */}
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
         <div className="flex items-center gap-1.5">
-          <h3 className={`text-lg font-bold ${mod.isLocked || !hasKanjis ? 'text-slate-500' : 'text-slate-900'}`}>
+          <h3 className={`text-lg font-bold ${isModLocked || !hasKanjis ? 'text-slate-500' : 'text-slate-900'}`}>
             {mod.title}
           </h3>
-          {!mod.isLocked && mod.tujuanPembelajaran && (
+          {!isModLocked && mod.tujuanPembelajaran && (
             <button
               onClick={() => onShowInfo(mod.title, mod.tujuanPembelajaran)}
               className="p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-slate-400 hover:text-slate-600 bg-transparent border-none flex items-center justify-center"
@@ -305,7 +323,7 @@ const ModuleCard = ({
             </button>
           )}
         </div>
-        {mod.isLocked ? (
+        {isModLocked ? (
           <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 select-none">
             <Lock className="w-3 h-3" /> Terkunci
           </span>
@@ -331,7 +349,7 @@ const ModuleCard = ({
           <div className="flex flex-wrap gap-2">
             {mod.kanjis.map((k: any) => {
               const isKanjiCompleted = k.isCompleted;
-              const isLocked = mod.isLocked || k.isLocked;
+              const isLocked = isLockActive && (isModLocked || Boolean(k.isLocked));
               return (
                 <div 
                   key={k.character}
@@ -357,7 +375,7 @@ const ModuleCard = ({
       </div>
 
       {/* Module Progress Bar */}
-      {!mod.isLocked && hasKanjis && (
+      {!isModLocked && hasKanjis && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1 mr-4">
             <div className="h-2 w-full bg-[#f1f5f9] rounded-full overflow-hidden">
@@ -369,7 +387,7 @@ const ModuleCard = ({
       )}
 
       {/* Action Button / Locked Notice */}
-      {!mod.isLocked ? (
+      {!isModLocked ? (
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
           <button 
             onClick={() => onShowLms(mod.id, mod.title)}

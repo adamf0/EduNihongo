@@ -4,6 +4,13 @@ import { AuthenticatedRequest } from "../middleware/auth";
 
 const prisma = new PrismaClient();
 
+// ============================================================================
+// KONFIGURASI SISTEM PENGUNCIAN (LOCK) MODUL & KANJI
+// true  = Fitur lock aktif (modul & kanji harus dibuka berurutan dengan threshold mastery > 60%)
+// false = Fitur lock dinonaktifkan (seluruh modul & kanji terbuka bebas)
+// ============================================================================
+export const ENABLE_LOCK_SYSTEM: boolean = false;
+
 export const getModulesData = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -39,7 +46,9 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
 
       // Module 1 (index 0) is always unlocked.
       // Subsequent modules unlock only if the preceding module reached threshold > 60%
-      const isModuleLocked: boolean = index === 0 ? false : !previousModulePassed;
+      const isModuleLocked: boolean = ENABLE_LOCK_SYSTEM
+        ? (index === 0 ? false : !previousModulePassed)
+        : false;
 
       // Sequential unlock for kanjis in this module:
       // First kanji is unlocked if module is unlocked.
@@ -59,8 +68,10 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
         const masteryPercent: number = progress?.masteryPercent || 0;
         const isCompleted: boolean = masteryPercent > 60;
 
-        // Kanji is locked if module is locked OR if preceding kanji has not reached masteryPercent > 60
-        const isKanjiLocked: boolean = isModuleLocked || (kIdx === 0 ? false : !previousKanjiPassed);
+        // Kanji is locked if lock system enabled AND (module is locked OR preceding kanji has not reached masteryPercent > 60)
+        const isKanjiLocked: boolean = ENABLE_LOCK_SYSTEM
+          ? (isModuleLocked || (kIdx === 0 ? false : !previousKanjiPassed))
+          : false;
         previousKanjiPassed = isCompleted;
 
         return {
@@ -122,6 +133,7 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
     res.json({
       overallProgress,
       modules,
+      isLockSystemEnabled: ENABLE_LOCK_SYSTEM,
     });
   } catch (error) {
     console.error("Modules error:", error);
