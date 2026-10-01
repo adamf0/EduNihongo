@@ -1375,4 +1375,114 @@ export const getLearningAnalytics = async (req: Request, res: Response) => {
   }
 };
 
+// Admin: Monitoring Progress Pembelajaran Kanji Mahasiswa (All students & module kanjis)
+export const getStudentKanjiProgress = async (req: Request, res: Response) => {
+  try {
+    const { moduleId, kanjiId, search } = req.query;
+
+    const kanjiCondition: any = {
+      character: { in: MODULE_TARGET_KANJIS },
+    };
+
+    if (kanjiId) {
+      const numKanji = Number(kanjiId);
+      if (isNaN(numKanji)) {
+        kanjiCondition.character = String(kanjiId).trim();
+      } else {
+        kanjiCondition.id = numKanji;
+      }
+    }
+
+    if (moduleId) {
+      const numMod = Number(moduleId);
+      if (!isNaN(numMod) && numMod > 0 && numMod <= 10) {
+        // Module number 1..6 passed
+        kanjiCondition.OR = [
+          { moduleId: numMod },
+          { module: { title: { contains: `Modul ${numMod}` } } },
+        ];
+      } else if (!isNaN(numMod)) {
+        kanjiCondition.moduleId = numMod;
+      }
+    } else {
+      kanjiCondition.moduleId = { not: null };
+    }
+
+    const whereCondition: any = {
+      user: {
+        role: "USER",
+      },
+      kanji: kanjiCondition,
+    };
+
+    if (search && typeof search === "string" && search.trim()) {
+      const q = search.trim();
+      whereCondition.OR = [
+        { user: { name: { contains: q } } },
+        { user: { email: { contains: q } } },
+        { kanji: { character: { contains: q } } },
+        { kanji: { romaji: { contains: q } } },
+      ];
+    }
+
+    const progressList = await prisma.userKanjiProgress.findMany({
+      where: whereCondition,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+        kanji: {
+          select: {
+            id: true,
+            character: true,
+            romaji: true,
+            meaning: true,
+            moduleId: true,
+            module: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [
+        { kanji: { moduleId: "asc" } },
+        { kanji: { id: "asc" } },
+        { user: { name: "asc" } },
+      ],
+    });
+
+    const formatted = progressList.map((p) => ({
+      userId: p.userId,
+      userName: p.user.name,
+      userEmail: p.user.email,
+      userAvatar: p.user.avatar,
+      kanjiId: p.kanjiId,
+      kanjiChar: p.kanji.character,
+      kanjiRomaji: p.kanji.romaji,
+      kanjiMeaning: p.kanji.meaning,
+      moduleId: p.kanji.moduleId,
+      moduleTitle: p.kanji.module?.title || (p.kanji.moduleId ? `Modul ${p.kanji.moduleId}` : "-"),
+      masteryPercent: p.masteryPercent,
+      readingPercent: p.readingPercent,
+      writingPercent: p.writingPercent,
+      quizPercent: p.quizPercent,
+      status: p.status,
+      lastPracticed: p.lastPracticed,
+    }));
+
+    res.json(formatted);
+  } catch (error: any) {
+    console.error("getStudentKanjiProgress error:", error);
+    res.status(500).json({ error: "Gagal memuat progress pembelajaran kanji mahasiswa." });
+  }
+};
+
 

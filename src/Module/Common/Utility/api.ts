@@ -272,6 +272,19 @@ export const api = {
       });
       return handleResponse(res);
     },
+    getStudentKanjiProgress: async (params?: { moduleId?: number; kanjiId?: number; search?: string }) => {
+      const query = new URLSearchParams();
+      if (params?.moduleId) query.append("moduleId", String(params.moduleId));
+      if (params?.kanjiId) query.append("kanjiId", String(params.kanjiId));
+      if (params?.search) query.append("search", params.search);
+
+      const queryString = query.toString() ? `?${query.toString()}` : "";
+      const res = await fetch(`${BASE_URL}/admin/student-kanji-progress${queryString}`, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+      return handleResponse(res);
+    },
     jukugos: {
       list: async () => {
         const res = await fetch(`${BASE_URL}/admin/jukugos`, {

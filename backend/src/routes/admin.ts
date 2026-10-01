@@ -11,7 +11,8 @@ import {
   updateKanji,
   deleteKanji,
   getQuizRubricReport,
-  getLearningAnalytics
+  getLearningAnalytics,
+  getStudentKanjiProgress
 } from "../controllers/admin";
 import {
   getJukugos,
@@ -50,6 +51,7 @@ router.delete("/kanjis/:id", deleteKanji);
 
 router.get("/quiz-rubric-report", getQuizRubricReport);
 router.get("/learning-analytics", getLearningAnalytics);
+router.get("/student-kanji-progress", getStudentKanjiProgress);
 
 router.get("/jukugos", getJukugos);
 router.post("/jukugos", createJukugo);

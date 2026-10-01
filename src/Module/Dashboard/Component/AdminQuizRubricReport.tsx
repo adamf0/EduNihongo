@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Icon from "../../Common/Component/Icon";
 import { api } from "../../Common/Utility/api";
 import { type StudentRotationItem } from "./RotationLearningChart";
+import AdminKanjiProgressMonitoring from "./AdminKanjiProgressMonitoring";
 
 interface QuizReportSummary {
   totalAttempts: number;
@@ -164,6 +165,10 @@ export const AdminQuizRubricReport: React.FC = () => {
   const [tableFilterKanji, setTableFilterKanji] = useState<string>("");
   const [tableFilterInterpretasi, setTableFilterInterpretasi] = useState<string>("");
 
+  // Recap Table Pagination State
+  const [recapCurrentPage, setRecapCurrentPage] = useState<number>(1);
+  const [recapPageSize, setRecapPageSize] = useState<number>(10);
+
   // Computed list of target module kanjis grouped by module (strictly 5 kanji per module)
   const availableKanjiList = useMemo(() => {
     const kanjiOptionMap = new Map<string, { id?: number; romaji?: string; moduleTitle?: string }>();
@@ -226,6 +231,19 @@ export const AdminQuizRubricReport: React.FC = () => {
       return true;
     });
   }, [recapTable, tableFilterNama, tableFilterKanji, tableFilterInterpretasi]);
+
+  // Reset pagination when recap table filters change
+  useEffect(() => {
+    setRecapCurrentPage(1);
+  }, [tableFilterNama, tableFilterKanji, tableFilterInterpretasi, startDate, endDate, selectedModuleId, selectedKanjiId, searchQuery]);
+
+  // Paginated slice for recap table
+  const paginatedRecapTable = useMemo(() => {
+    const start = (recapCurrentPage - 1) * recapPageSize;
+    return filteredRecapTable.slice(start, start + recapPageSize);
+  }, [filteredRecapTable, recapCurrentPage, recapPageSize]);
+
+  const totalRecapPages = Math.ceil(filteredRecapTable.length / recapPageSize) || 1;
 
   // Set preset dates helper
   const handlePresetChange = (preset: string) => {
@@ -823,7 +841,7 @@ export const AdminQuizRubricReport: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
-                  {filteredRecapTable.map((item, idx) => (
+                  {paginatedRecapTable.map((item, idx) => (
                     <tr key={`${item.userId}_${item.kanjiId}_${idx}`} className="hover:bg-slate-50/80 transition-all">
                       {/* Nama Mahasiswa */}
                       <td className="p-3">
@@ -922,9 +940,64 @@ export const AdminQuizRubricReport: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Toolbar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <span>Tampilkan:</span>
+                <select
+                  value={recapPageSize}
+                  onChange={(e) => {
+                    setRecapPageSize(Number(e.target.value));
+                    setRecapCurrentPage(1);
+                  }}
+                  className="p-1 rounded-lg border border-slate-300 font-bold bg-white text-slate-700 cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span>
+                  entri per halaman (Menampilkan{" "}
+                  <strong>
+                    {filteredRecapTable.length === 0 ? 0 : (recapCurrentPage - 1) * recapPageSize + 1} -{" "}
+                    {Math.min(filteredRecapTable.length, recapCurrentPage * recapPageSize)}
+                  </strong>{" "}
+                  dari <strong>{filteredRecapTable.length}</strong> entri)
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setRecapCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={recapCurrentPage === 1}
+                  className="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-bold cursor-pointer"
+                >
+                  Sebelumnya
+                </button>
+
+                <span className="px-3 py-1 font-bold text-slate-800">
+                  {recapCurrentPage} / {totalRecapPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setRecapCurrentPage((p) => Math.min(totalRecapPages, p + 1))}
+                  disabled={recapCurrentPage === totalRecapPages}
+                  className="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-bold cursor-pointer"
+                >
+                  Berikutnya
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Monitoring Progress Pembelajaran Kanji Mahasiswa (Di bawah Tabel Rekap Kuis) */}
+      <AdminKanjiProgressMonitoring />
 
       {/* Modal Detail Attempt History */}
       {isHistoryModalOpen && selectedRecapItem && (
