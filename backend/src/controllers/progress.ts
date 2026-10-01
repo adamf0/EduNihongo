@@ -21,9 +21,9 @@ export const getProgressData = async (req: AuthenticatedRequest, res: Response) 
     }
 
     // 1. Calculate Stats
-    // Kanji dikuasai: kanjis with masteryPercent >= 75 (fully mastered)
+    // Kanji dikuasai: kanjis with masteryPercent > 60 (mastered with threshold > 60%)
     const masteredCount = await prisma.userKanjiProgress.count({
-      where: { userId, masteryPercent: { gte: 75 } },
+      where: { userId, masteryPercent: { gt: 60 } },
     });
 
     // Kanji dipelajari: kanjis with masteryPercent > 0 (any progress)

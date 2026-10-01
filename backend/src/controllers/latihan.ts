@@ -767,7 +767,7 @@ export const verifyHandwriting = async (req: AuthenticatedRequest, res: Response
 
     // Calculate weighted average masteryPercent: 40% writing, 30% reading, 30% quiz
     const finalMasteryScore = Math.round(finalWritingScore * 0.4 + prevReading * 0.3 + prevQuiz * 0.3);
-    const isMastered = finalMasteryScore >= 75;
+    const isMastered = finalMasteryScore > 60;
 
     await prisma.userKanjiProgress.upsert({
       where: {
@@ -908,7 +908,7 @@ export const verifyReading = async (req: AuthenticatedRequest, res: Response) =>
     const finalReadingScore = Math.max(prevReading, score);
 
     const finalMasteryScore = Math.round(prevWriting * 0.4 + finalReadingScore * 0.3 + prevQuiz * 0.3);
-    const isMastered = finalMasteryScore >= 75;
+    const isMastered = finalMasteryScore > 60;
 
     await prisma.userKanjiProgress.upsert({
       where: {
@@ -1129,7 +1129,7 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
     const finalQuizScore = Math.max(prevQuiz, score, previousBestScore);
 
     const finalMasteryScore = Math.round(prevWriting * 0.4 + prevReading * 0.3 + finalQuizScore * 0.3);
-    const isMastered = finalMasteryScore >= 75;
+    const isMastered = finalMasteryScore > 60;
 
     await prisma.userKanjiProgress.upsert({
       where: {

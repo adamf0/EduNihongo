@@ -157,8 +157,11 @@ export const ModulePage: React.FC = () => {
                 ? "md:w-[46%] hidden md:block order-3"
                 : "w-full md:w-[46%] flex justify-start order-2 md:order-3 pl-12 md:pl-0";
 
-              // Find first incomplete kanji or fallback to first
-              const targetKanji = mod.kanjis.find((k: any) => !k.isCompleted)?.character || mod.kanjis[0]?.character || "";
+              // Find first unlocked and incomplete kanji, or first unlocked, or fallback
+              const targetKanji = mod.kanjis.find((k: any) => !k.isLocked && !k.isCompleted)?.character 
+                || mod.kanjis.find((k: any) => !k.isLocked)?.character 
+                || mod.kanjis[0]?.character 
+                || "";
 
               return (
                 <div key={mod.id} className={`relative flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-0 justify-between group ${mod.isLocked ? 'opacity-65' : ''}`}>
@@ -328,16 +331,20 @@ const ModuleCard = ({
           <div className="flex flex-wrap gap-2">
             {mod.kanjis.map((k: any) => {
               const isKanjiCompleted = k.isCompleted;
-              const isLocked = mod.isLocked;
+              const isLocked = mod.isLocked || k.isLocked;
               return (
                 <div 
                   key={k.character}
                   onClick={() => !isLocked && navigate(`/latihan?char=${k.character}`)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200 ${isLocked ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : (isKanjiCompleted ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800 hover:bg-emerald-50 cursor-pointer' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#8f0020] hover:text-[#8f0020] cursor-pointer')}`}
-                  title={`${k.meaning} (${isKanjiCompleted ? 'Selesai' : 'Belum selesai'})`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200 select-none ${isLocked ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : (isKanjiCompleted ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800 hover:bg-emerald-50 cursor-pointer' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#8f0020] hover:text-[#8f0020] cursor-pointer')}`}
+                  title={`${k.meaning} (${isLocked ? 'Terkunci (Kuasai kanji sebelumnya minimal 60%)' : (isKanjiCompleted ? 'Selesai' : 'Belum selesai')})`}
                 >
                   <span className="font-serif font-bold text-base">{k.character}</span>
-                  {isKanjiCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-50" />}
+                  {isLocked ? (
+                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                  ) : isKanjiCompleted ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-50" />
+                  ) : null}
                 </div>
               );
             })}
@@ -361,8 +368,8 @@ const ModuleCard = ({
         </div>
       )}
 
-      {/* Action Button */}
-      {!mod.isLocked && (
+      {/* Action Button / Locked Notice */}
+      {!mod.isLocked ? (
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
           <button 
             onClick={() => onShowLms(mod.id, mod.title)}
@@ -389,6 +396,11 @@ const ModuleCard = ({
             {!hasKanjis ? "Belum ada materi" : (mod.isCompleted ? "Ulas Kembali" : "Mulai Belajar")}
             {hasKanjis && <ChevronRight className="w-4 h-4 shrink-0" />}
           </button>
+        </div>
+      ) : (
+        <div className="mt-4 py-2.5 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-500 select-none text-center">
+          <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+          <span>Kuasai seluruh kanji pada modul sebelumnya minimal 60% untuk membuka modul ini</span>
         </div>
       )}
 

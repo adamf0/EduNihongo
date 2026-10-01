@@ -128,7 +128,7 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
 
         const nextK = kanjisInModule.find((k) => {
           const p = progressList.find((pl) => pl.kanjiId === k.id);
-          return !p || p.masteryPercent < 75;
+          return !p || p.masteryPercent <= 60;
         }) || kanjisInModule[0];
 
         if (nextK) {

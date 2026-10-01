@@ -28,11 +28,11 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ error: "User tidak ditemukan" });
     }
 
-    // 1. Fetch Mastered Kanji Collection (masteryPercent >= 75)
+    // 1. Fetch Mastered Kanji Collection (masteryPercent > 60)
     const masteredKanjiProgress = await prisma.userKanjiProgress.findMany({
       where: {
         userId,
-        masteryPercent: { gte: 75 },
+        masteryPercent: { gt: 60 },
       },
       include: { kanji: true },
       take: 6, // limit to 6 for profile display
