@@ -507,7 +507,7 @@ export default function SemanticGraph({
         onNodeClick={onNodeClick}
         fitView
         fitViewOptions={{ padding: 0.3 }}
-        minZoom={0.12}
+        minZoom={0.35}
         maxZoom={1.5}
         nodesConnectable={false}
         nodesDraggable={true}

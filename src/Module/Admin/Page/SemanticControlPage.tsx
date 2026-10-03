@@ -494,7 +494,7 @@ export const SemanticControlPage: React.FC = () => {
               elementsSelectable={true}
               panOnDrag={true}
               zoomOnScroll={true}
-              minZoom={0.1}
+              minZoom={0.35}
               maxZoom={2.0}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}

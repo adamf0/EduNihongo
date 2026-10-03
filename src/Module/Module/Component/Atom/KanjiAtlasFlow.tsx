@@ -114,16 +114,22 @@ const CustomCrossLinkEdge = ({
   let labelX = midX;
   let labelY = midY;
 
-  // 1. Same-column / vertical cross links (e.g. 経験 -> 経歴 in same vertical stack)
+  // 1. Same-column / vertical cross links (e.g. 調理 -> 調薬 in same vertical stack)
   if (Math.abs(dx) < 160 && Math.abs(dy) > 100) {
     const isLeftSide = midX < 0;
-    const curveOffset = isLeftSide ? -240 : 240;
-    const ctrlX = Math.min(sourceX, targetX) + curveOffset;
+    const dir = isLeftSide ? -1 : 1;
+    const customOffset = (data as any)?.curveOffset;
+    const defaultOffset = dir * 220;
+    const curveOffset = typeof customOffset === "number" ? customOffset : defaultOffset;
+    const ctrlX = (isLeftSide ? Math.min(sourceX, targetX) : Math.max(sourceX, targetX)) + curveOffset;
 
     // Cubic bezier curve extending outward to avoid middle nodes (e.g. 経過)
     edgePath = `M ${sourceX} ${sourceY} C ${ctrlX} ${sourceY}, ${ctrlX} ${targetY}, ${targetX} ${targetY}`;
-    labelX = ctrlX * 0.75 + midX * 0.25;
-    labelY = midY;
+
+    const t = (data as any)?.tPos ?? 0.5;
+    const u = 1 - t;
+    labelX = (u * u * u + t * t * t) * midX + 3 * u * t * ctrlX;
+    labelY = (u * u * (1 + 2 * t)) * sourceY + (t * t * (3 - 2 * t)) * targetY;
   }
   // 2. Lines passing close to central root node (within 380px radius)
   else if (distFromCenter < 380) {
@@ -131,12 +137,18 @@ const CustomCrossLinkEdge = ({
     const dirY = distFromCenter > 1 ? midY / distFromCenter : -1;
     
     // Outward control point
-    const ctrlX = midX + dirX * 320;
-    const ctrlY = midY + dirY * 320;
+    const rootOffset = (data as any)?.curveOffset ?? 320;
+    const ctrlX = midX + dirX * rootOffset;
+    const ctrlY = midY + dirY * rootOffset;
 
     edgePath = `M ${sourceX} ${sourceY} Q ${ctrlX} ${ctrlY} ${targetX} ${targetY}`;
-    labelX = (sourceX + 2 * ctrlX + targetX) / 4;
-    labelY = (sourceY + 2 * ctrlY + targetY) / 4;
+    if ((data as any)?.customLabelPos) {
+      labelX = (data as any).customLabelPos.x;
+      labelY = (data as any).customLabelPos.y;
+    } else {
+      labelX = (sourceX + 2 * ctrlX + targetX) / 4;
+      labelY = (sourceY + 2 * ctrlY + targetY) / 4;
+    }
   } else {
     const [path, lx, ly] = getBezierPath({
       sourceX,
@@ -147,8 +159,8 @@ const CustomCrossLinkEdge = ({
       targetPosition,
     });
     edgePath = path;
-    labelX = lx;
-    labelY = ly;
+    labelX = (data as any)?.customLabelPos?.x ?? lx;
+    labelY = (data as any)?.customLabelPos?.y ?? ly;
   }
 
   const labelText = typeof label === "string" ? label.replace(/_/g, " ") : label;
@@ -178,6 +190,7 @@ const CustomCrossLinkEdge = ({
               pointerEvents: isVisible ? "all" : "none",
               transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
               opacity: style.opacity ?? 1,
+              zIndex: isSelected ? 50 : 25,
             }}
             className="nodrag nopan"
             onClick={(e) => {
@@ -185,7 +198,7 @@ const CustomCrossLinkEdge = ({
               (data as any)?.onSelectRelation?.(id);
             }}
           >
-            <div className={`px-3.5 py-1 rounded-full text-[11px] font-black shadow-lg border-2 cursor-pointer transition-all duration-300 ${
+            <div className={`text-md px-3.5 py-1 rounded-full font-black shadow-lg border-2 cursor-pointer transition-all duration-300 ${
               isSelected
                 ? "bg-amber-400 text-slate-950 border-amber-300 ring-4 ring-amber-400/50 scale-115 z-50"
                 : "bg-white text-slate-900 border-slate-700 hover:bg-slate-900 hover:text-white hover:scale-110"
@@ -213,7 +226,7 @@ const CustomHierarchyEdge = ({
   label,
   data,
 }: EdgeProps) => {
-  const [edgePath, _lx, ly] = getBezierPath({
+  const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -222,10 +235,57 @@ const CustomHierarchyEdge = ({
     targetPosition,
   });
 
-  // Calculate label position at 36% along the X axis between source and target,
-  // keeping it cleanly in the open gap near source node and away from target node cards.
-  const labelX = sourceX + (targetX - sourceX) * 0.36;
-  const labelY = ly;
+  // Helper to calculate exact point on horizontal bezier path at parameter t (0 to 1)
+  const getBezierPoint = (t: number) => {
+    const dx = targetX - sourceX;
+    const p0x = sourceX;
+    const p0y = sourceY;
+    const p1x = sourceX + dx * 0.5;
+    const p1y = sourceY;
+    const p2x = targetX - dx * 0.5;
+    const p2y = targetY;
+    const p3x = targetX;
+    const p3y = targetY;
+
+    const u = 1 - t;
+    const tt = t * t;
+    const uu = u * u;
+    const uuu = uu * u;
+    const ttt = tt * t;
+
+    return {
+      x: uuu * p0x + 3 * uu * t * p1x + 3 * u * tt * p2x + ttt * p3x,
+      y: uuu * p0y + 3 * uu * t * p1y + 3 * u * tt * p2y + ttt * p3y,
+    };
+  };
+
+  const labelRaw = typeof label === "string" ? label.trim().toLowerCase().replace(/_/g, " ") : "";
+  const isPenyusun = labelRaw === "penyusun";
+  const isMencakup = labelRaw === "mencakup";
+  const isKategori = labelRaw === "kategori";
+
+  let labelX = (sourceX + targetX) / 2;
+  let labelY = (sourceY + targetY) / 2;
+
+  if (isPenyusun) {
+    const dx = targetX - sourceX;
+    // Always place 'penyusun' cleanly 190px before the Leaf Kanji handle on the straight horizontal line
+    labelX = targetX - Math.sign(dx) * 190;
+    labelY = targetY;
+  } else {
+    let defaultTPos = 0.5;
+    if (isMencakup) {
+      const staggerIdx = (data as any)?.edgeIndex ?? 0;
+      defaultTPos = staggerIdx % 2 === 0 ? 0.60 : 0.72;
+    } else if (isKategori) {
+      defaultTPos = 0.5;
+    }
+
+    const tPos = (data as any)?.tPos ?? defaultTPos;
+    const pt = getBezierPoint(tPos);
+    labelX = pt.x;
+    labelY = pt.y;
+  }
 
   const labelText = typeof label === "string" ? label.replace(/_/g, " ") : label;
   const isVisible = style.opacity === undefined || (typeof style.opacity === "number" && style.opacity > 0);
@@ -254,6 +314,7 @@ const CustomHierarchyEdge = ({
               pointerEvents: isVisible ? "all" : "none",
               transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
               opacity: isVisible ? (style.opacity ?? 1) : 0,
+              zIndex: isSelected ? 50 : 25,
             }}
             className="nodrag nopan"
             onClick={(e) => {
@@ -261,9 +322,9 @@ const CustomHierarchyEdge = ({
               (data as any)?.onSelectRelation?.(id);
             }}
           >
-            <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-black shadow-xs whitespace-nowrap backdrop-blur-xs cursor-pointer transition-all duration-300 ${
+            <div className={`text-md px-2.5 py-0.5 rounded-full font-black shadow-xs whitespace-nowrap backdrop-blur-xs cursor-pointer transition-all duration-300 ${
               isSelected
-                ? "bg-amber-400 text-slate-950 border-2 border-amber-300 ring-4 ring-amber-400/50 scale-110 z-50"
+                ? "bg-amber-400 text-slate-950 border-2 border-amber-300 ring-4 ring-amber-400/50 scale-110 z-50 text-sm font-black"
                 : "bg-white/95 text-slate-700 border border-slate-300 hover:bg-slate-900 hover:text-white hover:scale-105"
             }`}>
               {labelText}
@@ -414,7 +475,7 @@ function KanjiAtlasFlowInner({
         (n: any) => (n.type === "sub-bottom" || n.type === "sub") && (n.parentPill === cat.id || n.categoryId === cat.id)
       );
       const numJk = jks.length || 1;
-      return Math.max(numJk * 220 + 150, 500);
+      return Math.max(numJk * 150 + 100, 380);
     });
 
     const leftCatIndices: number[] = [];
@@ -491,13 +552,13 @@ function KanjiAtlasFlowInner({
       if (mainJukugos.length === 0) return;
 
       const col1X = catX + dir * 540;
-      const col2X = catX + dir * 1020;
-      const col3X = catX + dir * 1480;
+      const col2X = catX + dir * 1350;
+      const col3X = catX + dir * 2100;
 
       const subCompoundRequests: Map<string, { subWord: string; meaning: string; parentJkIds: string[]; preferredY: number }> = new Map();
       const leafKanjiRequests: Map<string, { char: string; parentIds: string[]; preferredY: number; animIndex?: number }> = new Map();
 
-      const jukugoSpacingY = 200;
+      const jukugoSpacingY = 160;
       const numJk = mainJukugos.length;
       const startJukugoY = catY - ((numJk - 1) * jukugoSpacingY) / 2;
 
@@ -617,7 +678,8 @@ function KanjiAtlasFlowInner({
 
       // Render Sub-Jukugo Cards in Column 2
       const subCompArray = Array.from(subCompoundRequests.values());
-      const subSpacingY = 220;
+      subCompArray.sort((a, b) => a.preferredY - b.preferredY);
+      const subSpacingY = 160;
       const numSub = subCompArray.length;
       const startSubY = catY - ((numSub - 1) * subSpacingY) / 2;
 
@@ -630,7 +692,8 @@ function KanjiAtlasFlowInner({
           : (dbJ?.meaning || (req.subWord === "分野" ? "bidang ilmu" : req.subWord === "方法" ? "cara atau prosedur" : req.subWord));
 
         const subX = col2X;
-        const subY = startSubY + sIdx * subSpacingY;
+        // If single sub-compound, align directly with its parent's preferredY; otherwise space cleanly
+        const subY = numSub === 1 ? req.preferredY : (startSubY + sIdx * subSpacingY);
 
         const parentJkNode = positionedNodes.find((n) => req.parentJkIds.includes(n.id));
         const sAnimIdx = parentJkNode?.staggerIndex ?? sIdx;
@@ -686,7 +749,7 @@ function KanjiAtlasFlowInner({
       const leafRequestsArray = Array.from(leafKanjiRequests.values());
       leafRequestsArray.sort((a, b) => a.preferredY - b.preferredY);
 
-      const leafSpacingY = 180;
+      const leafSpacingY = 160; // Perfectly aligns 1:1 with jukugoSpacingY (160px) for straight horizontal parallel lines
       const numLeaves = leafRequestsArray.length;
       const startLeafY = catY - ((numLeaves - 1) * leafSpacingY) / 2;
 
@@ -855,7 +918,8 @@ function KanjiAtlasFlowInner({
       const visibleCatNodes = positionedNodes.filter((n: any) => n.id === "root" || n.type === "bottom" || n.type === "category");
       fitView({ nodes: visibleCatNodes, padding: 0.35, duration: 750 });
     } else {
-      setCenter(0, 0, { zoom: 1.1, duration: 700 });
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+      setCenter(0, 0, { zoom: isMobile ? 0.85 : 1.05, duration: 700 });
     }
   };
 
@@ -912,7 +976,8 @@ function KanjiAtlasFlowInner({
     if (positionedNodes.length > 0 && !initialFocusedRef.current) {
       initialFocusedRef.current = true;
       setTimeout(() => {
-        setCenter(0, 0, { zoom: 1.1, duration: 600 });
+        const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+        setCenter(0, 0, { zoom: isMobile ? 0.85 : 1.05, duration: 600 });
       }, 150);
     }
   }, [positionedNodes, setCenter]);
@@ -1127,6 +1192,7 @@ function KanjiAtlasFlowInner({
         id: node.id,
         type: "kanjiNode",
         position: { x: node.x, y: node.y },
+        origin: [0.5, 0.5] as [number, number],
         data: { 
           ...node,
           isExpanded: isCategory ? (parentCatId ? expandedCategoryIds.has(parentCatId) : false) : true,
@@ -1146,11 +1212,151 @@ function KanjiAtlasFlowInner({
       nodeVisibilityMap.set(n.id, Boolean(n.data?.isVisible));
     });
 
+    // 1. Dynamic edge layout & anti-collision placement calculation
+    const edgeLayoutMap = new Map<string, {
+      curveOffset?: number;
+      customLabelPos?: { x: number; y: number };
+      tPos?: number;
+      edgeIndex?: number;
+    }>();
+
+    // Hierarchy leaf edges (penyusun) use direct handle-relative positioning in CustomHierarchyEdge
+    const penyusunEdges = deduplicatedEdges.filter((e: any) => !e.isCrossLink && (e.label || "").trim().toLowerCase() === "penyusun");
+    penyusunEdges.forEach((edge, pIdx) => {
+      edgeLayoutMap.set(edge.id, {
+        edgeIndex: pIdx,
+      });
+    });
+
+    // C. Vertical Same-Column Cross-Links: Concentric Arcs & Collision-free Labels
+    const vertCrossLinks: any[] = [];
+    const otherCrossLinks: any[] = [];
+
+    deduplicatedEdges.forEach((edge: any) => {
+      if (!edge.isCrossLink) return;
+      const sPos = nodePosMap.get(edge.source);
+      const tPos = nodePosMap.get(edge.target);
+      if (!sPos || !tPos) return;
+
+      const dx = Math.abs(tPos.x - sPos.x);
+      const dy = Math.abs(tPos.y - sPos.y);
+
+      if (dx < 160 && dy > 100) {
+        vertCrossLinks.push(edge);
+      } else {
+        otherCrossLinks.push(edge);
+      }
+    });
+
+    const colGroups = new Map<string, any[]>();
+    vertCrossLinks.forEach((e) => {
+      const sPos = nodePosMap.get(e.source)!;
+      const colKey = sPos.x < 0 ? "left" : "right";
+      const list = colGroups.get(colKey) || [];
+      list.push(e);
+      colGroups.set(colKey, list);
+    });
+
+    colGroups.forEach((groupEdges, colKey) => {
+      const isLeft = colKey === "left";
+      const dir = isLeft ? -1 : 1;
+
+      // Sort by span (smaller jumps first, then by vertical midY)
+      groupEdges.sort((a, b) => {
+        const sA = nodePosMap.get(a.source)!;
+        const tA = nodePosMap.get(a.target)!;
+        const sB = nodePosMap.get(b.source)!;
+        const tB = nodePosMap.get(b.target)!;
+        const spanA = Math.abs(tA.y - sA.y);
+        const spanB = Math.abs(tB.y - sB.y);
+        if (spanA !== spanB) return spanA - spanB;
+        const midYA = (sA.y + tA.y) / 2;
+        const midYB = (sB.y + tB.y) / 2;
+        return midYA - midYB;
+      });
+
+      const placedArcs: Array<{ yMin: number; yMax: number; offset: number; midY: number; labelW: number; labelTPos: number }> = [];
+
+      groupEdges.forEach((edge) => {
+        const sPos = nodePosMap.get(edge.source)!;
+        const tPos = nodePosMap.get(edge.target)!;
+        const yMin = Math.min(sPos.y, tPos.y);
+        const yMax = Math.max(sPos.y, tPos.y);
+        const span = yMax - yMin;
+        const jump = Math.max(1, Math.round(span / 160));
+        const midY = (sPos.y + tPos.y) / 2;
+
+        const labelText = typeof edge.label === "string" ? edge.label.replace(/_/g, " ") : "";
+        const labelW = Math.max(120, labelText.length * 8.5 + 32);
+        const halfW = labelW / 2;
+
+        // Base offset guaranteed to clear card horizontally:
+        // At apex (t = 0.5), distance from handle is 0.75 * baseOffset.
+        // We require: 0.75 * baseOffset >= halfW + 45px
+        const minClearanceOffset = Math.ceil((halfW + 45) / 0.75);
+        let baseOffset = Math.max(minClearanceOffset, 200) + (jump - 1) * 55;
+
+        // Ensure concentric curves don't collide with each other
+        while (placedArcs.some((arc) => {
+          const yOverlap = Math.max(0, Math.min(yMax, arc.yMax) - Math.max(yMin, arc.yMin));
+          return yOverlap > 40 && Math.abs(baseOffset - arc.offset) < 55;
+        })) {
+          baseOffset += 50;
+        }
+
+        // Check if another placed arc in this column has a close midY (within 55px)
+        let labelTPos = 0.50;
+        const confArc = placedArcs.find((arc) => {
+          return Math.abs(midY - arc.midY) < 55 && Math.abs(baseOffset - arc.offset) < (halfW + arc.labelW / 2 + 30);
+        });
+
+        if (confArc) {
+          // Stagger labelTPos: if earlier arc is at 0.50, stagger this one to 0.38 or 0.62
+          labelTPos = confArc.labelTPos === 0.50 ? 0.38 : (confArc.labelTPos === 0.38 ? 0.62 : 0.50);
+        }
+
+        placedArcs.push({ yMin, yMax, offset: baseOffset, midY, labelW, labelTPos });
+
+        const curveOffset = dir * baseOffset;
+
+        edgeLayoutMap.set(edge.id, {
+          curveOffset,
+          tPos: labelTPos,
+        });
+      });
+    });
+
+    // D. Other Cross-Links (e.g. passing close to root node)
+    otherCrossLinks.forEach((edge) => {
+      const sPos = nodePosMap.get(edge.source)!;
+      const tPos = nodePosMap.get(edge.target)!;
+      const midX = (sPos.x + tPos.x) / 2;
+      const midY = (sPos.y + tPos.y) / 2;
+      const distFromCenter = Math.sqrt(midX * midX + midY * midY);
+
+      if (distFromCenter < 380) {
+        const dirX = distFromCenter > 1 ? midX / distFromCenter : 0;
+        const dirY = distFromCenter > 1 ? midY / distFromCenter : -1;
+        const ctrlX = midX + dirX * 320;
+        const ctrlY = midY + dirY * 320;
+        const lx = (sPos.x + 2 * ctrlX + tPos.x) / 4;
+        const ly = (sPos.y + 2 * ctrlY + tPos.y) / 4;
+        const labelText = typeof edge.label === "string" ? edge.label.replace(/_/g, " ") : "";
+        const labelW = Math.max(120, labelText.length * 8.5 + 32);
+        const labelH = 34;
+
+        edgeLayoutMap.set(edge.id, {
+          customLabelPos: { x: lx, y: ly },
+        });
+      }
+    });
+
     const formattedEdges = deduplicatedEdges.map((edge: any) => {
       const isSelectedRelation = selectedRelationEdgeId === edge.id;
       const strokeColor = isSelectedRelation ? "#f59e0b" : (edge.color || catColorMap.get(edge.source) || catColorMap.get(edge.target) || "#64748b");
       const srcPos = nodePosMap.get(edge.source);
       const tgtPos = nodePosMap.get(edge.target);
+      const layoutInfo = edgeLayoutMap.get(edge.id);
 
       const { sourceHandle, targetHandle } = getOptimalHandles(srcPos, tgtPos, edge.isCrossLink);
 
@@ -1168,7 +1374,9 @@ function KanjiAtlasFlowInner({
             rawLabel === nodeKanji ||
             rawLabel === nodeMeaning ||
             rawLabel === nodeReading ||
-            rawLabel === "unsur"
+            rawLabel === "unsur" ||
+            rawLabel === "mencakup" ||
+            rawLabel === "kategori"
           ) {
             edgeLabel = undefined;
           }
@@ -1204,6 +1412,10 @@ function KanjiAtlasFlowInner({
           ...edge.data,
           isSelected: isSelectedRelation,
           onSelectRelation: handleSelectRelation,
+          curveOffset: layoutInfo?.curveOffset,
+          customLabelPos: layoutInfo?.customLabelPos,
+          tPos: layoutInfo?.tPos,
+          edgeIndex: layoutInfo?.edgeIndex,
         },
         labelBgPadding: edgeLabel ? [8, 4] : undefined,
         labelBgBorderRadius: edgeLabel ? 8 : undefined,
@@ -1266,7 +1478,8 @@ function KanjiAtlasFlowInner({
         setExpandedCategoryIds(new Set());
         setOpenCategoryHistory([]);
         setTimeout(() => {
-          setCenter(0, 0, { zoom: 1.1, duration: 700 });
+          const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+          setCenter(0, 0, { zoom: isMobile ? 0.85 : 1.05, duration: 700 });
         }, 300);
       }
       return;
@@ -1348,6 +1561,7 @@ function KanjiAtlasFlowInner({
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        nodeOrigin={[0.5, 0.5]}
         onNodeClick={onNodeClick}
         onEdgeClick={(_e, edge) => {
           if (edge.isCrossLink || edge.predicate || edge.label) {
@@ -1370,7 +1584,7 @@ function KanjiAtlasFlowInner({
         }}
         fitView
         fitViewOptions={{ padding: 0.35 }}
-        minZoom={0.12}
+        minZoom={0.35}
         maxZoom={1.5}
         nodesConnectable={false}
         nodesDraggable={true}
