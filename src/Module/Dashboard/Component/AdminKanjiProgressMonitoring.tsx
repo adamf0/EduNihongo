@@ -244,7 +244,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
         <div>
           <h3 className="font-bold text-on-surface text-base flex items-center gap-2">
             <Icon name="monitoring" className="text-[#8f0020] text-xl" />
-            Monitoring Progress Pembelajaran Kanji Mahasiswa
+            Monitoring Progres Pembelajaran Kanji Mahasiswa
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
             Pantau rincian penguasaan kanji (total, baca, tulis, kuis) setiap mahasiswa per modul & kanji target.
@@ -277,7 +277,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
           <span className="text-[10px] uppercase font-bold text-slate-400">Rata-rata Total</span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-lg font-black text-slate-800">{stats.avgTotal}%</span>
-            <span className="text-[10px] text-slate-400">mastery</span>
+            <span className="text-[10px] text-slate-400">penguasaan</span>
           </div>
         </div>
 
@@ -295,7 +295,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
           <span className="text-[10px] uppercase font-bold text-blue-700">Rata-rata Membaca</span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-lg font-black text-blue-800">{stats.avgReading}%</span>
-            <span className="text-[10px] text-blue-600 font-medium">reading</span>
+            <span className="text-[10px] text-blue-600 font-medium">membaca</span>
           </div>
         </div>
 
@@ -303,7 +303,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
           <span className="text-[10px] uppercase font-bold text-amber-700">Rata-rata Menulis</span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-lg font-black text-amber-800">{stats.avgWriting}%</span>
-            <span className="text-[10px] text-amber-600 font-medium">writing</span>
+            <span className="text-[10px] text-amber-600 font-medium">menulis</span>
           </div>
         </div>
       </div>
@@ -501,7 +501,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
                     className="p-3 text-center w-[140px] min-w-[130px] whitespace-nowrap cursor-pointer hover:bg-slate-200/60 transition-colors"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <span>Progress Total</span>
+                      <span>Progres Total</span>
                       {sortBy === "total" && (
                         <Icon name={sortOrder === "asc" ? "arrow_upward" : "arrow_downward"} className="text-xs" />
                       )}
@@ -514,7 +514,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
                     className="p-3 text-center w-[110px] min-w-[100px] whitespace-nowrap cursor-pointer hover:bg-slate-200/60 transition-colors"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <span>Progress Baca</span>
+                      <span>Progres Baca</span>
                       {sortBy === "reading" && (
                         <Icon name={sortOrder === "asc" ? "arrow_upward" : "arrow_downward"} className="text-xs" />
                       )}
@@ -527,7 +527,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
                     className="p-3 text-center w-[110px] min-w-[100px] whitespace-nowrap cursor-pointer hover:bg-slate-200/60 transition-colors"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <span>Progress Tulis</span>
+                      <span>Progres Tulis</span>
                       {sortBy === "writing" && (
                         <Icon name={sortOrder === "asc" ? "arrow_upward" : "arrow_downward"} className="text-xs" />
                       )}
@@ -540,7 +540,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
                     className="p-3 text-center w-[110px] min-w-[100px] whitespace-nowrap cursor-pointer hover:bg-slate-200/60 transition-colors"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <span>Progress Kuis</span>
+                      <span>Progres Kuis</span>
                       {sortBy === "quiz" && (
                         <Icon name={sortOrder === "asc" ? "arrow_upward" : "arrow_downward"} className="text-xs" />
                       )}

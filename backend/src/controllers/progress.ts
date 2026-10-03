@@ -153,7 +153,7 @@ export const getProgressData = async (req: AuthenticatedRequest, res: Response) 
         level: "Kanjigraph Learner",
         masteryWriting: `${computedStats.masteryWriting}%`,
         masteryVocabulary: `${computedStats.masteryVocabulary}%`,
-        xpToday: `${xpEarnedToday} XP`,
+        xpToday: `${xpEarnedToday} Poin`,
         todayProgress: `${kanjiPracticedToday} / ${dailyTarget} Kanji`
       },
       heatmap: {

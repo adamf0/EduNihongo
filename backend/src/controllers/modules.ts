@@ -127,9 +127,10 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       )
     );
 
-    // Calculate overall course progress (average of modules progress)
-    const overallProgress = modules.length > 0
-      ? Math.round(modules.reduce((sum, m) => sum + m.progressPercent, 0) / modules.length)
+    // Calculate overall course progress (average of modules with kanjis)
+    const activeModules = modules.filter((m) => m.kanjis && m.kanjis.length > 0);
+    const overallProgress = activeModules.length > 0
+      ? Math.round(activeModules.reduce((sum, m) => sum + m.progressPercent, 0) / activeModules.length)
       : 0;
 
     res.json({

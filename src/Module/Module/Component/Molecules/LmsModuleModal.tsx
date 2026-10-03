@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { api } from "../../../Common/Utility/api";
+import { getSharedAudioContext } from "../../../Common/Utility/audioContext";
 
 interface LmsModuleModalProps {
   moduleId: number;
@@ -55,10 +56,8 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
 
   const playSuccessFanfare = () => {
     try {
-      const AudioContextClass =
-        window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
+      const ctx = getSharedAudioContext();
+      if (!ctx) return;
 
       const playNote = (
         freq: number,
@@ -343,7 +342,7 @@ export const LmsModuleModal: React.FC<LmsModuleModalProps> = ({
                             if (isExpired) {
                               return (
                                 <span className="px-2.5 py-1 rounded-full text-xs font-black bg-red-100 text-red-700">
-                                  Expired
+                                  Waktu Habis
                                 </span>
                               );
                             }

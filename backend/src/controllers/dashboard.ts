@@ -163,10 +163,10 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
         levelProgress: todayProgressPercent,
         level: "Progres Target Hari Ini",
         totalDays: `${totalDaysActive} Hari`,
-        xpToday: `${xpEarnedToday} XP`,
+        xpToday: `${xpEarnedToday} Poin`,
         masteryWriting: `${computedStats.masteryWriting}%`,
         masteryVocabulary: `${computedStats.masteryVocabulary}%`,
-        totalXp: `${computedStats.totalXp} XP`,
+        totalXp: `${computedStats.totalXp} Poin`,
       },
       weeklyActivity,
       activities: recentActivities.map((act) => ({

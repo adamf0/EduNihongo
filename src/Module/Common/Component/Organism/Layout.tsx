@@ -43,7 +43,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const role = profile?.role || api.auth.getRole();
 
   const adminBottomNavItems = [
-    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+    { icon: "dashboard", label: "Beranda", route: "/dashboard" },
     { icon: "layers", label: "Modul", route: "/admin" },
     { icon: "draw", label: "Kanji", route: "/admin/kanji" },
     { icon: "menu_book", label: "Jukugo", route: "/admin/jukugo" },
@@ -52,9 +52,9 @@ export const Layout: React.FC<LayoutProps> = ({
 
   const userBottomNavItems = [
     { icon: "home", label: "Beranda", route: "/dashboard" },
-    { icon: "menu_book", label: "Kanji", route: "/module" },
+    { icon: "menu_book", label: "Modul", route: "/module" },
     { icon: "school", label: "Belajar", route: "/latihan" },
-    { icon: "analytics", label: "Stat", route: "/progress" },
+    { icon: "analytics", label: "Progres", route: "/progress" },
     { icon: "person", label: "Profil", route: "/profile" },
   ];
 

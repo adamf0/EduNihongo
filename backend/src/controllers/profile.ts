@@ -81,7 +81,7 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
         title,
         desc,
         time: getRelativeTime(act.date),
-        xp: act.xpEarned > 0 ? `+${act.xpEarned} XP` : "0 XP",
+        xp: act.xpEarned > 0 ? `+${act.xpEarned} Poin` : "0 Poin",
       };
     });
 

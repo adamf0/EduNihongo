@@ -90,6 +90,7 @@ class SpeechService {
 
     try {
       const audio = new Audio(url);
+      audio.preload = "auto";
       this.currentAudio = audio;
 
       audio.onended = finish;
@@ -98,6 +99,12 @@ class SpeechService {
         this.currentAudio = null;
         this.fallbackLocalSpeak(trimmedText, finish);
       };
+
+      try {
+        audio.load();
+      } catch (loadErr) {
+        // ignore load error
+      }
 
       const playPromise = audio.play();
       if (playPromise !== undefined) {
@@ -121,6 +128,9 @@ class SpeechService {
     }
 
     try {
+      if (this.synth.paused) {
+        this.synth.resume();
+      }
       this.synth.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
@@ -142,6 +152,9 @@ class SpeechService {
       }
 
       this.synth.speak(utterance);
+      if (this.synth.paused) {
+        this.synth.resume();
+      }
     } catch (error) {
       console.error("Local speech synthesis fallback failed:", error);
       if (onEnd) onEnd();

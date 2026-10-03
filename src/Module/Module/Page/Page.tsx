@@ -104,8 +104,23 @@ export const ModulePage: React.FC = () => {
     );
   }
 
-  const { overallProgress, modules } = data;
+  const modules = data?.modules || [];
   const isLockActive = ENABLE_LOCK_SYSTEM && (data?.isLockSystemEnabled !== false);
+
+  // Hanya tampilkan modul yang sudah memiliki materi kanji
+  const displayModules = modules.filter(
+    (mod: any) => mod.kanjis && mod.kanjis.length > 0
+  );
+
+  const activeOverallProgress =
+    displayModules.length > 0
+      ? Math.round(
+          displayModules.reduce(
+            (sum: number, m: any) => sum + (m.progressPercent || 0),
+            0
+          ) / displayModules.length
+        )
+      : (data?.overallProgress || 0);
 
   const showObjectives = (title: string, objectives: string) => {
     setInfoModalContent({ title, objectives });
@@ -139,7 +154,7 @@ export const ModulePage: React.FC = () => {
             </div>
             <div className="flex flex-col items-center shrink-0 self-start md:self-end">
               <div className="w-16 h-16 rounded-full border-4 border-[#c8232a] flex items-center justify-center bg-white shadow-sm">
-                <span className="text-xl font-bold text-[#c8232a]">{overallProgress}%</span>
+                <span className="text-xl font-bold text-[#c8232a]">{activeOverallProgress}%</span>
               </div>
               <span className="text-[10px] mt-1 font-bold uppercase tracking-wider text-[#c8232a]">PROGRES TOTAL</span>
             </div>
@@ -152,7 +167,7 @@ export const ModulePage: React.FC = () => {
             <div className="absolute left-6 md:left-1/2 top-8 bottom-8 w-[2px] bg-repeat-y -translate-x-1/2 z-0"
                  style={{ backgroundImage: 'linear-gradient(to bottom, #c8232a 50%, transparent 50%)', backgroundSize: '2px 16px' }}></div>
 
-            {modules.map((mod: any, idx: number) => {
+            {displayModules.map((mod: any, idx: number) => {
               const isEven = idx % 2 === 0;
               const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
               const isModLocked = isLockActive && Boolean(mod.isLocked);
@@ -311,11 +326,11 @@ const ModuleCard = ({
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
         <div className="flex items-center gap-1.5">
           <h3 className={`text-lg font-bold ${isModLocked || !hasKanjis ? 'text-slate-500' : 'text-slate-900'}`}>
-            {mod.title}
+            {mod.title?.replace(/^Module\s+/i, "Modul ") || mod.title}
           </h3>
           {!isModLocked && mod.tujuanPembelajaran && (
             <button
-              onClick={() => onShowInfo(mod.title, mod.tujuanPembelajaran)}
+              onClick={() => onShowInfo(mod.title?.replace(/^Module\s+/i, "Modul ") || mod.title, mod.tujuanPembelajaran)}
               className="p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-slate-400 hover:text-slate-600 bg-transparent border-none flex items-center justify-center"
               title="Lihat Tujuan Pembelajaran"
             >
@@ -329,7 +344,7 @@ const ModuleCard = ({
           </span>
         ) : !hasKanjis ? (
           <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
-            Belum ada materi
+            Segera hadir
           </span>
         ) : mod.isCompleted ? (
           <span className="bg-[#e2f0d9] text-[#385723] px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
@@ -369,7 +384,7 @@ const ModuleCard = ({
           </div>
         ) : (
           <div className="py-2.5 px-3 text-xs italic text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center font-medium select-none">
-            Belum ada materi kanji
+            Segera hadir
           </div>
         )}
       </div>
@@ -411,7 +426,7 @@ const ModuleCard = ({
             className={`flex-1 py-2.5 rounded-xl font-bold shadow-sm transition-all duration-200 text-xs flex items-center justify-center gap-1.5 ${!hasKanjis || !targetKanji ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed' : (mod.isCompleted ? 'bg-[#4F7942] text-white hover:brightness-105 active:scale-[0.98] cursor-pointer' : 'bg-[#8f0020] text-white hover:brightness-105 active:scale-[0.98] cursor-pointer')}`}
           >
             <BookOpen className="w-4 h-4 shrink-0" />
-            {!hasKanjis ? "Belum ada materi" : (mod.isCompleted ? "Ulas Kembali" : "Mulai Belajar")}
+            {!hasKanjis ? "Segera hadir" : (mod.isCompleted ? "Ulas Kembali" : "Mulai Belajar")}
             {hasKanjis && <ChevronRight className="w-4 h-4 shrink-0" />}
           </button>
         </div>

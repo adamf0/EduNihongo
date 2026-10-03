@@ -25,8 +25,8 @@ const KanjiStrokeVisualizer = ({ kanji }: Props) => {
 
   if (!kanjiData) {
     return (
-      <div className="flex items-center justify-center w-full h-full">
-        Loading...
+      <div className="flex items-center justify-center w-full h-full text-slate-400 text-xs italic">
+        Memuat animasi goresan...
       </div>
     );
   }

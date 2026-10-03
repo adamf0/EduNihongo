@@ -179,7 +179,7 @@ export const ProfilePage: React.FC = () => {
                   {stats.streak}
                 </span>
                 <span className="font-caption text-caption text-on-surface-variant uppercase tracking-wider font-semibold">
-                  Days Streak
+                  Hari Beruntun
                 </span>
               </div>
               <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/10 flex flex-col justify-center items-center text-center">
@@ -187,7 +187,7 @@ export const ProfilePage: React.FC = () => {
                   {stats.xp}
                 </span>
                 <span className="font-caption text-caption text-on-surface-variant uppercase tracking-wider font-semibold">
-                  Total XP
+                  Total Poin
                 </span>
               </div>
             </div>
@@ -253,7 +253,7 @@ export const ProfilePage: React.FC = () => {
                           {item.desc}
                         </p>
                         <p className="font-caption text-caption text-on-surface-variant">
-                          {item.time} • {item.xp}
+                          {item.time} • {item.xp ? String(item.xp).replace(/XP/i, "Poin") : ""}
                         </p>
                       </div>
                       <Icon
@@ -515,15 +515,15 @@ export const ProfilePage: React.FC = () => {
                 <div className="flex items-center gap-2.5 p-3 bg-surface-container-low rounded-xl">
                   <Icon name="local_fire_department" className="text-primary text-2xl block" />
                   <div>
-                    <p className="text-caption text-on-surface-variant font-semibold">Streak</p>
+                    <p className="text-caption text-on-surface-variant font-semibold">Hari Beruntun</p>
                     <p className="font-body-md text-body-md font-bold text-on-surface">{stats.streak} Hari</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 p-3 bg-surface-container-low rounded-xl">
                   <Icon name="military_tech" className="text-tertiary text-2xl block" />
                   <div>
-                    <p className="text-caption text-on-surface-variant font-semibold">Total XP</p>
-                    <p className="font-body-md text-body-md font-bold text-on-surface">{stats.xp} XP</p>
+                    <p className="text-caption text-on-surface-variant font-semibold">Total Poin</p>
+                    <p className="font-body-md text-body-md font-bold text-on-surface">{stats.xp} Poin</p>
                   </div>
                 </div>
               </div>

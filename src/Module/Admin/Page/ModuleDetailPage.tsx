@@ -447,7 +447,7 @@ export const ModuleDetailPage: React.FC = () => {
             <div>
               <h2 className="font-headline-lg text-headline-lg font-bold text-on-surface flex items-center gap-sm">
                 <Icon name="school" className="text-primary text-3xl animate-bounce" />
-                LMS Dosen: {module?.title || "Loading..."}
+                LMS Dosen: {module?.title || "Memuat..."}
               </h2>
               <p className="text-body-md text-on-surface-variant font-medium">
                 Manajemen kurikulum materi kuliah, penugasan mahasiswa, penilaian tugas, dan diskusi kelas.

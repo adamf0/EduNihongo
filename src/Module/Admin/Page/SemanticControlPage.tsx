@@ -390,7 +390,7 @@ export const SemanticControlPage: React.FC = () => {
                 <Icon name="arrow_back" className="text-2xl" />
               </button>
               <Icon name="hub" className="text-indigo-600 text-3xl" />
-              Control Semantic: Hubungan Jukugo
+              Kontrol Semantik: Hubungan Jukugo
             </h2>
             <p className="text-body-md text-on-surface-variant font-medium mt-1">
               Hubungkan relasi semantik antar Jukugo serta lihat komponen karakter Kanji leaf terkait.

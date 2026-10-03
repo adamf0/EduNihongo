@@ -228,7 +228,7 @@ export const JukugoPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <AddActionButton
-              label="Control Semantic"
+              label="Kontrol Semantik"
               iconName="hub"
               variant="indigo"
               onClick={() =>

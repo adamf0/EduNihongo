@@ -89,8 +89,8 @@ export const ProgressPage: React.FC = () => {
             />
             <StatCard
               icon="stars"
-              label="XP Hari Ini"
-              value={stats.xpToday || "0 XP"}
+              label="Poin Hari Ini"
+              value={stats.xpToday ? stats.xpToday.replace(/XP/i, "Poin") : "0 Poin"}
               iconColorClass="text-primary"
             />
             <StatCard

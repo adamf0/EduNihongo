@@ -138,6 +138,7 @@ router.get("/", async (req: Request, res: Response) => {
     // 1. Cek disk cache
     if (fs.existsSync(cachedFilePath)) {
       res.setHeader("Content-Type", "audio/mpeg");
+      res.setHeader("Accept-Ranges", "bytes");
       res.setHeader("Cache-Control", "public, max-age=86400");
       res.setHeader("X-TTS-Cache", "HIT");
       return res.sendFile(cachedFilePath);
@@ -152,9 +153,10 @@ router.get("/", async (req: Request, res: Response) => {
     fs.renameSync(tempPath, cachedFilePath);
 
     res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Accept-Ranges", "bytes");
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("X-TTS-Cache", "MISS");
-    return res.send(audioBuffer);
+    return res.sendFile(cachedFilePath);
   } catch (error: any) {
     console.error("TTS Proxy Error:", error);
     return res.status(500).json({

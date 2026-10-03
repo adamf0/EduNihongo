@@ -39,7 +39,7 @@ export const WeeklyActivity: React.FC<WeeklyActivityProps> = ({ data }) => {
         {/* Indicators Legend */}
         <div className="flex gap-sm items-center flex-wrap text-caption font-bold">
           <span className="flex items-center gap-xs">
-            <span className="w-2.5 h-2.5 bg-amber-500 rounded-full"></span> XP
+            <span className="w-2.5 h-2.5 bg-amber-500 rounded-full"></span> Poin
           </span>
           <span className="flex items-center gap-xs">
             <span className="w-2.5 h-2.5 bg-primary rounded-full"></span> Kanji
@@ -70,7 +70,7 @@ export const WeeklyActivity: React.FC<WeeklyActivityProps> = ({ data }) => {
                   Detail {item.day}
                 </div>
                 <div className="flex justify-between gap-md">
-                  <span className="text-amber-400">XP:</span>
+                  <span className="text-amber-400">Poin:</span>
                   <span className="font-bold">+{item.xp}</span>
                 </div>
                 <div className="flex justify-between gap-md">
@@ -94,7 +94,7 @@ export const WeeklyActivity: React.FC<WeeklyActivityProps> = ({ data }) => {
                           isToday ? "brightness-110 shadow-sm shadow-amber-500/30" : "opacity-80 group-hover:opacity-100"
                         }`}
                         style={{ height: `${xpHeight}%` }}
-                        title={`XP: ${item.xp}`}
+                        title={`Poin: ${item.xp}`}
                       />
                     </div>
 
@@ -139,7 +139,7 @@ export const WeeklyActivity: React.FC<WeeklyActivityProps> = ({ data }) => {
       <div className="mt-4 pt-3 border-t border-outline-variant/10 flex justify-between items-center text-[10px] text-on-surface-variant font-semibold">
         <span>Arahkan kursor ke grafik untuk info detail</span>
         <div className="flex gap-md">
-          <span>Total XP: <span className="text-amber-500 font-bold">{rawData.reduce((s, d) => s + d.xp, 0)} XP</span></span>
+          <span>Total Poin: <span className="text-amber-500 font-bold">{rawData.reduce((s, d) => s + d.xp, 0)} Poin</span></span>
           <span>Total Kanji: <span className="text-primary font-bold">{rawData.reduce((s, d) => s + d.kanji, 0)}</span></span>
           <span>Total Kosakata: <span className="text-teal-600 font-bold">{rawData.reduce((s, d) => s + d.vocab, 0)}</span></span>
         </div>

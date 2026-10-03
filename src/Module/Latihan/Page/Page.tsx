@@ -11,6 +11,7 @@ import Breadcrumbs from "../Component/Atoms/Breadcrumbs";
 import { api } from "../../Common/Utility/api";
 import { fetchGraphQL, GET_KANJI_SEMANTIC_GRAPH_QUERY } from "../../../Common/Utility/graphqlClient";
 import tts from "../../Common/Utility/tts";
+import { getSharedAudioContext } from "../../Common/Utility/audioContext";
 import StrokeByStroke from "../Component/Atoms/StrokeByStroke";
 import {
     BookOpen,
@@ -360,14 +361,14 @@ export const LatihanPage: React.FC = () => {
             return (
                 <span className="bg-emerald-500/10 text-emerald-700 text-xs px-2.5 py-1 rounded-full font-extrabold flex items-center gap-1 select-none border border-emerald-500/10">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                    +{amount} XP
+                    +{amount} Poin
                 </span>
             );
         }
         return (
             <span className="bg-amber-500/10 text-amber-700 text-xs px-2.5 py-1 rounded-full font-extrabold flex items-center gap-1 select-none border border-amber-500/10">
                 <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-                +{amount} XP
+                +{amount} Poin
             </span>
         );
     };
@@ -989,10 +990,8 @@ export const LatihanPage: React.FC = () => {
 
     const playSuccessFanfare = () => {
         try {
-            const AudioContextClass =
-                window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioContextClass) return;
-            const ctx = new AudioContextClass();
+            const ctx = getSharedAudioContext();
+            if (!ctx) return;
 
             const playNote = (
                 freq: number,
@@ -1040,10 +1039,8 @@ export const LatihanPage: React.FC = () => {
 
     const playPageLoadSound = () => {
         try {
-            const AudioContextClass =
-                window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioContextClass) return;
-            const ctx = new AudioContextClass();
+            const ctx = getSharedAudioContext();
+            if (!ctx) return;
 
             const playNote = (
                 freq: number,
@@ -1087,10 +1084,8 @@ export const LatihanPage: React.FC = () => {
 
     const playTabClickSound = () => {
         try {
-            const AudioContextClass =
-                window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioContextClass) return;
-            const ctx = new AudioContextClass();
+            const ctx = getSharedAudioContext();
+            if (!ctx) return;
 
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
@@ -1125,10 +1120,8 @@ export const LatihanPage: React.FC = () => {
 
     const playTingTing = () => {
         try {
-            const AudioContextClass =
-                window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioContextClass) return;
-            const ctx = new AudioContextClass();
+            const ctx = getSharedAudioContext();
+            if (!ctx) return;
 
             const playNote = (
                 freq: number,
@@ -1169,10 +1162,8 @@ export const LatihanPage: React.FC = () => {
 
     const playTungTung = () => {
         try {
-            const AudioContextClass =
-                window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioContextClass) return;
-            const ctx = new AudioContextClass();
+            const ctx = getSharedAudioContext();
+            if (!ctx) return;
 
             const playNote = (
                 freq: number,
@@ -2473,7 +2464,7 @@ export const LatihanPage: React.FC = () => {
                 {/* Breadcrumbs */}
                 <Breadcrumbs
                     items={[
-                        { label: "Dasbor", path: "/dashboard" },
+                        { label: "Beranda", path: "/dashboard" },
                         { label: "Kanji & Kosakata", path: "/module" },
                         {
                             label: `Latihan & Evaluasi: ${kanji} (${kanjiData.moduleTitle || "Kanji"})`,
@@ -3854,14 +3845,14 @@ export const LatihanPage: React.FC = () => {
                                                 <button
                                                     onClick={handleClear}
                                                     className="w-12 h-12 bg-white border border-slate-200 text-slate-600 rounded-full shadow-md flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all cursor-pointer active:scale-95"
-                                                    title="Clear pad"
+                                                    title="Hapus coretan kanvas"
                                                 >
                                                     <RotateCcw className="w-5 h-5" />
                                                 </button>
                                                 <button
                                                     onClick={handleUndo}
                                                     className="w-12 h-12 bg-white border border-slate-200 text-slate-600 rounded-full shadow-md flex items-center justify-center hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer active:scale-95"
-                                                    title="Undo"
+                                                    title="Batalkan goresan (Undo)"
                                                 >
                                                     <Icon
                                                         name="undo"
@@ -5358,7 +5349,7 @@ export const LatihanPage: React.FC = () => {
                                                             if (isExpired) {
                                                                 return (
                                                                     <span className="px-2.5 py-1 rounded-full text-xs font-black bg-red-100 text-red-700">
-                                                                        Expired
+                                                                        Waktu Habis
                                                                     </span>
                                                                 );
                                                             }
@@ -6231,12 +6222,12 @@ export const LatihanPage: React.FC = () => {
             {xpNotification && (
                 <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur text-white px-6 py-3.5 rounded-full border border-amber-500/35 shadow-2xl flex items-center gap-3 animate-fade-in animate-bounce">
                     <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-slate-950 font-black shadow-md text-xs">
-                        XP
+                        Poin
                     </div>
                     <div className="flex flex-col text-left">
                         <span className="font-extrabold text-sm text-amber-400">
                             Selamat! Anda mendapatkan +{xpNotification.amount}{" "}
-                            XP
+                            Poin
                         </span>
                         <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">
                             {xpNotification.description}

@@ -16,7 +16,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
 
   // Data fallback jika props items tidak dikirim (sesuai halaman Detail & Latihan Anda)
   const defaultItems: BreadcrumbItem[] = [
-    { label: "Dasbor", path: "/dashboard" },
+    { label: "Beranda", path: "/dashboard" },
     { label: "Kanji & Kosakata", path: "/module" },
     { label: "Detail & Latihan: 学 (情報)" },
   ];

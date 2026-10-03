@@ -96,8 +96,8 @@ export const DashboardPage: React.FC = () => {
             <StatCard
               icon="stars"
               title="Hari Ini"
-              label="XP Didapatkan"
-              value={stats.xpToday || "0 XP"}
+              label="Poin Didapatkan"
+              value={stats.xpToday ? stats.xpToday.replace(/XP/i, "Poin") : "0 Poin"}
               iconColorClass="text-primary"
             />
             <StatCard
@@ -177,7 +177,7 @@ export const DashboardPage: React.FC = () => {
                             </div>
                           </div>
                           <span className="text-sm font-bold text-emerald-600">
-                            +{act.xpEarned} XP
+                            +{act.xpEarned} Poin
                           </span>
                         </div>
                       );

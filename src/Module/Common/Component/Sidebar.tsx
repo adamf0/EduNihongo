@@ -41,17 +41,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const role = profile?.role || api.auth.getRole();
   const menus = role === "ADMIN"
     ? [
-        { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+        { icon: "dashboard", label: "Beranda", route: "/dashboard" },
         { icon: "layers", label: "Kelola Modul", route: "/admin" },
         { icon: "draw", label: "Kelola Kanji", route: "/admin/kanji" },
         { icon: "menu_book", label: "Kelola Jukugo", route: "/admin/jukugo" },
         { icon: "category", label: "Kategori Kanji", route: "/admin/categories" },
       ]
     : [
-        { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
-        { icon: "layers", label: "Module", route: "/module" },
-        { icon: "trending_up", label: "Progress Belajar", route: "/progress" },
-        { icon: "person", label: "Profile", route: "/profile" },
+        { icon: "dashboard", label: "Beranda", route: "/dashboard" },
+        { icon: "layers", label: "Modul", route: "/module" },
+        { icon: "trending_up", label: "Progres Belajar", route: "/progress" },
+        { icon: "person", label: "Profil", route: "/profile" },
       ];
 
   return (

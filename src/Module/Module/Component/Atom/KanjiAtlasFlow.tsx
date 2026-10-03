@@ -13,6 +13,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import KanjiNode from "./KanjiNode";
 import { api } from "../../../Common/Utility/api";
+import { getSharedAudioContext } from "../../../Common/Utility/audioContext";
 
 const PALETTE = [
   "#f97316", // Vibrant Orange
@@ -44,13 +45,8 @@ function getCategoryColor(index: number, name: string): string {
 // Web Audio API Synthesized SFX for Node & Category Pop Animations
 function playPopSfx(index: number = 0, type: "category" | "node" = "node") {
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-
-    const ctx = new AudioCtx();
-    if (ctx.state === "suspended") {
-      ctx.resume();
-    }
+    const ctx = getSharedAudioContext();
+    if (!ctx) return;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
