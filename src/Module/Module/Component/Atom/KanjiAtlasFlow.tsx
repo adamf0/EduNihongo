@@ -1341,9 +1341,9 @@ function KanjiAtlasFlowInner({
         const ctrlY = midY + dirY * 320;
         const lx = (sPos.x + 2 * ctrlX + tPos.x) / 4;
         const ly = (sPos.y + 2 * ctrlY + tPos.y) / 4;
-        const labelText = typeof edge.label === "string" ? edge.label.replace(/_/g, " ") : "";
-        const labelW = Math.max(120, labelText.length * 8.5 + 32);
-        const labelH = 34;
+        // const labelText = typeof edge.label === "string" ? edge.label.replace(/_/g, " ") : "";
+        // const labelW = Math.max(120, labelText.length * 8.5 + 32);
+        // const labelH = 34;
 
         edgeLayoutMap.set(edge.id, {
           customLabelPos: { x: lx, y: ly },
