@@ -61,19 +61,19 @@ export const Layout: React.FC<LayoutProps> = ({
   const mobileBottomNavItems = role === "ADMIN" ? adminBottomNavItems : userBottomNavItems;
 
   return (
-    <div className="min-h-screen bg-background text-on-surface flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-background text-on-surface flex flex-col">
       {/* Sidebar Navigation (Desktop Only) */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content Layout area */}
-      <div className="lg:pl-64 flex flex-col flex-1 min-h-screen pb-24 lg:pb-0">
+      <div className="xl:pl-64 flex flex-col flex-1 min-h-screen pb-24 xl:pb-0">
         {/* Top Header / Navigation Bar */}
         <header className="sticky top-0 z-40 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-md flex justify-between items-center w-full px-4 md:px-6 py-2 max-w-[1200px] mx-auto border-b border-outline-variant/10">
           <div className="flex items-center gap-md flex-1">
-            {/* Mobile Brand Logo */}
+            {/* Mobile / Tablet Brand Logo */}
             <div
               onClick={() => navigate("/dashboard")}
-              className="lg:hidden cursor-pointer transition-transform hover:scale-105"
+              className="xl:hidden cursor-pointer transition-transform hover:scale-105"
             >
               <MusubiLogo mode="standalone" size={32} showText={true} />
             </div>
@@ -102,7 +102,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <img
               onClick={() => navigate("/profile")}
               alt="Avatar Pengguna"
-              className="w-8 h-8 rounded-full lg:hidden border-2 border-primary/10 cursor-pointer object-cover"
+              className="w-8 h-8 rounded-full xl:hidden border-2 border-primary/10 cursor-pointer object-cover"
               src={profile?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150"}
             />
           </div>
@@ -125,8 +125,11 @@ export const Layout: React.FC<LayoutProps> = ({
         </footer>
       </div>
 
-      {/* Bottom Navigation Bar (Mobile Only) */}
-      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-1 sm:px-3 pb-3 pt-1.5 bg-surface dark:bg-surface-dim border-t border-outline-variant/20 z-50 lg:hidden shadow-lg rounded-t-2xl">
+      {/* Bottom Navigation Bar (Mobile & Tablet) */}
+      <nav 
+        className="fixed bottom-0 inset-x-0 w-full flex justify-around items-center px-1 sm:px-3 pt-1.5 bg-surface dark:bg-surface-dim border-t border-outline-variant/20 z-[100] xl:hidden shadow-lg rounded-t-2xl"
+        style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+      >
         {mobileBottomNavItems.map((item) => {
           const isActive =
             currentPath === item.route ||
@@ -150,7 +153,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 className="text-xl sm:text-2xl block"
                 style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
               />
-              <span className="text-[10px] leading-tight tracking-tight truncate max-w-[56px] sm:max-w-none text-center">
+              <span className="text-[10px] sm:text-xs leading-tight tracking-tight truncate max-w-[56px] sm:max-w-none text-center">
                 {item.label}
               </span>
             </button>
@@ -162,7 +165,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {showFAB && fabOnClick && (
         <button
           onClick={fabOnClick}
-          className="fixed bottom-24 right-6 lg:bottom-12 lg:right-12 w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center z-40 group cursor-pointer torii-button-shadow"
+          className="fixed bottom-24 right-6 xl:bottom-12 xl:right-12 w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center z-40 group cursor-pointer torii-button-shadow"
         >
           <Icon name={fabIcon} className="text-2xl" />
           <span className="absolute right-full mr-4 px-3 py-1 bg-on-surface text-surface text-caption rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">

@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [currentPath]); // Refetch on path changes to ensure consistency after login/logout
 
-  const sidebarClasses = `fixed top-0 bottom-0 w-64 bg-surface dark:bg-surface-dim border-r border-outline-variant/30 z-50 hidden lg:flex flex-col left-0`;
+  const sidebarClasses = `fixed top-0 bottom-0 w-64 bg-surface dark:bg-surface-dim border-r border-outline-variant/30 z-50 hidden xl:flex flex-col left-0`;
 
   const role = profile?.role || api.auth.getRole();
   const menus = role === "ADMIN"
@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Backdrop Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-primary/20 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-primary/20 backdrop-blur-xs z-40 xl:hidden transition-opacity"
           onClick={onClose}
         ></div>
       )}
@@ -77,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Mobile close button */}
           <button
             onClick={onClose}
-            className="lg:hidden p-2 rounded-full hover:bg-surface-container text-on-surface-variant cursor-pointer focus:outline-none border-none"
+            className="xl:hidden p-2 rounded-full hover:bg-surface-container text-on-surface-variant cursor-pointer focus:outline-none border-none"
             aria-label="Close menu"
           >
             <Icon name="close" className="block text-2xl" />
