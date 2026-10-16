@@ -623,7 +623,7 @@ export const AdminQuizRubricReport: React.FC = () => {
             <h4 className="text-2xl font-bold text-[#8f0020] mt-1">
               {summary ? summary.distribution.sangatBaik : 0} <span className="text-xs font-semibold text-slate-400">siswa</span>
             </h4>
-            <p className="text-[11px] text-slate-400 mt-1">Nilai $\ge 86$ (Tuntas Sangat Baik)</p>
+            <p className="text-[11px] text-slate-400 mt-1">Nilai &ge; 60 (Tuntas Sangat Baik)</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-[#8f0020] flex items-center justify-center">
             <Icon name="verified" className="text-2xl" />
