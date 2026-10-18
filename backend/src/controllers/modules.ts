@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/auth";
+import { sortModuleKanjis } from "../utils/kanjiOrder";
 
 const prisma = new PrismaClient();
 
@@ -63,7 +64,8 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
         isLocked: boolean;
       }
 
-      const moduleKanjis: ModuleKanjiItem[] = up.module.kanjis.map((k: any, kIdx: number): ModuleKanjiItem => {
+      const sortedKanjis = sortModuleKanjis(up.module.kanjis || [], up.module.id);
+      const moduleKanjis: ModuleKanjiItem[] = sortedKanjis.map((k: any, kIdx: number): ModuleKanjiItem => {
         const progress = k.userProgress?.[0];
         const masteryPercent: number = progress?.masteryPercent || 0;
         const isCompleted: boolean = masteryPercent > 60;

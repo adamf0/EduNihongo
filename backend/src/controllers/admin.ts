@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { sanitizeObject } from "../utils/sanitize";
 import { buildDynamicKanjiGraph } from "../services/graphService";
 import { AnalyticsAdapterFactory } from "../services/analyticsAdapter";
+import { sortModuleKanjis } from "../utils/kanjiOrder";
 
 const prisma = new PrismaClient();
 
@@ -28,7 +29,7 @@ export const getModules = async (req: Request, res: Response) => {
 
     const formattedModules = modules.map((mod) => ({
       ...mod,
-      kanjis: (mod.kanjis || []).map((k) => {
+      kanjis: sortModuleKanjis(mod.kanjis || [], mod.id).map((k) => {
         const quizQuestions = (k.quizzes || []).map(formatQuizFromDb);
         const refQuestions = (k.masterRefleksi || []).map((mr) => mr.question);
 
@@ -77,7 +78,7 @@ export const getModuleDetail = async (req: Request, res: Response) => {
     }
 
     const formattedKanji = await Promise.all(
-      (mod.kanjis || []).map(async (k) => {
+      sortModuleKanjis(mod.kanjis || [], mod.id).map(async (k) => {
         const quizQuestions = (k.quizzes || []).map(formatQuizFromDb);
         const refQuestions = (k.masterRefleksi || []).map((mr) => mr.question);
         const dynamicGraph = await buildDynamicKanjiGraph(k.id);

@@ -12,6 +12,28 @@ import { LmsModuleModal } from "../Component/Molecules/LmsModuleModal";
 // ============================================================================
 export const ENABLE_LOCK_SYSTEM: boolean = true;
 
+export const sortModuleKanjis = (kanjis: any[], moduleId?: number | string) => {
+  if (!Array.isArray(kanjis) || kanjis.length <= 1) return kanjis || [];
+  const isModul4 =
+    moduleId === 558 ||
+    moduleId === "558" ||
+    (typeof moduleId === "string" && /modul\s*4|dunia\s*kerja/i.test(moduleId)) ||
+    kanjis.some((k: any) => k.character === "職" || k.character === "商");
+
+  if (isModul4) {
+    const order = ["職", "業", "商", "務", "術"];
+    return [...kanjis].sort((a: any, b: any) => {
+      const idxA = a.character ? order.indexOf(a.character) : -1;
+      const idxB = b.character ? order.indexOf(b.character) : -1;
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+  return kanjis;
+};
+
 export const ModulePage: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
@@ -181,14 +203,15 @@ export const ModulePage: React.FC = () => {
                 ? "md:w-[46%] hidden md:block order-3"
                 : "w-full md:w-[46%] flex justify-start order-2 md:order-3 pl-12 md:pl-0";
 
+              const orderedKanjis = sortModuleKanjis(mod.kanjis, mod.id);
               // Find first unlocked and incomplete kanji, or first unlocked, or fallback
               const targetKanji = isModLocked
-                ? (mod.kanjis.find((k: any) => !k.isLocked && !k.isCompleted)?.character 
-                    || mod.kanjis.find((k: any) => !k.isLocked)?.character 
-                    || mod.kanjis[0]?.character 
+                ? (orderedKanjis.find((k: any) => !k.isLocked && !k.isCompleted)?.character 
+                    || orderedKanjis.find((k: any) => !k.isLocked)?.character 
+                    || orderedKanjis[0]?.character 
                     || "")
-                : (mod.kanjis.find((k: any) => !k.isCompleted)?.character 
-                    || mod.kanjis[0]?.character 
+                : (orderedKanjis.find((k: any) => !k.isCompleted)?.character 
+                    || orderedKanjis[0]?.character 
                     || "");
 
               return (
@@ -362,7 +385,7 @@ const ModuleCard = ({
         <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-2">Materi Kanji</p>
         {hasKanjis ? (
           <div className="flex flex-wrap gap-2">
-            {mod.kanjis.map((k: any) => {
+            {sortModuleKanjis(mod.kanjis, mod.id).map((k: any) => {
               const isKanjiCompleted = k.isCompleted;
               const isLocked = isLockActive && (isModLocked || Boolean(k.isLocked));
               return (
