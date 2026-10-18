@@ -10,11 +10,11 @@ COPY prisma ./prisma/
 # Install dependencies
 RUN npm install
 
-# Generate Prisma Client
-RUN npx prisma generate
-
 # Copy backend source code
 COPY . .
+
+# Generate Prisma Client
+RUN npx prisma generate
 
 # Build application (compiles TS to JS in dist/)
 RUN npm run build

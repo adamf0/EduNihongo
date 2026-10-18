@@ -275,7 +275,13 @@ export class RealAnalyticsAdapter implements IAnalyticsAdapter {
 
     const searchQuery = typeof search === "string" ? search.trim().toLowerCase() : "";
 
-    const users = await prisma.user.findMany({
+    const userInclude: any = {
+      kanjiProgress: true,
+      activities: startDate || endDate ? { where: { date: dateFilter } } : true,
+      quizAttempts: startDate || endDate || kanjiId || moduleId ? { where: attemptWhere } : true,
+    };
+
+    const users: any[] = await prisma.user.findMany({
       where: {
         role: { not: "ADMIN" },
         ...(searchQuery
@@ -287,11 +293,7 @@ export class RealAnalyticsAdapter implements IAnalyticsAdapter {
             }
           : {}),
       },
-      include: {
-        kanjiProgress: true,
-        activities: startDate || endDate ? { where: { date: dateFilter } } : true,
-        quizAttempts: startDate || endDate || kanjiId || moduleId ? { where: attemptWhere } : true,
-      },
+      include: userInclude,
       orderBy: { id: "asc" },
     });
 
@@ -300,24 +302,24 @@ export class RealAnalyticsAdapter implements IAnalyticsAdapter {
       "#06b6d4", "#10b981", "#f43f5e", "#f59e0b", "#a855f7"
     ];
 
-    return users.map((u, idx) => {
-      const uAttempts = u.quizAttempts || [];
-      const uProgress = u.kanjiProgress || [];
-      const uActivities = u.activities || [];
+    return users.map((u: any, idx: number) => {
+      const uAttempts: any[] = u.quizAttempts || [];
+      const uProgress: any[] = u.kanjiProgress || [];
+      const uActivities: any[] = u.activities || [];
 
       let compScore = 0;
       if (uAttempts.length > 0) {
-        compScore = uAttempts.reduce((acc, a) => acc + a.totalScore, 0) / uAttempts.length;
+        compScore = uAttempts.reduce((acc: number, a: any) => acc + (a.totalScore || 0), 0) / uAttempts.length;
       } else if (uProgress.length > 0) {
-        compScore = uProgress.reduce((acc, p) => acc + p.quizPercent, 0) / uProgress.length;
+        compScore = uProgress.reduce((acc: number, p: any) => acc + (p.quizPercent || 0), 0) / uProgress.length;
       }
 
-      let readScore = uProgress.length > 0 ? uProgress.reduce((acc, p) => acc + p.readingPercent, 0) / uProgress.length : 0;
-      let writeScore = uProgress.length > 0 ? uProgress.reduce((acc, p) => acc + p.writingPercent, 0) / uProgress.length : 0;
+      let readScore = uProgress.length > 0 ? uProgress.reduce((acc: number, p: any) => acc + (p.readingPercent || 0), 0) / uProgress.length : 0;
+      let writeScore = uProgress.length > 0 ? uProgress.reduce((acc: number, p: any) => acc + (p.writingPercent || 0), 0) / uProgress.length : 0;
 
       // Calculate trial & error attempts and trial efficiency factors strictly from DB
-      let readingAttemptsCount = uProgress.length > 0 ? uProgress.reduce((acc, p) => acc + Math.max(0, p.mistakeCount), 0) : 0;
-      let writingAttemptsCount = uProgress.length > 0 ? uProgress.reduce((acc, p) => acc + Math.max(0, Math.round((100 - p.writingPercent) / 15)), 0) : 0;
+      let readingAttemptsCount = uProgress.length > 0 ? uProgress.reduce((acc: number, p: any) => acc + Math.max(0, p.mistakeCount || 0), 0) : 0;
+      let writingAttemptsCount = uProgress.length > 0 ? uProgress.reduce((acc: number, p: any) => acc + Math.max(0, Math.round((100 - (p.writingPercent || 0)) / 15)), 0) : 0;
 
       let readingEfficiency = readScore > 0 ? Math.max(0, Math.round(readScore * (1 - Math.min(0.5, readingAttemptsCount * 0.03)))) : 0;
       let writingEfficiency = writeScore > 0 ? Math.max(0, Math.round(writeScore * (1 - Math.min(0.5, writingAttemptsCount * 0.03)))) : 0;
