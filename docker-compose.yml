@@ -18,16 +18,16 @@ services:
       - JWT_SECRET=super-secret-musubi-key-12345
     restart: always
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: edunihongo-frontend
-    ports:
-      - "5173:80" # Map host port 5173 to Nginx port 80 to match user's port preference
-    depends_on:
-      - backend
-    restart: always
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: edunihongo-frontend
+  #   ports:
+  #     - "5173:80" # Map host port 5173 to Nginx port 80 to match user's port preference
+  #   depends_on:
+  #     - backend
+  #   restart: always
 
 volumes:
   backend-db:
