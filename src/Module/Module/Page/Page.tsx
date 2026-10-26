@@ -31,6 +31,25 @@ export const sortModuleKanjis = (kanjis: any[], moduleId?: number | string) => {
       return (a.id || 0) - (b.id || 0);
     });
   }
+
+  const isModul5 =
+    moduleId === 559 ||
+    moduleId === "559" ||
+    (typeof moduleId === "string" && /modul\s*5|komunikasi/i.test(moduleId)) ||
+    kanjis.some((k: any) => k.character === "議" || k.character === "論" || k.character === "談");
+
+  if (isModul5) {
+    const order = ["議", "論", "談", "討", "意"];
+    return [...kanjis].sort((a: any, b: any) => {
+      const idxA = a.character ? order.indexOf(a.character) : -1;
+      const idxB = b.character ? order.indexOf(b.character) : -1;
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+
   return kanjis;
 };
 
