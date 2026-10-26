@@ -8,7 +8,9 @@
     "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "seed": "ts-node src/seed.ts",
-    "sync:shin": "ts-node src/scripts/syncKanjiShinSemanticData.ts"
+    "sync:shin": "ts-node src/scripts/syncKanjiShinSemanticData.ts",
+    "sync:ron": "ts-node src/scripts/syncKanjiRonSemanticData.ts",
+    "sync:gi": "ts-node src/scripts/syncKanjiGiSemanticData.ts"
   },
   "prisma": {
     "seed": "ts-node src/seed.ts"
