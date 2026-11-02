@@ -298,11 +298,16 @@ const ALL_GRAPH_EDGES_DATA: Record<string, CrossLinkRule[]> = {
     { source: "経口", target: "経常", predicate: "asupan vs kondisi rutin" }
   ],
   "歴": [
-    { source: "歴史", target: "年表", predicate: "sejarah & garis waktu" },
-    { source: "経歴", target: "職歴", predicate: "riwayat hidup & kerja" },
     { source: "学歴", target: "職歴", predicate: "pendidikan & riwayat kerja" },
-    { source: "前歴", target: "履歴", predicate: "rekam jejak & riwayat" },
-    { source: "歴代", target: "歴年", predicate: "generasi & perjalanan tahun" }
+    { source: "職歴", target: "経歴", predicate: "riwayat kerja & perjalanan karier" },
+    { source: "学歴", target: "経歴", predicate: "pendidikan & rekam jejak" },
+    { source: "前歴", target: "病歴", predicate: "rekam jejak & catatan medis" },
+    { source: "前歴", target: "来歴", predicate: "riwayat masa lalu & asal-usul" },
+    { source: "経歴", target: "前歴", predicate: "perjalanan hidup & riwayat masa lalu" },
+    { source: "歴史", target: "歴代", predicate: "sejarah & pergantian generasi" },
+    { source: "歴代", target: "歴年", predicate: "generasi & rentang tahun berlalu" },
+    { source: "来歴", target: "歴史", predicate: "asal-usul & catatan sejarah" },
+    { source: "歴史", target: "歴年", predicate: "catatan sejarah & kurun tahun" }
   ],
   "史": [
     { source: "歴史", target: "史実", predicate: "sejarah & fakta sejarah" },

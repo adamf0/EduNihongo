@@ -264,11 +264,37 @@ export async function syncKanjiReki() {
   }
   console.log("✅ 9 Semantic Relations & Constituent Nodes berhasil diperbarui sesuai semantic.md.");
 
-  // 5. Bersihkan Graph Edges (0 cross-link buatan, pohon murni)
+  // 5. Konfigurasi Cross-Link Semantic Relations antar Node Jukugo resmi
+  const REKI_CROSS_LINKS = [
+    { source: "学歴", target: "職歴", predicate: "pendidikan & riwayat kerja" },
+    { source: "職歴", target: "経歴", predicate: "riwayat kerja & perjalanan karier" },
+    { source: "学歴", target: "経歴", predicate: "pendidikan & rekam jejak" },
+    { source: "前歴", target: "病歴", predicate: "rekam jejak & catatan medis" },
+    { source: "前歴", target: "来歴", predicate: "riwayat masa lalu & asal-usul" },
+    { source: "経歴", target: "前歴", predicate: "perjalanan hidup & riwayat masa lalu" },
+    { source: "歴史", target: "歴代", predicate: "sejarah & pergantian generasi" },
+    { source: "歴代", target: "歴年", predicate: "generasi & rentang tahun berlalu" },
+    { source: "来歴", target: "歴史", predicate: "asal-usul & catatan sejarah" },
+    { source: "歴史", target: "歴年", predicate: "catatan sejarah & kurun tahun" }
+  ];
+
   await prisma.kanjiGraphEdge.deleteMany({
     where: { kanjiId: kanji.id }
   });
-  console.log("✅ KanjiGraphEdge bersih (0 cross-link buatan, grafik 100% mengikuti 3 cluster resmi).");
+
+  for (let idx = 0; idx < REKI_CROSS_LINKS.length; idx++) {
+    const link = REKI_CROSS_LINKS[idx];
+    await prisma.kanjiGraphEdge.create({
+      data: {
+        id: `cross-${kanji.id}-${idx + 1}-${link.source}-${link.target}`,
+        kanjiId: kanji.id,
+        source: link.source,
+        target: link.target,
+        predicate: link.predicate
+      }
+    });
+  }
+  console.log(`✅ ${REKI_CROSS_LINKS.length} relasi cross-link antar node jukugo resmi berhasil dibuat di KanjiGraphEdge.`);
 
   // 6. Update Grouping Quiz 7269 agar nama kategori dan katanya presisi
   const groupingWords = [
