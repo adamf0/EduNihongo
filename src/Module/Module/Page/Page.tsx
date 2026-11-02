@@ -50,6 +50,24 @@ export const sortModuleKanjis = (kanjis: any[], moduleId?: number | string) => {
     });
   }
 
+  const isModul6 =
+    moduleId === 560 ||
+    moduleId === "560" ||
+    (typeof moduleId === "string" && /modul\s*6|waktu\s*dan\s*pengalaman/i.test(moduleId)) ||
+    kanjis.some((k: any) => k.character === "経" || k.character === "歴" || k.character === "始");
+
+  if (isModul6) {
+    const order = ["経", "始", "歴", "史", "期"];
+    return [...kanjis].sort((a: any, b: any) => {
+      const idxA = a.character ? order.indexOf(a.character) : -1;
+      const idxB = b.character ? order.indexOf(b.character) : -1;
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+
   return kanjis;
 };
 
