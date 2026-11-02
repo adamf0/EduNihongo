@@ -1,5 +1,4 @@
-bentuk semantic /Users/adamf/Documents/design_web/EduNihongoAlt/modul/6/歴/Tangkapan Layar 2026-09-14 pukul 21.59.57.png
-ada 12 node
+ada 9 node
 
 e. Analisis Hubungan Makna
 Kanji 歴 mempunyai makna dasar “melewati atau riwayat yang telah dilalui.” Hubungan makna dari kanji 歴 tersebut terbagi menjadi beberapa kelompok makna, seperti pada jukugo kanji berikut ini:
@@ -49,7 +48,6 @@ Penjelasan:
 歴：melewati masa
 代：generasi, masa
 Hubungan makna antar kanji 歴 dan 代 menjadi 歴代, menunjukkan bahwa gabungan kedua kanji tersebut membentuk makna “pergantian atau keberlangsungan dari satu generasi atau masa ke generasi berikutnya.”
-
 歴年（れきねん） bertahun-tahun
 Penjelasan:
 歴：melewati
