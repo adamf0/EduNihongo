@@ -1112,25 +1112,20 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
       }
     }
 
-    // 1. Fetch attempts from QuizAttempt table (defensive fallback if not yet generated on server)
+    // 1. Fetch attempts from QuizAttempt table
     let attempts: any[] = [];
-    const prismaAny = prisma as any;
-    if (prismaAny.quizAttempt && typeof prismaAny.quizAttempt.findMany === "function") {
-      try {
-        attempts = await prismaAny.quizAttempt.findMany({
-          where: attemptWhere,
-          include: {
-            user: { select: { id: true, name: true, email: true, avatar: true } },
-            kanji: { select: { id: true, character: true, romaji: true, meaning: true, moduleId: true, module: { select: { id: true, title: true } } } },
-          },
-          orderBy: { createdAt: "desc" },
-        });
-      } catch (dbErr: any) {
-        console.warn("QuizAttempt findMany error, falling back to UserKanjiProgress:", dbErr?.message);
-        attempts = [];
-      }
-    } else {
-      console.warn("prisma.quizAttempt is undefined! Please run 'npx prisma generate' in /var/www/html/EduNihongo/backend on the server.");
+    try {
+      attempts = await prisma.quizAttempt.findMany({
+        where: attemptWhere,
+        include: {
+          user: { select: { id: true, name: true, email: true, avatar: true } },
+          kanji: { select: { id: true, character: true, romaji: true, meaning: true, moduleId: true, module: { select: { id: true, title: true } } } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (dbErr: any) {
+      console.warn("QuizAttempt findMany error, falling back to UserKanjiProgress:", dbErr?.message);
+      attempts = [];
     }
 
     // 2. Fetch UserKanjiProgress as fallback/baseline if attempts table is new
@@ -1196,77 +1191,95 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
       }>;
     }>();
 
-    // Process actual attempts
+    // Group attempts strictly by student (userId) and kanji (kanjiId)
+    const groupedAttempts = new Map<string, any[]>();
     for (const att of attempts) {
       const key = `${att.userId}_${att.kanjiId}`;
-      const existing = recapMap.get(key);
-
-      const historyItem = {
-        id: att.id,
-        attemptNumber: att.attemptNumber,
-        date: att.createdAt.toISOString(),
-        totalScore: att.totalScore,
-        scoreModelA: att.scoreModelA,
-        rawModelA: att.rawModelA,
-        maxModelA: att.maxModelA,
-        scoreModelB: att.scoreModelB,
-        rawModelB: att.rawModelB,
-        maxModelB: att.maxModelB,
-        scoreModelC: att.scoreModelC,
-        rawModelC: att.rawModelC,
-        maxModelC: att.maxModelC,
-        scoreModelD: att.scoreModelD,
-        rawModelD: att.rawModelD,
-        maxModelD: att.maxModelD,
-        isBestAttempt: att.isBestAttempt,
-        interpretation: att.interpretation,
-        details: att.details,
-      };
-
-      if (existing) {
-        existing.attemptsCount += 1;
-        existing.attemptsHistory.push(historyItem);
-        
-        // Retain best attempt scores for the main student recap
-        if (att.isBestAttempt || att.totalScore >= existing.maxScore) {
-          existing.maxScore = att.totalScore;
-          if (att.scoreModelA !== null) existing.scoreModelA = att.scoreModelA;
-          if (att.scoreModelB !== null) existing.scoreModelB = att.scoreModelB;
-          if (att.scoreModelC !== null) existing.scoreModelC = att.scoreModelC;
-          if (att.scoreModelD !== null) existing.scoreModelD = att.scoreModelD;
-        }
-      } else {
-        recapMap.set(key, {
-          userId: att.userId,
-          userName: att.user?.name || "Siswa",
-          userEmail: att.user?.email || "",
-          userAvatar: att.user?.avatar || "",
-          kanjiId: att.kanjiId,
-          kanjiChar: att.kanji?.character || "",
-          kanjiRomaji: att.kanji?.romaji || "",
-          kanjiMeaning: att.kanji?.meaning || "",
-          moduleTitle: att.kanji?.module?.title || "Modul Umum",
-          attemptsCount: 1,
-          maxScore: att.totalScore,
-          avgScore: att.totalScore,
-          scoreModelA: att.scoreModelA,
-          scoreModelB: att.scoreModelB,
-          scoreModelC: att.scoreModelC,
-          scoreModelD: att.scoreModelD,
-          lastPracticed: att.createdAt.toISOString(),
-          interpretation: att.interpretation || "",
-          attemptsHistory: [historyItem],
-        });
+      if (!groupedAttempts.has(key)) {
+        groupedAttempts.set(key, []);
       }
+      groupedAttempts.get(key)!.push(att);
     }
 
-    // Fill in from UserKanjiProgress if no QuizAttempt entries exist for a student-kanji pair or attempts is empty
+    const recapList: any[] = [];
+
+    // Process each student-kanji pair, taking the best attempt (nilai terbaik)
+    for (const [, userAttempts] of groupedAttempts.entries()) {
+      // Sort to guarantee best attempt is at index 0 (highest totalScore, newest date tie-breaker)
+      userAttempts.sort((a, b) => b.totalScore - a.totalScore || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const best = userAttempts[0];
+
+      // Chronological history (newest first for modal drill-down)
+      const attemptsHistory = [...userAttempts]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .map((att) => ({
+          id: att.id,
+          attemptNumber: att.attemptNumber,
+          date: att.createdAt.toISOString(),
+          totalScore: att.totalScore,
+          scoreModelA: att.scoreModelA,
+          rawModelA: att.rawModelA,
+          maxModelA: att.maxModelA,
+          scoreModelB: att.scoreModelB,
+          rawModelB: att.rawModelB,
+          maxModelB: att.maxModelB,
+          scoreModelC: att.scoreModelC,
+          rawModelC: att.rawModelC,
+          maxModelC: att.maxModelC,
+          scoreModelD: att.scoreModelD,
+          rawModelD: att.rawModelD,
+          maxModelD: att.maxModelD,
+          isBestAttempt: att.id === best.id,
+          interpretation: att.interpretation || (att.totalScore >= 86 ? "Sangat Baik" : att.totalScore >= 76 ? "Baik" : att.totalScore >= 66 ? "Cukup" : "Perlu Penguatan"),
+          details: att.details,
+        }));
+
+      const sumScore = userAttempts.reduce((acc, a) => acc + a.totalScore, 0);
+      const avgScore = Math.round(sumScore / userAttempts.length);
+
+      let interpretation = best.interpretation;
+      if (!interpretation) {
+        if (best.totalScore >= 86) interpretation = "Sangat Baik";
+        else if (best.totalScore >= 76) interpretation = "Baik";
+        else if (best.totalScore >= 66) interpretation = "Cukup";
+        else interpretation = "Perlu Penguatan";
+      }
+
+      recapList.push({
+        userId: best.userId,
+        userName: best.user?.name || "Siswa",
+        userEmail: best.user?.email || "",
+        userAvatar: best.user?.avatar || "",
+        kanjiId: best.kanjiId,
+        kanjiChar: best.kanji?.character || "",
+        kanjiRomaji: best.kanji?.romaji || "",
+        kanjiMeaning: best.kanji?.meaning || "",
+        moduleTitle: best.kanji?.module?.title || (best.kanji?.moduleId ? `Modul ${best.kanji?.moduleId}` : "Modul Umum"),
+        attemptsCount: userAttempts.length,
+        maxScore: best.totalScore,
+        avgScore,
+        scoreModelA: best.scoreModelA,
+        scoreModelB: best.scoreModelB,
+        scoreModelC: best.scoreModelC,
+        scoreModelD: best.scoreModelD,
+        lastPracticed: best.createdAt.toISOString(),
+        interpretation,
+        attemptsHistory,
+      });
+    }
+
+    // Fallback: fill from UserKanjiProgress only for any student-kanji pair without QuizAttempt
     if (attempts.length === 0 || (!startDate && !endDate)) {
       for (const p of progressList) {
         if (p.quizPercent > 0) {
           const key = `${p.userId}_${p.kanjiId}`;
-          if (!recapMap.has(key)) {
-            recapMap.set(key, {
+          if (!groupedAttempts.has(key)) {
+            let interp = "Perlu Penguatan";
+            if (p.quizPercent >= 86) interp = "Sangat Baik";
+            else if (p.quizPercent >= 76) interp = "Baik";
+            else if (p.quizPercent >= 66) interp = "Cukup";
+
+            recapList.push({
               userId: p.userId,
               userName: p.user?.name || "Siswa",
               userEmail: p.user?.email || "",
@@ -1284,7 +1297,7 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
               scoreModelC: p.quizPercent,
               scoreModelD: p.quizPercent,
               lastPracticed: p.lastPracticed ? p.lastPracticed.toISOString() : new Date().toISOString(),
-              interpretation: "",
+              interpretation: interp,
               attemptsHistory: [
                 {
                   id: 0,
@@ -1302,22 +1315,8 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
       }
     }
 
-    // Compute averages, interpretation labels, and filter search
-    const recapList = Array.from(recapMap.values()).map((item) => {
-      const sumScore = item.attemptsHistory.reduce((acc, h) => acc + h.totalScore, 0);
-      const avgScore = item.attemptsHistory.length > 0 ? Math.round(sumScore / item.attemptsHistory.length) : item.maxScore;
-
-      let interpretation = "Perlu Penguatan";
-      if (item.maxScore >= 86) interpretation = "Sangat Baik";
-      else if (item.maxScore >= 76) interpretation = "Baik";
-      else if (item.maxScore >= 66) interpretation = "Cukup";
-
-      return {
-        ...item,
-        avgScore,
-        interpretation,
-      };
-    });
+    // Sort recapList by maxScore DESC (highest score first), tie-breaker by userName and kanjiId
+    recapList.sort((a, b) => b.maxScore - a.maxScore || a.userName.localeCompare(b.userName) || a.kanjiId - b.kanjiId);
 
     // Filter search query (by student name or kanji character)
     const searchQuery = typeof search === "string" ? search.trim().toLowerCase() : "";
@@ -1345,27 +1344,16 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
     const overallAvgMaxScore =
       recapList.length > 0 ? Math.round(recapList.reduce((acc, r) => acc + r.maxScore, 0) / recapList.length) : 0;
 
-    // Model specific averages strictly calculated from actual DB records
-    const validModelA = attempts.filter((a) => a.scoreModelA !== null).map((a) => a.scoreModelA as number);
-    const validModelB = attempts.filter((a) => a.scoreModelB !== null).map((a) => a.scoreModelB as number);
-    const validModelC = attempts.filter((a) => a.scoreModelC !== null).map((a) => a.scoreModelC as number);
-    const validModelD = attempts.filter((a) => a.scoreModelD !== null).map((a) => a.scoreModelD as number);
+    // Model specific averages strictly calculated from student's best attempts in recapList
+    const validModelA = recapList.filter((r) => r.scoreModelA !== null).map((r) => r.scoreModelA as number);
+    const validModelB = recapList.filter((r) => r.scoreModelB !== null).map((r) => r.scoreModelB as number);
+    const validModelC = recapList.filter((r) => r.scoreModelC !== null).map((r) => r.scoreModelC as number);
+    const validModelD = recapList.filter((r) => r.scoreModelD !== null).map((r) => r.scoreModelD as number);
 
-    const getModelAvg = (validScores: number[], modelKey: 'scoreModelA' | 'scoreModelB' | 'scoreModelC' | 'scoreModelD') => {
-      if (validScores.length > 0) {
-        return Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length);
-      }
-      const recapScores = recapList.filter((r) => r[modelKey] !== null).map((r) => r[modelKey] as number);
-      if (recapScores.length > 0) {
-        return Math.round(recapScores.reduce((a, b) => a + b, 0) / recapScores.length);
-      }
-      return 0;
-    };
-
-    const avgModelA = getModelAvg(validModelA, 'scoreModelA');
-    const avgModelB = getModelAvg(validModelB, 'scoreModelB');
-    const avgModelC = getModelAvg(validModelC, 'scoreModelC');
-    const avgModelD = getModelAvg(validModelD, 'scoreModelD');
+    const avgModelA = validModelA.length > 0 ? Math.round(validModelA.reduce((a, b) => a + b, 0) / validModelA.length) : 0;
+    const avgModelB = validModelB.length > 0 ? Math.round(validModelB.reduce((a, b) => a + b, 0) / validModelB.length) : 0;
+    const avgModelC = validModelC.length > 0 ? Math.round(validModelC.reduce((a, b) => a + b, 0) / validModelC.length) : 0;
+    const avgModelD = validModelD.length > 0 ? Math.round(validModelD.reduce((a, b) => a + b, 0) / validModelD.length) : 0;
 
     // Distribution breakdown
     const distribution = {
@@ -1513,24 +1501,40 @@ export const getStudentKanjiProgress = async (req: Request, res: Response) => {
       ],
     });
 
-    const formatted = progressList.map((p) => ({
-      userId: p.userId,
-      userName: p.user.name,
-      userEmail: p.user.email,
-      userAvatar: p.user.avatar,
-      kanjiId: p.kanjiId,
-      kanjiChar: p.kanji.character,
-      kanjiRomaji: p.kanji.romaji,
-      kanjiMeaning: p.kanji.meaning,
-      moduleId: p.kanji.moduleId,
-      moduleTitle: p.kanji.module?.title || (p.kanji.moduleId ? `Modul ${p.kanji.moduleId}` : "-"),
-      masteryPercent: p.masteryPercent,
-      readingPercent: p.readingPercent,
-      writingPercent: p.writingPercent,
-      quizPercent: p.quizPercent,
-      status: p.status,
-      lastPracticed: p.lastPracticed,
-    }));
+    // Fetch best quiz attempt for each user and kanji from QuizAttempt
+    const bestAttempts = await prisma.quizAttempt.groupBy({
+      by: ["userId", "kanjiId"],
+      _max: { totalScore: true },
+    });
+    const bestAttemptMap = new Map<string, number>();
+    for (const b of bestAttempts) {
+      if (b._max.totalScore !== null) {
+        bestAttemptMap.set(`${b.userId}_${b.kanjiId}`, b._max.totalScore);
+      }
+    }
+
+    const formatted = progressList.map((p) => {
+      const bestScore = bestAttemptMap.get(`${p.userId}_${p.kanjiId}`);
+      const finalQuiz = bestScore !== undefined ? bestScore : p.quizPercent;
+      return {
+        userId: p.userId,
+        userName: p.user.name,
+        userEmail: p.user.email,
+        userAvatar: p.user.avatar,
+        kanjiId: p.kanjiId,
+        kanjiChar: p.kanji.character,
+        kanjiRomaji: p.kanji.romaji,
+        kanjiMeaning: p.kanji.meaning,
+        moduleId: p.kanji.moduleId,
+        moduleTitle: p.kanji.module?.title || (p.kanji.moduleId ? `Modul ${p.kanji.moduleId}` : "-"),
+        masteryPercent: p.masteryPercent,
+        readingPercent: p.readingPercent,
+        writingPercent: p.writingPercent,
+        quizPercent: finalQuiz,
+        status: p.status,
+        lastPracticed: p.lastPracticed,
+      };
+    });
 
     res.json(formatted);
   } catch (error: any) {

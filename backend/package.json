@@ -11,7 +11,8 @@
     "sync:shin": "ts-node src/scripts/syncKanjiShinSemanticData.ts",
     "sync:ron": "ts-node src/scripts/syncKanjiRonSemanticData.ts",
     "sync:gi": "ts-node src/scripts/syncKanjiGiSemanticData.ts",
-    "sync:reki": "ts-node src/scripts/syncKanjiRekiSemanticData.ts"
+    "sync:reki": "ts-node src/scripts/syncKanjiRekiSemanticData.ts",
+    "backfill:attempts": "ts-node src/scripts/backfillQuizAttemptsFromProgress.ts"
   },
   "prisma": {
     "seed": "ts-node src/seed.ts"

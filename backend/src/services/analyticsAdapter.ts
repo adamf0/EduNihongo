@@ -309,7 +309,17 @@ export class RealAnalyticsAdapter implements IAnalyticsAdapter {
 
       let compScore = 0;
       if (uAttempts.length > 0) {
-        compScore = uAttempts.reduce((acc: number, a: any) => acc + (a.totalScore || 0), 0) / uAttempts.length;
+        // Group attempts by kanjiId and take best score per kanji (nilai terbaik)
+        const bestPerKanji = new Map<number, number>();
+        for (const a of uAttempts) {
+          const score = a.totalScore ?? 0;
+          const current = bestPerKanji.get(a.kanjiId) ?? 0;
+          if (score > current) {
+            bestPerKanji.set(a.kanjiId, score);
+          }
+        }
+        const bestScores = Array.from(bestPerKanji.values());
+        compScore = bestScores.length > 0 ? bestScores.reduce((acc, s) => acc + s, 0) / bestScores.length : 0;
       } else if (uProgress.length > 0) {
         compScore = uProgress.reduce((acc: number, p: any) => acc + (p.quizPercent || 0), 0) / uProgress.length;
       }

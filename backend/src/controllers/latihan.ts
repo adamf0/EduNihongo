@@ -1031,6 +1031,22 @@ export const verifyReading = async (req: AuthenticatedRequest, res: Response) =>
   }
 };
 
+const toSafeFloat = (val: any): number | null => {
+  if (typeof val === "number" && !isNaN(val) && isFinite(val)) {
+    return val;
+  }
+  if (typeof val === "string" && val.trim() !== "") {
+    const parsed = parseFloat(val);
+    if (!isNaN(parsed) && isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const toSafeScore = (val: any): number | null => {
+  const f = toSafeFloat(val);
+  return f !== null ? Math.min(100, Math.max(0, Math.round(f))) : null;
+};
+
 // Verify quiz progress
 export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -1054,23 +1070,24 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ error: `Kanji ${character} tidak ditemukan.` });
     }
 
-    const score = typeof quizPercent === "number" ? Math.min(100, Math.max(0, quizPercent)) : 100;
+    const rawScore = toSafeFloat(quizPercent);
+    const score = rawScore !== null ? Math.min(100, Math.max(0, Math.round(rawScore))) : 100;
 
-    const scoreModelA = modelScores?.scoreModelA ?? modelScores?.modelA;
-    const rawModelA = modelScores?.rawModelA ?? null;
-    const maxModelA = modelScores?.maxModelA ?? null;
+    const scoreModelA = toSafeScore(modelScores?.scoreModelA ?? modelScores?.modelA);
+    const rawModelA = toSafeFloat(modelScores?.rawModelA);
+    const maxModelA = toSafeFloat(modelScores?.maxModelA);
 
-    const scoreModelB = modelScores?.scoreModelB ?? modelScores?.modelB;
-    const rawModelB = modelScores?.rawModelB ?? null;
-    const maxModelB = modelScores?.maxModelB ?? null;
+    const scoreModelB = toSafeScore(modelScores?.scoreModelB ?? modelScores?.modelB);
+    const rawModelB = toSafeFloat(modelScores?.rawModelB);
+    const maxModelB = toSafeFloat(modelScores?.maxModelB);
 
-    const scoreModelC = modelScores?.scoreModelC ?? modelScores?.modelC;
-    const rawModelC = modelScores?.rawModelC ?? null;
-    const maxModelC = modelScores?.maxModelC ?? null;
+    const scoreModelC = toSafeScore(modelScores?.scoreModelC ?? modelScores?.modelC);
+    const rawModelC = toSafeFloat(modelScores?.rawModelC);
+    const maxModelC = toSafeFloat(modelScores?.maxModelC);
 
-    const scoreModelD = modelScores?.scoreModelD ?? modelScores?.modelD;
-    const rawModelD = modelScores?.rawModelD ?? null;
-    const maxModelD = modelScores?.maxModelD ?? null;
+    const scoreModelD = toSafeScore(modelScores?.scoreModelD ?? modelScores?.modelD);
+    const rawModelD = toSafeFloat(modelScores?.rawModelD);
+    const maxModelD = toSafeFloat(modelScores?.maxModelD);
 
     // Determine rubric interpretation according to Section I of penilaian.md
     let interpretation = "Perlu Penguatan";
@@ -1078,62 +1095,59 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
     else if (score >= 76) interpretation = "Baik";
     else if (score >= 66) interpretation = "Cukup";
 
-    // Attempt counting & best score tracking (safely checked against prisma.quizAttempt)
+    // Attempt counting & best score tracking
     let quizAttempt: any = null;
     let attemptNumber = 1;
     let isNewBest = true;
     let previousBestScore = -1;
-    const prismaAny = prisma as any;
 
-    if (prismaAny.quizAttempt && typeof prismaAny.quizAttempt.findMany === "function") {
-      try {
-        const previousAttempts = await prismaAny.quizAttempt.findMany({
-          where: { userId, kanjiId: kanji.id },
-          select: { id: true, totalScore: true },
+    try {
+      const previousAttempts = await prisma.quizAttempt.findMany({
+        where: { userId, kanjiId: kanji.id },
+        select: { id: true, totalScore: true },
+      });
+      attemptNumber = previousAttempts.length + 1;
+      previousBestScore = previousAttempts.length > 0 
+        ? Math.max(...previousAttempts.map((a) => a.totalScore)) 
+        : -1;
+
+      isNewBest = score >= previousBestScore;
+
+      // If new score is the best so far, reset isBestAttempt on older attempts
+      if (isNewBest && previousAttempts.length > 0) {
+        await prisma.quizAttempt.updateMany({
+          where: { userId, kanjiId: kanji.id, isBestAttempt: true },
+          data: { isBestAttempt: false },
         });
-        attemptNumber = previousAttempts.length + 1;
-        previousBestScore = previousAttempts.length > 0 
-          ? Math.max(...previousAttempts.map((a: any) => a.totalScore)) 
-          : -1;
-
-        isNewBest = score >= previousBestScore;
-
-        // If new score is the best so far, reset isBestAttempt on older attempts
-        if (isNewBest && previousAttempts.length > 0) {
-          await prismaAny.quizAttempt.updateMany({
-            where: { userId, kanjiId: kanji.id, isBestAttempt: true },
-            data: { isBestAttempt: false },
-          });
-        }
-
-        // Create QuizAttempt record to store performance per attempt (history always preserved)
-        quizAttempt = await prismaAny.quizAttempt.create({
-          data: {
-            userId,
-            kanjiId: kanji.id,
-            attemptNumber,
-            scoreModelA: typeof scoreModelA === "number" ? Math.min(100, Math.max(0, scoreModelA)) : null,
-            rawModelA: typeof rawModelA === "number" ? rawModelA : null,
-            maxModelA: typeof maxModelA === "number" ? maxModelA : null,
-            scoreModelB: typeof scoreModelB === "number" ? Math.min(100, Math.max(0, scoreModelB)) : null,
-            rawModelB: typeof rawModelB === "number" ? rawModelB : null,
-            maxModelB: typeof maxModelB === "number" ? maxModelB : null,
-            scoreModelC: typeof scoreModelC === "number" ? Math.min(100, Math.max(0, scoreModelC)) : null,
-            rawModelC: typeof rawModelC === "number" ? rawModelC : null,
-            maxModelC: typeof maxModelC === "number" ? maxModelC : null,
-            scoreModelD: typeof scoreModelD === "number" ? Math.min(100, Math.max(0, scoreModelD)) : null,
-            rawModelD: typeof rawModelD === "number" ? rawModelD : null,
-            maxModelD: typeof maxModelD === "number" ? maxModelD : null,
-            totalScore: score,
-            interpretation,
-            isBestAttempt: isNewBest,
-            details: details ? (typeof details === "string" ? details : JSON.stringify(details)) : null,
-            createdAt: new Date(),
-          },
-        });
-      } catch (attErr) {
-        console.warn("QuizAttempt recording warning (non-blocking):", attErr);
       }
+
+      // Create QuizAttempt record to store performance per attempt (history always preserved)
+      quizAttempt = await prisma.quizAttempt.create({
+        data: {
+          userId,
+          kanjiId: kanji.id,
+          attemptNumber,
+          scoreModelA,
+          rawModelA,
+          maxModelA,
+          scoreModelB,
+          rawModelB,
+          maxModelB,
+          scoreModelC,
+          rawModelC,
+          maxModelC,
+          scoreModelD,
+          rawModelD,
+          maxModelD,
+          totalScore: score,
+          interpretation,
+          isBestAttempt: isNewBest,
+          details: details ? (typeof details === "string" ? details : JSON.stringify(details)) : null,
+          createdAt: new Date(),
+        },
+      });
+    } catch (attErr) {
+      console.error("Gagal mencatat QuizAttempt:", attErr);
     }
 
     const existingProgress = await prisma.userKanjiProgress.findUnique({

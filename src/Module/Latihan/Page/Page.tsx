@@ -2234,10 +2234,13 @@ export const LatihanPage: React.FC = () => {
                     ? modelAItems.reduce((sum, item) => sum + (item.rubricScore ?? (item.isCorrect ? 4 : 0)), 0)
                     : null;
             const maxModelA = modelAItems.length > 0 ? modelAItems.length * 4 : null;
-            const scoreModelA =
-                rawModelA !== null && maxModelA && maxModelA > 0
-                    ? Math.round((rawModelA / maxModelA) * 100)
-                    : null;
+            // Safe score calculators
+            const calcScore = (raw: number | null, max: number | null): number | null => {
+                if (raw !== null && max !== null && max > 0 && !isNaN(raw) && !isNaN(max)) {
+                    return Math.min(100, Math.max(0, Math.round((raw / max) * 100)));
+                }
+                return null;
+            };
 
             // Model B: 1 pt per jukugo benar
             const rawModelB =
@@ -2248,10 +2251,6 @@ export const LatihanPage: React.FC = () => {
                 modelBItems.length > 0
                     ? modelBItems.reduce((sum, item) => sum + (item.groupingMax ?? 1), 0)
                     : null;
-            const scoreModelB =
-                rawModelB !== null && maxModelB && maxModelB > 0
-                    ? Math.round((rawModelB / maxModelB) * 100)
-                    : null;
 
             // Model C: 1 pt per butir benar
             const rawModelC =
@@ -2259,10 +2258,6 @@ export const LatihanPage: React.FC = () => {
                     ? modelCItems.filter((i) => i.isCorrect).length
                     : null;
             const maxModelC = modelCItems.length > 0 ? modelCItems.length : null;
-            const scoreModelC =
-                rawModelC !== null && maxModelC && maxModelC > 0
-                    ? Math.round((rawModelC / maxModelC) * 100)
-                    : null;
 
             // Model D: 1 pt per butir benar
             const rawModelD =
@@ -2270,32 +2265,33 @@ export const LatihanPage: React.FC = () => {
                     ? modelDItems.filter((i) => i.isCorrect).length
                     : null;
             const maxModelD = modelDItems.length > 0 ? modelDItems.length : null;
-            const scoreModelD =
-                rawModelD !== null && maxModelD && maxModelD > 0
-                    ? Math.round((rawModelD / maxModelD) * 100)
-                    : null;
+
+            const scoreModelA = calcScore(rawModelA, maxModelA);
+            const scoreModelB = calcScore(rawModelB, maxModelB);
+            const scoreModelC = calcScore(rawModelC, maxModelC);
+            const scoreModelD = calcScore(rawModelD, maxModelD);
 
             // Nilai Akhir Kuis: Rata-rata dari model-model kuis yang aktif pada skala 0-100
             const activeModelScores = [scoreModelA, scoreModelB, scoreModelC, scoreModelD].filter(
-                (s): s is number => s !== null && s !== undefined
+                (s): s is number => typeof s === "number" && !isNaN(s)
             );
             const score = activeModelScores.length > 0
                 ? Math.round(activeModelScores.reduce((sum, s) => sum + s, 0) / activeModelScores.length)
                 : 0;
 
             const modelScores = {
-                scoreModelA,
-                rawModelA,
-                maxModelA,
-                scoreModelB,
-                rawModelB,
-                maxModelB,
-                scoreModelC,
-                rawModelC,
-                maxModelC,
-                scoreModelD,
-                rawModelD,
-                maxModelD,
+                scoreModelA: scoreModelA ?? null,
+                rawModelA: typeof rawModelA === "number" && !isNaN(rawModelA) ? rawModelA : null,
+                maxModelA: typeof maxModelA === "number" && !isNaN(maxModelA) ? maxModelA : null,
+                scoreModelB: scoreModelB ?? null,
+                rawModelB: typeof rawModelB === "number" && !isNaN(rawModelB) ? rawModelB : null,
+                maxModelB: typeof maxModelB === "number" && !isNaN(maxModelB) ? maxModelB : null,
+                scoreModelC: scoreModelC ?? null,
+                rawModelC: typeof rawModelC === "number" && !isNaN(rawModelC) ? rawModelC : null,
+                maxModelC: typeof maxModelC === "number" && !isNaN(maxModelC) ? maxModelC : null,
+                scoreModelD: scoreModelD ?? null,
+                rawModelD: typeof rawModelD === "number" && !isNaN(rawModelD) ? rawModelD : null,
+                maxModelD: typeof maxModelD === "number" && !isNaN(maxModelD) ? maxModelD : null,
             };
 
             setQuizScore(score);
