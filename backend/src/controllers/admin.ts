@@ -1128,17 +1128,6 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
       attempts = [];
     }
 
-    // 2. Fetch UserKanjiProgress as fallback/baseline if attempts table is new
-    const progressList = await prisma.userKanjiProgress.findMany({
-      where: {
-        kanji: kanjiCondition,
-      },
-      include: {
-        user: { select: { id: true, name: true, email: true, avatar: true } },
-        kanji: { select: { id: true, character: true, romaji: true, meaning: true, moduleId: true, module: { select: { id: true, title: true } } } },
-      },
-    });
-
     // Extract available Modules & Kanji for dropdown filter options (strictly 5 kanji per module)
     const modules = await prisma.module.findMany({
       select: { id: true, title: true },
@@ -1160,38 +1149,8 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
       orderBy: [{ moduleId: "asc" }, { id: "asc" }],
     });
 
-    // Grouping by student (userId) and kanji (kanjiId)
-    const recapMap = new Map<string, {
-      userId: number;
-      userName: string;
-      userEmail: string;
-      userAvatar: string;
-      kanjiId: number;
-      kanjiChar: string;
-      kanjiRomaji: string;
-      kanjiMeaning: string;
-      moduleTitle: string;
-      attemptsCount: number;
-      maxScore: number;
-      avgScore: number;
-      scoreModelA: number | null;
-      scoreModelB: number | null;
-      scoreModelC: number | null;
-      scoreModelD: number | null;
-      lastPracticed: string;
-      interpretation: string;
-      attemptsHistory: Array<{
-        id: number;
-        date: string;
-        totalScore: number;
-        scoreModelA: number | null;
-        scoreModelB: number | null;
-        scoreModelC: number | null;
-        scoreModelD: number | null;
-      }>;
-    }>();
-
     // Group attempts strictly by student (userId) and kanji (kanjiId)
+    // 100% strictly driven by QuizAttempt — if QuizAttempt is empty, recapList is empty!
     const groupedAttempts = new Map<string, any[]>();
     for (const att of attempts) {
       const key = `${att.userId}_${att.kanjiId}`;
@@ -1266,53 +1225,6 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
         interpretation,
         attemptsHistory,
       });
-    }
-
-    // Fallback: fill from UserKanjiProgress only for any student-kanji pair without QuizAttempt
-    if (attempts.length === 0 || (!startDate && !endDate)) {
-      for (const p of progressList) {
-        if (p.quizPercent > 0) {
-          const key = `${p.userId}_${p.kanjiId}`;
-          if (!groupedAttempts.has(key)) {
-            let interp = "Perlu Penguatan";
-            if (p.quizPercent >= 86) interp = "Sangat Baik";
-            else if (p.quizPercent >= 76) interp = "Baik";
-            else if (p.quizPercent >= 66) interp = "Cukup";
-
-            recapList.push({
-              userId: p.userId,
-              userName: p.user?.name || "Siswa",
-              userEmail: p.user?.email || "",
-              userAvatar: p.user?.avatar || "",
-              kanjiId: p.kanjiId,
-              kanjiChar: p.kanji?.character || "",
-              kanjiRomaji: p.kanji?.romaji || "",
-              kanjiMeaning: p.kanji?.meaning || "",
-              moduleTitle: p.kanji?.module?.title || "Modul Umum",
-              attemptsCount: 1,
-              maxScore: p.quizPercent,
-              avgScore: p.quizPercent,
-              scoreModelA: p.quizPercent,
-              scoreModelB: p.quizPercent,
-              scoreModelC: p.quizPercent,
-              scoreModelD: p.quizPercent,
-              lastPracticed: p.lastPracticed ? p.lastPracticed.toISOString() : new Date().toISOString(),
-              interpretation: interp,
-              attemptsHistory: [
-                {
-                  id: 0,
-                  date: p.lastPracticed ? p.lastPracticed.toISOString() : new Date().toISOString(),
-                  totalScore: p.quizPercent,
-                  scoreModelA: p.quizPercent,
-                  scoreModelB: p.quizPercent,
-                  scoreModelC: p.quizPercent,
-                  scoreModelD: p.quizPercent,
-                },
-              ],
-            });
-          }
-        }
-      }
     }
 
     // Sort recapList by maxScore DESC (highest score first), tie-breaker by userName and kanjiId
