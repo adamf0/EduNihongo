@@ -103,7 +103,7 @@ export const AdminPage: React.FC = () => {
         setSubmitting(true);
         setActionError("");
         const openDateIso = moduleOpenDate
-          ? new Date(moduleOpenDate.length === 16 ? `${moduleOpenDate}:00+07:00` : `${moduleOpenDate}+07:00`).toISOString()
+          ? (moduleOpenDate.length === 16 ? `${moduleOpenDate}:00+07:00` : `${moduleOpenDate}+07:00`)
           : null;
         if (selectedModule) {
           await api.admin.modules.update(selectedModule.id, moduleTitle, moduleTujuan, openDateIso);

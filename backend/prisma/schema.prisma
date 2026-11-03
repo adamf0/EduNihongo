@@ -76,7 +76,7 @@ model Module {
   id                 Int                  @id @default(autoincrement())
   title              String
   tujuanPembelajaran String?              @db.Text
-  openDate           DateTime?
+  openDate           String?              @db.VarChar(50)
   kanjis             Kanji[]
   Task               Task[]
   userProgress       UserModuleProgress[]

@@ -105,19 +105,49 @@ export const getModuleDetail = async (req: Request, res: Response) => {
   }
 };
 
-const parseWibDate = (openDateStr: any): Date | null => {
+const parseWibDate = (openDateStr: any): string | null => {
   if (!openDateStr) return null;
-  if (typeof openDateStr === "string") {
-    // If format is YYYY-MM-DDTHH:mm or YYYY-MM-DDTHH:mm:ss without timezone offset, treat as WIB (+07:00)
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(openDateStr)) {
-      return new Date(`${openDateStr}:00+07:00`);
-    }
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(openDateStr)) {
-      return new Date(`${openDateStr}+07:00`);
+  if (typeof openDateStr !== "string") {
+    if (openDateStr instanceof Date && !isNaN(openDateStr.getTime())) {
+      openDateStr = openDateStr.toISOString();
+    } else {
+      return null;
     }
   }
-  const d = new Date(openDateStr);
-  return isNaN(d.getTime()) ? null : d;
+  const str = openDateStr.trim();
+  if (!str) return null;
+
+  // 1. If it already has +07:00 or +0700 offset
+  if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?\+07(:?00)?$/.test(str)) {
+    return str.replace(" ", "T");
+  }
+
+  // 2. If it is local datetime without timezone, e.g. "2026-11-05T04:00" or "2026-11-05 04:00:00"
+  const localMatch = str.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})(:\d{2})?$/);
+  if (localMatch) {
+    const [, date, time, sec] = localMatch;
+    return `${date}T${time}${sec || ":00"}+07:00`;
+  }
+
+  // 3. Fallback parse (e.g. UTC ISO string)
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return null;
+
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(d);
+  const p: Record<string, string> = {};
+  parts.forEach((item) => { p[item.type] = item.value; });
+  const hr = (p.hour === "24" ? "00" : p.hour).padStart(2, "0");
+  return `${p.year}-${p.month}-${p.day}T${hr}:${p.minute}:${p.second}+07:00`;
 };
 
 export const createModule = async (req: Request, res: Response) => {
