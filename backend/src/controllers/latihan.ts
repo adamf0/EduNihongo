@@ -54,6 +54,30 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       return res.status(404).json({ error: `Kanji ${character} tidak ditemukan.` });
     }
 
+    // Check if parent module has a scheduled openDate that is still in the future
+    if (kanji.module?.openDate) {
+      const openTime = new Date(kanji.module.openDate).getTime();
+      if (Date.now() < openTime) {
+        const currentUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { role: true, email: true },
+        });
+        const userEmail = (currentUser?.email || (req as any).user?.email || "").toLowerCase();
+        if (currentUser?.role !== "ADMIN" && userEmail !== "haruki@sato.com") {
+          const formattedDate = new Date(kanji.module.openDate).toLocaleString("id-ID", {
+            timeZone: "Asia/Jakarta",
+            dateStyle: "full",
+            timeStyle: "short",
+          }).replace(".", ":") + " WIB";
+          return res.status(403).json({
+            error: `Modul ini belum terbuka. Modul akan terbuka pada tanggal ${formattedDate}.`,
+            isLocked: true,
+            openDate: kanji.module.openDate,
+          });
+        }
+      }
+    }
+
     // Find User progress for this Kanji
     const progress = await prisma.userKanjiProgress.findUnique({
       where: {

@@ -8,6 +8,7 @@ interface ModuleData {
   id: number;
   title: string;
   tujuanPembelajaran?: string | null;
+  openDate?: string | null;
 }
 
 interface KanjiData {
@@ -445,10 +446,32 @@ export const ModuleDetailPage: React.FC = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-base border-b border-outline-variant/30 pb-base">
             <div>
-              <h2 className="font-headline-lg text-headline-lg font-bold text-on-surface flex items-center gap-sm">
-                <Icon name="school" className="text-primary text-3xl animate-bounce" />
-                LMS Dosen: {module?.title || "Memuat..."}
-              </h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-headline-lg text-headline-lg font-bold text-on-surface flex items-center gap-sm">
+                  <Icon name="school" className="text-primary text-3xl animate-bounce" />
+                  LMS Dosen: {module?.title || "Memuat..."}
+                </h2>
+                {module?.openDate && (
+                  <span
+                    className={`text-xs px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 ${
+                      new Date(module.openDate).getTime() > Date.now()
+                        ? "bg-amber-50 text-amber-800 border border-amber-200"
+                        : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    }`}
+                  >
+                    <Icon name="schedule" className="text-sm" />
+                    {new Date(module.openDate).getTime() > Date.now() ? "Buka: " : "Terbuka sejak: "}
+                    {new Date(module.openDate).toLocaleDateString("id-ID", {
+                      timeZone: "Asia/Jakarta",
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).replace(".", ":")} WIB
+                  </span>
+                )}
+              </div>
               <p className="text-body-md text-on-surface-variant font-medium">
                 Manajemen kurikulum materi kuliah, penugasan mahasiswa, penilaian tugas, dan diskusi kelas.
               </p>

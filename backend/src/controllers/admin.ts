@@ -105,18 +105,36 @@ export const getModuleDetail = async (req: Request, res: Response) => {
   }
 };
 
+const parseWibDate = (openDateStr: any): Date | null => {
+  if (!openDateStr) return null;
+  if (typeof openDateStr === "string") {
+    // If format is YYYY-MM-DDTHH:mm or YYYY-MM-DDTHH:mm:ss without timezone offset, treat as WIB (+07:00)
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(openDateStr)) {
+      return new Date(`${openDateStr}:00+07:00`);
+    }
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(openDateStr)) {
+      return new Date(`${openDateStr}+07:00`);
+    }
+  }
+  const d = new Date(openDateStr);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 export const createModule = async (req: Request, res: Response) => {
   try {
     const body = sanitizeObject(req.body);
-    const { title, tujuanPembelajaran } = body;
+    const { title, tujuanPembelajaran, openDate } = body;
     if (!title) {
       return res.status(400).json({ error: "Judul modul wajib diisi." });
     }
 
+    const parsedOpenDate = parseWibDate(openDate);
+
     const module = await prisma.module.create({
       data: { 
         title,
-        tujuanPembelajaran: tujuanPembelajaran || null
+        tujuanPembelajaran: tujuanPembelajaran || null,
+        openDate: parsedOpenDate,
       },
     });
 
@@ -145,17 +163,22 @@ export const updateModule = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const body = sanitizeObject(req.body);
-    const { title, tujuanPembelajaran } = body;
+    const { title, tujuanPembelajaran, openDate } = body;
 
     if (!title) {
       return res.status(400).json({ error: "Judul modul wajib diisi." });
     }
 
+    const parsedOpenDate = openDate !== undefined
+      ? parseWibDate(openDate)
+      : undefined;
+
     const module = await prisma.module.update({
       where: { id: parseInt(id, 10) },
       data: { 
         title,
-        tujuanPembelajaran: tujuanPembelajaran || null
+        tujuanPembelajaran: tujuanPembelajaran || null,
+        ...(parsedOpenDate !== undefined ? { openDate: parsedOpenDate } : {}),
       },
     });
 

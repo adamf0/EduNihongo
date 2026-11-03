@@ -11,6 +11,8 @@ interface ModuleFormModalProps {
   setModuleTitle: (title: string) => void;
   moduleTujuan: string;
   setModuleTujuan: (tujuan: string) => void;
+  moduleOpenDate: string;
+  setModuleOpenDate: (date: string) => void;
   actionError: string;
   submitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
@@ -25,6 +27,8 @@ export const ModuleFormModal: React.FC<ModuleFormModalProps> = React.memo(
     setModuleTitle,
     moduleTujuan,
     setModuleTujuan,
+    moduleOpenDate,
+    setModuleOpenDate,
     actionError,
     submitting,
     onSubmit,
@@ -59,6 +63,33 @@ export const ModuleFormModal: React.FC<ModuleFormModalProps> = React.memo(
                 placeholder="Contoh: Module 6"
                 required
               />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between items-center">
+                <label className="font-label-md text-label-md font-bold text-on-surface">
+                  Jadwal Tanggal Buka Modul (WIB / UTC+7)
+                </label>
+                {moduleOpenDate && (
+                  <button
+                    type="button"
+                    onClick={() => setModuleOpenDate("")}
+                    className="text-xs text-error hover:underline cursor-pointer bg-transparent border-none font-semibold flex items-center gap-1"
+                  >
+                    <Icon name="clear" className="text-xs" />
+                    Kosongkan (Buka Langsung)
+                  </button>
+                )}
+              </div>
+              <input
+                type="datetime-local"
+                value={moduleOpenDate}
+                onChange={(e) => setModuleOpenDate(e.target.value)}
+                className="bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-xl p-3 w-full focus:ring-2 focus:ring-primary outline-none transition-all font-sans"
+              />
+              <span className="text-xs text-on-surface-variant font-medium">
+                Pilih tanggal & waktu modul akan dibuka dalam Waktu Indonesia Barat (WIB). Jika dikosongkan, modul dapat diakses langsung sesuai alur belajar.
+              </span>
             </div>
 
             <div className="flex flex-col gap-1.5">

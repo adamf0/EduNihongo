@@ -19,6 +19,13 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       return res.status(401).json({ error: "Unauthorized" });
     }
 
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, role: true },
+    });
+    const userEmail = (currentUser?.email || req.user?.email || "").toLowerCase();
+    const isExempt = userEmail === "haruki@sato.com" || currentUser?.role === "ADMIN";
+
     // Fetch user module progress with associated modules and their kanjis
     const userProgress = await prisma.userModuleProgress.findMany({
       where: { userId },
@@ -41,15 +48,23 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
 
     let previousModulePassed = true; // Module 1 is always unlocked by default
     const modules: any[] = [];
+    const now = new Date();
 
     for (let index = 0; index < userProgress.length; index++) {
       const up = userProgress[index];
 
-      // Module 1 (index 0) is always unlocked.
-      // Subsequent modules unlock only if the preceding module reached threshold > 60%
-      const isModuleLocked: boolean = ENABLE_LOCK_SYSTEM
+      // Check date lock: locked if openDate is set and in the future (bypassed for exempt users)
+      const isDateLocked: boolean = isExempt
+        ? false
+        : Boolean(up.module.openDate && new Date(up.module.openDate) > now);
+
+      // Sequential unlock: subsequent modules unlock only if preceding module reached threshold > 60%
+      const isSequentialLocked: boolean = (ENABLE_LOCK_SYSTEM && !isExempt)
         ? (index === 0 ? false : !previousModulePassed)
         : false;
+
+      // Module is locked if either date is not reached or sequential requirement not met
+      const isModuleLocked: boolean = isDateLocked || isSequentialLocked;
 
       // Sequential unlock for kanjis in this module:
       // First kanji is unlocked if module is unlocked.
@@ -71,9 +86,9 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
         const isCompleted: boolean = masteryPercent > 60;
 
         // Kanji is locked if lock system enabled AND (module is locked OR preceding kanji has masteryPercent <= 0)
-        const isKanjiLocked: boolean = ENABLE_LOCK_SYSTEM
-          ? (isModuleLocked || (kIdx === 0 ? false : !previousKanjiHasProgress))
-          : false;
+        const isKanjiLocked: boolean = isExempt
+          ? false
+          : (isModuleLocked || (ENABLE_LOCK_SYSTEM ? (kIdx === 0 ? false : !previousKanjiHasProgress) : false));
 
         // Next kanji in module unlocks if this kanji has masteryPercent > 0
         previousKanjiHasProgress = masteryPercent > 0;
@@ -103,8 +118,10 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
         id: up.module.id,
         title: up.module.title,
         tujuanPembelajaran: up.module.tujuanPembelajaran,
+        openDate: up.module.openDate,
         isCompleted: isModuleCompleted,
         isLocked: isModuleLocked,
+        isDateLocked,
         progressPercent,
         kanjis: moduleKanjis,
       });
@@ -138,7 +155,8 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
     res.json({
       overallProgress,
       modules,
-      isLockSystemEnabled: ENABLE_LOCK_SYSTEM,
+      isLockSystemEnabled: isExempt ? false : ENABLE_LOCK_SYSTEM,
+      isExempt,
     });
   } catch (error) {
     console.error("Modules error:", error);

@@ -6,6 +6,7 @@ export interface ModuleData {
   id: number;
   title: string;
   tujuanPembelajaran?: string | null;
+  openDate?: string | null;
   kanjis?: any[];
 }
 
@@ -16,6 +17,52 @@ interface ModuleTableProps {
   onDeleteModule: (id: number) => void;
   onNavigateDetail: (id: number) => void;
 }
+
+const formatScheduleDate = (openDateStr?: string | null) => {
+  if (!openDateStr) {
+    return (
+      <span className="text-xs text-on-surface-variant font-medium flex items-center gap-1.5">
+        <Icon name="lock_open" className="text-sm text-emerald-600" />
+        Langsung Terbuka
+      </span>
+    );
+  }
+  const dateObj = new Date(openDateStr);
+  if (isNaN(dateObj.getTime())) {
+    return <span className="text-xs text-on-surface-variant">-</span>;
+  }
+  const isFuture = dateObj.getTime() > Date.now();
+  const formatted = dateObj.toLocaleDateString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).replace(".", ":") + " WIB";
+
+  if (isFuture) {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200"
+        title={`Modul akan terbuka otomatis pada ${formatted}`}
+      >
+        <Icon name="schedule" className="text-sm text-amber-600" />
+        <span>Buka: {formatted}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200"
+      title={`Sudah terbuka sejak ${formatted}`}
+    >
+      <Icon name="check_circle" className="text-sm text-emerald-600" />
+      <span>Terbuka ({formatted})</span>
+    </span>
+  );
+};
 
 export const ModuleTable: React.FC<ModuleTableProps> = React.memo(
   ({
@@ -40,7 +87,8 @@ export const ModuleTable: React.FC<ModuleTableProps> = React.memo(
               <tr className="bg-surface-container-low border-b border-outline-variant/20 text-label-md text-on-surface-variant font-semibold">
                 <th className="p-4 w-20">ID</th>
                 <th className="p-4">Nama Modul / Judul</th>
-                <th className="p-4 w-48">Jumlah Kanji</th>
+                <th className="p-4 w-52">Jadwal Buka</th>
+                <th className="p-4 w-44">Jumlah Kanji</th>
                 <th className="p-4 w-36 text-center">Aksi</th>
               </tr>
             </thead>
@@ -51,6 +99,9 @@ export const ModuleTable: React.FC<ModuleTableProps> = React.memo(
                     {mod.id}
                   </td>
                   <td className="p-4 font-bold">{mod.title}</td>
+                  <td className="p-4">
+                    {formatScheduleDate(mod.openDate)}
+                  </td>
                   <td className="p-4">
                     <div className="flex items-center gap-sm">
                       <span className="font-semibold text-on-surface-variant">
@@ -87,7 +138,7 @@ export const ModuleTable: React.FC<ModuleTableProps> = React.memo(
               {modules.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="p-8 text-center text-on-surface-variant italic"
                   >
                     Belum ada modul yang terdaftar. Silakan tambah modul pertama

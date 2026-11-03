@@ -23,6 +23,7 @@ export const AdminPage: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<ModuleData | null>(null);
   const [moduleTitle, setModuleTitle] = useState("");
   const [moduleTujuan, setModuleTujuan] = useState("");
+  const [moduleOpenDate, setModuleOpenDate] = useState("");
 
   // Feedback states
   const [submitting, setSubmitting] = useState(false);
@@ -55,6 +56,7 @@ export const AdminPage: React.FC = () => {
     setSelectedModule(null);
     setModuleTitle("");
     setModuleTujuan("");
+    setModuleOpenDate("");
     setActionError("");
     setIsModuleModalOpen(true);
   }, []);
@@ -63,6 +65,29 @@ export const AdminPage: React.FC = () => {
     setSelectedModule(mod);
     setModuleTitle(mod.title);
     setModuleTujuan(mod.tujuanPembelajaran || "");
+    if (mod.openDate) {
+      const d = new Date(mod.openDate);
+      if (!isNaN(d.getTime())) {
+        const formatter = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Jakarta",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        const parts = formatter.formatToParts(d);
+        const p: Record<string, string> = {};
+        parts.forEach((item) => { p[item.type] = item.value; });
+        const hr = (p.hour === "24" ? "00" : p.hour).padStart(2, "0");
+        setModuleOpenDate(`${p.year}-${p.month}-${p.day}T${hr}:${p.minute}`);
+      } else {
+        setModuleOpenDate("");
+      }
+    } else {
+      setModuleOpenDate("");
+    }
     setActionError("");
     setIsModuleModalOpen(true);
   }, []);
@@ -77,10 +102,13 @@ export const AdminPage: React.FC = () => {
       try {
         setSubmitting(true);
         setActionError("");
+        const openDateIso = moduleOpenDate
+          ? new Date(moduleOpenDate.length === 16 ? `${moduleOpenDate}:00+07:00` : `${moduleOpenDate}+07:00`).toISOString()
+          : null;
         if (selectedModule) {
-          await api.admin.modules.update(selectedModule.id, moduleTitle, moduleTujuan);
+          await api.admin.modules.update(selectedModule.id, moduleTitle, moduleTujuan, openDateIso);
         } else {
-          await api.admin.modules.create(moduleTitle, moduleTujuan);
+          await api.admin.modules.create(moduleTitle, moduleTujuan, openDateIso);
         }
         setIsModuleModalOpen(false);
         await loadData();
@@ -90,7 +118,7 @@ export const AdminPage: React.FC = () => {
         setSubmitting(false);
       }
     },
-    [moduleTitle, moduleTujuan, selectedModule, loadData]
+    [moduleTitle, moduleTujuan, moduleOpenDate, selectedModule, loadData]
   );
 
   const handleDeleteModule = useCallback(
@@ -180,6 +208,8 @@ export const AdminPage: React.FC = () => {
         setModuleTitle={setModuleTitle}
         moduleTujuan={moduleTujuan}
         setModuleTujuan={setModuleTujuan}
+        moduleOpenDate={moduleOpenDate}
+        setModuleOpenDate={setModuleOpenDate}
         actionError={actionError}
         submitting={submitting}
         onSubmit={handleSaveModule}

@@ -42,6 +42,9 @@ export const api = {
         localStorage.setItem("kangraph_role", data.user.role || "USER");
         localStorage.setItem("musubi_token", data.token);
         localStorage.setItem("musubi_role", data.user.role || "USER");
+        if (data.user?.email) {
+          localStorage.setItem("musubi_email", data.user.email);
+        }
       }
       return data;
     },
@@ -57,6 +60,9 @@ export const api = {
         localStorage.setItem("kangraph_role", data.user.role || "USER");
         localStorage.setItem("musubi_token", data.token);
         localStorage.setItem("musubi_role", data.user.role || "USER");
+        if (data.user?.email) {
+          localStorage.setItem("musubi_email", data.user.email);
+        }
       }
       return data;
     },
@@ -65,6 +71,7 @@ export const api = {
       localStorage.removeItem("kangraph_role");
       localStorage.removeItem("musubi_token");
       localStorage.removeItem("musubi_role");
+      localStorage.removeItem("musubi_email");
       localStorage.removeItem("kanjigraph_token");
       localStorage.removeItem("kanjigraph_role");
     },
@@ -153,6 +160,9 @@ export const api = {
       if (data && data.role) {
         localStorage.setItem("musubi_role", data.role);
       }
+      if (data && data.email) {
+        localStorage.setItem("musubi_email", data.email);
+      }
       return data;
     },
     update: async (data: any) => {
@@ -186,19 +196,19 @@ export const api = {
         });
         return handleResponse(res);
       },
-      create: async (title: string, tujuanPembelajaran?: string) => {
+      create: async (title: string, tujuanPembelajaran?: string, openDate?: string | null) => {
         const res = await fetch(`${BASE_URL}/admin/modules`, {
           method: "POST",
           headers: getHeaders(),
-          body: JSON.stringify({ title, tujuanPembelajaran }),
+          body: JSON.stringify({ title, tujuanPembelajaran, openDate }),
         });
         return handleResponse(res);
       },
-      update: async (id: number, title: string, tujuanPembelajaran?: string) => {
+      update: async (id: number, title: string, tujuanPembelajaran?: string, openDate?: string | null) => {
         const res = await fetch(`${BASE_URL}/admin/modules/${id}`, {
           method: "PUT",
           headers: getHeaders(),
-          body: JSON.stringify({ title, tujuanPembelajaran }),
+          body: JSON.stringify({ title, tujuanPembelajaran, openDate }),
         });
         return handleResponse(res);
       },
