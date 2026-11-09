@@ -5,7 +5,6 @@ import DrawingCanvas, {
 import Icon from "../../Common/Component/Icon";
 import confetti from "canvas-confetti";
 import KanjiStrokeVisualizer from "../../Module/Component/Atom/KanjiStrokeVisualizer";
-import { createWorker, PSM } from "tesseract.js";
 import KanjiAtlasFlow from "../../Module/Component/Atom/KanjiAtlasFlow";
 import Breadcrumbs from "../Component/Atoms/Breadcrumbs";
 import { api } from "../../Common/Utility/api";
@@ -36,13 +35,6 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-
-const worker = await createWorker("jpn");
-
-await worker.setParameters({
-    tessedit_pageseg_mode: PSM.SINGLE_CHAR,
-    tessedit_char_whitelist: "一二三四五六七八九十",
-} as any);
 
 const parseJsonDeep = (val: any): any => {
     let result = val;
