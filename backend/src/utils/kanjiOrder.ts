@@ -14,6 +14,10 @@ export const MODULE_KANJI_CANONICAL_ORDER: Record<string, string[]> = {
   "559": ["議", "論", "談", "討", "意"],
   // Modul 6 (id 560): WAKTU DAN PENGALAMAN
   "560": ["経", "始", "歴", "史", "期"],
+  // Modul 7 (id 561): PERUBAHAN DAN PERKEMBANGAN
+  "561": ["化", "発", "展", "成", "増"],
+  // Modul 8 (id 562): PROSES BERPIKIR DAN PENALARAN
+  "562": ["認", "識", "判", "断", "想"],
 };
 
 export function sortModuleKanjis<T extends { character?: string; id?: number }>(
@@ -66,6 +70,42 @@ export function sortModuleKanjis<T extends { character?: string; id?: number }>(
 
   if (isModul6) {
     const order = MODULE_KANJI_CANONICAL_ORDER["560"];
+    return [...kanjis].sort((a, b) => {
+      const idxA = a.character ? order.indexOf(a.character) : -1;
+      const idxB = b.character ? order.indexOf(b.character) : -1;
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+
+  const isModul7 =
+    moduleIdentifier === 561 ||
+    moduleIdentifier === "561" ||
+    (typeof moduleIdentifier === "string" && /modul\s*7|perubahan|perkembangan/i.test(moduleIdentifier)) ||
+    kanjis.some((k) => k.character === "化" || k.character === "発" || k.character === "展" || k.character === "成" || k.character === "増");
+
+  if (isModul7) {
+    const order = MODULE_KANJI_CANONICAL_ORDER["561"];
+    return [...kanjis].sort((a, b) => {
+      const idxA = a.character ? order.indexOf(a.character) : -1;
+      const idxB = b.character ? order.indexOf(b.character) : -1;
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+
+  const isModul8 =
+    moduleIdentifier === 562 ||
+    moduleIdentifier === "562" ||
+    (typeof moduleIdentifier === "string" && /modul\s*8|berpikir|penalaran/i.test(moduleIdentifier)) ||
+    kanjis.some((k) => k.character === "認" || k.character === "識" || k.character === "判" || k.character === "断" || k.character === "想");
+
+  if (isModul8) {
+    const order = MODULE_KANJI_CANONICAL_ORDER["562"];
     return [...kanjis].sort((a, b) => {
       const idxA = a.character ? order.indexOf(a.character) : -1;
       const idxB = b.character ? order.indexOf(b.character) : -1;

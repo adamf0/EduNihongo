@@ -5,13 +5,6 @@ import { api } from "../../Common/Utility/api";
 import { CheckCircle2, Lock, BookOpen, ChevronRight, Info, X, FileText, Calendar } from "lucide-react";
 import { LmsModuleModal } from "../Component/Molecules/LmsModuleModal";
 
-// ============================================================================
-// KONFIGURASI SISTEM PENGUNCIAN (LOCK) MODUL & KANJI
-// true  = Fitur lock aktif (modul & kanji harus dibuka berurutan dengan threshold mastery > 60%)
-// false = Fitur lock dinonaktifkan (seluruh modul & kanji langsung terbuka bebas di UI)
-// ============================================================================
-export const ENABLE_LOCK_SYSTEM: boolean = true;
-
 export const sortModuleKanjis = (kanjis: any[], moduleId?: number | string) => {
   if (!Array.isArray(kanjis) || kanjis.length <= 1) return kanjis || [];
   const isModul4 =
@@ -68,12 +61,49 @@ export const sortModuleKanjis = (kanjis: any[], moduleId?: number | string) => {
     });
   }
 
+  const isModul7 =
+    moduleId === 561 ||
+    moduleId === "561" ||
+    (typeof moduleId === "string" && /modul\s*7|perubahan|perkembangan/i.test(moduleId)) ||
+    kanjis.some((k: any) => k.character === "化" || k.character === "発" || k.character === "展" || k.character === "成" || k.character === "増");
+
+  if (isModul7) {
+    const order = ["化", "発", "展", "成", "増"];
+    return [...kanjis].sort((a: any, b: any) => {
+      const idxA = a.character ? order.indexOf(a.character) : -1;
+      const idxB = b.character ? order.indexOf(b.character) : -1;
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+
+  const isModul8 =
+    moduleId === 562 ||
+    moduleId === "562" ||
+    (typeof moduleId === "string" && /modul\s*8|berpikir|penalaran/i.test(moduleId)) ||
+    kanjis.some((k: any) => k.character === "認" || k.character === "識" || k.character === "判" || k.character === "断" || k.character === "想");
+
+  if (isModul8) {
+    const order = ["認", "識", "判", "断", "想"];
+    return [...kanjis].sort((a: any, b: any) => {
+      const idxA = a.character ? order.indexOf(a.character) : -1;
+      const idxB = b.character ? order.indexOf(b.character) : -1;
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+
   return kanjis;
 };
 
 export const ModulePage: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
+  const [fetchedAtMs, setFetchedAtMs] = useState<number>(() => Date.now());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -118,6 +148,7 @@ export const ModulePage: React.FC = () => {
       try {
         setLoading(true);
         const result = await api.modules.get();
+        setFetchedAtMs(Date.now());
         setData(result);
         if (result?.modules) {
           fetchLmsBadgeCounts(result.modules);
@@ -166,7 +197,25 @@ export const ModulePage: React.FC = () => {
   const modules = data?.modules || [];
   const storedEmail = (localStorage.getItem("musubi_email") || "").toLowerCase();
   const isExemptUser = Boolean(data?.isExempt) || storedEmail === "haruki@sato.com";
-  const isLockActive = !isExemptUser && ENABLE_LOCK_SYSTEM && (data?.isLockSystemEnabled !== false);
+  const isMasteryLockActive =
+    !isExemptUser &&
+    (data?.isMasteryLockEnabled !== undefined
+      ? Boolean(data.isMasteryLockEnabled)
+      : data?.isLockSystemEnabled !== false);
+  const isScheduleLockActive =
+    !isExemptUser &&
+    (data?.isScheduleLockEnabled !== undefined
+      ? Boolean(data.isScheduleLockEnabled)
+      : data?.isLockSystemEnabled !== false);
+
+  const headerSubtitle =
+    isMasteryLockActive && isScheduleLockActive
+      ? "Pelajari karakter Kanji Jepang secara bertahap sesuai jadwal pembukaan modul dan syarat penguasaan minimal 60% pada modul sebelumnya."
+      : isMasteryLockActive
+      ? "Pelajari karakter Kanji Jepang secara berurutan. Kuasai kanji pada modul sebelumnya minimal 60% untuk membuka modul berikutnya."
+      : isScheduleLockActive
+      ? "Pelajari karakter Kanji Jepang sesuai jadwal pembukaan masing-masing modul tanpa syarat ketuntasan 60%."
+      : "Pelajari karakter Kanji Jepang secara modular. Seluruh modul dapat diakses secara bebas untuk mendukung fleksibilitas belajar Anda.";
 
   // Hanya tampilkan modul yang sudah memiliki materi kanji
   const displayModules = modules.filter(
@@ -210,7 +259,7 @@ export const ModulePage: React.FC = () => {
             <div className="max-w-2xl">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[#191c1e] mb-3">Alur Belajar Anda</h2>
               <p className="text-base text-[#5c403f] leading-relaxed">
-                Pelajari karakter Kanji Jepang secara modular. Seluruh modul dapat diakses secara bebas untuk mendukung fleksibilitas belajar Anda.
+                {headerSubtitle}
               </p>
             </div>
             <div className="flex flex-col items-center shrink-0 self-start md:self-end">
@@ -231,7 +280,21 @@ export const ModulePage: React.FC = () => {
             {displayModules.map((mod: any, idx: number) => {
               const isEven = idx % 2 === 0;
               const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
-              const isModLocked = isLockActive && (Boolean(mod.isLocked) || Boolean(mod.isDateLocked));
+              const isDateLocked =
+                isScheduleLockActive &&
+                Boolean(
+                  mod.isDateLocked !== undefined
+                    ? mod.isDateLocked
+                    : mod.openDate && new Date(mod.openDate).getTime() > fetchedAtMs
+                );
+              const isSequentialLocked =
+                isMasteryLockActive &&
+                Boolean(
+                  mod.isSequentialLocked !== undefined
+                    ? mod.isSequentialLocked
+                    : mod.isLocked && !isDateLocked
+                );
+              const isModLocked = isDateLocked || isSequentialLocked;
               
               // Determine layout alignment for desktop
               const leftSideClass = isEven 
@@ -244,7 +307,7 @@ export const ModulePage: React.FC = () => {
 
               const orderedKanjis = sortModuleKanjis(mod.kanjis, mod.id);
               // Find first unlocked and incomplete kanji, or first unlocked, or fallback
-              const targetKanji = isModLocked
+              const targetKanji = isMasteryLockActive
                 ? (orderedKanjis.find((k: any) => !k.isLocked && !k.isCompleted)?.character 
                     || orderedKanjis.find((k: any) => !k.isLocked)?.character 
                     || orderedKanjis[0]?.character 
@@ -266,7 +329,9 @@ export const ModulePage: React.FC = () => {
                         onShowInfo={showObjectives}
                         onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
                         lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
-                        isLockActive={isLockActive}
+                        isMasteryLockActive={isMasteryLockActive}
+                        isScheduleLockActive={isScheduleLockActive}
+                        nowMs={fetchedAtMs}
                       />
                     )}
                   </div>
@@ -293,7 +358,9 @@ export const ModulePage: React.FC = () => {
                         onShowInfo={showObjectives}
                         onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
                         lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
-                        isLockActive={isLockActive}
+                        isMasteryLockActive={isMasteryLockActive}
+                        isScheduleLockActive={isScheduleLockActive}
+                        nowMs={fetchedAtMs}
                       />
                     )}
                   </div>
@@ -368,7 +435,9 @@ const ModuleCard = ({
   onShowInfo,
   onShowLms,
   lmsBadgeCount = 0,
-  isLockActive = true
+  isMasteryLockActive = true,
+  isScheduleLockActive = true,
+  nowMs = 0
 }: { 
   mod: any; 
   targetKanji: string; 
@@ -376,15 +445,26 @@ const ModuleCard = ({
   onShowInfo: (title: string, objectives: string) => void;
   onShowLms: (id: number, title: string) => void;
   lmsBadgeCount?: number;
-  isLockActive?: boolean;
+  isMasteryLockActive?: boolean;
+  isScheduleLockActive?: boolean;
+  nowMs?: number;
 }) => {
   const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
-  const isDateLocked = isLockActive && Boolean(
-    mod.isDateLocked !== undefined
-      ? mod.isDateLocked
-      : (mod.openDate && new Date(mod.openDate).getTime() > Date.now())
-  );
-  const isModLocked = isLockActive && (Boolean(mod.isLocked) || isDateLocked);
+  const isDateLocked =
+    isScheduleLockActive &&
+    Boolean(
+      mod.isDateLocked !== undefined
+        ? mod.isDateLocked
+        : mod.openDate && new Date(mod.openDate).getTime() > nowMs
+    );
+  const isSequentialLocked =
+    isMasteryLockActive &&
+    Boolean(
+      mod.isSequentialLocked !== undefined
+        ? mod.isSequentialLocked
+        : mod.isLocked && !isDateLocked
+    );
+  const isModLocked = isDateLocked || isSequentialLocked;
 
   const formattedOpenDateShort = mod.openDate
     ? new Date(mod.openDate).toLocaleDateString("id-ID", {
@@ -462,13 +542,13 @@ const ModuleCard = ({
           <div className="flex flex-wrap gap-2">
             {sortModuleKanjis(mod.kanjis, mod.id).map((k: any) => {
               const isKanjiCompleted = k.isCompleted;
-              const isLocked = isModLocked || (isLockActive && Boolean(k.isLocked));
+              const isLocked = isModLocked || (isMasteryLockActive && Boolean(k.isLocked));
               const lockTitle = isDateLocked
                 ? `Terkunci (Modul dijadwalkan buka pada ${formattedOpenDateShort} WIB)`
                 : isLocked
                   ? 'Terkunci (Pelajari materi kanji sebelumnya terlebih dahulu)'
                   : isKanjiCompleted
-                    ? 'Selesai (> 60%)'
+                    ? 'Selesai (>= 60%)'
                     : 'Belum selesai';
 
               return (

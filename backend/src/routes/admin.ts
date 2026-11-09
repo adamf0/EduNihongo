@@ -12,7 +12,9 @@ import {
   deleteKanji,
   getQuizRubricReport,
   getLearningAnalytics,
-  getStudentKanjiProgress
+  getStudentKanjiProgress,
+  getSystemConfig,
+  updateSystemConfig
 } from "../controllers/admin";
 import {
   getJukugos,
@@ -37,6 +39,9 @@ const router = Router();
 
 // Apply auth middleware to protect admin endpoints
 router.use(authenticateToken);
+
+router.get("/config", getSystemConfig);
+router.put("/config", updateSystemConfig);
 
 router.get("/modules", getModules);
 router.get("/modules/:id", getModuleDetail);

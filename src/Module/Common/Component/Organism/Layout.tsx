@@ -48,6 +48,7 @@ export const Layout: React.FC<LayoutProps> = ({
     { icon: "draw", label: "Kanji", route: "/admin/kanji" },
     { icon: "menu_book", label: "Jukugo", route: "/admin/jukugo" },
     { icon: "category", label: "Kategori", route: "/admin/categories" },
+    { icon: "tune", label: "Aturan", route: "/admin/config" },
   ];
 
   const userBottomNavItems = [
@@ -127,7 +128,8 @@ export const Layout: React.FC<LayoutProps> = ({
 
       {/* Bottom Navigation Bar (Mobile & Tablet) */}
       <nav 
-        className="fixed bottom-0 inset-x-0 w-full flex justify-around items-center px-1 sm:px-3 pt-1.5 bg-surface dark:bg-surface-dim border-t border-outline-variant/20 z-[100] xl:hidden shadow-lg rounded-t-2xl"
+        aria-label="Navigasi seluler"
+        className="fixed bottom-0 inset-x-0 w-full flex justify-around items-center gap-0.5 px-1 sm:px-3 pt-1.5 bg-surface dark:bg-surface-dim border-t border-outline-variant/20 z-[100] xl:hidden shadow-lg rounded-t-2xl"
         style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
       >
         {mobileBottomNavItems.map((item) => {
@@ -136,13 +138,16 @@ export const Layout: React.FC<LayoutProps> = ({
             (item.route === "/admin" && currentPath === "/admin") ||
             (item.route === "/admin/kanji" && (currentPath.startsWith("/admin/kanji") || currentPath.startsWith("/admin/kanji-form"))) ||
             (item.route === "/admin/jukugo" && currentPath.startsWith("/admin/jukugo")) ||
-            (item.route === "/admin/categories" && currentPath.startsWith("/admin/categories"));
+            (item.route === "/admin/categories" && currentPath.startsWith("/admin/categories")) ||
+            (item.route === "/admin/config" && currentPath.startsWith("/admin/config"));
 
           return (
             <button
               key={item.route}
+              type="button"
               onClick={() => navigate(item.route)}
-              className={`flex flex-col items-center justify-center px-1 sm:px-2.5 py-1 active:scale-95 transition-all rounded-xl cursor-pointer min-w-0 flex-1 ${
+              aria-current={isActive ? "page" : undefined}
+              className={`flex flex-col items-center justify-center min-h-[48px] px-0.5 sm:px-2 py-1.5 active:scale-95 transition-all rounded-xl cursor-pointer min-w-0 flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 isActive
                   ? "bg-secondary-container text-on-secondary-container font-bold"
                   : "text-on-surface-variant hover:bg-surface-container-high"
@@ -153,7 +158,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 className="text-xl sm:text-2xl block"
                 style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
               />
-              <span className="text-[10px] sm:text-xs leading-tight tracking-tight truncate max-w-[56px] sm:max-w-none text-center">
+              <span className="text-[10px] sm:text-xs leading-tight tracking-tight truncate max-w-full text-center">
                 {item.label}
               </span>
             </button>

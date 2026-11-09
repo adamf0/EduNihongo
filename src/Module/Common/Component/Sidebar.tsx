@@ -46,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { icon: "draw", label: "Kelola Kanji", route: "/admin/kanji" },
         { icon: "menu_book", label: "Kelola Jukugo", route: "/admin/jukugo" },
         { icon: "category", label: "Kategori Kanji", route: "/admin/categories" },
+        { icon: "tune", label: "Konfigurasi", route: "/admin/config" },
       ]
     : [
         { icon: "dashboard", label: "Beranda", route: "/dashboard" },
@@ -77,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Mobile close button */}
           <button
             onClick={onClose}
-            className="xl:hidden p-2 rounded-full hover:bg-surface-container text-on-surface-variant cursor-pointer focus:outline-none border-none"
+            className="xl:hidden p-2 rounded-full hover:bg-surface-container text-on-surface-variant cursor-pointer focus-visible:outline-2 focus-visible:outline-primary border-none"
             aria-label="Close menu"
           >
             <Icon name="close" className="block text-2xl" />
@@ -85,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation links */}
-        <nav className="flex-grow px-4 py-4 space-y-1 sidebar-scroll overflow-y-auto">
+        <nav aria-label="Menu utama" className="flex-grow px-4 py-4 space-y-1 sidebar-scroll overflow-y-auto">
           {menus.map((item) => (
             <SidebarLink
               key={item.route}
@@ -96,7 +97,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 (item.route === "/admin" && currentPath === "/admin") ||
                 (item.route === "/admin/kanji" && (currentPath.startsWith("/admin/kanji") || currentPath.startsWith("/admin/kanji-form"))) ||
                 (item.route === "/admin/jukugo" && currentPath.startsWith("/admin/jukugo")) ||
-                (item.route === "/admin/categories" && currentPath.startsWith("/admin/categories"))
+                (item.route === "/admin/categories" && currentPath.startsWith("/admin/categories")) ||
+                (item.route === "/admin/config" && currentPath.startsWith("/admin/config"))
               }
               onClick={() => {
                 navigate(item.route);

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { buildDynamicKanjiGraph } from "../services/graphService";
+import { getAccessConfig, MASTERY_PASS_THRESHOLD } from "../utils/accessConfig";
 
 const prisma = new PrismaClient();
 
@@ -54,26 +55,29 @@ export const getKanjiDetail = async (req: AuthenticatedRequest, res: Response) =
       return res.status(404).json({ error: `Kanji ${character} tidak ditemukan.` });
     }
 
-    // Check if parent module has a scheduled openDate that is still in the future
+    // Check if schedule lock is enabled and parent module openDate is still in the future
     if (kanji.module?.openDate) {
-      const openTime = new Date(kanji.module.openDate).getTime();
-      if (Date.now() < openTime) {
-        const currentUser = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { role: true, email: true },
-        });
-        const userEmail = (currentUser?.email || (req as any).user?.email || "").toLowerCase();
-        if (currentUser?.role !== "ADMIN" && userEmail !== "haruki@sato.com") {
-          const formattedDate = new Date(kanji.module.openDate).toLocaleString("id-ID", {
-            timeZone: "Asia/Jakarta",
-            dateStyle: "full",
-            timeStyle: "short",
-          }).replace(".", ":") + " WIB";
-          return res.status(403).json({
-            error: `Modul ini belum terbuka. Modul akan terbuka pada tanggal ${formattedDate}.`,
-            isLocked: true,
-            openDate: kanji.module.openDate,
+      const accessConfig = await getAccessConfig(prisma);
+      if (accessConfig.enableScheduleLock) {
+        const openTime = new Date(kanji.module.openDate).getTime();
+        if (Date.now() < openTime) {
+          const currentUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true, email: true },
           });
+          const userEmail = (currentUser?.email || (req as any).user?.email || "").toLowerCase();
+          if (currentUser?.role !== "ADMIN" && userEmail !== "haruki@sato.com") {
+            const formattedDate = new Date(kanji.module.openDate).toLocaleString("id-ID", {
+              timeZone: "Asia/Jakarta",
+              dateStyle: "full",
+              timeStyle: "short",
+            }).replace(".", ":") + " WIB";
+            return res.status(403).json({
+              error: `Modul ini belum terbuka. Modul akan terbuka pada tanggal ${formattedDate}.`,
+              isLocked: true,
+              openDate: kanji.module.openDate,
+            });
+          }
         }
       }
     }
@@ -791,7 +795,7 @@ export const verifyHandwriting = async (req: AuthenticatedRequest, res: Response
 
     // Calculate weighted average masteryPercent: 40% writing, 30% reading, 30% quiz
     const finalMasteryScore = Math.round(finalWritingScore * 0.4 + prevReading * 0.3 + prevQuiz * 0.3);
-    const isMastered = finalMasteryScore > 60;
+    const isMastered = finalMasteryScore >= MASTERY_PASS_THRESHOLD;
 
     await prisma.userKanjiProgress.upsert({
       where: {
@@ -932,7 +936,7 @@ export const verifyReading = async (req: AuthenticatedRequest, res: Response) =>
     const finalReadingScore = Math.max(prevReading, score);
 
     const finalMasteryScore = Math.round(prevWriting * 0.4 + finalReadingScore * 0.3 + prevQuiz * 0.3);
-    const isMastered = finalMasteryScore > 60;
+    const isMastered = finalMasteryScore >= MASTERY_PASS_THRESHOLD;
 
     await prisma.userKanjiProgress.upsert({
       where: {
@@ -1167,7 +1171,7 @@ export const verifyQuiz = async (req: AuthenticatedRequest, res: Response) => {
     const finalQuizScore = Math.max(prevQuiz, score, previousBestScore);
 
     const finalMasteryScore = Math.round(prevWriting * 0.4 + prevReading * 0.3 + finalQuizScore * 0.3);
-    const isMastered = finalMasteryScore > 60;
+    const isMastered = finalMasteryScore >= MASTERY_PASS_THRESHOLD;
 
     await prisma.userKanjiProgress.upsert({
       where: {

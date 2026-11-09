@@ -2,6 +2,7 @@ import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { calculateUserStats } from "../utils/stats";
+import { computeUserModuleAccess, MASTERY_PASS_THRESHOLD } from "../utils/accessConfig";
 
 const prisma = new PrismaClient();
 
@@ -96,15 +97,11 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
     const todayProgressPercent = Math.min(100, Math.round((kanjiPracticedToday / dailyTarget) * 100));
 
     // 4. Continue Learning Module & Dynamic Next Kanji details
-    const activeModuleProgress = await prisma.userModuleProgress.findFirst({
-      where: {
-        userId,
-        isCompleted: false,
-        isLocked: false,
-      },
-      include: { module: true },
-      orderBy: { moduleId: "asc" },
-    });
+    const { modules: computedModules } = await computeUserModuleAccess(prisma, userId);
+    const activeModule =
+      computedModules.find((m) => !m.isCompleted && !m.isLocked && m.kanjis.length > 0) ||
+      computedModules.find((m) => !m.isCompleted && !m.isLocked) ||
+      null;
 
     let nextKanjiDetails = {
       character: "学",
@@ -112,32 +109,17 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
       meaning: "Belajar, Pembelajaran, Ilmu",
     };
 
-    if (activeModuleProgress) {
-      const kanjisInModule = await prisma.kanji.findMany({
-        where: { moduleId: activeModuleProgress.moduleId },
-        orderBy: { id: "asc" },
-      });
+    if (activeModule && activeModule.kanjis.length > 0) {
+      const nextK =
+        activeModule.kanjis.find((k) => k.masteryPercent < MASTERY_PASS_THRESHOLD) ||
+        activeModule.kanjis[0];
 
-      if (kanjisInModule.length > 0) {
-        const progressList = await prisma.userKanjiProgress.findMany({
-          where: {
-            userId,
-            kanjiId: { in: kanjisInModule.map((k) => k.id) },
-          },
-        });
-
-        const nextK = kanjisInModule.find((k) => {
-          const p = progressList.find((pl) => pl.kanjiId === k.id);
-          return !p || p.masteryPercent <= 60;
-        }) || kanjisInModule[0];
-
-        if (nextK) {
-          nextKanjiDetails = {
-            character: nextK.character,
-            romaji: nextK.romaji,
-            meaning: nextK.meaning,
-          };
-        }
+      if (nextK) {
+        nextKanjiDetails = {
+          character: nextK.character,
+          romaji: nextK.romaji,
+          meaning: nextK.meaning,
+        };
       }
     }
 
@@ -178,10 +160,10 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
         activityType: act.activityType,
         description: act.description,
       })),
-      continueLearning: activeModuleProgress
+      continueLearning: activeModule
         ? {
-            moduleTitle: activeModuleProgress.module.title,
-            progressPercent: activeModuleProgress.progressPercent,
+            moduleTitle: activeModule.title,
+            progressPercent: activeModule.progressPercent,
             nextKanji: nextKanjiDetails.character,
             nextKanjiRomaji: nextKanjiDetails.romaji,
             nextKanjiMeaning: nextKanjiDetails.meaning,

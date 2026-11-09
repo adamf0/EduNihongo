@@ -345,4 +345,9 @@ model QuizAttempt {
   @@index([createdAt], map: "QuizAttempt_createdAt_fkey")
 }
 
-
+model SystemConfig {
+  id                 Int      @id @default(1)
+  enableMasteryLock  Boolean  @default(true)
+  enableScheduleLock Boolean  @default(true)
+  updatedAt          DateTime @updatedAt
+}

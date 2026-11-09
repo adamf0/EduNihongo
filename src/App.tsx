@@ -14,6 +14,7 @@ import JukugoPage from "./Module/Admin/Page/JukugoPage";
 import KanjiListPage from "./Module/Admin/Page/KanjiListPage";
 import CategoryListPage from "./Module/Admin/Page/CategoryListPage";
 import SemanticControlPage from "./Module/Admin/Page/SemanticControlPage";
+import ConfigPage from "./Module/Admin/Page/ConfigPage";
 
 import AboutPage from "./Module/About/Page/Page";
 
@@ -38,6 +39,7 @@ function App() {
         <Route path="/admin/jukugo" element={<JukugoPage />} />
         <Route path="/admin/categories" element={<CategoryListPage />} />
         <Route path="/admin/semantic-control" element={<SemanticControlPage />} />
+        <Route path="/admin/config" element={<ConfigPage />} />
       </Routes>
     </Router>
   );

@@ -181,6 +181,23 @@ export const api = {
     }
   },
   admin: {
+    config: {
+      get: async () => {
+        const res = await fetch(`${BASE_URL}/admin/config`, {
+          method: "GET",
+          headers: getHeaders(),
+        });
+        return handleResponse(res);
+      },
+      update: async (data: { enableMasteryLock: boolean; enableScheduleLock: boolean }) => {
+        const res = await fetch(`${BASE_URL}/admin/config`, {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        return handleResponse(res);
+      }
+    },
     modules: {
       list: async () => {
         const res = await fetch(`${BASE_URL}/admin/modules`, {

@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { AuthenticatedRequest } from "../middleware/auth";
 import { sanitizeObject } from "../utils/sanitize";
 import { buildDynamicKanjiGraph } from "../services/graphService";
 import { AnalyticsAdapterFactory } from "../services/analyticsAdapter";
 import { sortModuleKanjis } from "../utils/kanjiOrder";
+import { getAccessConfig } from "../utils/accessConfig";
 
 const prisma = new PrismaClient();
 
@@ -1455,4 +1457,127 @@ export const getStudentKanjiProgress = async (req: Request, res: Response) => {
   }
 };
 
+// ================= SYSTEM CONFIGURATION =================
+
+const verifyAdminRole = async (req: AuthenticatedRequest, res: Response): Promise<boolean> => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return false;
+  }
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!currentUser || currentUser.role !== "ADMIN") {
+    res.status(403).json({
+      error: "Akses ditolak: Hanya administrator yang dapat mengelola konfigurasi sistem.",
+    });
+    return false;
+  }
+  return true;
+};
+
+const getConfigModuleStats = async () => {
+  const modules = await prisma.module.findMany({
+    select: {
+      id: true,
+      openDate: true,
+      _count: { select: { kanjis: true } },
+    },
+  });
+  const now = Date.now();
+  let futureScheduledModulesCount = 0;
+  let totalScheduledModulesCount = 0;
+  let activeModulesCount = 0;
+
+  for (const mod of modules) {
+    if (mod._count.kanjis > 0) {
+      activeModulesCount++;
+    }
+    if (mod.openDate) {
+      totalScheduledModulesCount++;
+      const parsed = new Date(mod.openDate).getTime();
+      if (!isNaN(parsed) && parsed > now) {
+        futureScheduledModulesCount++;
+      }
+    }
+  }
+
+  return {
+    futureScheduledModulesCount,
+    totalScheduledModulesCount,
+    activeModulesCount,
+  };
+};
+
+export const getSystemConfig = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const isAdmin = await verifyAdminRole(req, res);
+    if (!isAdmin) return;
+
+    const [config, stats] = await Promise.all([
+      getAccessConfig(prisma),
+      getConfigModuleStats(),
+    ]);
+
+    res.json({
+      id: config.id,
+      enableMasteryLock: config.enableMasteryLock,
+      enableScheduleLock: config.enableScheduleLock,
+      updatedAt: config.updatedAt,
+      stats,
+    });
+  } catch (error: any) {
+    console.error("Admin getSystemConfig error:", error);
+    res.status(500).json({ error: "Gagal memuat konfigurasi aturan modul." });
+  }
+};
+
+export const updateSystemConfig = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const isAdmin = await verifyAdminRole(req, res);
+    if (!isAdmin) return;
+
+    const { enableMasteryLock, enableScheduleLock } = req.body ?? {};
+    if (typeof enableMasteryLock !== "boolean" || typeof enableScheduleLock !== "boolean") {
+      return res.status(400).json({
+        error: "Nilai enableMasteryLock dan enableScheduleLock wajib berupa boolean (true/false).",
+      });
+    }
+
+    const updated = await prisma.systemConfig.upsert({
+      where: { id: 1 },
+      update: {
+        enableMasteryLock,
+        enableScheduleLock,
+      },
+      create: {
+        id: 1,
+        enableMasteryLock,
+        enableScheduleLock,
+      },
+    });
+
+    if (!enableMasteryLock && !enableScheduleLock) {
+      await prisma.userModuleProgress.updateMany({
+        data: { isLocked: false },
+      });
+    }
+
+    const stats = await getConfigModuleStats();
+
+    res.json({
+      id: updated.id,
+      enableMasteryLock: updated.enableMasteryLock,
+      enableScheduleLock: updated.enableScheduleLock,
+      updatedAt: updated.updatedAt,
+      stats,
+      message: "Konfigurasi aturan akses modul berhasil disimpan.",
+    });
+  } catch (error: any) {
+    console.error("Admin updateSystemConfig error:", error);
+    res.status(500).json({ error: "Gagal menyimpan konfigurasi aturan modul." });
+  }
+};
 

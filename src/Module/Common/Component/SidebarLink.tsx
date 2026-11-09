@@ -15,7 +15,7 @@ export const SidebarLink: React.FC<SidebarLinkProps> = ({
   onClick,
 }) => {
   const baseClass =
-    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 w-full text-left cursor-pointer";
+    "flex items-center gap-3 px-4 py-3 min-h-[44px] rounded-xl transition-all duration-200 w-full text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
   const activeClass =
     "text-primary font-bold border-r-4 border-primary bg-primary-container/10 scale-[0.98]";
@@ -27,6 +27,7 @@ export const SidebarLink: React.FC<SidebarLinkProps> = ({
     <button
       type="button"
       onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
       className={`${baseClass} ${
         isActive ? activeClass : inactiveClass
       }`}

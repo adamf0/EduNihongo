@@ -338,11 +338,111 @@ const ALL_GRAPH_EDGES_DATA: Record<string, CrossLinkRule[]> = {
     { source: "年始", target: "始業", predicate: "awal tahun & aktivitas kerja" },
     { source: "終始", target: "始終", predicate: "awal hingga akhir / senantiasa" },
     { source: "始末", target: "開始", predicate: "penyelesaian vs pengawalan" }
+  ],
+
+  // ==================== MODUL 7 ====================
+  "化": [
+    { source: "進化", target: "退化", predicate: "evolusi vs degenerasi" },
+    { source: "進化", target: "分化", predicate: "diferensiasi evolusi" },
+    { source: "硬化", target: "軟化", predicate: "pengerasan vs pelunakan" },
+    { source: "強化", target: "美化", predicate: "penguatan & perbaikan" },
+    { source: "浄化", target: "緑化", predicate: "pemurnian & penghijauan" },
+    { source: "変化", target: "悪化", predicate: "perubahan keadaan memburuk" },
+    { source: "化学", target: "化合", predicate: "reaksi & ilmu kimia" },
+    { source: "文化", target: "電化", predicate: "kemajuan budaya & teknologi" }
+  ],
+  "発": [
+    { source: "出発", target: "発車", predicate: "keberangkatan orang vs kendaraan" },
+    { source: "発車", target: "発進", predicate: "kendaraan mulai bergerak" },
+    { source: "発見", target: "発明", predicate: "menemukan vs menciptakan hal baru" },
+    { source: "発生", target: "発達", predicate: "kemunculan & perkembangan" },
+    { source: "発達", target: "発展", predicate: "perkembangan menuju kemajuan" },
+    { source: "発表", target: "発言", predicate: "penyampaian presentasi & pernyataan lisan" },
+    { source: "発表", target: "発信", predicate: "penyampaian & pengiriman pesan" },
+    { source: "発送", target: "発売", predicate: "pengiriman barang & penjualan produk" },
+    { source: "発売", target: "発行", predicate: "penjualan & penerbitan" },
+    { source: "開発", target: "発展", predicate: "pengembangan & perluasan" }
+  ],
+  "展": [
+    { source: "展開", target: "発展", predicate: "pembentangan & perluasan kemajuan" },
+    { source: "発展", target: "進展", predicate: "perkembangan & kemajuan bertahap" },
+    { source: "展示", target: "展覧", predicate: "pameran benda vs galeri umum" },
+    { source: "展覧", target: "個展", predicate: "pameran umum vs pameran tunggal" },
+    { source: "進展", target: "伸展", predicate: "kemajuan & perpanjangan" },
+    { source: "展開", target: "展望", predicate: "pengembangan wawasan luas" }
+  ],
+  "成": [
+    { source: "成功", target: "成果", predicate: "keberhasilan & perolehan hasil usaha" },
+    { source: "達成", target: "成就", predicate: "pencapaian sasaran & terwujud cita-cita" },
+    { source: "成長", target: "成育", predicate: "tumbuh kembang makhluk hidup" },
+    { source: "成人", target: "成年", predicate: "orang dewasa & usia kedewasaan" },
+    { source: "完成", target: "作成", predicate: "penyelesaian akhir & proses pembuatan" },
+    { source: "形成", target: "構成", predicate: "pembentukan wujud & susunan struktur" },
+    { source: "合成", target: "生成", predicate: "sintesis penggabungan & produksi hasil" },
+    { source: "育成", target: "養成", predicate: "pembinaan bakat & pelatihan keahlian" },
+    { source: "成立", target: "賛成", predicate: "kesepakatan berdiri berkat persetujuan" },
+    { source: "結成", target: "成立", predicate: "pembentukan tim & pendirian organisasi" }
+  ],
+  "増": [
+    { source: "増加", target: "増大", predicate: "peningkatan jumlah & ukuran" },
+    { source: "増加", target: "急増", predicate: "penambahan biasa vs lonjakan tajam" },
+    { source: "倍増", target: "急増", predicate: "pelipatgandaan & lonjakan cepat" },
+    { source: "増強", target: "増進", predicate: "penguatan daya & peningkatan kesehatan" },
+    { source: "増設", target: "増結", predicate: "penambahan fasilitas & gerbong sarana" },
+    { source: "増援", target: "増訂", predicate: "dukungan bantuan & penambahan revisi buku" },
+    { source: "増悪", target: "増血", predicate: "perubahan kondisi klinis & penambahan darah" }
+  ],
+
+  // ==================== MODUL 8 ====================
+  "認": [
+    { source: "確認", target: "認識", predicate: "memastikan fakta vs pemahaman situasi" },
+    { source: "認識", target: "認知", predicate: "pemahaman mendalam & pengenalan luas" },
+    { source: "承認", target: "公認", predicate: "persetujuan usulan vs pengakuan resmi" },
+    { source: "承認", target: "容認", predicate: "menyetujui aktif vs membiarkan/menerima" },
+    { source: "認定", target: "認証", predicate: "penetapan kualifikasi vs verifikasi identitas" },
+    { source: "承認", target: "否認", predicate: "menerima persetujuan vs menyangkal tuduhan" }
+  ],
+  "識": [
+    { source: "知識", target: "学識", predicate: "pengetahuan umum & wawasan keilmuan" },
+    { source: "常識", target: "良識", predicate: "akal sehat lazim & pertimbangan matang" },
+    { source: "見識", target: "有識", predicate: "wawasan pandangan & pengetahuan luas" },
+    { source: "認識", target: "識別", predicate: "kesadaran pemahaman & daya pembeda ciri" },
+    { source: "識別", target: "弁識", predicate: "membedakan ciri & daya memilah fakta" },
+    { source: "見識", target: "眼識", predicate: "wawasan berpikir & ketajaman mata pengamatan" },
+    { source: "意識", target: "認識", predicate: "kesadaran diri & pemahaman situasi" },
+    { source: "面識", target: "知識", predicate: "mengenal orang vs mengetahui ilmu" },
+    { source: "標識", target: "識別", predicate: "rambu penanda & pembedaan arah" }
+  ],
+  "判": [
+    { source: "判断", target: "判定", predicate: "pertimbangan sikap & penetapan hasil" },
+    { source: "批判", target: "評判", predicate: "kritik evaluasi & reputasi publik" },
+    { source: "判別", target: "判明", predicate: "membedakan ciri & fakta terungkap jelas" },
+    { source: "判別", target: "判読", predicate: "membedakan tanda & membaca tulisan samar" },
+    { source: "裁判", target: "判決", predicate: "proses peradilan & putusan pengadilan" },
+    { source: "裁判", target: "判事", predicate: "lembaga peradilan & hakim pemeriksa" },
+    { source: "判決", target: "判断", predicate: "putusan hukum resmi & pertimbangan nalar" }
+  ],
+  "断": [
+    { source: "切断", target: "中断", predicate: "pemotongan fisik & penghentian sementara" },
+    { source: "中断", target: "遮断", predicate: "berhenti sementara & blokir total akses" },
+    { source: "断食", target: "中断", predicate: "menahan asupan makan & jeda berkegiatan" },
+    { source: "判断", target: "決断", predicate: "pertimbangan nalar & ketegasan keputusan" },
+    { source: "診断", target: "断定", predicate: "diagnosis pemeriksaan & penetapan pasti" },
+    { source: "独断", target: "決断", predicate: "keputusan sepihak vs keputusan matang" },
+    { source: "無断", target: "独断", predicate: "tanpa izin awal & keputusan sendiri" }
+  ],
+  "想": [
+    { source: "想像", target: "空想", predicate: "imajinasi pikiran & khayalan tidak nyata" },
+    { source: "想像", target: "理想", predicate: "gambaran mental & keadaan terbaik idaman" },
+    { source: "思想", target: "発想", predicate: "sistem pemikiran filosofis & ide baru muncul" },
+    { source: "予想", target: "想定", predicate: "perkiraan masa depan & asumsi dasar berpikir" },
+    { source: "回想", target: "連想", predicate: "mengenang masa lalu & asosiasi pikiran" },
+    { source: "感想", target: "思想", predicate: "kesan pengalaman & pandangan pemikiran" }
   ]
 };
 
 async function seedAllEdges() {
-  console.log("=== Memulai Seeding KanjiGraphEdge untuk Seluruh Modul 1 - 6 ===");
+  console.log("=== Memulai Seeding KanjiGraphEdge untuk Seluruh Modul 1 - 8 ===");
 
   const allKanjiInDb = await prisma.kanji.findMany({
     where: { moduleId: { not: null } },
