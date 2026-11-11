@@ -28,6 +28,8 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       isLocked: m.isLocked,
       isDateLocked: m.isDateLocked,
       isSequentialLocked: m.isSequentialLocked,
+      isEvaluationLocked: m.isEvaluationLocked,
+      evaluationLockTitle: m.evaluationLockTitle,
       progressPercent: m.progressPercent,
       kanjis: m.kanjis.map(({ romaji: _romaji, ...rest }) => rest),
     }));
@@ -62,9 +64,96 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
           )
         : 0;
 
+    // Fetch Review Quizzes and evaluate lock status relative to target module
+    const rawReviewQuizzes = await prisma.reviewQuiz.findMany({
+      where: { isOpen: true },
+      include: {
+        attempts: {
+          where: { userId },
+          orderBy: { score: "desc" },
+          take: 1,
+        },
+        _count: { select: { questions: true } },
+      },
+      orderBy: { peletakanSetelahModul: "asc" },
+    });
+
+    let cumulativeQuizLock = false;
+    let precedingQuizLockTitle: string | null = null;
+
+    const reviewQuizzes = rawReviewQuizzes.map((rq) => {
+      // Find the module before this review quiz
+      const matchedMod =
+        modules.find((m) => m.id === rq.peletakanSetelahModul) ||
+        modules[rq.peletakanSetelahModul - 1] ||
+        null;
+
+      let isLocked = false;
+      let lockReason = "";
+      if (!isExempt) {
+        if (cumulativeQuizLock) {
+          isLocked = true;
+          lockReason = `Selesaikan evaluasi ${precedingQuizLockTitle} terlebih dahulu untuk membuka evaluasi ini.`;
+        } else if (matchedMod) {
+          if (matchedMod.isLocked) {
+            isLocked = true;
+            lockReason = matchedMod.isEvaluationLocked
+              ? `Selesaikan evaluasi ${matchedMod.evaluationLockTitle} terlebih dahulu untuk membuka evaluasi ini.`
+              : `Selesaikan ${matchedMod.title} terlebih dahulu untuk membuka evaluasi ini.`;
+          } else if (applyMasteryLock && !matchedMod.isCompleted) {
+            isLocked = true;
+            lockReason = `Kuasai seluruh kanji pada ${matchedMod.title} minimal 60% untuk membuka evaluasi ini.`;
+          }
+        }
+      }
+
+      const bestAttempt = rq.attempts?.[0] || null;
+      const hasFilledThisQuiz = Boolean(bestAttempt);
+
+      // Jika kuis evaluasi ini belum terisi, kuis evaluasi selanjutnya akan terkunci
+      if (!hasFilledThisQuiz && !cumulativeQuizLock) {
+        cumulativeQuizLock = true;
+        precedingQuizLockTitle = rq.judul;
+      }
+
+      let parsedSectionScores = null;
+      if (bestAttempt?.sectionScores) {
+        try {
+          parsedSectionScores = JSON.parse(bestAttempt.sectionScores);
+        } catch (e) {
+          parsedSectionScores = null;
+        }
+      }
+
+      return {
+        id: rq.id,
+        judul: rq.judul,
+        peletakanSetelahModul: rq.peletakanSetelahModul,
+        deskripsi: rq.deskripsi,
+        durasiMenit: rq.durasiMenit,
+        totalSoal: rq._count.questions || rq.totalSoal,
+        targetScore: rq.targetScore,
+        isLocked,
+        lockReason,
+        isOpen: rq.isOpen,
+        bestAttempt: bestAttempt
+          ? {
+              id: bestAttempt.id,
+              score: bestAttempt.score,
+              totalCorrect: bestAttempt.totalCorrect,
+              totalQuestions: bestAttempt.totalQuestions,
+              isPassed: bestAttempt.isPassed,
+              sectionScores: parsedSectionScores,
+              createdAt: bestAttempt.createdAt,
+            }
+          : null,
+      };
+    });
+
     res.json({
       overallProgress,
       modules,
+      reviewQuizzes,
       isMasteryLockEnabled: applyMasteryLock,
       isScheduleLockEnabled: applyScheduleLock,
       isLockSystemEnabled: applyMasteryLock || applyScheduleLock,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Layout from "../../Common/Component/Organism/Layout";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../Common/Utility/api";
-import { CheckCircle2, Lock, BookOpen, ChevronRight, Info, X, FileText, Calendar } from "lucide-react";
+import { CheckCircle2, Lock, BookOpen, ChevronRight, Info, X, FileText, Calendar, Award, Sparkles } from "lucide-react";
 import { LmsModuleModal } from "../Component/Molecules/LmsModuleModal";
 
 export const sortModuleKanjis = (kanjis: any[], moduleId?: number | string) => {
@@ -277,97 +277,221 @@ export const ModulePage: React.FC = () => {
             <div className="absolute left-6 md:left-1/2 top-8 bottom-8 w-[2px] bg-repeat-y -translate-x-1/2 z-0"
                  style={{ backgroundImage: 'linear-gradient(to bottom, #c8232a 50%, transparent 50%)', backgroundSize: '2px 16px' }}></div>
 
-            {displayModules.map((mod: any, idx: number) => {
-              const isEven = idx % 2 === 0;
-              const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
-              const isDateLocked =
-                isScheduleLockActive &&
-                Boolean(
-                  mod.isDateLocked !== undefined
-                    ? mod.isDateLocked
-                    : mod.openDate && new Date(mod.openDate).getTime() > fetchedAtMs
+            {(() => {
+              const reviewQuizzes: any[] = data?.reviewQuizzes || [];
+              type TimelineItem = 
+                | { type: "module"; mod: any; originalIdx: number }
+                | { type: "review_quiz"; rq: any };
+
+              const timelineItems: TimelineItem[] = [];
+              const placedQuizIds = new Set<number>();
+
+              displayModules.forEach((mod: any, idx: number) => {
+                timelineItems.push({ type: "module", mod, originalIdx: idx });
+
+                const matchingQuizzes = reviewQuizzes.filter((rq: any) => {
+                  if (placedQuizIds.has(rq.id)) return false;
+                  return (
+                    rq.peletakanSetelahModul === mod.id ||
+                    rq.peletakanSetelahModul === idx + 1
+                  );
+                });
+
+                matchingQuizzes.forEach((rq: any) => {
+                  timelineItems.push({ type: "review_quiz", rq });
+                  placedQuizIds.add(rq.id);
+                });
+              });
+
+              // Any review quiz not placed yet
+              reviewQuizzes.forEach((rq: any) => {
+                if (!placedQuizIds.has(rq.id)) {
+                  timelineItems.push({ type: "review_quiz", rq });
+                  placedQuizIds.add(rq.id);
+                }
+              });
+
+              let chainEvaluationLocked = false;
+              let chainEvaluationTitle = "";
+
+              return timelineItems.map((item, timelineIdx) => {
+                const isEven = timelineIdx % 2 === 0;
+
+                const leftSideClass = isEven
+                  ? "w-full md:w-[46%] flex justify-start md:justify-end order-2 md:order-1 pl-12 md:pl-0"
+                  : "md:w-[46%] hidden md:block order-1";
+
+                const rightSideClass = isEven
+                  ? "md:w-[46%] hidden md:block order-3"
+                  : "w-full md:w-[46%] flex justify-start order-2 md:order-3 pl-12 md:pl-0";
+
+                if (item.type === "module") {
+                  const mod = item.mod;
+                  const idx = item.originalIdx;
+                  const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
+
+                  if (!isExemptUser && mod.isEvaluationLocked && !chainEvaluationLocked) {
+                    chainEvaluationLocked = true;
+                    chainEvaluationTitle = mod.evaluationLockTitle || "Fukushuu";
+                  }
+
+                  const isEvaluationLocked =
+                    !isExemptUser && (chainEvaluationLocked || Boolean(mod.isEvaluationLocked));
+                  const evaluationLockTitle =
+                    chainEvaluationTitle || mod.evaluationLockTitle || "Fukushuu";
+
+                  const isDateLocked =
+                    isScheduleLockActive &&
+                    Boolean(
+                      mod.isDateLocked !== undefined
+                        ? mod.isDateLocked
+                        : mod.openDate && new Date(mod.openDate).getTime() > fetchedAtMs
+                    );
+                  const isSequentialLocked =
+                    isMasteryLockActive &&
+                    Boolean(
+                      mod.isSequentialLocked !== undefined
+                        ? mod.isSequentialLocked
+                        : mod.isLocked && !isDateLocked
+                    );
+                  const isModLocked = isDateLocked || isEvaluationLocked || isSequentialLocked;
+
+                  const orderedKanjis = sortModuleKanjis(mod.kanjis, mod.id);
+                  const targetKanji = isMasteryLockActive
+                    ? (orderedKanjis.find((k: any) => !k.isLocked && !k.isCompleted)?.character 
+                        || orderedKanjis.find((k: any) => !k.isLocked)?.character 
+                        || orderedKanjis[0]?.character 
+                        || "")
+                    : (orderedKanjis.find((k: any) => !k.isCompleted)?.character 
+                        || orderedKanjis[0]?.character 
+                        || "");
+
+                  return (
+                    <div key={`mod-${mod.id}`} className={`relative flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-0 justify-between group ${isModLocked ? 'opacity-65' : ''}`}>
+                      
+                      {/* Left side card or placeholder */}
+                      <div className={leftSideClass}>
+                        {isEven && (
+                          <ModuleCard 
+                            mod={mod} 
+                            targetKanji={targetKanji} 
+                            navigate={navigate} 
+                            onShowInfo={showObjectives}
+                            onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
+                            lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
+                            isMasteryLockActive={isMasteryLockActive}
+                            isScheduleLockActive={isScheduleLockActive}
+                            isEvaluationLocked={isEvaluationLocked}
+                            evaluationLockTitle={evaluationLockTitle}
+                            nowMs={fetchedAtMs}
+                          />
+                        )}
+                      </div>
+
+                      {/* Timeline Dot in the Center */}
+                      <div className="absolute left-6 md:relative md:left-0 z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 bg-white shadow-md order-1 md:order-2 shrink-0 -translate-x-1/2 md:translate-x-0 transition-colors duration-300"
+                           style={{ borderColor: isModLocked || !hasKanjis ? '#e2e8f0' : (mod.isCompleted ? '#4F7942' : '#c8232a') }}>
+                        {isModLocked ? (
+                          <Lock className="w-4 h-4 text-slate-400" />
+                        ) : mod.isCompleted && hasKanjis ? (
+                          <CheckCircle2 className="w-6 h-6 fill-white text-[#4F7942] stroke-[#4F7942]" />
+                        ) : (
+                          <span className={`text-sm font-bold ${!hasKanjis ? 'text-slate-400' : 'text-[#c8232a]'}`}>{idx + 1}</span>
+                        )}
+                      </div>
+
+                      {/* Right side card or placeholder */}
+                      <div className={rightSideClass}>
+                        {!isEven && (
+                          <ModuleCard 
+                            mod={mod} 
+                            targetKanji={targetKanji} 
+                            navigate={navigate} 
+                            onShowInfo={showObjectives}
+                            onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
+                            lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
+                            isMasteryLockActive={isMasteryLockActive}
+                            isScheduleLockActive={isScheduleLockActive}
+                            isEvaluationLocked={isEvaluationLocked}
+                            evaluationLockTitle={evaluationLockTitle}
+                            nowMs={fetchedAtMs}
+                          />
+                        )}
+                      </div>
+
+                    </div>
+                  );
+                }
+
+                // item.type === "review_quiz"
+                const rq = item.rq;
+                const hasFilledThisRq = Boolean(
+                  rq.bestAttempt || (rq.attempts && rq.attempts.length > 0)
                 );
-              const isSequentialLocked =
-                isMasteryLockActive &&
-                Boolean(
-                  mod.isSequentialLocked !== undefined
-                    ? mod.isSequentialLocked
-                    : mod.isLocked && !isDateLocked
+
+                let isRqLocked = Boolean(rq.isLocked);
+                let rqLockReason = rq.lockReason || "";
+
+                if (!isExemptUser && chainEvaluationLocked) {
+                  isRqLocked = true;
+                  if (!rqLockReason) {
+                    rqLockReason = `Selesaikan evaluasi ${chainEvaluationTitle} terlebih dahulu untuk membuka evaluasi ini.`;
+                  }
+                }
+
+                if (!isExemptUser && !hasFilledThisRq && !chainEvaluationLocked) {
+                  chainEvaluationLocked = true;
+                  chainEvaluationTitle = rq.judul || "Fukushuu";
+                }
+
+                const isPassed = Boolean(rq.bestAttempt?.isPassed);
+
+                return (
+                  <div key={`rq-${rq.id}`} className={`relative flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-0 justify-between group ${isRqLocked ? 'opacity-70' : ''}`}>
+                    {/* Left side card or placeholder */}
+                    <div className={leftSideClass}>
+                      {isEven && (
+                        <ReviewQuizCard
+                          rq={rq}
+                          navigate={navigate}
+                          isLocked={isRqLocked}
+                          lockReason={rqLockReason}
+                        />
+                      )}
+                    </div>
+
+                    {/* Timeline Dot in the Center */}
+                    <div 
+                      className="absolute left-6 md:relative md:left-0 z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 bg-white shadow-md order-1 md:order-2 shrink-0 -translate-x-1/2 md:translate-x-0 transition-colors duration-300"
+                      style={{ 
+                        borderColor: isRqLocked ? '#cbd5e1' : (isPassed ? '#4F7942' : '#8f0020') 
+                      }}
+                      title={isRqLocked ? "Review Quiz Terkunci" : isPassed ? "Review Quiz Selesai" : "Review Quiz Siap"}
+                    >
+                      {isRqLocked ? (
+                        <Lock className="w-4 h-4 text-slate-400" />
+                      ) : isPassed ? (
+                        <Award className="w-5 h-5 text-[#4F7942]" />
+                      ) : (
+                        <Sparkles className="w-5 h-5 text-[#8f0020]" />
+                      )}
+                    </div>
+
+                    {/* Right side card or placeholder */}
+                    <div className={rightSideClass}>
+                      {!isEven && (
+                        <ReviewQuizCard
+                          rq={rq}
+                          navigate={navigate}
+                          isLocked={isRqLocked}
+                          lockReason={rqLockReason}
+                        />
+                      )}
+                    </div>
+                  </div>
                 );
-              const isModLocked = isDateLocked || isSequentialLocked;
-              
-              // Determine layout alignment for desktop
-              const leftSideClass = isEven 
-                ? "w-full md:w-[46%] flex justify-start md:justify-end order-2 md:order-1 pl-12 md:pl-0"
-                : "md:w-[46%] hidden md:block order-1";
-              
-              const rightSideClass = isEven
-                ? "md:w-[46%] hidden md:block order-3"
-                : "w-full md:w-[46%] flex justify-start order-2 md:order-3 pl-12 md:pl-0";
-
-              const orderedKanjis = sortModuleKanjis(mod.kanjis, mod.id);
-              // Find first unlocked and incomplete kanji, or first unlocked, or fallback
-              const targetKanji = isMasteryLockActive
-                ? (orderedKanjis.find((k: any) => !k.isLocked && !k.isCompleted)?.character 
-                    || orderedKanjis.find((k: any) => !k.isLocked)?.character 
-                    || orderedKanjis[0]?.character 
-                    || "")
-                : (orderedKanjis.find((k: any) => !k.isCompleted)?.character 
-                    || orderedKanjis[0]?.character 
-                    || "");
-
-              return (
-                <div key={mod.id} className={`relative flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-0 justify-between group ${isModLocked ? 'opacity-65' : ''}`}>
-                  
-                  {/* Left side card or placeholder */}
-                  <div className={leftSideClass}>
-                    {isEven && (
-                      <ModuleCard 
-                        mod={mod} 
-                        targetKanji={targetKanji} 
-                        navigate={navigate} 
-                        onShowInfo={showObjectives}
-                        onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
-                        lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
-                        isMasteryLockActive={isMasteryLockActive}
-                        isScheduleLockActive={isScheduleLockActive}
-                        nowMs={fetchedAtMs}
-                      />
-                    )}
-                  </div>
-
-                  {/* Timeline Dot in the Center */}
-                  <div className="absolute left-6 md:relative md:left-0 z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 bg-white shadow-md order-1 md:order-2 shrink-0 -translate-x-1/2 md:translate-x-0 transition-colors duration-300"
-                       style={{ borderColor: isModLocked || !hasKanjis ? '#e2e8f0' : (mod.isCompleted ? '#4F7942' : '#c8232a') }}>
-                    {isModLocked ? (
-                      <Lock className="w-4 h-4 text-slate-400" />
-                    ) : mod.isCompleted && hasKanjis ? (
-                      <CheckCircle2 className="w-6 h-6 fill-white text-[#4F7942] stroke-[#4F7942]" />
-                    ) : (
-                      <span className={`text-sm font-bold ${!hasKanjis ? 'text-slate-400' : 'text-[#c8232a]'}`}>{idx + 1}</span>
-                    )}
-                  </div>
-
-                  {/* Right side card or placeholder */}
-                  <div className={rightSideClass}>
-                    {!isEven && (
-                      <ModuleCard 
-                        mod={mod} 
-                        targetKanji={targetKanji} 
-                        navigate={navigate} 
-                        onShowInfo={showObjectives}
-                        onShowLms={(id, title) => setLmsModal({ isOpen: true, moduleId: id, moduleTitle: title })}
-                        lmsBadgeCount={lmsBadgeCounts[mod.id] || 0}
-                        isMasteryLockActive={isMasteryLockActive}
-                        isScheduleLockActive={isScheduleLockActive}
-                        nowMs={fetchedAtMs}
-                      />
-                    )}
-                  </div>
-
-                </div>
-              );
-            })}
+              });
+            })()}
 
           </div>
 
@@ -437,6 +561,8 @@ const ModuleCard = ({
   lmsBadgeCount = 0,
   isMasteryLockActive = true,
   isScheduleLockActive = true,
+  isEvaluationLocked,
+  evaluationLockTitle,
   nowMs = 0
 }: { 
   mod: any; 
@@ -447,6 +573,8 @@ const ModuleCard = ({
   lmsBadgeCount?: number;
   isMasteryLockActive?: boolean;
   isScheduleLockActive?: boolean;
+  isEvaluationLocked?: boolean;
+  evaluationLockTitle?: string;
   nowMs?: number;
 }) => {
   const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
@@ -457,6 +585,11 @@ const ModuleCard = ({
         ? mod.isDateLocked
         : mod.openDate && new Date(mod.openDate).getTime() > nowMs
     );
+  const isEvaluationLockedProp = Boolean(
+    isEvaluationLocked !== undefined ? isEvaluationLocked : mod.isEvaluationLocked
+  );
+  const evaluationLockTitleProp = evaluationLockTitle || mod.evaluationLockTitle || "Fukushuu";
+
   const isSequentialLocked =
     isMasteryLockActive &&
     Boolean(
@@ -464,7 +597,7 @@ const ModuleCard = ({
         ? mod.isSequentialLocked
         : mod.isLocked && !isDateLocked
     );
-  const isModLocked = isDateLocked || isSequentialLocked;
+  const isModLocked = isDateLocked || isEvaluationLockedProp || isSequentialLocked;
 
   const formattedOpenDateShort = mod.openDate
     ? new Date(mod.openDate).toLocaleDateString("id-ID", {
@@ -545,11 +678,13 @@ const ModuleCard = ({
               const isLocked = isModLocked || (isMasteryLockActive && Boolean(k.isLocked));
               const lockTitle = isDateLocked
                 ? `Terkunci (Modul dijadwalkan buka pada ${formattedOpenDateShort} WIB)`
-                : isLocked
-                  ? 'Terkunci (Pelajari materi kanji sebelumnya terlebih dahulu)'
-                  : isKanjiCompleted
-                    ? 'Selesai (>= 60%)'
-                    : 'Belum selesai';
+                : isEvaluationLockedProp
+                  ? `Terkunci (Selesaikan evaluasi ${evaluationLockTitleProp} terlebih dahulu)`
+                  : isLocked
+                    ? 'Terkunci (Pelajari materi kanji sebelumnya terlebih dahulu)'
+                    : isKanjiCompleted
+                      ? 'Selesai (>= 60%)'
+                      : 'Belum selesai';
 
               return (
                 <div 
@@ -622,11 +757,128 @@ const ModuleCard = ({
           <span>
             {isDateLocked
               ? `Modul ini dijadwalkan akan terbuka pada tanggal ${formattedOpenDateFull}.`
+              : isEvaluationLockedProp
+              ? `Selesaikan evaluasi ${evaluationLockTitleProp} terlebih dahulu untuk membuka modul ini.`
               : "Kuasai seluruh kanji pada modul sebelumnya minimal 60% untuk membuka modul ini."}
           </span>
         </div>
       )}
 
+    </div>
+  );
+};
+
+// Helper ReviewQuizCard component for rendering review quiz milestone
+const ReviewQuizCard = ({
+  rq,
+  navigate,
+  isLocked,
+  lockReason,
+}: {
+  rq: any;
+  navigate: any;
+  isLocked?: boolean;
+  lockReason?: string;
+}) => {
+  const isRqLocked = isLocked !== undefined ? isLocked : Boolean(rq.isLocked);
+  const isPassed = Boolean(rq.bestAttempt?.isPassed);
+  const displayLockReason =
+    lockReason ||
+    rq.lockReason ||
+    "Selesaikan materi modul sebelumnya minimal 60% untuk membuka evaluasi ini.";
+
+  return (
+    <div
+      className={`ml-4 md:ml-0 bg-white/95 backdrop-blur-xl p-5 rounded-2xl shadow-sm hover:shadow-md w-full border border-slate-100 border-l-4 transition-all duration-300 hover:-translate-y-0.5 ${
+        isRqLocked
+          ? "border-l-slate-300"
+          : isPassed
+          ? "border-l-[#4F7942]"
+          : "border-l-[#8f0020]"
+      }`}
+    >
+      {/* Header Tag and Status */}
+      <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
+        {isRqLocked ? (
+          <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 select-none">
+            <Lock className="w-3 h-3" /> Terkunci
+          </span>
+        ) : isPassed ? (
+          <span className="bg-[#e2f0d9] text-[#385723] px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 select-none">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            Lulus ({Math.round(rq.bestAttempt.score)}%)
+          </span>
+        ) : rq.bestAttempt ? (
+          <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 select-none">
+            Nilai: {Math.round(rq.bestAttempt.score)}%
+          </span>
+        ) : (
+          <span className="bg-[#fcebeb] text-[#8f0020] px-2.5 py-0.5 rounded-full text-xs font-bold animate-pulse select-none">
+            Aktif
+          </span>
+        )}
+      </div>
+
+      {/* Title & Description */}
+      <h3
+        className={`text-lg font-bold mb-1 ${
+          isRqLocked ? "text-slate-500" : "text-slate-900"
+        }`}
+      >
+        {rq.judul}
+      </h3>
+      <p className="text-xs text-slate-600 leading-relaxed mb-4 line-clamp-2">
+        {rq.deskripsi ||
+          "Evaluasi komprehensif materi Modul 1 sampai Modul 6 (Pertemuan 7)."}
+      </p>
+
+      {/* Best Attempt Progress Bar */}
+      {!isRqLocked && rq.bestAttempt && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex-1 mr-4">
+            <div className="h-2 w-full bg-[#f1f5f9] rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  isPassed ? "bg-[#4F7942]" : "bg-[#8f0020]"
+                }`}
+                style={{
+                  width: `${Math.min(100, Math.round(rq.bestAttempt.score))}%`,
+                }}
+              />
+            </div>
+          </div>
+          <span
+            className={`text-xs font-bold ${
+              isPassed ? "text-[#4F7942]" : "text-[#8f0020]"
+            }`}
+          >
+            {rq.bestAttempt.totalCorrect} / {rq.bestAttempt.totalQuestions}
+          </span>
+        </div>
+      )}
+
+      {/* Action Button / Lock message */}
+      {!isRqLocked ? (
+        <button
+          onClick={() => navigate(`/review-quiz/${rq.id}`)}
+          className={`w-full py-2.5 rounded-xl font-bold shadow-sm transition-all duration-200 text-xs flex items-center justify-center gap-1.5 border-none cursor-pointer ${
+            isPassed
+              ? "bg-[#4F7942] text-white hover:brightness-105 active:scale-[0.98]"
+              : "bg-[#8f0020] text-white hover:brightness-105 active:scale-[0.98]"
+          }`}
+        >
+          <Award className="w-4 h-4 shrink-0" />
+          <span>
+            {rq.bestAttempt ? "Ulas Kembali Evaluasi" : "Mulai Kerjakan Review Quiz"}
+          </span>
+          <ChevronRight className="w-4 h-4 shrink-0" />
+        </button>
+      ) : (
+        <div className="mt-4 py-2.5 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-600 select-none text-center">
+          <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+          <span>{displayLockReason}</span>
+        </div>
+      )}
     </div>
   );
 };

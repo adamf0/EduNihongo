@@ -15,6 +15,9 @@ import KanjiListPage from "./Module/Admin/Page/KanjiListPage";
 import CategoryListPage from "./Module/Admin/Page/CategoryListPage";
 import SemanticControlPage from "./Module/Admin/Page/SemanticControlPage";
 import ConfigPage from "./Module/Admin/Page/ConfigPage";
+import ReviewQuizAdminPage from "./Module/Admin/Page/ReviewQuizAdminPage";
+import ReviewQuizQuestionsAdminPage from "./Module/Admin/Page/ReviewQuizQuestionsAdminPage";
+import ReviewQuizPage from "./Module/ReviewQuiz/Page/ReviewQuizPage";
 
 import AboutPage from "./Module/About/Page/Page";
 
@@ -31,6 +34,7 @@ function App() {
         <Route path="/module-detail" element={<LatihanPage />} />
         <Route path="/latihan" element={<LatihanPage />} />
         <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/review-quiz/:id" element={<ReviewQuizPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/module-detail" element={<ModuleDetailPage />} />
@@ -40,6 +44,8 @@ function App() {
         <Route path="/admin/categories" element={<CategoryListPage />} />
         <Route path="/admin/semantic-control" element={<SemanticControlPage />} />
         <Route path="/admin/config" element={<ConfigPage />} />
+        <Route path="/admin/review-quiz" element={<ReviewQuizAdminPage />} />
+        <Route path="/admin/review-quiz/:id/questions" element={<ReviewQuizQuestionsAdminPage />} />
       </Routes>
     </Router>
   );

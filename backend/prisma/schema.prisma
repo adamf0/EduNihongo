@@ -28,6 +28,8 @@ model User {
   moduleProgress    UserModuleProgress[]
   refleksiData      RefleksiData[]
   quizAttempts      QuizAttempt[]
+  reviewQuizAttempts ReviewQuizAttempt[]
+  reviewQuizProgresses ReviewQuizProgress[]
 }
 
 model MasterRefleksi {
@@ -350,4 +352,80 @@ model SystemConfig {
   enableMasteryLock  Boolean  @default(true)
   enableScheduleLock Boolean  @default(true)
   updatedAt          DateTime @updatedAt
+}
+
+model ReviewQuiz {
+  id                    Int                  @id @default(autoincrement())
+  judul                 String
+  peletakanSetelahModul Int                  @default(6) // ID modul atau urutan modul setelahnya (misal: 6 atau 560 untuk Modul 6)
+  deskripsi             String?              @db.Text
+  durasiMenit           Int                  @default(60)
+  totalSoal             Int                  @default(120)
+  targetScore           Int                  @default(60)
+  isOpen                Boolean              @default(true)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  questions             ReviewQuizQuestion[]
+  attempts              ReviewQuizAttempt[]
+  progresses            ReviewQuizProgress[]
+
+  @@map("review_quiz")
+}
+
+model ReviewQuizQuestion {
+  id             Int        @id @default(autoincrement())
+  reviewQuizId   Int
+  moduleNumber   Int        @default(1)
+  section        String     @default("A") // "A", "B", "C", "D"
+  type           String     @default("multiple") // "unscramble", "multiple", "fill"
+  questionNumber Int        @default(1)
+  question       String     @db.Text
+  options        String?    @db.Text // JSON array: ["A. ...", "B. ...", "C. ..."]
+  correctAnswer  String?    @db.Text // Jawaban benar (teks / index)
+  words          String?    @db.Text // JSON array potongan kata untuk unscramble
+  correctOrder   String?    @db.Text // JSON array urutan kata benar / teks kalimat
+  explanation    String?    @db.Text
+  reviewQuiz     ReviewQuiz @relation(fields: [reviewQuizId], references: [id], onDelete: Cascade)
+
+  @@index([reviewQuizId], map: "ReviewQuizQuestion_reviewQuizId_fkey")
+  @@map("review_quiz_question")
+}
+
+model ReviewQuizAttempt {
+  id             Int        @id @default(autoincrement())
+  userId         Int
+  reviewQuizId   Int
+  score          Float
+  totalCorrect   Int
+  totalQuestions Int        @default(120)
+  answers        String?    @db.Text // JSON array jawaban user
+  sectionScores  String?    @db.Text // JSON { A: 24, B: 27, C: 26, D: 25 }
+  isPassed       Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewQuiz     ReviewQuiz @relation(fields: [reviewQuizId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "ReviewQuizAttempt_userId_fkey")
+  @@index([reviewQuizId], map: "ReviewQuizAttempt_reviewQuizId_fkey")
+  @@map("review_quiz_attempt")
+}
+
+model ReviewQuizProgress {
+  id                  Int        @id @default(autoincrement())
+  userId              Int
+  reviewQuizId        Int
+  stage               String     @default("quiz") // "quiz", "checkpoint_A", "checkpoint_B", "checkpoint_C", "final_summary"
+  activeSection       String     @default("A") // "A", "B", "C", "D"
+  currentIdxInSection Int        @default(0)
+  answers             String     @db.Text // JSON stringified map of questionId -> answer
+  updatedAt           DateTime   @updatedAt
+  createdAt           DateTime   @default(now())
+
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewQuiz          ReviewQuiz @relation(fields: [reviewQuizId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewQuizId])
+  @@index([userId], map: "ReviewQuizProgress_userId_fkey")
+  @@index([reviewQuizId], map: "ReviewQuizProgress_reviewQuizId_fkey")
+  @@map("review_quiz_progress")
 }

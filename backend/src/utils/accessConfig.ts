@@ -41,12 +41,14 @@ export interface ComputedModuleAccessItem {
   isLocked: boolean;
   isDateLocked: boolean;
   isSequentialLocked: boolean;
+  isEvaluationLocked?: boolean;
+  evaluationLockTitle?: string | null;
   progressPercent: number;
   kanjis: ModuleKanjiAccessItem[];
 }
 
 export async function computeUserModuleAccess(prisma: PrismaClient, userId: number) {
-  const [currentUser, config, userProgress] = await Promise.all([
+  const [currentUser, config, userProgress, reviewQuizzes] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, role: true },
@@ -70,19 +72,50 @@ export async function computeUserModuleAccess(prisma: PrismaClient, userId: numb
       },
       orderBy: { moduleId: "asc" },
     }),
+    prisma.reviewQuiz.findMany({
+      where: { isOpen: true },
+      include: {
+        attempts: {
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { peletakanSetelahModul: "asc" },
+    }),
   ]);
 
-  const userEmail = (currentUser?.email || "").toLowerCase();
-  const isExempt = userEmail === "haruki@sato.com" || currentUser?.role === "ADMIN";
+  const isExempt = currentUser?.role === "ADMIN";
   const applyMasteryLock = !isExempt && config.enableMasteryLock;
   const applyScheduleLock = !isExempt && config.enableScheduleLock;
 
   let previousModulePassed: boolean = true;
+  let cumulativeEvaluationLocked: boolean = false;
+  let cumulativeEvaluationTitle: string | null = null;
   const now = new Date();
   const modules: ComputedModuleAccessItem[] = [];
 
   for (let index = 0; index < userProgress.length; index++) {
     const up = userProgress[index];
+
+    // Cek apakah ada review quiz baru yang ditempatkan sebelum modul ini
+    if (index > 0 && !isExempt) {
+      const prevMod = userProgress[index - 1].module;
+      const precedingReviewQuizzes = reviewQuizzes.filter(
+        (rq) => rq.peletakanSetelahModul === prevMod.id || rq.peletakanSetelahModul === index
+      );
+
+      for (const rq of precedingReviewQuizzes) {
+        const hasFilled = Boolean(rq.attempts && rq.attempts.length > 0);
+        if (!hasFilled && !cumulativeEvaluationLocked) {
+          cumulativeEvaluationLocked = true;
+          cumulativeEvaluationTitle = rq.judul;
+        }
+      }
+    }
+
+    const isEvaluationLocked = cumulativeEvaluationLocked;
+    const evaluationLockTitle = cumulativeEvaluationTitle;
 
     const isDateLocked: boolean = applyScheduleLock
       ? Boolean(up.module.openDate && new Date(up.module.openDate) > now)
@@ -91,10 +124,10 @@ export async function computeUserModuleAccess(prisma: PrismaClient, userId: numb
     const isSequentialLocked: boolean = applyMasteryLock
       ? index === 0
         ? false
-        : !previousModulePassed
-      : false;
+        : !previousModulePassed || isEvaluationLocked
+      : isEvaluationLocked;
 
-    const isModuleLocked: boolean = isDateLocked || isSequentialLocked;
+    const isModuleLocked: boolean = isDateLocked || isSequentialLocked || isEvaluationLocked;
 
     let previousKanjiHasProgress = true;
     const sortedKanjis = sortModuleKanjis(up.module.kanjis || [], up.module.id);
@@ -146,6 +179,8 @@ export async function computeUserModuleAccess(prisma: PrismaClient, userId: numb
       isLocked: isModuleLocked,
       isDateLocked,
       isSequentialLocked,
+      isEvaluationLocked,
+      evaluationLockTitle,
       progressPercent,
       kanjis: moduleKanjis,
     });

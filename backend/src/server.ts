@@ -12,6 +12,7 @@ import profileRoutes from "./routes/profile";
 import adminRoutes from "./routes/admin";
 import lmsRoutes from "./routes/lms";
 import ttsRoutes from "./routes/tts";
+import reviewQuizRoutes from "./routes/reviewQuiz";
 import { startQueueWorker } from "./utils/mailer";
 
 import { createYoga, createSchema } from "graphql-yoga";
@@ -35,6 +36,8 @@ const yoga = createYoga({
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "http://localhost:5175",
+  "http://127.0.0.1:5175",
   "http://localhost:5001",
   "http://127.0.0.1:5001",
   "https://kanji.fishiden.com",
@@ -93,6 +96,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/lms", lmsRoutes);
 app.use("/api/tts", ttsRoutes);
+app.use("/api/review-quiz", reviewQuizRoutes);
 
 // Serve Swagger Documentation
 app.get("/docs", (req, res) => {

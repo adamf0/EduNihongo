@@ -100,6 +100,75 @@ export const api = {
       return handleResponse(res);
     }
   },
+  reviewQuiz: {
+    list: async () => {
+      const res = await fetch(`${BASE_URL}/review-quiz`, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+      return handleResponse(res);
+    },
+    get: async (id: number | string) => {
+      const res = await fetch(`${BASE_URL}/review-quiz/${id}`, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+      return handleResponse(res);
+    },
+    submit: async (id: number | string, answers: Record<string | number, any>) => {
+      const res = await fetch(`${BASE_URL}/review-quiz/${id}/submit`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ answers }),
+      });
+      return handleResponse(res);
+    },
+    saveProgress: async (id: number | string, progress: { stage: string; activeSection: string; currentIdxInSection: number; answers: any }) => {
+      const res = await fetch(`${BASE_URL}/review-quiz/${id}/progress`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(progress),
+      });
+      return handleResponse(res);
+    },
+    resetProgress: async (id: number | string) => {
+      const res = await fetch(`${BASE_URL}/review-quiz/${id}/progress`, {
+        method: "DELETE",
+        headers: getHeaders(),
+      });
+      return handleResponse(res);
+    },
+    adminScoreReport: async (quizId?: number | string) => {
+      const q = quizId ? `?quizId=${quizId}` : "";
+      const res = await fetch(`${BASE_URL}/review-quiz/admin/score-report${q}`, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+      return handleResponse(res);
+    },
+    adminList: async () => {
+      const res = await fetch(`${BASE_URL}/review-quiz/admin/list`, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+      return handleResponse(res);
+    },
+    adminSave: async (payload: any) => {
+      const res = await fetch(`${BASE_URL}/review-quiz/admin/save`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return handleResponse(res);
+    },
+    adminDelete: async (id: number | string) => {
+      const res = await fetch(`${BASE_URL}/review-quiz/admin/${id}`, {
+        method: "DELETE",
+        headers: getHeaders(),
+      });
+      return handleResponse(res);
+    },
+  },
   latihan: {
     get: async (character: string) => {
       const res = await fetch(`${BASE_URL}/latihan/${encodeURIComponent(character)}`, {
