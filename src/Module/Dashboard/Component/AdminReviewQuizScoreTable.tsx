@@ -600,7 +600,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                               title={`Modul ${mNum} Bagian A: ${mod.correctA}/${mod.totalA || 5} benar (${mod.rubricA}% rubrik)`}
                             >
                               {mod.correctA}<br/>
-                              {mod.correctA}/{mod.totalA || 5} (${mod.rubricA}%)
+                              {mod.correctA}/{mod.totalA || 5} ({mod.rubricA}%)
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-100">
@@ -611,7 +611,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                               title={`Modul ${mNum} Bagian B: ${mod.correctB}/${mod.totalB || 5} benar (${mod.rubricB}% rubrik)`}
                             >
                               {mod.correctB}<br/>
-                              {mod.correctB}/{mod.totalB || 5} (${mod.rubricB}%)
+                              {mod.correctB}/{mod.totalB || 5} ({mod.rubricB}%)
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-100">
@@ -622,7 +622,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                               title={`Modul ${mNum} Bagian C: ${mod.correctC}/${mod.totalC || 5} benar (${mod.rubricC}% rubrik)`}
                             >
                               {mod.correctC}<br/>
-                              {mod.correctC}/{mod.totalC || 5} (${mod.rubricC}%)
+                              {mod.correctC}/{mod.totalC || 5} ({mod.rubricC}%)
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-200">
@@ -633,7 +633,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                               title={`Modul ${mNum} Bagian D: ${mod.correctD}/${mod.totalD || 5} benar (${mod.rubricD}% rubrik)`}
                             >
                               {mod.correctD}<br/>
-                              {mod.correctD}/{mod.totalD || 5} (${mod.rubricD}%)
+                              {mod.correctD}/{mod.totalD || 5} ({mod.rubricD}%)
                             </span>
                           </td>
                         </React.Fragment>
