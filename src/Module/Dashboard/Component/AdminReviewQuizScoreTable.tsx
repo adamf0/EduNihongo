@@ -527,9 +527,6 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                   <th rowSpan={2} className="py-3 px-3 text-center border-r border-slate-200 min-w-[110px]">
                     Status
                   </th>
-                  <th rowSpan={2} className="py-3 px-4 text-center min-w-[80px]">
-                    Aksi
-                  </th>
                 </tr>
                 <tr className="bg-slate-50 text-slate-500 font-extrabold uppercase text-[9px] border-b border-slate-200">
                   {modulesWithQuestions.map((m) => (
@@ -683,17 +680,6 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                           Belum Mulai
                         </span>
                       )}
-                    </td>
-
-                    {/* Aksi Button */}
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => openStudentDetail(std)}
-                        className="p-1.5 rounded-xl bg-slate-100 hover:bg-[#8f0020] text-slate-600 hover:text-white transition-all border-none cursor-pointer"
-                        title="Lihat Detail Rubrik Modul Mahasiswa"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
                     </td>
                   </tr>
                 ))}
