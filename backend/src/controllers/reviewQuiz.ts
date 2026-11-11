@@ -656,20 +656,30 @@ export const adminGetReviewQuizScoreReport = async (req: AuthenticatedRequest, r
       return res.status(404).json({ error: "Review Quiz tidak ditemukan." });
     }
 
-    // 2. Ambil seluruh modul untuk label judul modul
+    // 2. Ambil modul yang ada di review_quiz ini (dari daftar questions kuis ini)
+    const distinctModuleNumbers = Array.from(
+      new Set(reviewQuiz.questions.map((q) => q.moduleNumber))
+    ).sort((a, b) => a - b);
+
+    // Ambil data modul dari tabel Module untuk mendapatkan judul resmi modul
     const dbModules = await prisma.module.findMany({
       orderBy: { id: "asc" },
     });
-    const moduleMap: Record<number, string> = {
-      1: "Modul 1: Ujian, Pertanyaan, dan Jawaban",
-      2: "Modul 2: Penelitian dan Pengumpulan Data",
-      3: "Modul 3: Informasi dan Data",
-      4: "Modul 4: Dunia Kerja dan Perdagangan",
-      5: "Modul 5: Komunikasi dan Pertukaran Ide",
-      6: "Modul 6: Waktu dan Pengalaman",
-    };
-    dbModules.slice(0, 6).forEach((m, idx) => {
-      moduleMap[idx + 1] = m.title;
+    const moduleMap: Record<number, { id: number; title: string }> = {};
+    dbModules.forEach((m, idx) => {
+      moduleMap[idx + 1] = { id: m.id, title: m.title };
+    });
+
+    const moduleList = distinctModuleNumbers.map((moduleNumber) => {
+      const modQuestions = reviewQuiz.questions.filter((q) => q.moduleNumber === moduleNumber);
+      const modInfo = moduleMap[moduleNumber];
+      return {
+        moduleNumber,
+        title: modInfo?.title || `Modul ${moduleNumber}`,
+        id: modInfo?.id,
+        hasQuestions: true,
+        questionCount: modQuestions.length,
+      };
     });
 
     // 3. Ambil seluruh user mahasiswa (role = USER) beserta attempts dan progress
@@ -740,11 +750,6 @@ export const adminGetReviewQuizScoreReport = async (req: AuthenticatedRequest, r
     let completedCount = 0;
     let passedCount = 0;
 
-    const moduleList = [1, 2, 3, 4, 5, 6].map((mNum) => ({
-      moduleNumber: mNum,
-      title: moduleMap[mNum] || `Modul ${mNum}`,
-    }));
-
     const studentReports = students.map((std) => {
       const bestAttempt = std.reviewQuizAttempts?.[0] || null;
       const attemptCount = std.reviewQuizAttempts?.length || 0;
@@ -774,24 +779,34 @@ export const adminGetReviewQuizScoreReport = async (req: AuthenticatedRequest, r
       const moduleScores: Record<number, any> = {};
       let studentTotalCorrect = 0;
 
-      [1, 2, 3, 4, 5, 6].forEach((mNum) => {
+      moduleList.forEach(({ moduleNumber: mNum }) => {
         const modQuestions = reviewQuiz.questions.filter((q) => q.moduleNumber === mNum);
-        const correctA = modQuestions.filter((q) => q.section === "A" && evaluate(q, answersObj[q.id])).length;
-        const correctB = modQuestions.filter((q) => q.section === "B" && evaluate(q, answersObj[q.id])).length;
-        const correctC = modQuestions.filter((q) => q.section === "C" && evaluate(q, answersObj[q.id])).length;
-        const correctD = modQuestions.filter((q) => q.section === "D" && evaluate(q, answersObj[q.id])).length;
+        const hasQuestionsInMod = modQuestions.length > 0;
+
+        const correctA = hasQuestionsInMod ? modQuestions.filter((q) => q.section === "A" && evaluate(q, answersObj[q.id])).length : 0;
+        const correctB = hasQuestionsInMod ? modQuestions.filter((q) => q.section === "B" && evaluate(q, answersObj[q.id])).length : 0;
+        const correctC = hasQuestionsInMod ? modQuestions.filter((q) => q.section === "C" && evaluate(q, answersObj[q.id])).length : 0;
+        const correctD = hasQuestionsInMod ? modQuestions.filter((q) => q.section === "D" && evaluate(q, answersObj[q.id])).length : 0;
 
         const totalModCorrect = correctA + correctB + correctC + correctD;
         studentTotalCorrect += totalModCorrect;
 
-        const totalQuestionsInMod = modQuestions.length || 20;
-        const percent = Math.round((totalModCorrect / totalQuestionsInMod) * 100);
+        const totalQuestionsInMod = modQuestions.length;
+        const percent = totalQuestionsInMod > 0 ? Math.round((totalModCorrect / totalQuestionsInMod) * 100) : 0;
 
-        // Bobot kontribusi rubrik (Bagian A-D masing-masing bobot 25%, per modul 5 soal = max 4.17%)
-        const rubricA = parseFloat(((correctA / 30) * 25).toFixed(1));
-        const rubricB = parseFloat(((correctB / 30) * 25).toFixed(1));
-        const rubricC = parseFloat(((correctC / 30) * 25).toFixed(1));
-        const rubricD = parseFloat(((correctD / 30) * 25).toFixed(1));
+        const countA = modQuestions.filter((q) => q.section === "A").length;
+        const countB = modQuestions.filter((q) => q.section === "B").length;
+        const countC = modQuestions.filter((q) => q.section === "C").length;
+        const countD = modQuestions.filter((q) => q.section === "D").length;
+
+        // Bobot kontribusi rubrik (setiap bagian A-D bobot maksimal 25% dari total seluruh kuis)
+        const totalSoalKuis = reviewQuiz.questions.length || 120;
+        const totalPerSection = totalSoalKuis / 4 || 30;
+
+        const rubricA = parseFloat(((correctA / totalPerSection) * 25).toFixed(1));
+        const rubricB = parseFloat(((correctB / totalPerSection) * 25).toFixed(1));
+        const rubricC = parseFloat(((correctC / totalPerSection) * 25).toFixed(1));
+        const rubricD = parseFloat(((correctD / totalPerSection) * 25).toFixed(1));
         const totalRubricMod = parseFloat((rubricA + rubricB + rubricC + rubricD).toFixed(1));
 
         let status = "Perlu Latihan (<60%)";
@@ -801,23 +816,26 @@ export const adminGetReviewQuizScoreReport = async (req: AuthenticatedRequest, r
         moduleScores[mNum] = {
           moduleNumber: mNum,
           moduleTitle: moduleMap[mNum] || `Modul ${mNum}`,
+          hasQuestions: hasQuestionsInMod,
           correctA,
-          totalA: 5,
+          totalA: countA,
           rubricA,
           correctB,
-          totalB: 5,
+          totalB: countB,
           rubricB,
           correctC,
-          totalC: 5,
+          totalC: countC,
           rubricC,
           correctD,
-          totalD: 5,
+          totalD: countD,
           rubricD,
           totalCorrect: totalModCorrect,
           totalQuestions: totalQuestionsInMod,
           percent,
           totalRubric: totalRubricMod,
-          status: hasAttempted || isDraft ? status : "Belum Mengerjakan",
+          status: !hasQuestionsInMod
+            ? "Tidak Ada Soal Di Kuis Ini"
+            : (hasAttempted || isDraft ? status : "Belum Mengerjakan"),
         };
       });
 

@@ -7,6 +7,7 @@ export interface AccessConfigState {
   id: number;
   enableMasteryLock: boolean;
   enableScheduleLock: boolean;
+  enableEvaluationLock: boolean;
   updatedAt: Date;
 }
 
@@ -18,6 +19,7 @@ export async function getAccessConfig(prisma: PrismaClient): Promise<AccessConfi
       id: 1,
       enableMasteryLock: true,
       enableScheduleLock: true,
+      enableEvaluationLock: true,
     },
   });
 }
@@ -88,6 +90,7 @@ export async function computeUserModuleAccess(prisma: PrismaClient, userId: numb
   const isExempt = currentUser?.role === "ADMIN";
   const applyMasteryLock = !isExempt && config.enableMasteryLock;
   const applyScheduleLock = !isExempt && config.enableScheduleLock;
+  const applyEvaluationLock = !isExempt && config.enableEvaluationLock;
 
   let previousModulePassed: boolean = true;
   let cumulativeEvaluationLocked: boolean = false;
@@ -99,7 +102,7 @@ export async function computeUserModuleAccess(prisma: PrismaClient, userId: numb
     const up = userProgress[index];
 
     // Cek apakah ada review quiz baru yang ditempatkan sebelum modul ini
-    if (index > 0 && !isExempt) {
+    if (index > 0 && applyEvaluationLock) {
       const prevMod = userProgress[index - 1].module;
       const precedingReviewQuizzes = reviewQuizzes.filter(
         (rq) => rq.peletakanSetelahModul === prevMod.id || rq.peletakanSetelahModul === index
@@ -114,8 +117,8 @@ export async function computeUserModuleAccess(prisma: PrismaClient, userId: numb
       }
     }
 
-    const isEvaluationLocked = cumulativeEvaluationLocked;
-    const evaluationLockTitle = cumulativeEvaluationTitle;
+    const isEvaluationLocked: boolean = applyEvaluationLock ? cumulativeEvaluationLocked : false;
+    const evaluationLockTitle: string | null = applyEvaluationLock ? cumulativeEvaluationTitle : null;
 
     const isDateLocked: boolean = applyScheduleLock
       ? Boolean(up.module.openDate && new Date(up.module.openDate) > now)
@@ -191,6 +194,7 @@ export async function computeUserModuleAccess(prisma: PrismaClient, userId: numb
     isExempt,
     applyMasteryLock,
     applyScheduleLock,
+    applyEvaluationLock,
     modules,
   };
 }

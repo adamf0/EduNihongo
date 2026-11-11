@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import * as XLSX from "xlsx";
 import {
   FileText,
   Search,
@@ -13,12 +14,14 @@ import {
   Users,
   X,
   Sparkles,
+  ChevronDown,
 } from "lucide-react";
 import { api } from "../../Common/Utility/api";
 
 interface ModuleSectionScore {
   moduleNumber: number;
   moduleTitle: string;
+  hasQuestions?: boolean;
   correctA: number;
   totalA: number;
   rubricA: number;
@@ -63,7 +66,13 @@ interface ReviewQuizScoreReportData {
     totalSoal: number;
     targetScore: number;
   };
-  modules: Array<{ moduleNumber: number; title: string }>;
+  modules: Array<{
+    moduleNumber: number;
+    title: string;
+    id?: number;
+    hasQuestions?: boolean;
+    questionCount?: number;
+  }>;
   students: StudentReportItem[];
   summary: {
     totalStudents: number;
@@ -78,6 +87,10 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
 
+  // Review Quiz selection
+  const [quizList, setQuizList] = useState<any[]>([]);
+  const [selectedQuizId, setSelectedQuizId] = useState<number | null>(null);
+
   // Filters
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all"); // 'all' | 'passed' | 'remedial' | 'not_attempted'
@@ -91,11 +104,12 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentReportItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const loadReport = async () => {
+  const loadReport = async (quizId?: number | null) => {
     try {
       setLoading(true);
       setError("");
-      const res = await api.reviewQuiz.adminScoreReport();
+      const targetId = quizId !== undefined ? quizId : selectedQuizId;
+      const res = await api.reviewQuiz.adminScoreReport(targetId || undefined);
       setData(res);
     } catch (err: any) {
       console.error("Error loading review quiz score report:", err);
@@ -107,6 +121,20 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
 
   useEffect(() => {
     loadReport();
+    const fetchQuizList = async () => {
+      try {
+        const list = await api.reviewQuiz.adminList();
+        if (Array.isArray(list) && list.length > 0) {
+          setQuizList(list);
+          if (!selectedQuizId) {
+            setSelectedQuizId(list[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memuat daftar review quiz:", err);
+      }
+    };
+    fetchQuizList();
   }, []);
 
   // Filtered Students
@@ -144,9 +172,29 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
     return filteredStudents.slice(start, start + pageSize);
   }, [filteredStudents, currentPage, pageSize]);
 
-  // Export CSV
-  const handleExportCSV = () => {
+  // Seluruh modul dari tabel Module (tanpa batasan 6)
+  const allModules = useMemo(() => {
+    return data?.modules || [];
+  }, [data?.modules]);
+
+  // Modul yang memiliki pertanyaan di review quiz ini (untuk kolom tabel tampilan semua modul)
+  const modulesWithQuestions = useMemo(() => {
+    if (!data?.modules || data.modules.length === 0) return [];
+    const withQ = data.modules.filter((m) => m.hasQuestions !== false && (m.questionCount ?? 1) > 0);
+    return withQ.length > 0 ? withQ : data.modules;
+  }, [data?.modules]);
+
+  // Modul yang sedang difokuskan (jika tab fokus aktif)
+  const focusedModuleInfo = useMemo(() => {
+    if (activeModuleTab === "all") return null;
+    return allModules.find((m) => m.moduleNumber === activeModuleTab) || null;
+  }, [allModules, activeModuleTab]);
+
+  // Export Excel (.xlsx)
+  const handleExportXLSX = () => {
     if (!data || !data.students.length) return;
+
+    const modulesToExport = modulesWithQuestions.length > 0 ? modulesWithQuestions : allModules;
 
     const headers = [
       "No",
@@ -156,116 +204,78 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
       "Total Skor Akhir (%)",
       "Total Soal Benar",
       "Status Kelulusan",
-      // Modul 1
-      "M1 Bagian A (Susun)",
-      "M1 Rubrik A (%)",
-      "M1 Bagian B (Semantik)",
-      "M1 Rubrik B (%)",
-      "M1 Bagian C (Makna)",
-      "M1 Rubrik C (%)",
-      "M1 Bagian D (Rumpang)",
-      "M1 Rubrik D (%)",
-      "M1 Total Benar",
-      "M1 Persentase (%)",
-      // Modul 2
-      "M2 Bagian A",
-      "M2 Rubrik A (%)",
-      "M2 Bagian B",
-      "M2 Rubrik B (%)",
-      "M2 Bagian C",
-      "M2 Rubrik C (%)",
-      "M2 Bagian D",
-      "M2 Rubrik D (%)",
-      "M2 Total Benar",
-      "M2 Persentase (%)",
-      // Modul 3
-      "M3 Bagian A",
-      "M3 Rubrik A (%)",
-      "M3 Bagian B",
-      "M3 Rubrik B (%)",
-      "M3 Bagian C",
-      "M3 Rubrik C (%)",
-      "M3 Bagian D",
-      "M3 Rubrik D (%)",
-      "M3 Total Benar",
-      "M3 Persentase (%)",
-      // Modul 4
-      "M4 Bagian A",
-      "M4 Rubrik A (%)",
-      "M4 Bagian B",
-      "M4 Rubrik B (%)",
-      "M4 Bagian C",
-      "M4 Rubrik C (%)",
-      "M4 Bagian D",
-      "M4 Rubrik D (%)",
-      "M4 Total Benar",
-      "M4 Persentase (%)",
-      // Modul 5
-      "M5 Bagian A",
-      "M5 Rubrik A (%)",
-      "M5 Bagian B",
-      "M5 Rubrik B (%)",
-      "M5 Bagian C",
-      "M5 Rubrik C (%)",
-      "M5 Bagian D",
-      "M5 Rubrik D (%)",
-      "M5 Total Benar",
-      "M5 Persentase (%)",
-      // Modul 6
-      "M6 Bagian A",
-      "M6 Rubrik A (%)",
-      "M6 Bagian B",
-      "M6 Rubrik B (%)",
-      "M6 Bagian C",
-      "M6 Rubrik C (%)",
-      "M6 Bagian D",
-      "M6 Rubrik D (%)",
-      "M6 Total Benar",
-      "M6 Persentase (%)",
     ];
 
+    modulesToExport.forEach((m) => {
+      headers.push(
+        `M${m.moduleNumber} Bagian A`,
+        `M${m.moduleNumber} Rubrik A (%)`,
+        `M${m.moduleNumber} Bagian B`,
+        `M${m.moduleNumber} Rubrik B (%)`,
+        `M${m.moduleNumber} Bagian C`,
+        `M${m.moduleNumber} Rubrik C (%)`,
+        `M${m.moduleNumber} Bagian D`,
+        `M${m.moduleNumber} Rubrik D (%)`,
+        `M${m.moduleNumber} Total Benar`,
+        `M${m.moduleNumber} Persentase (%)`
+      );
+    });
+
     const rows = filteredStudents.map((std, idx) => {
-      const row = [
+      const row: (string | number)[] = [
         idx + 1,
-        `"${std.name.replace(/"/g, '""')}"`,
-        `"${std.email.replace(/"/g, '""')}"`,
+        std.name,
+        std.email,
         std.hasAttempted ? "Sudah Mengerjakan" : std.isDraft ? "Draft" : "Belum Mengerjakan",
-        std.finalScore !== null ? std.finalScore : "-",
-        std.totalCorrect !== null ? `${std.totalCorrect}/120` : "-",
+        std.finalScore !== null ? `${std.finalScore}%` : "-",
+        std.totalCorrect !== null ? `${std.totalCorrect}/${std.totalQuestions || 120}` : "-",
         std.hasAttempted ? (std.isPassed ? "LULUS" : "REMEDIAL") : "-",
       ];
 
-      [1, 2, 3, 4, 5, 6].forEach((mNum) => {
-        const m = std.modules[mNum];
-        if (m) {
+      modulesToExport.forEach((m) => {
+        const mod = std.modules[m.moduleNumber];
+        if (mod && mod.hasQuestions !== false) {
           row.push(
-            `${m.correctA}/${m.totalA}`,
-            m.rubricA,
-            `${m.correctB}/${m.totalB}`,
-            m.rubricB,
-            `${m.correctC}/${m.totalC}`,
-            m.rubricC,
-            `${m.correctD}/${m.totalD}`,
-            m.rubricD,
-            `${m.totalCorrect}/${m.totalQuestions}`,
-            `${m.percent}%`
+            `${mod.correctA}/${mod.totalA || 5}`,
+            `${mod.rubricA}%`,
+            `${mod.correctB}/${mod.totalB || 5}`,
+            `${mod.rubricB}%`,
+            `${mod.correctC}/${mod.totalC || 5}`,
+            `${mod.rubricC}%`,
+            `${mod.correctD}/${mod.totalD || 5}`,
+            `${mod.rubricD}%`,
+            `${mod.totalCorrect}/${mod.totalQuestions || 20}`,
+            `${mod.percent}%`
           );
         } else {
           row.push("-", "-", "-", "-", "-", "-", "-", "-", "-", "-");
         }
       });
 
-      return row.join(",");
+      return row;
     });
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Rekap_Review_Quiz_Fukushuu_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+    // Auto column width calculation
+    const colWidths = headers.map((h, i) => {
+      let maxLen = h.length;
+      rows.forEach((r) => {
+        const val = r[i] !== undefined && r[i] !== null ? String(r[i]) : "";
+        if (val.length > maxLen) maxLen = val.length;
+      });
+      return { wch: Math.min(Math.max(maxLen + 3, 10), 36) };
+    });
+    ws["!cols"] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    const sheetTitle = (data?.reviewQuiz?.judul || "Rekap Review Quiz").slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetTitle);
+
+    const safeTitle = (data?.reviewQuiz?.judul || "Rekap_Review_Quiz")
+      .replace(/[^a-zA-Z0-9_\-]/g, "_")
+      .replace(/_+/g, "_");
+    XLSX.writeFile(wb, `${safeTitle}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const openStudentDetail = (std: StudentReportItem) => {
@@ -288,16 +298,9 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
       {/* 1. Header Banner & Stats */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#8f0020]/10 text-[#8f0020] uppercase tracking-wider flex items-center gap-1">
-              <Award className="w-3.5 h-3.5" />
-              Rubrik Evaluasi Komprehensif
-            </span>
-            <span className="text-xs text-slate-400 font-semibold">• 120 Butir Soal</span>
-          </div>
           <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
             <FileText className="w-6 h-6 text-[#8f0020]" />
-            Rekap Skor Review Quiz Mahasiswa (Fukushuu Modul 1 – 6)
+            Rekap Review Quiz Mahasiswa
           </h3>
           <p className="text-xs text-slate-500 mt-1 max-w-3xl leading-relaxed">
             Menampilkan rincian pencapaian skor dan kontribusi rubrik penilaian masing-masing mahasiswa untuk setiap modul
@@ -309,13 +312,13 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
 
         <div className="flex items-center gap-2 self-start lg:self-center">
           <button
-            onClick={handleExportCSV}
+            onClick={handleExportXLSX}
             disabled={!data || !data.students.length}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 cursor-pointer transition-all active:scale-95 shadow-2xs disabled:opacity-50"
-            title="Download file spreadsheet CSV"
+            title="Download file spreadsheet Excel (.xlsx)"
           >
             <Download className="w-4 h-4" />
-            <span>Ekspor CSV</span>
+            <span>Ekspor XLSX</span>
           </button>
         </div>
       </div>
@@ -414,56 +417,62 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-slate-500" />
-            <span className="text-xs font-bold text-slate-600">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700 outline-none cursor-pointer"
-            >
-              <option value="all">Semua Status</option>
-              <option value="passed">Lulus (≥{data?.reviewQuiz?.targetScore || 60}%)</option>
-              <option value="remedial">Perlu Peningkatan (&lt;{data?.reviewQuiz?.targetScore || 60}%)</option>
-              <option value="not_attempted">Belum Mengerjakan</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-slate-500" />
+              <span className="text-xs font-bold text-slate-600">Status:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700 outline-none cursor-pointer"
+              >
+                <option value="all">Semua Status</option>
+                <option value="passed">Lulus (≥{data?.reviewQuiz?.targetScore || 60}%)</option>
+                <option value="remedial">Perlu Peningkatan (&lt;{data?.reviewQuiz?.targetScore || 60}%)</option>
+                <option value="not_attempted">Belum Mengerjakan</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Module View Tabs: Semua Modul vs Modul 1..6 */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 scrollbar-none">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5" />
-            Tampilan:
-          </span>
+        {/* Pilihan Review Quiz dari Tabel review_quiz */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-[#8f0020]" />
+              Review Quiz:
+            </span>
 
-          <button
-            onClick={() => setActiveModuleTab("all")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-              activeModuleTab === "all"
-                ? "bg-[#8f0020] text-white border-[#8f0020] shadow-xs"
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
-            }`}
-          >
-            Semua Modul (Komprehensif A–D)
-          </button>
+            <div className="relative inline-flex items-center">
+              <select
+                value={selectedQuizId || (data?.reviewQuiz?.id ?? "")}
+                onChange={(e) => {
+                  const id = Number(e.target.value);
+                  setSelectedQuizId(id);
+                  loadReport(id);
+                  setActiveModuleTab("all");
+                  setCurrentPage(1);
+                }}
+                className="pl-3.5 pr-8 py-2 rounded-xl text-xs font-bold transition-all border appearance-none outline-none cursor-pointer shadow-2xs min-w-[280px] sm:min-w-[340px] bg-white text-slate-800 border-slate-300 hover:border-[#8f0020] focus:border-[#8f0020] focus:ring-2 focus:ring-rose-100"
+              >
+                {quizList.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {q.judul} ({q.totalSoal || 120} Butir Soal)
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
+            </div>
 
-          {[1, 2, 3, 4, 5, 6].map((mNum) => (
-            <button
-              key={mNum}
-              onClick={() => setActiveModuleTab(mNum)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-                activeModuleTab === mNum
-                  ? "bg-[#8f0020] text-white border-[#8f0020] shadow-xs"
-                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
-              }`}
-            >
-              Fokus Modul {mNum}
-            </button>
-          ))}
+            {data?.reviewQuiz && (
+              <span className="text-[11px] font-semibold text-slate-500 hidden md:inline ml-1">
+                Menampilkan nilai komprehensif untuk <strong>{data.reviewQuiz.judul}</strong> (Target: ≥{data.reviewQuiz.targetScore || 60}%)
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -480,7 +489,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
             <span>{error}</span>
           </div>
           <button
-            onClick={loadReport}
+            onClick={() => loadReport()}
             className="px-3 py-1 rounded-lg bg-rose-600 text-white text-xs font-bold border-none cursor-pointer hover:bg-rose-700"
           >
             Coba Lagi
@@ -500,13 +509,14 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                   <th rowSpan={2} className="py-3 px-4 border-r border-slate-200 sticky left-0 bg-slate-100 z-10 min-w-[200px]">
                     Mahasiswa
                   </th>
-                  {[1, 2, 3, 4, 5, 6].map((mNum) => (
+                  {modulesWithQuestions.map((m) => (
                     <th
-                      key={mNum}
+                      key={m.moduleNumber}
                       colSpan={4}
                       className="py-2.5 px-2 text-center border-r border-slate-200 bg-slate-50/90 font-black text-slate-800"
+                      title={m.title}
                     >
-                      Modul {mNum}
+                      Modul {m.moduleNumber}
                     </th>
                   ))}
                   <th rowSpan={2} className="py-3 px-3 text-center border-r border-slate-200 min-w-[95px]">
@@ -520,18 +530,18 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                   </th>
                 </tr>
                 <tr className="bg-slate-50 text-slate-500 font-extrabold uppercase text-[9px] border-b border-slate-200">
-                  {[1, 2, 3, 4, 5, 6].map((mNum) => (
-                    <React.Fragment key={mNum}>
-                      <th className="py-1.5 px-2 text-center border-r border-slate-100" title="Bagian A: Menyusun Kalimat (Maks 5)">
+                  {modulesWithQuestions.map((m) => (
+                    <React.Fragment key={m.moduleNumber}>
+                      <th className="py-1.5 px-2 text-center border-r border-slate-100" title={`Modul ${m.moduleNumber} Bagian A: Menyusun Kalimat`}>
                         A
                       </th>
-                      <th className="py-1.5 px-2 text-center border-r border-slate-100" title="Bagian B: Grouping Semantik (Maks 5)">
+                      <th className="py-1.5 px-2 text-center border-r border-slate-100" title={`Modul ${m.moduleNumber} Bagian B: Grouping Semantik`}>
                         B
                       </th>
-                      <th className="py-1.5 px-2 text-center border-r border-slate-100" title="Bagian C: Makna Jukugo (Maks 5)">
+                      <th className="py-1.5 px-2 text-center border-r border-slate-100" title={`Modul ${m.moduleNumber} Bagian C: Makna Jukugo`}>
                         C
                       </th>
-                      <th className="py-1.5 px-2 text-center border-r border-slate-200" title="Bagian D: Melengkapi Kalimat (Maks 5)">
+                      <th className="py-1.5 px-2 text-center border-r border-slate-200" title={`Modul ${m.moduleNumber} Bagian D: Melengkapi Kalimat`}>
                         D
                       </th>
                     </React.Fragment>
@@ -563,10 +573,11 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* Modul 1 to 6 Scores */}
-                    {[1, 2, 3, 4, 5, 6].map((mNum) => {
-                      const m = std.modules[mNum];
-                      if (!std.hasAttempted && !std.isDraft) {
+                    {/* Dynamic Modules Scores */}
+                    {modulesWithQuestions.map((m) => {
+                      const mNum = m.moduleNumber;
+                      const mod = std.modules[mNum];
+                      if (!mod || (!std.hasAttempted && !std.isDraft) || mod.hasQuestions === false) {
                         return (
                           <React.Fragment key={mNum}>
                             <td className="py-3 px-2 text-center text-slate-300 font-bold border-r border-slate-100">-</td>
@@ -582,41 +593,41 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                           <td className="py-3 px-1.5 text-center border-r border-slate-100">
                             <span
                               className={`px-1.5 py-0.5 rounded-md font-black text-[11px] border inline-block ${getScoreCellBadge(
-                                m.correctA
+                                mod.correctA
                               )}`}
-                              title={`Modul ${mNum} Bagian A: ${m.correctA}/5 benar (${m.rubricA}% rubrik)`}
+                              title={`Modul ${mNum} Bagian A: ${mod.correctA}/${mod.totalA || 5} benar (${mod.rubricA}% rubrik)`}
                             >
-                              {m.correctA}
+                              {mod.correctA}
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-100">
                             <span
                               className={`px-1.5 py-0.5 rounded-md font-black text-[11px] border inline-block ${getScoreCellBadge(
-                                m.correctB
+                                mod.correctB
                               )}`}
-                              title={`Modul ${mNum} Bagian B: ${m.correctB}/5 benar (${m.rubricB}% rubrik)`}
+                              title={`Modul ${mNum} Bagian B: ${mod.correctB}/${mod.totalB || 5} benar (${mod.rubricB}% rubrik)`}
                             >
-                              {m.correctB}
+                              {mod.correctB}
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-100">
                             <span
                               className={`px-1.5 py-0.5 rounded-md font-black text-[11px] border inline-block ${getScoreCellBadge(
-                                m.correctC
+                                mod.correctC
                               )}`}
-                              title={`Modul ${mNum} Bagian C: ${m.correctC}/5 benar (${m.rubricC}% rubrik)`}
+                              title={`Modul ${mNum} Bagian C: ${mod.correctC}/${mod.totalC || 5} benar (${mod.rubricC}% rubrik)`}
                             >
-                              {m.correctC}
+                              {mod.correctC}
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-200">
                             <span
                               className={`px-1.5 py-0.5 rounded-md font-black text-[11px] border inline-block ${getScoreCellBadge(
-                                m.correctD
+                                mod.correctD
                               )}`}
-                              title={`Modul ${mNum} Bagian D: ${m.correctD}/5 benar (${m.rubricD}% rubrik)`}
+                              title={`Modul ${mNum} Bagian D: ${mod.correctD}/${mod.totalD || 5} benar (${mod.rubricD}% rubrik)`}
                             >
-                              {m.correctD}
+                              {mod.correctD}
                             </span>
                           </td>
                         </React.Fragment>
@@ -635,7 +646,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                             {std.finalScore}%
                           </span>
                           <span className="text-[10px] text-slate-400 block">
-                            {std.totalCorrect}/120
+                            {std.totalCorrect}/{data?.reviewQuiz?.totalSoal || std.totalQuestions || 120}
                           </span>
                         </div>
                       ) : (
@@ -690,23 +701,33 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                   <th className="py-3.5 px-4 min-w-[200px]">Mahasiswa</th>
                   <th className="py-3.5 px-3 text-center">
                     Bagian A (Susun)<br />
-                    <span className="text-[9px] font-normal lowercase text-slate-400">skor /5 • rubrik /4.2%</span>
+                    <span className="text-[9px] font-normal lowercase text-slate-400">
+                      skor /{focusedModuleInfo?.questionCount ? Math.round(focusedModuleInfo.questionCount / 4) : 5} • rubrik /4.2%
+                    </span>
                   </th>
                   <th className="py-3.5 px-3 text-center">
                     Bagian B (Semantik)<br />
-                    <span className="text-[9px] font-normal lowercase text-slate-400">skor /5 • rubrik /4.2%</span>
+                    <span className="text-[9px] font-normal lowercase text-slate-400">
+                      skor /{focusedModuleInfo?.questionCount ? Math.round(focusedModuleInfo.questionCount / 4) : 5} • rubrik /4.2%
+                    </span>
                   </th>
                   <th className="py-3.5 px-3 text-center">
                     Bagian C (Makna)<br />
-                    <span className="text-[9px] font-normal lowercase text-slate-400">skor /5 • rubrik /4.2%</span>
+                    <span className="text-[9px] font-normal lowercase text-slate-400">
+                      skor /{focusedModuleInfo?.questionCount ? Math.round(focusedModuleInfo.questionCount / 4) : 5} • rubrik /4.2%
+                    </span>
                   </th>
                   <th className="py-3.5 px-3 text-center">
                     Bagian D (Rumpang)<br />
-                    <span className="text-[9px] font-normal lowercase text-slate-400">skor /5 • rubrik /4.2%</span>
+                    <span className="text-[9px] font-normal lowercase text-slate-400">
+                      skor /{focusedModuleInfo?.questionCount ? Math.round(focusedModuleInfo.questionCount / 4) : 5} • rubrik /4.2%
+                    </span>
                   </th>
                   <th className="py-3.5 px-3 text-center">
                     Total Modul {activeModuleTab}<br />
-                    <span className="text-[9px] font-normal lowercase text-slate-400">maks 20 butir</span>
+                    <span className="text-[9px] font-normal lowercase text-slate-400">
+                      maks {focusedModuleInfo?.questionCount || 20} butir
+                    </span>
                   </th>
                   <th className="py-3.5 px-3 text-center">Persentase</th>
                   <th className="py-3.5 px-3 text-center">Tingkat Kemahiran</th>
@@ -717,7 +738,8 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
               <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
                 {paginatedStudents.map((std) => {
                   const m = std.modules[activeModuleTab as number];
-                  const hasAttempt = std.hasAttempted || std.isDraft;
+                  const hasQuestions = m && m.hasQuestions !== false;
+                  const hasAttempt = (std.hasAttempted || std.isDraft) && hasQuestions;
 
                   return (
                     <tr key={std.userId} className="hover:bg-slate-50/80 transition-colors">
@@ -745,7 +767,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                       <td className="py-3.5 px-3 text-center">
                         {hasAttempt ? (
                           <div>
-                            <span className="font-black text-slate-900 text-xs block">{m.correctA} / 5</span>
+                            <span className="font-black text-slate-900 text-xs block">{m.correctA} / {m.totalA || 5}</span>
                             <span className="text-[10px] text-slate-400 font-bold">{m.rubricA}%</span>
                           </div>
                         ) : (
@@ -756,7 +778,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                       <td className="py-3.5 px-3 text-center">
                         {hasAttempt ? (
                           <div>
-                            <span className="font-black text-slate-900 text-xs block">{m.correctB} / 5</span>
+                            <span className="font-black text-slate-900 text-xs block">{m.correctB} / {m.totalB || 5}</span>
                             <span className="text-[10px] text-slate-400 font-bold">{m.rubricB}%</span>
                           </div>
                         ) : (
@@ -767,7 +789,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                       <td className="py-3.5 px-3 text-center">
                         {hasAttempt ? (
                           <div>
-                            <span className="font-black text-slate-900 text-xs block">{m.correctC} / 5</span>
+                            <span className="font-black text-slate-900 text-xs block">{m.correctC} / {m.totalC || 5}</span>
                             <span className="text-[10px] text-slate-400 font-bold">{m.rubricC}%</span>
                           </div>
                         ) : (
@@ -778,7 +800,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                       <td className="py-3.5 px-3 text-center">
                         {hasAttempt ? (
                           <div>
-                            <span className="font-black text-slate-900 text-xs block">{m.correctD} / 5</span>
+                            <span className="font-black text-slate-900 text-xs block">{m.correctD} / {m.totalD || 5}</span>
                             <span className="text-[10px] text-slate-400 font-bold">{m.rubricD}%</span>
                           </div>
                         ) : (
@@ -787,7 +809,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-3 text-center font-black text-slate-900">
-                        {hasAttempt ? `${m.totalCorrect} / 20` : "-"}
+                        {hasAttempt ? `${m.totalCorrect} / ${m.totalQuestions || 20}` : "-"}
                       </td>
 
                       <td className="py-3.5 px-3 text-center">
@@ -951,7 +973,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                 </span>
                 <span className="text-2xl font-black text-slate-900 block mt-0.5">
                   {selectedStudent.totalCorrect !== null
-                    ? `${selectedStudent.totalCorrect} / 120`
+                    ? `${selectedStudent.totalCorrect} / ${selectedStudent.totalQuestions || data?.reviewQuiz?.totalSoal || 120}`
                     : "-"}
                 </span>
               </div>
@@ -970,11 +992,11 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
               </div>
             </div>
 
-            {/* Comprehensive Breakdown Table Modul 1-6 */}
+            {/* Comprehensive Breakdown Table Modul */}
             <div className="flex-1 overflow-y-auto pr-1">
               <h5 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-[#8f0020]" />
-                Rincian Pemetaan Modul 1 sampai Modul 6 (Bagian A – D)
+                Rincian Pemetaan Modul (Bagian A – D)
               </h5>
 
               <div className="overflow-x-auto rounded-2xl border border-slate-200">
@@ -984,42 +1006,43 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                       <th className="py-3 px-3">Modul</th>
                       <th className="py-3 px-2 text-center" title="Bagian A (Susun Kalimat)">
                         A (Susun)<br />
-                        <span className="text-[9px] font-normal lowercase text-slate-400">/5</span>
+                        <span className="text-[9px] font-normal lowercase text-slate-400">skor</span>
                       </th>
                       <th className="py-3 px-2 text-center" title="Bagian B (Grouping Semantik)">
                         B (Semantik)<br />
-                        <span className="text-[9px] font-normal lowercase text-slate-400">/5</span>
+                        <span className="text-[9px] font-normal lowercase text-slate-400">skor</span>
                       </th>
                       <th className="py-3 px-2 text-center" title="Bagian C (Makna Jukugo)">
                         C (Makna)<br />
-                        <span className="text-[9px] font-normal lowercase text-slate-400">/5</span>
+                        <span className="text-[9px] font-normal lowercase text-slate-400">skor</span>
                       </th>
                       <th className="py-3 px-2 text-center" title="Bagian D (Konteks Kalimat)">
                         D (Rumpang)<br />
-                        <span className="text-[9px] font-normal lowercase text-slate-400">/5</span>
+                        <span className="text-[9px] font-normal lowercase text-slate-400">skor</span>
                       </th>
                       <th className="py-3 px-2.5 text-center">
                         Total<br />
-                        <span className="text-[9px] font-normal lowercase text-slate-400">/20</span>
+                        <span className="text-[9px] font-normal lowercase text-slate-400">benar</span>
                       </th>
                       <th className="py-3 px-2.5 text-center">Persentase</th>
                       <th className="py-3 px-3 text-right">Kemahiran</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
-                    {[1, 2, 3, 4, 5, 6].map((mNum) => {
+                    {(modulesWithQuestions.length > 0 ? modulesWithQuestions : allModules).map((modItem) => {
+                      const mNum = modItem.moduleNumber;
                       const m = selectedStudent.modules[mNum];
-                      const hasData = selectedStudent.hasAttempted || selectedStudent.isDraft;
+                      const hasData = (selectedStudent.hasAttempted || selectedStudent.isDraft) && m && m.hasQuestions !== false;
 
                       return (
                         <tr key={mNum} className="hover:bg-slate-50/60 transition-colors">
                           <td className="py-3 px-3 font-extrabold text-slate-900">
-                            {m?.moduleTitle || `Modul ${mNum}`}
+                            {m?.moduleTitle || modItem.title || `Modul ${mNum}`}
                           </td>
                           <td className="py-3 px-2 text-center font-bold">
                             {hasData ? (
                               <span className={m.correctA >= 4 ? "text-emerald-700 font-black" : "text-slate-800"}>
-                                {m.correctA}/5
+                                {m.correctA}/{m.totalA || 5}
                               </span>
                             ) : (
                               "-"
@@ -1028,7 +1051,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                           <td className="py-3 px-2 text-center font-bold">
                             {hasData ? (
                               <span className={m.correctB >= 4 ? "text-emerald-700 font-black" : "text-slate-800"}>
-                                {m.correctB}/5
+                                {m.correctB}/{m.totalB || 5}
                               </span>
                             ) : (
                               "-"
@@ -1037,7 +1060,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                           <td className="py-3 px-2 text-center font-bold">
                             {hasData ? (
                               <span className={m.correctC >= 4 ? "text-emerald-700 font-black" : "text-slate-800"}>
-                                {m.correctC}/5
+                                {m.correctC}/{m.totalC || 5}
                               </span>
                             ) : (
                               "-"
@@ -1046,14 +1069,14 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                           <td className="py-3 px-2 text-center font-bold">
                             {hasData ? (
                               <span className={m.correctD >= 4 ? "text-emerald-700 font-black" : "text-slate-800"}>
-                                {m.correctD}/5
+                                {m.correctD}/{m.totalD || 5}
                               </span>
                             ) : (
                               "-"
                             )}
                           </td>
                           <td className="py-3 px-2.5 text-center font-black text-slate-900">
-                            {hasData ? `${m.totalCorrect}/20` : "-"}
+                            {hasData ? `${m.totalCorrect}/${m.totalQuestions || 20}` : "-"}
                           </td>
                           <td className="py-3 px-2.5 text-center font-black">
                             {hasData ? (

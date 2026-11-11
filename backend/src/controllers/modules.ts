@@ -16,6 +16,7 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       isExempt,
       applyMasteryLock,
       applyScheduleLock,
+      applyEvaluationLock,
       modules: computedModules,
     } = await computeUserModuleAccess(prisma, userId);
 
@@ -91,7 +92,7 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       let isLocked = false;
       let lockReason = "";
       if (!isExempt) {
-        if (cumulativeQuizLock) {
+        if (applyEvaluationLock && cumulativeQuizLock) {
           isLocked = true;
           lockReason = `Selesaikan evaluasi ${precedingQuizLockTitle} terlebih dahulu untuk membuka evaluasi ini.`;
         } else if (matchedMod) {
@@ -110,8 +111,8 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       const bestAttempt = rq.attempts?.[0] || null;
       const hasFilledThisQuiz = Boolean(bestAttempt);
 
-      // Jika kuis evaluasi ini belum terisi, kuis evaluasi selanjutnya akan terkunci
-      if (!hasFilledThisQuiz && !cumulativeQuizLock) {
+      // Jika kuis evaluasi ini belum terisi dan aturan evaluasi aktif, kuis evaluasi selanjutnya akan terkunci
+      if (applyEvaluationLock && !hasFilledThisQuiz && !cumulativeQuizLock) {
         cumulativeQuizLock = true;
         precedingQuizLockTitle = rq.judul;
       }
@@ -156,7 +157,8 @@ export const getModulesData = async (req: AuthenticatedRequest, res: Response) =
       reviewQuizzes,
       isMasteryLockEnabled: applyMasteryLock,
       isScheduleLockEnabled: applyScheduleLock,
-      isLockSystemEnabled: applyMasteryLock || applyScheduleLock,
+      isEvaluationLockEnabled: applyEvaluationLock,
+      isLockSystemEnabled: applyMasteryLock || applyScheduleLock || applyEvaluationLock,
       isExempt,
     });
   } catch (error) {

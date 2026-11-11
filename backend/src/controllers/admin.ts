@@ -1525,6 +1525,7 @@ export const getSystemConfig = async (req: AuthenticatedRequest, res: Response) 
       id: config.id,
       enableMasteryLock: config.enableMasteryLock,
       enableScheduleLock: config.enableScheduleLock,
+      enableEvaluationLock: config.enableEvaluationLock,
       updatedAt: config.updatedAt,
       stats,
     });
@@ -1539,27 +1540,32 @@ export const updateSystemConfig = async (req: AuthenticatedRequest, res: Respons
     const isAdmin = await verifyAdminRole(req, res);
     if (!isAdmin) return;
 
-    const { enableMasteryLock, enableScheduleLock } = req.body ?? {};
+    const { enableMasteryLock, enableScheduleLock, enableEvaluationLock } = req.body ?? {};
     if (typeof enableMasteryLock !== "boolean" || typeof enableScheduleLock !== "boolean") {
       return res.status(400).json({
         error: "Nilai enableMasteryLock dan enableScheduleLock wajib berupa boolean (true/false).",
       });
     }
 
+    const evaluationLock =
+      typeof enableEvaluationLock === "boolean" ? enableEvaluationLock : true;
+
     const updated = await prisma.systemConfig.upsert({
       where: { id: 1 },
       update: {
         enableMasteryLock,
         enableScheduleLock,
+        enableEvaluationLock: evaluationLock,
       },
       create: {
         id: 1,
         enableMasteryLock,
         enableScheduleLock,
+        enableEvaluationLock: evaluationLock,
       },
     });
 
-    if (!enableMasteryLock && !enableScheduleLock) {
+    if (!enableMasteryLock && !enableScheduleLock && !evaluationLock) {
       await prisma.userModuleProgress.updateMany({
         data: { isLocked: false },
       });
@@ -1571,6 +1577,7 @@ export const updateSystemConfig = async (req: AuthenticatedRequest, res: Respons
       id: updated.id,
       enableMasteryLock: updated.enableMasteryLock,
       enableScheduleLock: updated.enableScheduleLock,
+      enableEvaluationLock: updated.enableEvaluationLock,
       updatedAt: updated.updatedAt,
       stats,
       message: "Konfigurasi aturan akses modul berhasil disimpan.",

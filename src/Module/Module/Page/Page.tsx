@@ -207,6 +207,11 @@ export const ModulePage: React.FC = () => {
     (data?.isScheduleLockEnabled !== undefined
       ? Boolean(data.isScheduleLockEnabled)
       : data?.isLockSystemEnabled !== false);
+  const isEvaluationLockActive =
+    !isExemptUser &&
+    (data?.isEvaluationLockEnabled !== undefined
+      ? Boolean(data.isEvaluationLockEnabled)
+      : true);
 
   const headerSubtitle =
     isMasteryLockActive && isScheduleLockActive
@@ -330,13 +335,13 @@ export const ModulePage: React.FC = () => {
                   const idx = item.originalIdx;
                   const hasKanjis = mod.kanjis && mod.kanjis.length > 0;
 
-                  if (!isExemptUser && mod.isEvaluationLocked && !chainEvaluationLocked) {
+                  if (!isExemptUser && isEvaluationLockActive && mod.isEvaluationLocked && !chainEvaluationLocked) {
                     chainEvaluationLocked = true;
                     chainEvaluationTitle = mod.evaluationLockTitle || "Fukushuu";
                   }
 
                   const isEvaluationLocked =
-                    !isExemptUser && (chainEvaluationLocked || Boolean(mod.isEvaluationLocked));
+                    !isExemptUser && isEvaluationLockActive && (chainEvaluationLocked || Boolean(mod.isEvaluationLocked));
                   const evaluationLockTitle =
                     chainEvaluationTitle || mod.evaluationLockTitle || "Fukushuu";
 

@@ -258,7 +258,7 @@ export const api = {
         });
         return handleResponse(res);
       },
-      update: async (data: { enableMasteryLock: boolean; enableScheduleLock: boolean }) => {
+      update: async (data: { enableMasteryLock: boolean; enableScheduleLock: boolean; enableEvaluationLock?: boolean }) => {
         const res = await fetch(`${BASE_URL}/admin/config`, {
           method: "PUT",
           headers: getHeaders(),

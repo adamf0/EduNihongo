@@ -401,31 +401,6 @@ export const AdminQuizRubricReport: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full select-none">
-      {/* Quick Navigation Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <a
-          href="#kanji-quiz-section"
-          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:border-slate-300 shadow-2xs no-underline flex items-center gap-1.5 transition-all"
-        >
-          <Icon name="quiz" className="text-sm text-[#8f0020]" />
-          <span>Kuis Harian Kanji (Model A–D)</span>
-        </a>
-        <a
-          href="#review-quiz-section"
-          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#8f0020] text-white shadow-2xs no-underline flex items-center gap-1.5 transition-all hover:brightness-110"
-        >
-          <Icon name="assignment" className="text-sm text-white" />
-          <span>Review Quiz (Fukushuu Modul 1–6)</span>
-        </a>
-        <a
-          href="#kanji-progress-section"
-          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:border-slate-300 shadow-2xs no-underline flex items-center gap-1.5 transition-all"
-        >
-          <Icon name="trending_up" className="text-sm text-emerald-600" />
-          <span>Monitoring Progres Kanji</span>
-        </a>
-      </div>
-
       {/* 1. Rubrik Overview & Pedoman Info Card (Placed directly under main header) */}
       <div id="kanji-quiz-section" className="bg-gradient-to-br from-[#8f0020] to-[#5b0014] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
         <div className="absolute right-[-20px] bottom-[-20px] opacity-10 pointer-events-none">

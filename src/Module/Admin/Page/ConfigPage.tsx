@@ -13,6 +13,7 @@ interface SystemConfigData {
   id: number;
   enableMasteryLock: boolean;
   enableScheduleLock: boolean;
+  enableEvaluationLock?: boolean;
   updatedAt?: string;
   stats?: ConfigStats;
 }
@@ -111,6 +112,7 @@ export const ConfigPage: React.FC = () => {
   const [savedConfig, setSavedConfig] = useState<SystemConfigData | null>(null);
   const [enableMasteryLock, setEnableMasteryLock] = useState<boolean>(true);
   const [enableScheduleLock, setEnableScheduleLock] = useState<boolean>(true);
+  const [enableEvaluationLock, setEnableEvaluationLock] = useState<boolean>(true);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -124,6 +126,9 @@ export const ConfigPage: React.FC = () => {
     setSavedConfig(data);
     setEnableMasteryLock(Boolean(data.enableMasteryLock));
     setEnableScheduleLock(Boolean(data.enableScheduleLock));
+    setEnableEvaluationLock(
+      data.enableEvaluationLock !== undefined ? Boolean(data.enableEvaluationLock) : true
+    );
   }, []);
 
   const handleLoadError = useCallback(
@@ -187,7 +192,8 @@ export const ConfigPage: React.FC = () => {
   const isDirty =
     savedConfig !== null &&
     (enableMasteryLock !== savedConfig.enableMasteryLock ||
-      enableScheduleLock !== savedConfig.enableScheduleLock);
+      enableScheduleLock !== savedConfig.enableScheduleLock ||
+      enableEvaluationLock !== (savedConfig.enableEvaluationLock ?? true));
 
   const handleToggleMastery = (value: boolean) => {
     setEnableMasteryLock(value);
@@ -201,10 +207,17 @@ export const ConfigPage: React.FC = () => {
     setSubmitError("");
   };
 
+  const handleToggleEvaluation = (value: boolean) => {
+    setEnableEvaluationLock(value);
+    setSubmitSuccess("");
+    setSubmitError("");
+  };
+
   const handleResetChanges = () => {
     if (!savedConfig) return;
     setEnableMasteryLock(savedConfig.enableMasteryLock);
     setEnableScheduleLock(savedConfig.enableScheduleLock);
+    setEnableEvaluationLock(savedConfig.enableEvaluationLock ?? true);
     setSubmitSuccess("");
     setSubmitError("");
   };
@@ -218,16 +231,19 @@ export const ConfigPage: React.FC = () => {
       const updated = await api.admin.config.update({
         enableMasteryLock,
         enableScheduleLock,
+        enableEvaluationLock,
       });
       setSavedConfig({
         id: updated.id,
         enableMasteryLock: Boolean(updated.enableMasteryLock),
         enableScheduleLock: Boolean(updated.enableScheduleLock),
+        enableEvaluationLock: Boolean(updated.enableEvaluationLock),
         updatedAt: updated.updatedAt,
         stats: updated.stats,
       });
       setEnableMasteryLock(Boolean(updated.enableMasteryLock));
       setEnableScheduleLock(Boolean(updated.enableScheduleLock));
+      setEnableEvaluationLock(Boolean(updated.enableEvaluationLock));
       setSubmitSuccess(
         updated.message || "Konfigurasi aturan akses modul berhasil disimpan ke database."
       );
@@ -330,7 +346,7 @@ export const ConfigPage: React.FC = () => {
   }
 
   const stats = savedConfig.stats;
-  const bothDisabled = !enableMasteryLock && !enableScheduleLock;
+  const allDisabled = !enableMasteryLock && !enableScheduleLock && !enableEvaluationLock;
 
   return (
     <Layout>
@@ -497,6 +513,36 @@ export const ConfigPage: React.FC = () => {
                   onChange={handleToggleSchedule}
                 />
               </div>
+
+              {/* Rule 3: Selesaikan Evaluasi (Review Quiz) */}
+              <div className="p-5 sm:p-6 flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <label
+                      htmlFor="toggle-evaluation-lock"
+                      className="text-base sm:text-lg font-bold text-[#191c1e] cursor-pointer"
+                    >
+                      Aturan Selesaikan Evaluasi
+                    </label>
+                    <StatusIndicator active={enableEvaluationLock} />
+                  </div>
+                  <p
+                    id="rule-evaluation-desc"
+                    className="text-sm text-[#5c403f] leading-relaxed"
+                  >
+                    {enableEvaluationLock
+                      ? "Mahasiswa wajib menyelesaikan evaluasi (Review Quiz) terlebih dahulu untuk membuka modul-modul pada tahap kurikulum berikutnya."
+                      : "Syarat penyelesaian evaluasi dinonaktifkan. Mahasiswa dapat langsung membuka modul berikutnya tanpa harus menyelesaikan evaluasi terlebih dahulu."}
+                  </p>
+                </div>
+
+                <RuleSwitch
+                  id="toggle-evaluation-lock"
+                  checked={enableEvaluationLock}
+                  describedBy="rule-evaluation-desc"
+                  onChange={handleToggleEvaluation}
+                />
+              </div>
             </fieldset>
 
             {/* Form Footer Actions */}
@@ -564,13 +610,11 @@ export const ConfigPage: React.FC = () => {
                 </h2>
               </div>
               <p className="text-sm text-[#334155] leading-relaxed">
-                {bothDisabled
-                  ? "Mode akses bebas aktif. Kedua pembatasan dimatikan sehingga seluruh modul dan kanji terbuka untuk mahasiswa."
-                  : enableMasteryLock && enableScheduleLock
-                  ? "Pembelajaran bertahap penuh aktif. Mahasiswa harus memenuhi syarat ketuntasan 60% sekaligus mengikuti jadwal buka modul."
-                  : enableMasteryLock
-                  ? "Hanya syarat ketuntasan 60% yang berlaku. Jadwal tanggal rilis diabaikan agar mahasiswa dapat maju sesuai kecepatan masing-masing."
-                  : "Hanya jadwal tanggal buka modul yang berlaku. Semua kanji dalam modul yang sudah rilis terbuka bebas tanpa syarat 60%."}
+                {allDisabled
+                  ? "Mode akses bebas aktif. Seluruh pembatasan dimatikan sehingga seluruh modul dan kanji terbuka untuk mahasiswa."
+                  : enableMasteryLock && enableScheduleLock && enableEvaluationLock
+                  ? "Pembelajaran bertahap penuh aktif. Mahasiswa harus memenuhi syarat penguasaan 60%, jadwal rilis, serta menyelesaikan evaluasi Review Quiz."
+                  : "Kombinasi aturan aktif diterapkan. Pembatasan akses modul diberlakukan hanya untuk aturan yang sedang dinyalakan."}
               </p>
             </div>
 
