@@ -12,7 +12,7 @@ export interface AccessConfigState {
 }
 
 export async function getAccessConfig(prisma: PrismaClient): Promise<AccessConfigState> {
-  return prisma.systemConfig.upsert({
+  const row = await prisma.systemConfig.upsert({
     where: { id: 1 },
     update: {},
     create: {
@@ -22,6 +22,17 @@ export async function getAccessConfig(prisma: PrismaClient): Promise<AccessConfi
       enableEvaluationLock: true,
     },
   });
+
+  return {
+    id: row.id,
+    enableMasteryLock: row.enableMasteryLock,
+    enableScheduleLock: row.enableScheduleLock,
+    enableEvaluationLock:
+      (row as any).enableEvaluationLock !== undefined
+        ? Boolean((row as any).enableEvaluationLock)
+        : true,
+    updatedAt: row.updatedAt,
+  };
 }
 
 export interface ModuleKanjiAccessItem {
