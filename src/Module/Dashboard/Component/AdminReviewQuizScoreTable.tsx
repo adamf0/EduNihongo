@@ -395,8 +395,8 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
       <div className="flex flex-col gap-3.5 bg-slate-50/70 p-4 rounded-2xl border border-slate-200/70">
         {/* Search & Status Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <div className="relative flex-1 max-w-[420px]">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Cari mahasiswa berdasarkan nama atau email..."
@@ -405,12 +405,14 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 placeholder-slate-400 bg-white focus:border-[#8f0020] outline-none"
+              className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 placeholder-slate-400 bg-white focus:border-[#8f0020] focus:ring-2 focus:ring-rose-100 outline-none transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-0"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-0.5 inline-flex items-center justify-center rounded-md"
+                title="Hapus pencarian"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -597,7 +599,8 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                               )}`}
                               title={`Modul ${mNum} Bagian A: ${mod.correctA}/${mod.totalA || 5} benar (${mod.rubricA}% rubrik)`}
                             >
-                              {mod.correctA}
+                              {mod.correctA}<br/>
+                              {mod.correctA}/{mod.totalA || 5} (${mod.rubricA}%)
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-100">
@@ -607,7 +610,8 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                               )}`}
                               title={`Modul ${mNum} Bagian B: ${mod.correctB}/${mod.totalB || 5} benar (${mod.rubricB}% rubrik)`}
                             >
-                              {mod.correctB}
+                              {mod.correctB}<br/>
+                              {mod.correctB}/{mod.totalB || 5} (${mod.rubricB}%)
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-100">
@@ -617,7 +621,8 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                               )}`}
                               title={`Modul ${mNum} Bagian C: ${mod.correctC}/${mod.totalC || 5} benar (${mod.rubricC}% rubrik)`}
                             >
-                              {mod.correctC}
+                              {mod.correctC}<br/>
+                              {mod.correctC}/{mod.totalC || 5} (${mod.rubricC}%)
                             </span>
                           </td>
                           <td className="py-3 px-1.5 text-center border-r border-slate-200">
@@ -627,7 +632,8 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
                               )}`}
                               title={`Modul ${mNum} Bagian D: ${mod.correctD}/${mod.totalD || 5} benar (${mod.rubricD}% rubrik)`}
                             >
-                              {mod.correctD}
+                              {mod.correctD}<br/>
+                              {mod.correctD}/{mod.totalD || 5} (${mod.rubricD}%)
                             </span>
                           </td>
                         </React.Fragment>
