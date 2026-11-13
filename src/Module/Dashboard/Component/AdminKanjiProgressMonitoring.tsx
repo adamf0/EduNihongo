@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Icon from "../../Common/Component/Icon";
 import { api } from "../../Common/Utility/api";
-import { MODULE_TARGET_KANJIS_CONFIG } from "./AdminQuizRubricReport";
+import { MODULE_TARGET_KANJIS_CONFIG, type ModuleTargetKanjiGroup } from "./AdminQuizRubricReport";
 
 export interface StudentKanjiProgressItem {
   userId: number;
@@ -24,6 +24,7 @@ export interface StudentKanjiProgressItem {
 
 export const AdminKanjiProgressMonitoring: React.FC = () => {
   const [data, setData] = useState<StudentKanjiProgressItem[]>([]);
+  const [targetConfig, setTargetConfig] = useState<ModuleTargetKanjiGroup[]>(MODULE_TARGET_KANJIS_CONFIG);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
 
@@ -56,6 +57,16 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
 
   useEffect(() => {
     fetchProgress();
+    api.admin
+      .getTargetKanjisConfig()
+      .then((cfg: any) => {
+        if (Array.isArray(cfg) && cfg.length > 0) {
+          setTargetConfig(cfg);
+        }
+      })
+      .catch((err: any) => {
+        console.error("Gagal memuat konfigurasi kanji modul:", err);
+      });
   }, [fetchProgress]);
 
   // Reset page to 1 whenever filters change
@@ -63,24 +74,25 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
     setCurrentPage(1);
   }, [filterModule, filterKanji, searchQuery, filterStatus]);
 
-  // Module filter options
+  // Module filter options (dynamically from database)
   const moduleOptions = useMemo(() => {
-    return MODULE_TARGET_KANJIS_CONFIG.map((m, idx) => ({
+    return targetConfig.map((m, idx) => ({
       num: String(idx + 1),
+      id: m.moduleId,
       name: m.moduleName,
     }));
-  }, []);
+  }, [targetConfig]);
 
   // Kanji options based on selected module
   const currentModuleKanjis = useMemo(() => {
     if (filterModule) {
-      const selected = MODULE_TARGET_KANJIS_CONFIG.find(
-        (_, idx) => String(idx + 1) === filterModule
+      const selected = targetConfig.find(
+        (m, idx) => String(idx + 1) === filterModule || String(m.moduleId) === filterModule
       );
       return selected ? selected.kanjis : [];
     }
     return [];
-  }, [filterModule]);
+  }, [filterModule, targetConfig]);
 
   // Filtered & Sorted Data (100% Client-Side for instant responsiveness)
   const processedData = useMemo(() => {
@@ -88,14 +100,18 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
 
     // 1. Filter Modul
     if (filterModule) {
-      const modNum = filterModule; // e.g. "1"
+      const modNum = filterModule; // e.g. "1" or "7"
+      const selectedGroup = targetConfig.find(
+        (m, idx) => String(idx + 1) === modNum || String(m.moduleId) === modNum
+      );
       result = result.filter((item) => {
         const titleLower = (item.moduleTitle || "").toLowerCase();
         return (
           titleLower.includes(`modul ${modNum}`) ||
           titleLower.includes(`modul: ${modNum}`) ||
           titleLower.includes(`modul ${modNum}:`) ||
-          String(item.moduleId) === modNum
+          String(item.moduleId) === modNum ||
+          (selectedGroup?.moduleId !== undefined && item.moduleId === selectedGroup.moduleId)
         );
       });
     }
@@ -323,7 +339,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
             }}
             className="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#8f0020] bg-white transition-all shadow-2xs cursor-pointer"
           >
-            <option value="">Semua Modul (Modul 1 - 6)</option>
+            <option value="">Semua Modul (Modul 1 - {moduleOptions.length})</option>
             {moduleOptions.map((m) => (
               <option key={m.num} value={m.num}>
                 {m.name}
@@ -350,7 +366,7 @@ export const AdminKanjiProgressMonitoring: React.FC = () => {
                 </option>
               ))
             ) : (
-              MODULE_TARGET_KANJIS_CONFIG.map((group) => (
+              targetConfig.map((group) => (
                 <optgroup key={group.moduleName} label={`— ${group.moduleName} —`}>
                   {group.kanjis.map((k) => (
                     <option key={k.char} value={k.char}>

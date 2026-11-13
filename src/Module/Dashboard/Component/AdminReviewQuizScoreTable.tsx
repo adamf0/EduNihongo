@@ -304,7 +304,7 @@ export const AdminReviewQuizScoreTable: React.FC = () => {
           </h3>
           <p className="text-xs text-slate-500 mt-1 max-w-3xl leading-relaxed">
             Menampilkan rincian pencapaian skor dan kontribusi rubrik penilaian masing-masing mahasiswa untuk setiap modul
-            (Modul 1 s.d. 6) pada 4 model keterampilan: <strong>Bagian A (Susun Kalimat)</strong>,{" "}
+            {data?.reviewQuiz?.judul ? ` (${data.reviewQuiz.judul})` : ""} pada 4 model keterampilan: <strong>Bagian A (Susun Kalimat)</strong>,{" "}
             <strong>Bagian B (Grouping Semantik)</strong>, <strong>Bagian C (Makna Jukugo)</strong>, dan{" "}
             <strong>Bagian D (Lengkapi Kalimat)</strong>.
           </p>

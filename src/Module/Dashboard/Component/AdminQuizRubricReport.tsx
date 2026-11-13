@@ -68,69 +68,23 @@ interface RecapItem {
   attemptsHistory: AttemptHistoryItem[];
 }
 
-// Standard 30 module kanjis (strictly 5 kanji per module for Modul 1 - 6)
-export const MODULE_TARGET_KANJIS_CONFIG = [
-  {
-    moduleName: "Modul 1",
-    kanjis: [
-      { char: "試", romaji: "shi" },
-      { char: "験", romaji: "ken" },
-      { char: "問", romaji: "mon" },
-      { char: "題", romaji: "dai" },
-      { char: "答", romaji: "tou" },
-    ],
-  },
-  {
-    moduleName: "Modul 2",
-    kanjis: [
-      { char: "研", romaji: "ken" },
-      { char: "究", romaji: "kyuu" },
-      { char: "調", romaji: "chou" },
-      { char: "査", romaji: "sa" },
-      { char: "集", romaji: "shuu" },
-    ],
-  },
-  {
-    moduleName: "Modul 3",
-    kanjis: [
-      { char: "伝", romaji: "den" },
-      { char: "信", romaji: "shin" },
-      { char: "報", romaji: "hou" },
-      { char: "情", romaji: "jou" },
-      { char: "送", romaji: "sou" },
-    ],
-  },
-  {
-    moduleName: "Modul 4",
-    kanjis: [
-      { char: "務", romaji: "mu" },
-      { char: "商", romaji: "shou" },
-      { char: "業", romaji: "gyou" },
-      { char: "職", romaji: "shoku" },
-      { char: "術", romaji: "jutsu" },
-    ],
-  },
-  {
-    moduleName: "Modul 5",
-    kanjis: [
-      { char: "意", romaji: "i" },
-      { char: "討", romaji: "tou" },
-      { char: "談", romaji: "dan" },
-      { char: "論", romaji: "ron" },
-      { char: "議", romaji: "gi" },
-    ],
-  },
-  {
-    moduleName: "Modul 6",
-    kanjis: [
-      { char: "史", romaji: "shi" },
-      { char: "始", romaji: "shi" },
-      { char: "期", romaji: "ki" },
-      { char: "歴", romaji: "reki" },
-      { char: "経", romaji: "kei" },
-    ],
-  },
-];
+export interface ModuleTargetKanjiItem {
+  id?: number;
+  char: string;
+  romaji: string;
+  meaning?: string;
+  moduleTitle?: string;
+}
+
+export interface ModuleTargetKanjiGroup {
+  moduleId?: number;
+  moduleName: string;
+  moduleTitle?: string;
+  kanjis: ModuleTargetKanjiItem[];
+}
+
+// Fallback module kanjis (initial state before database loads)
+export const MODULE_TARGET_KANJIS_CONFIG: ModuleTargetKanjiGroup[] = [];
 
 export const ALL_MODULE_KANJIS = new Set(
   MODULE_TARGET_KANJIS_CONFIG.flatMap((m) => m.kanjis.map((k) => k.char))
@@ -152,6 +106,8 @@ export const AdminQuizRubricReport: React.FC = () => {
   const [recapTable, setRecapTable] = useState<RecapItem[]>([]);
   const [moduleOptions, setModuleOptions] = useState<Array<{ id: number; title: string }>>([]);
   const [kanjiOptions, setKanjiOptions] = useState<Array<{ id: number; character: string; romaji: string; moduleId?: number; moduleTitle?: string }>>([]);
+  const [moduleTargetConfig, setModuleTargetConfig] = useState<ModuleTargetKanjiGroup[]>(MODULE_TARGET_KANJIS_CONFIG);
+  const [allModuleKanjisSet, setAllModuleKanjisSet] = useState<Set<string>>(ALL_MODULE_KANJIS);
 
   // Analytics States
   const [_, setRotationItems] = useState<StudentRotationItem[]>([]);
@@ -170,7 +126,7 @@ export const AdminQuizRubricReport: React.FC = () => {
   const [recapCurrentPage, setRecapCurrentPage] = useState<number>(1);
   const [recapPageSize, setRecapPageSize] = useState<number>(10);
 
-  // Computed list of target module kanjis grouped by module (strictly 5 kanji per module)
+  // Computed list of target module kanjis grouped by module (dynamically from database)
   const availableKanjiList = useMemo(() => {
     const kanjiOptionMap = new Map<string, { id?: number; romaji?: string; moduleTitle?: string }>();
     if (kanjiOptions && kanjiOptions.length > 0) {
@@ -185,25 +141,26 @@ export const AdminQuizRubricReport: React.FC = () => {
       });
     }
 
-    return MODULE_TARGET_KANJIS_CONFIG.map((group) => ({
+    return moduleTargetConfig.map((group) => ({
+      moduleId: group.moduleId,
       moduleName: group.moduleName,
       kanjis: group.kanjis.map((k) => {
         const option = kanjiOptionMap.get(k.char);
         return {
-          id: option?.id,
+          id: option?.id || k.id,
           char: k.char,
           romaji: option?.romaji || k.romaji,
-          moduleTitle: option?.moduleTitle || group.moduleName,
+          moduleTitle: option?.moduleTitle || group.moduleTitle || group.moduleName,
         };
       }),
     }));
-  }, [kanjiOptions]);
+  }, [kanjiOptions, moduleTargetConfig]);
 
   // Computed filtered recap table based on Nama, Kanji, and Interpretasi filters
   const filteredRecapTable = useMemo(() => {
     return recapTable.filter((item) => {
-      // 0. Ensure strictly only the 30 module kanjis (5 kanjis per module) are included
-      if (!ALL_MODULE_KANJIS.has(item.kanjiChar)) {
+      // 0. Ensure strictly only the target module kanjis from DB are included
+      if (allModuleKanjisSet.size > 0 && !allModuleKanjisSet.has(item.kanjiChar)) {
         return false;
       }
 
@@ -291,13 +248,25 @@ export const AdminQuizRubricReport: React.FC = () => {
       });
 
       setSummary(res.summary);
+
+      if (res.moduleTargetKanjisConfig && Array.isArray(res.moduleTargetKanjisConfig) && res.moduleTargetKanjisConfig.length > 0) {
+        setModuleTargetConfig(res.moduleTargetKanjisConfig);
+      }
+
+      const targetSet = res.allModuleKanjis && Array.isArray(res.allModuleKanjis) && res.allModuleKanjis.length > 0
+        ? new Set<string>(res.allModuleKanjis)
+        : allModuleKanjisSet;
+      if (res.allModuleKanjis && Array.isArray(res.allModuleKanjis) && res.allModuleKanjis.length > 0) {
+        setAllModuleKanjisSet(targetSet);
+      }
+
       const validTable = (res.recapTable || []).filter((item: RecapItem) =>
-        ALL_MODULE_KANJIS.has(item.kanjiChar)
+        targetSet.size === 0 || targetSet.has(item.kanjiChar)
       );
       setRecapTable(validTable);
       setModuleOptions(res.moduleOptions || []);
       const validOptions = (res.kanjiOptions || []).filter((k: any) =>
-        ALL_MODULE_KANJIS.has(k.character)
+        targetSet.size === 0 || targetSet.has(k.character)
       );
       setKanjiOptions(validOptions);
     } catch (err: any) {
@@ -745,7 +714,9 @@ export const AdminQuizRubricReport: React.FC = () => {
               onChange={(e) => setTableFilterKanji(e.target.value)}
               className="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#8f0020] bg-white transition-all shadow-2xs cursor-pointer"
             >
-              <option value="">Semua Kanji Target (5 Kanji Per Modul)</option>
+              <option value="">
+                Semua Kanji Target ({moduleTargetConfig.length > 0 ? `Modul 1 - ${moduleTargetConfig.length}` : "Semua Modul"})
+              </option>
               {availableKanjiList.map((group) => (
                 <optgroup key={group.moduleName} label={`— ${group.moduleName} —`}>
                   {group.kanjis.map((k) => (

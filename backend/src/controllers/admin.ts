@@ -1062,30 +1062,66 @@ export const deleteKanji = async (req: Request, res: Response) => {
   }
 };
 
-// Standard 30 module kanjis (strictly 5 kanji per module for Modul 1 - 6)
-export const MODULE_TARGET_KANJIS = [
-  // Modul 1
-  "試", "験", "問", "題", "答",
-  // Modul 2
-  "研", "究", "調", "査", "集",
-  // Modul 3
-  "伝", "信", "報", "情", "送",
-  // Modul 4
-  "務", "商", "業", "職", "術",
-  // Modul 5
-  "意", "討", "談", "論", "議",
-  // Modul 6
-  "史", "始", "期", "歴", "経",
-];
+// Standard module kanjis fallback
+export const MODULE_TARGET_KANJIS = [];
+
+// Helper to query module target kanjis dynamically from database
+export const getModuleTargetKanjisConfigFromDb = async () => {
+  const modules = await prisma.module.findMany({
+    where: {
+      kanjis: { some: {} },
+    },
+    include: {
+      kanjis: {
+        select: {
+          id: true,
+          character: true,
+          romaji: true,
+          meaning: true,
+          moduleId: true,
+        },
+        orderBy: { id: "asc" },
+      },
+    },
+    orderBy: { id: "asc" },
+  });
+
+  return modules.map((mod, idx) => ({
+    moduleId: mod.id,
+    moduleName: `Modul ${idx + 1}`,
+    moduleTitle: mod.title,
+    kanjis: sortModuleKanjis(mod.kanjis, mod.id).map((k) => ({
+      id: k.id,
+      char: k.character,
+      romaji: k.romaji,
+      meaning: k.meaning,
+    })),
+  }));
+};
+
+// API Endpoint: Get dynamic module target kanjis config
+export const getModuleTargetKanjis = async (req: Request, res: Response) => {
+  try {
+    const config = await getModuleTargetKanjisConfigFromDb();
+    res.json(config);
+  } catch (error: any) {
+    console.error("getModuleTargetKanjis error:", error);
+    res.status(500).json({ error: "Gagal mengambil daftar target kanji modul." });
+  }
+};
 
 // Admin Quiz Rubric & Analytics Report (Model A-D) with Date Range filtering
 export const getQuizRubricReport = async (req: Request, res: Response) => {
   try {
     const { startDate, endDate, moduleId, kanjiId, search } = req.query;
 
-    // Kanji filter condition: strictly limited to the 5 kanjis per module
+    // Kanji filter condition: dynamically retrieved from modules in database
+    const moduleTargetKanjisConfig = await getModuleTargetKanjisConfigFromDb();
+    const allDbKanjis = moduleTargetKanjisConfig.flatMap((m) => m.kanjis.map((k) => k.char));
+    const targetCharacters = allDbKanjis.length > 0 ? allDbKanjis : MODULE_TARGET_KANJIS;
+
     const kanjiCondition: any = {
-      character: { in: MODULE_TARGET_KANJIS },
+      character: { in: targetCharacters },
     };
 
     if (kanjiId) {
@@ -1137,7 +1173,7 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
     });
     const kanjis = await prisma.kanji.findMany({
       where: {
-        character: { in: MODULE_TARGET_KANJIS },
+        character: { in: targetCharacters },
         ...(moduleId ? { moduleId: Number(moduleId) } : { moduleId: { not: null } }),
       },
       select: {
@@ -1301,6 +1337,8 @@ export const getQuizRubricReport = async (req: Request, res: Response) => {
         moduleId: k.moduleId,
         moduleTitle: k.module?.title || (k.moduleId ? `Modul ${k.moduleId}` : ""),
       })),
+      moduleTargetKanjisConfig,
+      allModuleKanjis: targetCharacters,
     });
   } catch (error: any) {
     console.error("getQuizRubricReport error:", error);
@@ -1336,8 +1374,12 @@ export const getStudentKanjiProgress = async (req: Request, res: Response) => {
   try {
     const { moduleId, kanjiId, search } = req.query;
 
+    const moduleTargetKanjisConfig = await getModuleTargetKanjisConfigFromDb();
+    const allDbKanjis = moduleTargetKanjisConfig.flatMap((m) => m.kanjis.map((k) => k.char));
+    const targetCharacters = allDbKanjis.length > 0 ? allDbKanjis : MODULE_TARGET_KANJIS;
+
     const kanjiCondition: any = {
-      character: { in: MODULE_TARGET_KANJIS },
+      character: { in: targetCharacters },
     };
 
     if (kanjiId) {
@@ -1351,11 +1393,13 @@ export const getStudentKanjiProgress = async (req: Request, res: Response) => {
 
     if (moduleId) {
       const numMod = Number(moduleId);
-      if (!isNaN(numMod) && numMod > 0 && numMod <= 10) {
-        // Module number 1..6 passed
+      if (!isNaN(numMod) && numMod > 0 && numMod <= 50) {
+        // Module number passed, match either exact moduleId, title, or mapped module from config
+        const matchedModule = moduleTargetKanjisConfig[numMod - 1];
         kanjiCondition.OR = [
           { moduleId: numMod },
           { module: { title: { contains: `Modul ${numMod}` } } },
+          ...(matchedModule ? [{ moduleId: matchedModule.moduleId }] : []),
         ];
       } else if (!isNaN(numMod)) {
         kanjiCondition.moduleId = numMod;

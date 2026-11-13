@@ -381,6 +381,13 @@ export const api = {
       });
       return handleResponse(res);
     },
+    getTargetKanjisConfig: async () => {
+      const res = await fetch(`${BASE_URL}/admin/module-target-kanjis`, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+      return handleResponse(res);
+    },
     jukugos: {
       list: async () => {
         const res = await fetch(`${BASE_URL}/admin/jukugos`, {
